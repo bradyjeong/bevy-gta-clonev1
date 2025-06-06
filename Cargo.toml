@@ -1,0 +1,17 @@
+[package]
+name = "gta_game"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = []
+weather = []
+debug-weather = ["weather"]
+debug-movement = []
+debug-audio = []
+debug-ui = []
+
+[dependencies]
+bevy = "0.16.1"
+bevy_rapier3d = "0.30.0"
+rand = "0.8"
