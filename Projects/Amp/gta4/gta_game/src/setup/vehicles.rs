@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::bundles::{VehicleVisibilityBundle, VisibleChildBundle};
-use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
+use crate::factories::{BundleFactory, MaterialFactory, MeshFactory, TransformFactory};
 
 pub fn setup_basic_vehicles(
     mut commands: Commands,
@@ -13,15 +13,10 @@ pub fn setup_basic_vehicles(
     // Basic car for testing
     let car_entity = commands.spawn((
         Car,
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 0.5, 2.0),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Velocity::zero(),
-        ExternalForce::default(),
-        TransformFactory::vehicle_spawn(15.0, 8.0),
-        VehicleVisibilityBundle::default(),
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(15.0, 8.0, 0.0)),
+        BundleFactory::create_basic_car_collision(),
+        BundleFactory::create_standard_vehicle_locked_axes(),
+        BundleFactory::create_standard_vehicle_damping(),
     )).id();
 
     // Car body
@@ -30,20 +25,11 @@ pub fn setup_basic_vehicles(
         MeshMaterial3d(MaterialFactory::create_simple_material(&mut materials, Color::srgb(1.0, 0.0, 0.0))),
         TransformFactory::vehicle_body_center(),
         ChildOf(car_entity),
-        Cullable { max_distance: 300.0, is_culled: false },
-        VisibleChildBundle::default(),
+        BundleFactory::create_visibility_bundle(300.0),
     ));
 
     // BUGATTI CHIRON SUPERCAR
     let chiron_entity = commands.spawn((
-        TransformFactory::vehicle_elevated(3.0, 1.3, 0.0),
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 0.5, 2.0),
-        Velocity::zero(),
-        ExternalForce::default(),
-        Friction::coefficient(0.3),
-        Restitution::coefficient(0.0),
-        Ccd::enabled(),
         Car,
         SuperCar {
             max_speed: 120.0,
@@ -51,10 +37,11 @@ pub fn setup_basic_vehicles(
             turbo_boost: false,
             exhaust_timer: 0.0,
         },
-        Cullable { max_distance: 800.0, is_culled: false },
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
-        VehicleVisibilityBundle::default(),
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(3.0, 1.3, 0.0)),
+        BundleFactory::create_super_car_collision(),
+        BundleFactory::create_visibility_bundle(800.0),
+        BundleFactory::create_standard_vehicle_locked_axes(),
+        BundleFactory::create_standard_vehicle_damping(),
     )).id();
 
     // Main body (lower chassis)
@@ -261,15 +248,10 @@ pub fn setup_helicopter(
     // HELICOPTER - Spawn a luxury Dubai police helicopter
     let helicopter_entity = commands.spawn((
         Helicopter,
-        RigidBody::Dynamic,
-        Collider::cuboid(1.5, 1.0, 3.0),
-        Velocity::zero(),
-        ExternalForce::default(),
-        Transform::from_xyz(5.0, 3.0, 0.0),
-        VehicleVisibilityBundle::default(),
-        Ccd::enabled(),
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 2.0, angular_damping: 8.0 },
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(5.0, 3.0, 0.0)),
+        BundleFactory::create_helicopter_collision(),
+        Damping { linear_damping: 2.0, angular_damping: 8.0 }, // Override default damping for helicopter
+        LockedAxes::empty(), // Helicopter has full 6DOF movement
     )).id();
 
     // Main helicopter body (sleek design)
@@ -398,14 +380,11 @@ pub fn setup_f16(
     // F16 FIGHTER JET - Spawn an advanced military aircraft
     let f16_entity = commands.spawn((
         F16,
-        RigidBody::Dynamic,
-        Collider::cuboid(8.0, 1.5, 1.5),
-        LockedAxes::empty(), // Full 6DOF movement for realistic flight
-        Velocity::zero(),
-        ExternalForce::default(),
-        Transform::from_xyz(80.0, 2.0, 120.0), // Spawn at airfield location, separated from helicopter
-        VehicleVisibilityBundle::default(),
-        Cullable { max_distance: 2000.0, is_culled: false },
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(80.0, 2.0, 120.0)),
+        BundleFactory::create_f16_collision(),
+        BundleFactory::create_visibility_bundle(2000.0),
+        LockedAxes::empty(), // F16 has full 6DOF movement for realistic flight
+        BundleFactory::create_standard_vehicle_damping(),
     )).id();
 
     // F16 Main fuselage (sleek fighter design)

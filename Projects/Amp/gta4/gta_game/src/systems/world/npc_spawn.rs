@@ -5,6 +5,7 @@ use crate::components::{
     NPC_LOD_CULL_DISTANCE
 };
 use crate::systems::timing_service::{TimingService, EntityTimerType, ManagedTiming};
+use crate::factories::BundleFactory;
 use rand::prelude::*;
 
 /// Spawn NPCs using the new architecture while maintaining compatibility
@@ -47,21 +48,11 @@ pub fn spawn_npc_with_new_architecture(
         // Core state component (always present)
         npc_state,
         
-        // Physics components
-        Transform::from_xyz(position.x, 1.0, position.z),
-        RigidBody::Dynamic,
-        Collider::capsule(
-            Vec3::new(0.0, -height * 0.4, 0.0), 
-            Vec3::new(0.0, height * 0.4, 0.0), 
-            0.3
-        ),
-        Velocity::zero(),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+        // Physics components using bundle factory
+        BundleFactory::create_npc_physics_bundle(Vec3::new(position.x, 1.0, position.z), height),
         
         // Performance and content management
-        Cullable::new(NPC_LOD_CULL_DISTANCE),
-        DynamicContent { content_type: ContentType::NPC },
-        ManagedTiming::new(EntityTimerType::NPCLOD),
+        BundleFactory::create_npc_content_bundle(NPC_LOD_CULL_DISTANCE),
         
         // Note: NPCRendering will be added by the LOD system based on distance
     )).id()

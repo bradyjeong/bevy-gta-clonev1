@@ -4,6 +4,7 @@ use rand::Rng;
 use crate::components::*;
 use crate::constants::*;
 use crate::bundles::{VehicleVisibilityBundle, VisibleChildBundle};
+use crate::factories::BundleFactory;
 
 pub fn dynamic_terrain_system(
     mut terrain_query: Query<&mut Transform, (With<DynamicTerrain>, Without<ActiveEntity>)>,
@@ -332,11 +333,9 @@ fn spawn_building(
         Mesh3d(meshes.add(Cuboid::new(width, height, width))),
         MeshMaterial3d(building_material),
         Transform::from_translation(Vec3::new(position.x, height / 2.0, position.z)),
-        RigidBody::Fixed,
-        Collider::cuboid(width / 2.0, height / 2.0 + 10.0, width / 2.0),
-        CollisionGroups::new(STATIC_GROUP, Group::ALL),
+        BundleFactory::create_building_collision_bundle(Vec3::new(width, height, width)),
         Building,
-        Cullable { max_distance: 300.0, is_culled: false }, // Reduced from 800 to 300
+        BundleFactory::create_visibility_bundle(300.0), // Reduced from 800 to 300
     ));
 }
 
@@ -368,15 +367,11 @@ fn spawn_vehicle(
             content_type: ContentType::Vehicle,
         },
         Car,
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 0.5, 2.0),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Velocity::zero(),
-        Transform::from_xyz(position.x, 1.5, position.z),
-        VehicleVisibilityBundle::default(),
-        Cullable { max_distance: 150.0, is_culled: false }, // Reduced for better performance
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(position.x, 1.5, position.z)),
+        BundleFactory::create_basic_car_collision(),
+        BundleFactory::create_standard_vehicle_locked_axes(),
+        BundleFactory::create_standard_vehicle_damping(),
+        BundleFactory::create_visibility_bundle(150.0), // Reduced for better performance
     )).id();
 
     // Car body (main hull)
@@ -453,17 +448,13 @@ fn spawn_dynamic_npc(
         },
         Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
         MeshMaterial3d(materials.add(color)),
-        Transform::from_xyz(position.x, 1.0, position.z),
-        RigidBody::Dynamic,
-        Collider::capsule(Vec3::new(0.0, -0.9, 0.0), Vec3::new(0.0, 0.9, 0.0), 0.3),
-        Velocity::zero(),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+        BundleFactory::create_npc_physics_bundle(Vec3::new(position.x, 1.0, position.z), 1.8),
         NPC {
             target_position: Vec3::new(target_x, 1.0, target_z),
             speed: rng.gen_range(2.0..5.0),
             last_update: 0.0,
             update_interval: rng.gen_range(0.05..0.2),
         },
-        Cullable { max_distance: 100.0, is_culled: false }, // Reduced from 200 to 100 for NPCs
+        BundleFactory::create_visibility_bundle(100.0), // Reduced from 200 to 100 for NPCs
     ));
 }

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
+use crate::factories::BundleFactory;
 
 // NEW LOD-BASED VEHICLE SPAWNING
 
@@ -15,15 +16,12 @@ pub fn setup_lod_vehicles(
     commands.spawn((
         VehicleState::new(VehicleType::BasicCar),
         Car, // Keep legacy marker for compatibility
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 0.5, 2.0),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Velocity::zero(),
-        Transform::from_xyz(20.0, 0.5, 12.0),
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(20.0, 0.5, 12.0)),
+        BundleFactory::create_basic_car_collision(),
+        BundleFactory::create_standard_vehicle_locked_axes(),
+        BundleFactory::create_standard_vehicle_damping(),
         GlobalTransform::default(),
         Visibility::default(),
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
     ));
 
     // Bugatti Chiron SuperCar
@@ -44,17 +42,12 @@ pub fn setup_lod_vehicles(
             turbo_boost: false,
             exhaust_timer: 0.0,
         },
-        Transform::from_xyz(5.0, 1.3, 0.0),
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(5.0, 1.3, 0.0)),
+        BundleFactory::create_super_car_collision(),
+        BundleFactory::create_standard_vehicle_locked_axes(),
+        BundleFactory::create_standard_vehicle_damping(),
         GlobalTransform::default(),
         Visibility::default(),
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 0.5, 2.0),
-        Velocity::zero(),
-        Friction::coefficient(0.3),
-        Restitution::coefficient(0.0),
-        Ccd::enabled(),
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
     ));
 
     // Add beacon for Bugatti Chiron (still static for now)
@@ -82,15 +75,13 @@ pub fn setup_lod_helicopter(
             last_lod_check: 0.0,
         },
         Helicopter,
-        RigidBody::Dynamic,
-        Collider::cuboid(1.5, 1.0, 3.0),
-        Velocity::zero(),
-        Transform::from_xyz(120.0, 15.0, 80.0).with_rotation(Quat::from_rotation_y(std::f32::consts::PI)),
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(120.0, 15.0, 80.0)),
+        BundleFactory::create_helicopter_collision(),
         GlobalTransform::default(),
         Visibility::default(),
-        Ccd::enabled(),
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 2.0, angular_damping: 8.0 },
+        Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI)), // Additional rotation
+        Damping { linear_damping: 2.0, angular_damping: 8.0 }, // Override default damping
+        LockedAxes::empty(), // Helicopter has full 6DOF movement
     ));
 
     // Add beacon for Helicopter
@@ -118,13 +109,11 @@ pub fn setup_lod_f16(
             last_lod_check: 0.0,
         },
         F16,
-        RigidBody::Dynamic,
-        Collider::cuboid(8.0, 1.5, 1.5),
-        LockedAxes::empty(), // Full 6DOF movement for realistic flight
-        Velocity::zero(),
-        Transform::from_xyz(80.0, 2.0, 120.0),
+        BundleFactory::create_vehicle_physics_bundle(Vec3::new(80.0, 2.0, 120.0)),
+        BundleFactory::create_f16_collision(),
         GlobalTransform::default(),
         Visibility::default(),
+        LockedAxes::empty(), // F16 has full 6DOF movement for realistic flight
     ));
 
     // Add beacon for F16
@@ -145,11 +134,7 @@ pub fn spawn_vehicle_with_lod(
 ) -> Entity {
     let vehicle_state = VehicleState::new(vehicle_type);
     
-    let collider_size = match vehicle_type {
-        VehicleType::BasicCar | VehicleType::SuperCar => Collider::cuboid(1.0, 0.5, 2.0),
-        VehicleType::Helicopter => Collider::cuboid(1.5, 1.0, 3.0),
-        VehicleType::F16 => Collider::cuboid(8.0, 1.5, 1.5),
-    };
+    let collider_bundle = BundleFactory::create_vehicle_collision_bundle(vehicle_type);
     
     let locked_axes = match vehicle_type {
         VehicleType::BasicCar | VehicleType::SuperCar => 
@@ -159,14 +144,12 @@ pub fn spawn_vehicle_with_lod(
     
     commands.spawn((
         vehicle_state,
-        RigidBody::Dynamic,
-        collider_size,
-        locked_axes,
-        Velocity::zero(),
-        Transform::from_translation(position).with_rotation(rotation),
+        BundleFactory::create_vehicle_physics_bundle(position),
+        collider_bundle,
+        BundleFactory::create_standard_vehicle_damping(),
         GlobalTransform::default(),
         Visibility::default(),
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
+        Transform::from_rotation(rotation), // Additional rotation override
+        locked_axes, // Locked axes based on vehicle type
     )).id()
 }
