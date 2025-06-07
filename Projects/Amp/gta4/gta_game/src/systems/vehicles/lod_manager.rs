@@ -4,31 +4,38 @@ use crate::components::{
     LOD_FULL_DISTANCE, LOD_MEDIUM_DISTANCE, LOD_LOW_DISTANCE, LOD_CULL_DISTANCE
 };
 use crate::bundles::VisibleChildBundle;
+use crate::systems::timing_service::{TimingService, SystemType, EntityTimerType, ManagedTiming};
+use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 
 pub fn vehicle_lod_system(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    time: Res<Time>,
+    mut timing_service: ResMut<TimingService>,
     active_query: Query<&Transform, With<ActiveEntity>>,
-    mut vehicle_query: Query<(Entity, &mut VehicleState, Option<&VehicleRendering>, &Transform)>,
+    mut vehicle_query: Query<(Entity, &mut VehicleState, Option<&VehicleRendering>, &Transform, Option<&ManagedTiming>)>,
 ) {
+    // Use unified timing service instead of manual timing checks
+    if !timing_service.should_run_system(SystemType::VehicleLOD) {
+        return;
+    }
+    
     let Ok(active_transform) = active_query.single() else { return };
     let player_pos = active_transform.translation;
-    let current_time = time.elapsed_secs();
     
-    // Check LOD every 0.1 seconds to avoid constant updates
-    const LOD_CHECK_INTERVAL: f32 = 0.1;
-    
-    for (entity, mut vehicle_state, rendering, transform) in vehicle_query.iter_mut() {
-        // Skip if checked recently
-        if current_time - vehicle_state.last_lod_check < LOD_CHECK_INTERVAL {
+    for (entity, mut vehicle_state, rendering, transform, managed_timing) in vehicle_query.iter_mut() {
+        // Register entity for timing management if not already managed
+        if managed_timing.is_none() {
+            timing_service.register_entity(entity, EntityTimerType::VehicleLOD, 0.1);
+            commands.entity(entity).insert(ManagedTiming::new(EntityTimerType::VehicleLOD));
+        }
+        
+        // Check if this specific entity should update (individual entity timing)
+        if !timing_service.should_update_entity(entity) {
             continue;
         }
         
-        vehicle_state.last_lod_check = current_time;
         let distance = player_pos.distance(transform.translation);
-        
         let new_lod = determine_lod(distance);
         
         if new_lod != vehicle_state.current_lod {
@@ -125,17 +132,11 @@ fn spawn_full_vehicle_mesh(
     
     match vehicle_state.vehicle_type {
         VehicleType::SuperCar => {
-            // Main body
+            // Main body - USING MATERIAL FACTORY
             let body = commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(1.8, 0.4, 4.2))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: vehicle_state.color,
-                    metallic: 0.95,
-                    perceptual_roughness: 0.1,
-                    reflectance: 0.9,
-                    ..default()
-                })),
-                Transform::from_xyz(0.0, -0.1, 0.0),
+                Mesh3d(MeshFactory::create_sports_car_body(meshes)),
+                MeshMaterial3d(MaterialFactory::create_vehicle_metallic(materials, vehicle_state.color)),
+                TransformFactory::vehicle_chassis(),
                 ChildOf(parent_entity),
                 VisibleChildBundle::default(),
             )).id();
@@ -144,14 +145,9 @@ fn spawn_full_vehicle_mesh(
             // Wheels
             for (x, z) in [(-1.0, 1.2), (1.0, 1.2), (-1.0, -1.2), (1.0, -1.2)] {
                 let wheel = commands.spawn((
-                    Mesh3d(meshes.add(Cylinder::new(0.35, 0.25))),
-                    MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: Color::srgb(0.1, 0.1, 0.1),
-                        metallic: 0.1,
-                        perceptual_roughness: 0.8,
-                        ..default()
-                    })),
-                    Transform::from_xyz(x, -0.35, z).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
+                    Mesh3d(MeshFactory::create_standard_wheel(meshes)),
+                    MeshMaterial3d(MaterialFactory::create_wheel_material(materials)),
+                    TransformFactory::wheel_with_rotation(x, -0.35, z),
                     ChildOf(parent_entity),
                     VisibleChildBundle::default(),
                 )).id();
@@ -160,9 +156,9 @@ fn spawn_full_vehicle_mesh(
         },
         VehicleType::BasicCar => {
             let body = commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(1.8, 0.6, 3.6))),
-                MeshMaterial3d(materials.add(vehicle_state.color)),
-                Transform::from_xyz(0.0, 0.0, 0.0),
+                Mesh3d(MeshFactory::create_car_body(meshes)),
+                MeshMaterial3d(MaterialFactory::create_simple_material(materials, vehicle_state.color)),
+                TransformFactory::vehicle_body_center(),
                 ChildOf(parent_entity),
                 VisibleChildBundle::default(),
             )).id();
@@ -171,9 +167,9 @@ fn spawn_full_vehicle_mesh(
         VehicleType::Helicopter => {
             // Body
             let body = commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(2.5, 1.5, 5.0))),
-                MeshMaterial3d(materials.add(Color::srgb(0.9, 0.9, 0.9))),
-                Transform::from_xyz(0.0, 0.0, 0.0),
+                Mesh3d(MeshFactory::create_suv_body(meshes)),
+                MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.9, 0.9, 0.9))),
+                TransformFactory::helicopter_body(),
                 ChildOf(parent_entity),
                 VisibleChildBundle::default(),
             )).id();
@@ -183,9 +179,9 @@ fn spawn_full_vehicle_mesh(
             for i in 0..4 {
                 let angle = i as f32 * std::f32::consts::PI / 2.0;
                 let blade = commands.spawn((
-                    Mesh3d(meshes.add(Cuboid::new(10.0, 0.05, 0.2))),
-                    MeshMaterial3d(materials.add(Color::srgb(0.05, 0.05, 0.05))),
-                    Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
+                    Mesh3d(MeshFactory::create_rotor_blade(meshes)),
+                    MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.05, 0.05, 0.05))),
+                    TransformFactory::rotor_with_rotation(angle),
                     ChildOf(parent_entity),
                     VisibleChildBundle::default(),
                 )).id();
@@ -195,14 +191,9 @@ fn spawn_full_vehicle_mesh(
         VehicleType::F16 => {
             // Fuselage
             let body = commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(16.0, 2.0, 3.0))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgb(0.4, 0.4, 0.5),
-                    metallic: 0.8,
-                    perceptual_roughness: 0.2,
-                    ..default()
-                })),
-                Transform::from_xyz(0.0, 0.0, 0.0),
+                Mesh3d(MeshFactory::create_truck_body(meshes)),
+                MeshMaterial3d(MaterialFactory::create_aircraft_material(materials, Color::srgb(0.4, 0.4, 0.5))),
+                TransformFactory::helicopter_body(),
                 ChildOf(parent_entity),
                 VisibleChildBundle::default(),
             )).id();
@@ -210,14 +201,9 @@ fn spawn_full_vehicle_mesh(
             
             // Wings
             let wings = commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(4.0, 0.3, 8.0))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgb(0.4, 0.4, 0.5),
-                    metallic: 0.8,
-                    perceptual_roughness: 0.2,
-                    ..default()
-                })),
-                Transform::from_xyz(-2.0, -0.2, 0.0),
+                Mesh3d(MeshFactory::create_helicopter_body(meshes)),
+                MeshMaterial3d(MaterialFactory::create_aircraft_material(materials, Color::srgb(0.4, 0.4, 0.5))),
+                TransformFactory::landing_skid_left(),
                 ChildOf(parent_entity),
                 VisibleChildBundle::default(),
             )).id();
@@ -244,9 +230,9 @@ fn spawn_medium_vehicle_mesh(
     };
     
     let body = commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(size.x, size.y, size.z))),
-        MeshMaterial3d(materials.add(color)),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        Mesh3d(MeshFactory::create_custom_cuboid(meshes, size.x, size.y, size.z)),
+        MeshMaterial3d(MaterialFactory::create_simple_material(materials, color)),
+        TransformFactory::vehicle_body_center(),
         ChildOf(parent_entity),
         VisibleChildBundle::default(),
     )).id();
@@ -269,13 +255,9 @@ fn spawn_low_vehicle_mesh(
     };
     
     let body = commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(size.x, size.y, size.z))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: vehicle_state.color,
-            perceptual_roughness: 0.9,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        Mesh3d(MeshFactory::create_custom_cuboid(meshes, size.x, size.y, size.z)),
+        MeshMaterial3d(MaterialFactory::create_low_detail_material(materials, vehicle_state.color)),
+        TransformFactory::vehicle_body_center(),
         ChildOf(parent_entity),
         VisibleChildBundle::default(),
     )).id();

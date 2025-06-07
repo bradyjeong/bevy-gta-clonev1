@@ -3,6 +3,7 @@ use crate::components::world::*;
 #[cfg(feature = "weather")]
 use crate::components::weather::*;
 use crate::components::Player;
+use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 
 /// Plugin for sky rendering and time management
 pub struct SkyPlugin;
@@ -203,14 +204,9 @@ pub fn sky_dome_system(
         SkyDomeRenderer {
             gradient_colors: blended_colors,
         },
-        Mesh3d(meshes.add(Sphere::new(2000.0))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: zenith_color,
-            unlit: true,
-            cull_mode: Some(bevy::render::render_resource::Face::Front), // Render inside
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        Mesh3d(MeshFactory::create_sky_dome(&mut meshes)),
+        MeshMaterial3d(MaterialFactory::create_sky_dome_material(&mut materials, zenith_color)),
+        TransformFactory::sky_dome(),
     ));
 }
 
@@ -250,13 +246,8 @@ pub fn sky_dome_system(
     // Create sky dome (sphere rendered from inside)
     commands.spawn((
         SkyDome,
-        Mesh3d(meshes.add(Sphere::new(2000.0))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: zenith_color,
-            unlit: true,
-            cull_mode: Some(bevy::render::render_resource::Face::Front), // Render inside
-            ..default()
-        })),
+        Mesh3d(MeshFactory::create_sky_dome(&mut meshes)),
+        MeshMaterial3d(MaterialFactory::create_sky_dome_material(&mut materials, zenith_color)),
         Transform::from_xyz(0.0, 0.0, 0.0),
     ));
 }
@@ -328,12 +319,11 @@ pub fn sun_system(
                 size: 50.0,
             },
             Mesh3d(meshes.add(Sphere::new(50.0))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(1.0, 0.9, 0.7),
-                emissive: LinearRgba::rgb(10.0, 8.0, 5.0),
-                unlit: true,
-                ..default()
-            })),
+            MeshMaterial3d(MaterialFactory::create_celestial_material(
+                &mut materials,
+                Color::srgb(1.0, 0.9, 0.7),
+                LinearRgba::rgb(10.0, 8.0, 5.0),
+            )),
             Transform::from_translation(sun_position),
         ));
     }
@@ -450,13 +440,11 @@ pub fn celestial_bodies_system(
                     size: 30.0,
                 },
                 Mesh3d(meshes.add(Sphere::new(30.0))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgba(0.9, 0.9, 0.8, night_factor * weather_clarity),
-                    emissive: LinearRgba::rgb(0.5, 0.5, 0.4) * night_factor * weather_clarity,
-                    unlit: true,
-                    alpha_mode: AlphaMode::Blend,
-                    ..default()
-                })),
+                MeshMaterial3d(MaterialFactory::create_celestial_material(
+                    &mut materials,
+                    Color::srgba(0.9, 0.9, 0.8, night_factor * weather_clarity),
+                    LinearRgba::rgb(0.5, 0.5, 0.4) * night_factor * weather_clarity,
+                )),
                 Transform::from_translation(moon_position),
             ));
             
@@ -483,13 +471,11 @@ pub fn celestial_bodies_system(
                         size: star_size,
                     },
                     Mesh3d(meshes.add(Sphere::new(star_size))),
-                    MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: Color::srgba(1.0, 1.0, 0.9, brightness * night_factor * weather_clarity),
-                        emissive: LinearRgba::rgb(brightness, brightness, brightness * 0.9) * night_factor * weather_clarity,
-                        unlit: true,
-                        alpha_mode: AlphaMode::Blend,
-                        ..default()
-                    })),
+                    MeshMaterial3d(MaterialFactory::create_celestial_material(
+                        &mut materials,
+                        Color::srgba(1.0, 1.0, 0.9, brightness * night_factor * weather_clarity),
+                        LinearRgba::rgb(brightness, brightness, brightness * 0.9) * night_factor * weather_clarity,
+                    )),
                     Transform::from_translation(star_position),
                 ));
             }
@@ -529,13 +515,11 @@ pub fn celestial_bodies_system(
                     size: 50.0,
                 },
                 Mesh3d(meshes.add(Sphere::new(50.0))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgba(0.9, 0.9, 0.95, night_factor),
-                    emissive: LinearRgba::rgb(0.3, 0.3, 0.4) * night_factor,
-                    unlit: true,
-                    alpha_mode: AlphaMode::Blend,
-                    ..default()
-                })),
+                MeshMaterial3d(MaterialFactory::create_celestial_material(
+                    &mut materials,
+                    Color::srgba(0.9, 0.9, 0.95, night_factor),
+                    LinearRgba::rgb(0.3, 0.3, 0.4) * night_factor,
+                )),
                 Transform::from_translation(moon_position),
             ));
             
@@ -561,13 +545,11 @@ pub fn celestial_bodies_system(
                         size: star_size,
                     },
                     Mesh3d(meshes.add(Sphere::new(star_size))),
-                    MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: Color::srgba(1.0, 1.0, 0.9, brightness * night_factor),
-                        emissive: LinearRgba::rgb(brightness, brightness, brightness * 0.9) * night_factor,
-                        unlit: true,
-                        alpha_mode: AlphaMode::Blend,
-                        ..default()
-                    })),
+                    MeshMaterial3d(MaterialFactory::create_celestial_material(
+                        &mut materials,
+                        Color::srgba(1.0, 1.0, 0.9, brightness * night_factor),
+                        LinearRgba::rgb(brightness, brightness, brightness * 0.9) * night_factor,
+                    )),
                     Transform::from_translation(star_position),
                 ));
             }
@@ -649,12 +631,7 @@ pub fn cloud_system(
                     scale: cloud_scale,
                 },
                 Mesh3d(meshes.add(Sphere::new(cloud_scale))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: cloud_color,
-                    alpha_mode: AlphaMode::Blend,
-                    unlit: true,
-                    ..default()
-                })),
+                MeshMaterial3d(MaterialFactory::create_cloud_material(&mut materials, cloud_color)),
                 Transform::from_translation(cloud_position)
                     .with_scale(Vec3::new(2.0, 0.5, 1.5)), // Flatten clouds
             ));

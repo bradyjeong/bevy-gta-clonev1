@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
+use crate::factories::MaterialFactory;
 
 pub fn setup_lake(
     mut commands: Commands,
@@ -9,24 +10,29 @@ pub fn setup_lake(
 ) {
     let lake_size = 200.0;
     let lake_depth = 5.0;
+    let lake_position = Vec3::new(300.0, -2.0, 300.0); // Positioned away from spawn and below ground
+    
+    // Create lake basin (carved out ground)
+    commands.spawn((
+        Mesh3d(meshes.add(Cylinder::new(lake_size / 2.0, lake_depth))),
+        MeshMaterial3d(MaterialFactory::create_water_bottom_material(&mut materials, Color::srgb(0.3, 0.25, 0.2))),
+        Transform::from_xyz(lake_position.x, lake_position.y - lake_depth / 2.0, lake_position.z),
+        RigidBody::Fixed,
+        Collider::cylinder(lake_depth / 2.0, lake_size / 2.0),
+        Name::new("Lake Basin"),
+    ));
     
     // Create lake water surface
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(lake_size, lake_size))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(0.1, 0.4, 0.8, 0.7),
-            alpha_mode: AlphaMode::Blend,
-            reflectance: 0.8,
-            metallic: 0.1,
-            perceptual_roughness: 0.1,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        MeshMaterial3d(MaterialFactory::create_water_surface_material(&mut materials, Color::srgba(0.1, 0.4, 0.8, 0.7))),
+        Transform::from_xyz(lake_position.x, lake_position.y, lake_position.z),
         Lake {
             size: lake_size,
             depth: lake_depth,
             wave_height: 0.5,
             wave_speed: 1.0,
+            position: lake_position,
         },
         WaterBody,
         RigidBody::Fixed,
@@ -35,16 +41,11 @@ pub fn setup_lake(
         Name::new("Lake"),
     ));
 
-    // Create lake bottom (for depth visualization)
+    // Create lake bottom
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(lake_size, lake_size))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.2, 0.15, 0.1),
-            metallic: 0.0,
-            perceptual_roughness: 0.9,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, -lake_depth, 0.0),
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(lake_size * 0.9, lake_size * 0.9))),
+        MeshMaterial3d(MaterialFactory::create_water_bottom_material(&mut materials, Color::srgb(0.2, 0.15, 0.1))),
+        Transform::from_xyz(lake_position.x, lake_position.y - lake_depth, lake_position.z),
         Name::new("Lake Bottom"),
     ));
 }
@@ -54,16 +55,13 @@ pub fn setup_yacht(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let yacht_position = Vec3::new(300.0, -1.0, 300.0); // On the lake surface
+    
     // Yacht hull
     let yacht_id = commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(8.0, 2.0, 20.0))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.9, 0.9, 0.9),
-            metallic: 0.8,
-            perceptual_roughness: 0.2,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 1.0, 0.0),
+        MeshMaterial3d(MaterialFactory::create_aircraft_material(&mut materials, Color::srgb(0.9, 0.9, 0.9))),
+        Transform::from_xyz(yacht_position.x, yacht_position.y, yacht_position.z),
         RigidBody::Dynamic,
         Collider::cuboid(4.0, 1.0, 10.0),
         Yacht {
@@ -75,19 +73,13 @@ pub fn setup_yacht(
         },
         Boat,
         Cullable::new(300.0),
-        ActiveEntity,
         Name::new("Yacht"),
     )).id();
 
     // Yacht cabin
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(6.0, 3.0, 8.0))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.8, 0.9),
-            metallic: 0.3,
-            perceptual_roughness: 0.4,
-            ..default()
-        })),
+        MeshMaterial3d(MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.8, 0.8, 0.9), 0.3, 0.4)),
         Transform::from_xyz(0.0, 3.5, -2.0),
         Name::new("Yacht Cabin"),
     )).insert(ChildOf(yacht_id));
@@ -95,12 +87,7 @@ pub fn setup_yacht(
     // Yacht mast
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.2, 15.0))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.6, 0.4, 0.2),
-            metallic: 0.1,
-            perceptual_roughness: 0.8,
-            ..default()
-        })),
+        MeshMaterial3d(MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.6, 0.4, 0.2), 0.1, 0.8)),
         Transform::from_xyz(0.0, 9.5, 2.0),
         Name::new("Yacht Mast"),
     )).insert(ChildOf(yacht_id));
@@ -157,12 +144,31 @@ pub fn water_wave_system(
 
 pub fn yacht_buoyancy_system(
     mut yacht_query: Query<(&mut Transform, &mut Velocity, &Yacht), With<Boat>>,
-    lake_query: Query<&Transform, (With<WaterBody>, Without<Boat>)>,
+    lake_query: Query<(&Transform, &Lake), (With<WaterBody>, Without<Boat>)>,
 ) {
-    if let Ok(water_transform) = lake_query.single() {
+    if let Ok((water_transform, lake)) = lake_query.single() {
         for (mut yacht_transform, mut velocity, yacht) in yacht_query.iter_mut() {
             let water_level = water_transform.translation.y;
             let yacht_bottom = yacht_transform.translation.y - 1.0;
+            
+            // Check if yacht is within lake boundaries
+            let distance_from_center = Vec2::new(
+                yacht_transform.translation.x - lake.position.x,
+                yacht_transform.translation.z - lake.position.z,
+            ).length();
+            
+            let max_distance = lake.size / 2.0 - 10.0; // 10m buffer from edge
+            
+            if distance_from_center > max_distance {
+                // Push yacht back toward lake center
+                let direction_to_center = Vec2::new(
+                    lake.position.x - yacht_transform.translation.x,
+                    lake.position.z - yacht_transform.translation.z,
+                ).normalize();
+                
+                velocity.linvel.x += direction_to_center.x * 5.0;
+                velocity.linvel.z += direction_to_center.y * 5.0;
+            }
             
             if yacht_bottom < water_level {
                 let submersion = water_level - yacht_bottom;
@@ -171,6 +177,35 @@ pub fn yacht_buoyancy_system(
                 
                 // Damping in water
                 velocity.linvel *= 0.98;
+            }
+        }
+    }
+}
+
+pub fn yacht_water_constraint_system(
+    mut yacht_query: Query<(&mut Transform, &mut Velocity), With<Yacht>>,
+    lake_query: Query<&Lake, With<WaterBody>>,
+) {
+    if let Ok(lake) = lake_query.single() {
+        for (mut transform, mut velocity) in yacht_query.iter_mut() {
+            // Ensure yacht stays above ground level
+            if transform.translation.y < -4.0 {
+                transform.translation.y = -1.0;
+                velocity.linvel.y = 0.0;
+            }
+            
+            // Keep yacht within a reasonable distance of lake
+            let distance_from_lake = Vec2::new(
+                transform.translation.x - lake.position.x,
+                transform.translation.z - lake.position.z,
+            ).length();
+            
+            if distance_from_lake > lake.size {
+                // Teleport yacht back to lake if it gets too far
+                transform.translation.x = lake.position.x;
+                transform.translation.z = lake.position.z;
+                transform.translation.y = lake.position.y + 1.0;
+                velocity.linvel = Vec3::ZERO;
             }
         }
     }

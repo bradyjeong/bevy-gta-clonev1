@@ -30,6 +30,7 @@ pub fn dynamic_content_system(
     mut commands: Commands,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<DynamicContent>)>,
     content_query: Query<(Entity, &Transform, &DynamicContent)>,
+    existing_vehicles_query: Query<&Transform, (With<Car>, Without<DynamicContent>)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     time: Res<Time>,
@@ -70,18 +71,23 @@ pub fn dynamic_content_system(
         }
         
         // Phase 2: Collect existing content for collision avoidance
-        let existing_content: Vec<(Vec3, ContentType, f32)> = content_query.iter()
+        let mut existing_content: Vec<(Vec3, ContentType, f32)> = content_query.iter()
             .map(|(_, transform, dynamic_content)| {
                 let radius = match dynamic_content.content_type {
                     ContentType::Building => 20.0,
                     ContentType::Road => 15.0,
                     ContentType::Tree => 8.0,
-                    ContentType::Vehicle => 10.0,
+                    ContentType::Vehicle => 25.0,
                     ContentType::NPC => 3.0,
                 };
                 (transform.translation, dynamic_content.content_type.clone(), radius)
             })
             .collect();
+            
+        // Add existing vehicles (non-dynamic) to the collision avoidance list with larger radius
+        for vehicle_transform in existing_vehicles_query.iter() {
+            existing_content.push((vehicle_transform.translation, ContentType::Vehicle, 25.0));
+        }
         
         // Phase 3: TRUE CIRCULAR SPAWNING using polar coordinates
         // Generate content in concentric circles around the active entity
@@ -130,21 +136,21 @@ fn spawn_dynamic_content_safe(
     // NOTE: Road generation now handled by road_network_system
     // Dramatically reduced spawn rates for 60 FPS target
     // Buildings away from roads (check for road conflicts using new road system)
-    if !is_on_road_network(position) && rng.gen_range(0.0..1.0) < 0.08 { // Ultra-reduced from 0.15 to 0.08
+    if !is_on_road_network(position) && !is_in_water_area(position) && rng.gen_range(0.0..1.0) < 0.08 { // Ultra-reduced from 0.15 to 0.08
         // Ensure no overlap with roads or other buildings
         if !has_content_at_position(position, existing_content, 25.0) {
             spawn_building(commands, position, meshes, materials);
         }
     }
     // Vehicles on roads only
-    else if is_on_road_network(position) && rng.gen_range(0.0..1.0) < 0.04 { // Ultra-reduced from 0.08 to 0.04
-        // Ensure no overlap with other vehicles or buildings
-        if !has_content_at_position(position, existing_content, 40.0) {
+    else if is_on_road_network(position) && rng.gen_range(0.0..1.0) < 0.15 { // Increased for more vehicles
+        // Ensure no overlap with other vehicles or buildings (increased spacing)
+        if !has_content_at_position(position, existing_content, 80.0) {
             spawn_vehicle(commands, position, meshes, materials);
         }
     }
     // Trees in empty areas (away from roads and buildings)
-    else if !is_on_road_network(position) && rng.gen_range(0.0..1.0) < 0.05 { // Ultra-reduced from 0.1 to 0.05
+    else if !is_on_road_network(position) && !is_in_water_area(position) && rng.gen_range(0.0..1.0) < 0.05 { // Ultra-reduced from 0.1 to 0.05
         // Ensure no overlap with buildings or roads
         if !has_content_at_position(position, existing_content, 10.0) {
             spawn_dynamic_tree(commands, position, meshes, materials);
@@ -171,6 +177,46 @@ fn is_on_road_network(position: Vec3) -> bool {
     let on_vertical = (position.x % grid_size).abs() < road_width;
     
     on_horizontal || on_vertical
+}
+
+fn is_in_water_area(position: Vec3) -> bool {
+    // Lake position and size (must match water.rs setup)
+    let lake_center = Vec3::new(300.0, -2.0, 300.0);
+    let lake_size = 200.0;
+    let buffer = 20.0; // Extra buffer around lake
+    
+    let distance = Vec2::new(
+        position.x - lake_center.x,
+        position.z - lake_center.z,
+    ).length();
+    
+    distance < (lake_size / 2.0 + buffer)
+}
+
+pub fn vehicle_separation_system(
+    mut vehicle_query: Query<(&mut Transform, &mut Velocity), (With<Car>, With<DynamicContent>)>,
+) {
+    let vehicles: Vec<(Vec3, Entity)> = vehicle_query.iter()
+        .enumerate()
+        .map(|(i, (transform, _))| (transform.translation, Entity::from_raw(i as u32)))
+        .collect();
+    
+    for (mut transform, mut velocity) in vehicle_query.iter_mut() {
+        let current_pos = transform.translation;
+        
+        for (other_pos, _) in &vehicles {
+            if *other_pos == current_pos { continue; }
+            
+            let distance = current_pos.distance(*other_pos);
+            if distance < 15.0 && distance > 0.1 { // Too close
+                let separation_force = (current_pos - *other_pos).normalize() * (15.0 - distance) * 2.0;
+                velocity.linvel += separation_force;
+                
+                // Also adjust position slightly to prevent exact overlap
+                transform.translation += separation_force * 0.1;
+            }
+        }
+    }
 }
 
 fn spawn_road_segment(
@@ -329,6 +375,8 @@ fn spawn_vehicle(
         Transform::from_xyz(position.x, 1.5, position.z),
         VehicleVisibilityBundle::default(),
         Cullable { max_distance: 150.0, is_culled: false }, // Reduced for better performance
+        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
+        Damping { linear_damping: 1.0, angular_damping: 5.0 },
     )).id();
 
     // Car body (main hull)

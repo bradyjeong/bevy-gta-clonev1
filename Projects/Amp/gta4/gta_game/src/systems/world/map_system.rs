@@ -99,13 +99,13 @@ impl Default for MapSystem {
 pub fn map_streaming_system(
     mut commands: Commands,
     mut map_system: ResMut<MapSystem>,
-    player_query: Query<&Transform, With<Player>>,
+    active_query: Query<&Transform, With<ActiveEntity>>,
     mut chunk_query: Query<(Entity, &mut MapChunk)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let Ok(player_transform) = player_query.single() else { return; };
-    let player_pos = player_transform.translation;
+    let Ok(active_transform) = active_query.single() else { return; };
+    let player_pos = active_transform.translation;
     
     // Calculate which chunks should be loaded
     let player_chunk = world_to_chunk_coord(player_pos);

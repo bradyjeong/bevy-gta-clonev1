@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 use crate::components::weather::*;
+use crate::systems::timing_service::{TimingService, SystemType};
 use rand::Rng;
 
 /// System that manages weather state transitions
 pub fn weather_state_system(
     mut weather: ResMut<WeatherManager>,
+    mut timing_service: ResMut<TimingService>,
     time: Res<Time>,
 ) {
     let delta = time.delta_secs();
@@ -42,7 +44,7 @@ pub fn weather_state_system(
     } else {
         // No transition - log current state occasionally
         #[cfg(feature = "debug-weather")]
-        if (time.elapsed_secs() * 10.0) as i32 % 50 == 0 { // Every 5 seconds
+        if timing_service.should_run_system(SystemType::WeatherDebug) {
             info!("Current weather: {:?} intensity: {:.2}", weather.current_weather, weather.intensity);
         }
     }

@@ -19,6 +19,11 @@ pub fn human_player_movement(
 ) {
     let Ok((mut velocity, transform, mut movement, mut animation, mut behavior)) = 
         player_query.single_mut() else {
+        // Debug: Check if player exists but doesn't have ActiveEntity
+        let all_players = player_query.iter().count();
+        if all_players == 0 {
+            warn!("No player entity found with ActiveEntity component!");
+        }
         return;
     };
 

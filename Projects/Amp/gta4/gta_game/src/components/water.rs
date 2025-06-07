@@ -6,6 +6,7 @@ pub struct Lake {
     pub depth: f32,
     pub wave_height: f32,
     pub wave_speed: f32,
+    pub position: Vec3,
 }
 
 #[derive(Component, Default)]

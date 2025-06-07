@@ -10,6 +10,7 @@ impl Plugin for WaterPlugin {
                 yacht_movement_system,
                 water_wave_system,
                 yacht_buoyancy_system,
+                yacht_water_constraint_system,
             ));
     }
 }

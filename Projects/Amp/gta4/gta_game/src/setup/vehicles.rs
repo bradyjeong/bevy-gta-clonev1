@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::bundles::{VehicleVisibilityBundle, VisibleChildBundle};
+use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 
 pub fn setup_basic_vehicles(
     mut commands: Commands,
@@ -17,7 +18,7 @@ pub fn setup_basic_vehicles(
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         Velocity::zero(),
         ExternalForce::default(),
-        Transform::from_xyz(15.0, 0.5, 8.0),
+        TransformFactory::vehicle_spawn(15.0, 8.0),
         VehicleVisibilityBundle::default(),
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
         Damping { linear_damping: 1.0, angular_damping: 5.0 },
@@ -25,9 +26,9 @@ pub fn setup_basic_vehicles(
 
     // Car body
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.8, 0.6, 3.6))),
-        MeshMaterial3d(materials.add(Color::srgb(1.0, 0.0, 0.0))),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        Mesh3d(MeshFactory::create_car_body(&mut meshes)),
+        MeshMaterial3d(MaterialFactory::create_simple_material(&mut materials, Color::srgb(1.0, 0.0, 0.0))),
+        TransformFactory::vehicle_body_center(),
         ChildOf(car_entity),
         Cullable { max_distance: 300.0, is_culled: false },
         VisibleChildBundle::default(),
@@ -35,7 +36,7 @@ pub fn setup_basic_vehicles(
 
     // BUGATTI CHIRON SUPERCAR
     let chiron_entity = commands.spawn((
-        Transform::from_xyz(3.0, 1.3, 0.0),
+        TransformFactory::vehicle_elevated(3.0, 1.3, 0.0),
         RigidBody::Dynamic,
         Collider::cuboid(1.0, 0.5, 2.0),
         Velocity::zero(),
@@ -58,187 +59,120 @@ pub fn setup_basic_vehicles(
 
     // Main body (lower chassis)
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.8, 0.4, 4.2))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.05, 0.05, 0.15),
-            metallic: 0.95,
-            perceptual_roughness: 0.1,
-            reflectance: 0.9,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, -0.1, 0.0),
+        Mesh3d(MeshFactory::create_sports_car_body(&mut meshes)),
+        MeshMaterial3d(MaterialFactory::create_vehicle_metallic(&mut materials, Color::srgb(0.05, 0.05, 0.15))),
+        TransformFactory::vehicle_chassis(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     // Upper body/cabin
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.6, 0.5, 2.8))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.05, 0.05, 0.15),
-            metallic: 0.95,
-            perceptual_roughness: 0.1,
-            reflectance: 0.9,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.25, -0.3),
+        Mesh3d(MeshFactory::create_custom_cuboid(&mut meshes, 1.6, 0.5, 2.8)),
+        MeshMaterial3d(MaterialFactory::create_vehicle_metallic(&mut materials, Color::srgb(0.05, 0.05, 0.15))),
+        TransformFactory::vehicle_cabin(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     // Front hood
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.7, 0.15, 1.2))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.05, 0.05, 0.15),
-            metallic: 0.95,
-            perceptual_roughness: 0.1,
-            reflectance: 0.9,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.12, 1.6),
+        Mesh3d(MeshFactory::create_custom_cuboid(&mut meshes, 1.7, 0.15, 1.2)),
+        MeshMaterial3d(MaterialFactory::create_vehicle_metallic(&mut materials, Color::srgb(0.05, 0.05, 0.15))),
+        TransformFactory::vehicle_hood(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     // Windshield
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.5, 0.8, 0.1))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(0.2, 0.3, 0.4, 0.8),
-            metallic: 0.1,
-            perceptual_roughness: 0.0,
-            alpha_mode: AlphaMode::Blend,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.4, 0.8).with_rotation(Quat::from_rotation_x(-0.2)),
+        Mesh3d(MeshFactory::create_custom_cuboid(&mut meshes, 1.5, 0.8, 0.1)),
+        MeshMaterial3d(MaterialFactory::create_vehicle_glass_material(&mut materials, Color::srgba(0.2, 0.3, 0.4, 0.8))),
+        TransformFactory::windshield(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     // Side windows
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(0.1, 0.6, 1.5))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(0.2, 0.3, 0.4, 0.8),
-            metallic: 0.1,
-            perceptual_roughness: 0.0,
-            alpha_mode: AlphaMode::Blend,
-            ..default()
-        })),
-        Transform::from_xyz(0.75, 0.3, -0.3),
+        Mesh3d(MeshFactory::create_custom_cuboid(&mut meshes, 0.1, 0.6, 1.5)),
+        MeshMaterial3d(MaterialFactory::create_vehicle_glass_material(&mut materials, Color::srgba(0.2, 0.3, 0.4, 0.8))),
+        TransformFactory::left_door(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(0.1, 0.6, 1.5))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(0.2, 0.3, 0.4, 0.8),
-            metallic: 0.1,
-            perceptual_roughness: 0.0,
-            alpha_mode: AlphaMode::Blend,
-            ..default()
-        })),
-        Transform::from_xyz(-0.75, 0.3, -0.3),
+        Mesh3d(MeshFactory::create_custom_cuboid(&mut meshes, 0.1, 0.6, 1.5)),
+        MeshMaterial3d(MaterialFactory::create_vehicle_glass_material(&mut materials, Color::srgba(0.2, 0.3, 0.4, 0.8))),
+        TransformFactory::right_door(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     // Front grille
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.2, 0.6, 0.05))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.1, 0.1, 0.1),
-            metallic: 0.8,
-            perceptual_roughness: 0.3,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, -0.05, 2.1),
+        Mesh3d(MeshFactory::create_custom_cuboid(&mut meshes, 1.2, 0.6, 0.05)),
+        MeshMaterial3d(MaterialFactory::create_vehicle_metallic(&mut materials, Color::srgb(0.1, 0.1, 0.1))),
+        TransformFactory::rear_window(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     // Headlights
+    let headlight_material = MaterialFactory::create_vehicle_emissive(&mut materials, Color::srgb(0.9, 0.9, 1.0), Color::srgb(0.5, 0.5, 0.8));
     commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(0.2))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.9, 0.9, 1.0),
-            emissive: Color::srgb(0.5, 0.5, 0.8).into(),
-            metallic: 0.9,
-            perceptual_roughness: 0.1,
-            ..default()
-        })),
-        Transform::from_xyz(0.6, 0.0, 2.0),
+        Mesh3d(MeshFactory::create_headlight(&mut meshes)),
+        MeshMaterial3d(headlight_material.clone()),
+        TransformFactory::front_left_wheel(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(0.2))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.9, 0.9, 1.0),
-            emissive: Color::srgb(0.5, 0.5, 0.8).into(),
-            metallic: 0.9,
-            perceptual_roughness: 0.1,
-            ..default()
-        })),
-        Transform::from_xyz(-0.6, 0.0, 2.0),
+        Mesh3d(MeshFactory::create_headlight(&mut meshes)),
+        MeshMaterial3d(headlight_material),
+        TransformFactory::front_right_wheel(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     // Rear spoiler
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.6, 0.1, 0.4))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.02, 0.02, 0.1),
-            metallic: 0.9,
-            perceptual_roughness: 0.2,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.6, -1.8),
+        Mesh3d(MeshFactory::create_custom_cuboid(&mut meshes, 1.6, 0.1, 0.4)),
+        MeshMaterial3d(MaterialFactory::create_vehicle_metallic(&mut materials, Color::srgb(0.02, 0.02, 0.1))),
+        TransformFactory::front_bumper(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     // Exhaust pipes
+    let exhaust_material = MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.3, 0.3, 0.3), 0.8, 0.2);
     commands.spawn((
-        Mesh3d(meshes.add(Cylinder::new(0.08, 0.3))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.3, 0.3, 0.3),
-            metallic: 0.8,
-            perceptual_roughness: 0.2,
-            ..default()
-        })),
-        Transform::from_xyz(0.4, -0.25, -2.0).with_rotation(Quat::from_rotation_x(std::f32::consts::PI / 2.0)),
+        Mesh3d(MeshFactory::create_exhaust_pipe(&mut meshes)),
+        MeshMaterial3d(exhaust_material.clone()),
+        TransformFactory::left_exhaust(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
 
     commands.spawn((
-        Mesh3d(meshes.add(Cylinder::new(0.08, 0.3))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.3, 0.3, 0.3),
-            metallic: 0.8,
-            perceptual_roughness: 0.2,
-            ..default()
-        })),
-        Transform::from_xyz(-0.4, -0.25, -2.0).with_rotation(Quat::from_rotation_x(std::f32::consts::PI / 2.0)),
+        Mesh3d(MeshFactory::create_exhaust_pipe(&mut meshes)),
+        MeshMaterial3d(exhaust_material),
+        TransformFactory::right_exhaust(),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
+
+    // Create shared materials for wheels
+    let wheel_material = MaterialFactory::create_wheel_material(&mut materials);
+    let rim_material = MaterialFactory::create_vehicle_metallic(&mut materials, Color::srgb(0.8, 0.8, 0.9));
 
     // Wheels - Front Left
     commands.spawn((
-        Mesh3d(meshes.add(Cylinder::new(0.35, 0.25))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.1, 0.1, 0.1),
-            metallic: 0.1,
-            perceptual_roughness: 0.8,
-            ..default()
-        })),
-        Transform::from_xyz(1.0, -0.35, 1.2).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
+        Mesh3d(MeshFactory::create_standard_wheel(&mut meshes)),
+        MeshMaterial3d(wheel_material.clone()),
+        TransformFactory::wheel_with_rotation(1.0, -0.35, 1.2),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
     ));
@@ -246,12 +180,7 @@ pub fn setup_basic_vehicles(
     // Rim - Front Left
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.25, 0.3))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.8, 0.9),
-            metallic: 0.9,
-            perceptual_roughness: 0.1,
-            ..default()
-        })),
+        MeshMaterial3d(rim_material.clone()),
         Transform::from_xyz(1.05, -0.35, 1.2).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
@@ -260,12 +189,7 @@ pub fn setup_basic_vehicles(
     // Wheels - Front Right
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.35, 0.25))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.1, 0.1, 0.1),
-            metallic: 0.1,
-            perceptual_roughness: 0.8,
-            ..default()
-        })),
+        MeshMaterial3d(wheel_material.clone()),
         Transform::from_xyz(-1.0, -0.35, 1.2).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
@@ -274,12 +198,7 @@ pub fn setup_basic_vehicles(
     // Rim - Front Right
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.25, 0.3))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.8, 0.9),
-            metallic: 0.9,
-            perceptual_roughness: 0.1,
-            ..default()
-        })),
+        MeshMaterial3d(rim_material.clone()),
         Transform::from_xyz(-1.05, -0.35, 1.2).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
@@ -288,12 +207,7 @@ pub fn setup_basic_vehicles(
     // Wheels - Rear Left
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.4, 0.3))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.1, 0.1, 0.1),
-            metallic: 0.1,
-            perceptual_roughness: 0.8,
-            ..default()
-        })),
+        MeshMaterial3d(wheel_material.clone()),
         Transform::from_xyz(1.0, -0.35, -1.2).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
@@ -302,12 +216,7 @@ pub fn setup_basic_vehicles(
     // Rim - Rear Left
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.3, 0.35))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.8, 0.9),
-            metallic: 0.9,
-            perceptual_roughness: 0.1,
-            ..default()
-        })),
+        MeshMaterial3d(rim_material.clone()),
         Transform::from_xyz(1.05, -0.35, -1.2).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
@@ -316,12 +225,7 @@ pub fn setup_basic_vehicles(
     // Wheels - Rear Right
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.4, 0.3))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.1, 0.1, 0.1),
-            metallic: 0.1,
-            perceptual_roughness: 0.8,
-            ..default()
-        })),
+        MeshMaterial3d(wheel_material),
         Transform::from_xyz(-1.0, -0.35, -1.2).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
@@ -330,12 +234,7 @@ pub fn setup_basic_vehicles(
     // Rim - Rear Right
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.3, 0.35))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.8, 0.9),
-            metallic: 0.9,
-            perceptual_roughness: 0.1,
-            ..default()
-        })),
+        MeshMaterial3d(rim_material),
         Transform::from_xyz(-1.05, -0.35, -1.2).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0)),
         ChildOf(chiron_entity),
         VisibleChildBundle::default(),
@@ -366,7 +265,7 @@ pub fn setup_helicopter(
         Collider::cuboid(1.5, 1.0, 3.0),
         Velocity::zero(),
         ExternalForce::default(),
-        Transform::from_xyz(120.0, 15.0, 80.0).with_rotation(Quat::from_rotation_y(std::f32::consts::PI)),
+        Transform::from_xyz(5.0, 3.0, 0.0),
         VehicleVisibilityBundle::default(),
         Ccd::enabled(),
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
@@ -376,7 +275,7 @@ pub fn setup_helicopter(
     // Main helicopter body (sleek design)
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(2.5, 1.5, 5.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.9, 0.9, 0.9))), // Bright white/silver body
+        MeshMaterial3d(MaterialFactory::create_simple_material(&mut materials, Color::srgb(0.9, 0.9, 0.9))), // Bright white/silver body
         Transform::from_xyz(0.0, 0.0, 0.0),
         ChildOf(helicopter_entity),
         VisibleChildBundle::default(),
@@ -385,7 +284,7 @@ pub fn setup_helicopter(
     // Cockpit (front glass section)
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(2.2, 1.2, 1.8))),
-        MeshMaterial3d(materials.add(Color::srgba(0.1, 0.1, 0.2, 0.3))), // Dark tinted glass
+        MeshMaterial3d(MaterialFactory::create_vehicle_glass_material(&mut materials, Color::srgba(0.1, 0.1, 0.2, 0.3))), // Dark tinted glass
         Transform::from_xyz(0.0, 0.2, 1.5),
         ChildOf(helicopter_entity),
         VisibleChildBundle::default(),
@@ -417,7 +316,7 @@ pub fn setup_helicopter(
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(0.6, 0.6, 4.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.85, 0.85, 0.85))), // Light gray
-        Transform::from_xyz(0.0, 0.0, -4.5),
+        Transform::from_xyz(0.0, 0.0, 4.5),
         ChildOf(helicopter_entity),
         VisibleChildBundle::default(),
     ));
@@ -428,7 +327,7 @@ pub fn setup_helicopter(
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(0.08, 2.2, 0.15))), // Vertical blade
             MeshMaterial3d(materials.add(Color::srgb(0.05, 0.05, 0.05))), // Dark blade
-            Transform::from_xyz(-1.0, 0.5, -6.5).with_rotation(Quat::from_rotation_z(angle)),
+            Transform::from_xyz(-1.0, 0.5, 6.5).with_rotation(Quat::from_rotation_z(angle)),
             ChildOf(helicopter_entity),
             TailRotor,
             VisibleChildBundle::default(),
@@ -439,7 +338,7 @@ pub fn setup_helicopter(
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.15, 0.2))),
         MeshMaterial3d(materials.add(Color::srgb(0.2, 0.2, 0.2))), // Dark hub
-        Transform::from_xyz(-1.0, 0.5, -6.5).with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+        Transform::from_xyz(-1.0, 0.5, 6.5).with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
         ChildOf(helicopter_entity),
         VisibleChildBundle::default(),
     ));

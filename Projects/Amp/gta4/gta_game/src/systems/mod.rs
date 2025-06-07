@@ -11,6 +11,8 @@ pub mod sky;
 pub mod vehicles;
 pub mod ui;
 pub mod water;
+pub mod debug;
+pub mod timing_service;
 
 pub use movement::*;
 pub use world::*;
@@ -25,3 +27,5 @@ pub use sky::*;
 pub use vehicles::*;
 pub use ui::*;
 pub use water::*;
+pub use debug::*;
+pub use timing_service::*;

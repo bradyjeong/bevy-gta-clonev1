@@ -8,6 +8,13 @@ pub mod road_generation;
 pub mod debug;
 pub mod map_system;
 
+// NEW UNIFIED WORLD SYSTEM
+pub mod unified_world;
+pub mod layered_generation;
+pub mod unified_lod;
+pub mod npc_lod;
+pub mod npc_spawn;
+
 pub use npc::*;
 pub use culling::*;
 pub use dynamic_content::*;
@@ -17,3 +24,10 @@ pub use road_mesh::*;
 pub use road_generation::*;
 pub use debug::*;
 pub use map_system::*;
+
+// Export unified system components
+pub use unified_world::*;
+pub use layered_generation::*;
+pub use unified_lod::*;
+pub use npc_lod::*;
+pub use npc_spawn::*;

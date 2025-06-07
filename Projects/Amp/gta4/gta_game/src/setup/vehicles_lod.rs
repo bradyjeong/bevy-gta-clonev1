@@ -19,7 +19,7 @@ pub fn setup_lod_vehicles(
         Collider::cuboid(1.0, 0.5, 2.0),
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         Velocity::zero(),
-        Transform::from_xyz(15.0, 0.5, 8.0),
+        Transform::from_xyz(20.0, 0.5, 12.0),
         GlobalTransform::default(),
         Visibility::default(),
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),

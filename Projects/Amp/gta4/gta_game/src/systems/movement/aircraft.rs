@@ -10,9 +10,9 @@ pub fn helicopter_movement(
         return;
     };
 
-    let speed = 15.0;
-    let rotation_speed = 2.5;
-    let vertical_speed = 8.0;
+    let speed = 40.0;
+    let rotation_speed = 5.0;
+    let vertical_speed = 20.0;
     
     let mut target_linear_velocity = Vec3::ZERO;
     let mut target_angular_velocity = Vec3::ZERO;

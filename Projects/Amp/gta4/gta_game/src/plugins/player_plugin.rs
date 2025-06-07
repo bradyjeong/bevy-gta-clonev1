@@ -4,6 +4,7 @@ use crate::systems::camera::camera_follow_system;
 use crate::systems::interaction::interaction_system;
 use crate::systems::audio::{footstep_system, cleanup_footstep_sounds};
 use crate::systems::human_behavior::{human_emotional_state_system, human_fidget_system};
+use crate::systems::debug::debug_game_state;
 use crate::game_state::GameState;
 
 pub struct PlayerPlugin;
@@ -19,6 +20,7 @@ impl Plugin for PlayerPlugin {
             cleanup_footstep_sounds,
             camera_follow_system,
             interaction_system,
+            debug_game_state,
         ));
     }
 }

@@ -5,6 +5,8 @@ use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 // Import our modular components
 use gta_game::*;
 use gta_game::systems::SkyPlugin;
+use gta_game::setup::vehicles::{setup_helicopter, setup_f16};
+use gta_game::plugins::{UnifiedWorldPlugin, MixedWorldPlugin};
 
 fn main() {
     let mut app = App::new();
@@ -26,7 +28,13 @@ fn main() {
         // Add our custom plugins
         .add_plugins(PlayerPlugin)
         .add_plugins(VehiclePlugin)
-        .add_plugins(WorldPlugin)
+        
+        // WORLD SYSTEM: Use unified system or old system
+        // Uncomment one of these:
+        // .add_plugins(WorldPlugin)              // OLD system (multiple separate streaming)
+        .add_plugins(UnifiedWorldPlugin)    // NEW unified system (single coordinated streaming)
+        // .add_plugins(MixedWorldPlugin)       // BOTH systems for comparison
+        
         .add_plugins(UIPlugin)
         .add_plugins(WaterPlugin)
         .add_plugins(SkyPlugin);
@@ -39,18 +47,15 @@ fn main() {
         // Setup systems
         .add_systems(Startup, (
             setup_basic_world,
-            // NEW LOD VEHICLE SYSTEMS
-            setup_lod_vehicles,
-            setup_lod_helicopter,
-            setup_lod_f16,
-            // OLD SYSTEMS (commented out for comparison)
-            // setup_basic_vehicles,
-            // setup_helicopter,
-            // setup_f16,
+            // Aircraft with full visuals
+            setup_helicopter,
+            setup_f16,
+            // Environment only
             setup_palm_trees,
-            setup_luxury_cars,
             setup_npcs,
-            // setup_buildings, // Removed - now fully dynamic
+            // Starter vehicles (minimal, non-overlapping)
+            setup_starter_vehicles,
+            // Rest are dynamic via dynamic_content_system
         ));
         
     // Conditionally add weather setup systems

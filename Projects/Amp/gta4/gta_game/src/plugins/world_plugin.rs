@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::systems::world::{optimized_npc_movement, distance_culling_system, performance_monitoring_system, debug_player_position, dynamic_terrain_system, dynamic_content_system, road_network_system, update_road_dependent_systems, map_streaming_system, map_lod_system};
+use crate::systems::world::{optimized_npc_movement, distance_culling_system, performance_monitoring_system, debug_player_position, dynamic_terrain_system, dynamic_content_system, vehicle_separation_system, road_network_system, update_road_dependent_systems, map_streaming_system, map_lod_system};
 use crate::systems::effects::update_beacon_visibility;
 use crate::systems::world::{RoadNetwork, MapSystem};
 
@@ -20,6 +20,7 @@ impl Plugin for WorldPlugin {
                 map_lod_system,
                 // OLD: Dynamic content system (now without road generation)
                 dynamic_content_system,
+                vehicle_separation_system,
                 // Other systems
                 optimized_npc_movement,
                 distance_culling_system,

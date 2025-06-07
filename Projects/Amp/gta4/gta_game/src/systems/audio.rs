@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use rand::Rng;
 use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation};
+use crate::systems::timing_service::{TimingService, EntityTimerType, ManagedTiming};
 
+// Legacy FootstepTimer component - now replaced by unified timing service
 #[derive(Component)]
 pub struct FootstepTimer {
     pub timer: f32,
@@ -23,47 +25,46 @@ impl Default for FootstepTimer {
 #[derive(Component)]
 pub struct FootstepSound;
 
+/// Unified footstep system using the timing service
 pub fn footstep_system(
-    time: Res<Time>,
     mut commands: Commands,
+    mut timing_service: ResMut<TimingService>,
     mut player_query: Query<
-        (&Transform, &HumanAnimation, &HumanMovement, &mut FootstepTimer),
+        (Entity, &Transform, &HumanAnimation, &HumanMovement, Option<&ManagedTiming>),
         (With<Player>, With<ActiveEntity>),
     >,
 ) {
-    let Ok((transform, animation, movement, mut footstep)) = player_query.single_mut() else {
+    let Ok((entity, transform, animation, movement, managed_timing)) = player_query.single_mut() else {
         return;
     };
 
-    let dt = time.delta_secs();
-    footstep.timer += dt;
+    // Register entity for timing management if not already managed
+    if managed_timing.is_none() {
+        let mut rng = rand::thread_rng();
+        let step_interval = rng.gen_range(0.45..0.55); // Natural variation in step timing
+        timing_service.register_entity(entity, EntityTimerType::FootstepAudio, step_interval);
+        commands.entity(entity).insert(ManagedTiming::new(EntityTimerType::FootstepAudio));
+        return; // Skip this frame to let the timer initialize
+    }
 
     // Only play footsteps when walking/running
     if animation.is_walking && movement.current_speed > 0.5 {
-        let step_rate = if animation.is_running {
-            footstep.step_interval * 0.6 // Faster steps when running
-        } else {
-            footstep.step_interval
-        };
-
-        if footstep.timer - footstep.last_step_time >= step_rate {
-            // Add natural timing variation
-            let mut rng = rand::thread_rng();
-            let timing_variation = rng.gen_range(0.9..1.1);
+        // Adjust timing based on movement speed
+        let speed_multiplier = if animation.is_running { 0.6 } else { 1.0 };
+        
+        // Check if enough time has passed for next footstep (handled by timing service)
+        if timing_service.should_update_entity(entity) {
+            // Create footstep sound effect
+            commands.spawn((
+                Transform::from_translation(transform.translation),
+                FootstepSound,
+                ManagedTiming::new(EntityTimerType::FootstepAudio),
+            ));
             
-            if footstep.timer - footstep.last_step_time >= step_rate * timing_variation {
-                // Create footstep sound effect (placeholder - would be actual audio in real implementation)
-                commands.spawn((
-                    Transform::from_translation(transform.translation),
-                    FootstepSound,
-                    // In a real implementation, you'd spawn an AudioBundle here
-                ));
-
-                footstep.last_step_time = footstep.timer;
-                
-                // Vary the next step interval slightly for natural rhythm
-                footstep.step_interval = rng.gen_range(0.45..0.55);
-            }
+            // Add variation to next step interval for natural rhythm
+            let mut rng = rand::thread_rng();
+            let new_interval = rng.gen_range(0.45..0.55) * speed_multiplier;
+            timing_service.register_entity(entity, EntityTimerType::FootstepAudio, new_interval);
         }
     }
 }
@@ -71,12 +72,25 @@ pub fn footstep_system(
 // System to clean up footstep sound entities after a short time
 pub fn cleanup_footstep_sounds(
     mut commands: Commands,
-    _time: Res<Time>,
-    footstep_query: Query<(Entity, &Transform), With<FootstepSound>>,
+    mut timing_service: ResMut<TimingService>,
+    footstep_query: Query<(Entity, &Transform, Option<&ManagedTiming>), With<FootstepSound>>,
 ) {
-    // In a real implementation, this would clean up audio entities after they finish playing
-    for (entity, _transform) in footstep_query.iter() {
-        // Placeholder cleanup - in real audio system, check if sound finished
-        commands.entity(entity).despawn();
+    // Use unified timing service for cleanup intervals
+    if !timing_service.should_run_system(crate::systems::timing_service::SystemType::AudioCleanup) {
+        return;
+    }
+    
+    for (entity, _transform, managed_timing) in footstep_query.iter() {
+        // Register for cleanup timing if not already managed
+        if managed_timing.is_none() {
+            timing_service.register_entity(entity, EntityTimerType::FootstepAudio, 1.0);
+            commands.entity(entity).insert(ManagedTiming::new(EntityTimerType::FootstepAudio));
+        }
+        
+        // Clean up entity if enough time has passed (1 second for footstep sounds)
+        if timing_service.should_update_entity(entity) {
+            timing_service.unregister_entity(entity);
+            commands.entity(entity).despawn();
+        }
     }
 }
