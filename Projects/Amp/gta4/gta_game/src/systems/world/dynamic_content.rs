@@ -334,7 +334,11 @@ fn spawn_building(
         MeshMaterial3d(building_material),
         Transform::from_translation(Vec3::new(position.x, height / 2.0, position.z)),
         BundleFactory::create_building_collision_bundle(Vec3::new(width, height, width)),
-        Building,
+        Building {
+            building_type: BuildingType::Generic,
+            height,
+            scale: Vec3::new(width, height, width),
+        },
         BundleFactory::create_visibility_bundle(300.0), // Reduced from 800 to 300
     ));
 }

@@ -1,4 +1,5 @@
 pub mod components;
+pub mod config;
 pub mod systems;
 pub mod plugins;
 pub mod setup;
@@ -27,4 +28,5 @@ pub use setup::{setup_basic_world, setup_basic_vehicles, setup_helicopter, setup
 #[cfg(feature = "weather")]
 pub use setup::{setup_weather_components, setup_weather_materials, setup_weather_ui, setup_weather_environment, update_weather_ui};
 pub use constants::*;
+pub use config::*;
 pub use game_state::*;

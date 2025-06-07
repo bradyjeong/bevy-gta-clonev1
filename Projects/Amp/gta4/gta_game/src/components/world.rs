@@ -1,5 +1,31 @@
 use bevy::prelude::*;
 
+/// NPC Behavior Component - replaces old NPCBehavior
+#[derive(Component, Debug, Clone)]
+pub struct NPCBehaviorComponent {
+    pub speed: f32,
+    pub last_update: f32,
+    pub update_interval: f32,
+}
+
+/// Movement Controller Component
+#[derive(Component)]
+pub struct MovementController {
+    pub current_speed: f32,
+    pub max_speed: f32,
+    pub stamina: f32,
+}
+
+/// Building Type Enum
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BuildingType {
+    Residential,
+    Commercial,
+    Industrial,
+    Skyscraper,
+    Generic,
+}
+
 // Legacy NPC component (kept for compatibility during migration)
 #[derive(Component)]
 pub struct NPC {
@@ -39,7 +65,7 @@ pub struct NPCState {
     pub last_lod_check: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone, Copy)]
 pub struct NPCAppearance {
     pub height: f32,
     pub build: f32,
@@ -221,7 +247,11 @@ pub enum ContentType {
 pub struct PerformanceCritical;
 
 #[derive(Component)]
-pub struct Building;
+pub struct Building {
+    pub building_type: BuildingType,
+    pub height: f32,
+    pub scale: Vec3,
+}
 
 #[derive(Component)]
 pub struct Landmark;

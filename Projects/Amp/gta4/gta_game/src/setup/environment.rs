@@ -319,7 +319,11 @@ pub fn setup_buildings(
             Collider::cuboid(width / 2.0 + 2.0, height / 2.0 + 10.0, depth / 2.0 + 2.0), // Large collider extending way below ground
             Cullable { max_distance: 800.0, is_culled: false },
             CollisionGroups::new(STATIC_GROUP, Group::ALL),
-            Building,
+            Building {
+                building_type: BuildingType::Generic,
+                height: 30.0,
+                scale: Vec3::new(20.0, 30.0, 20.0),
+            },
         ));
     }
 }

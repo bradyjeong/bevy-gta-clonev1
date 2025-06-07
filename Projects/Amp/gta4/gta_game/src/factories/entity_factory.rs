@@ -137,7 +137,7 @@ impl EntityFactory {
         commands: &mut Commands,
         position: Vec3,
         size: Vec3,
-        building_type: BuildingType,
+        building_type: crate::components::world::BuildingType,
         color: Color,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -150,7 +150,11 @@ impl EntityFactory {
                 crate::constants::STATIC_GROUP,
                 crate::constants::VEHICLE_GROUP | crate::constants::CHARACTER_GROUP
             ),
-            Building,
+            Building {
+                building_type,
+                height: size.y,
+                scale: size,
+            },
             Cullable { max_distance: 600.0, is_culled: false },
             DynamicContent { content_type: ContentType::Building },
         )).id();

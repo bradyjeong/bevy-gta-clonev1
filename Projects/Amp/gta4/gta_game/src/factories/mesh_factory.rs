@@ -230,4 +230,14 @@ impl MeshFactory {
         let safe_length = length.max(0.001).min(1000.0);
         meshes.add(Capsule3d::new(safe_radius, safe_length))
     }
+    
+    /// Create F16 fighter jet body
+    pub fn create_f16_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
+        meshes.add(Cuboid::new(16.0, 2.0, 3.0))
+    }
+    
+    /// Create F16 wing
+    pub fn create_f16_wing(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
+        meshes.add(Cuboid::new(8.0, 0.2, 2.0))
+    }
 }

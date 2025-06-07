@@ -337,7 +337,11 @@ fn spawn_unified_building(
             coord: chunk_coord,
             layer: ContentLayer::Buildings,
         },
-        Building,
+        Building {
+            building_type: crate::components::world::BuildingType::Generic,
+            height,
+            scale: Vec3::new(width, height, width),
+        },
         Mesh3d(meshes.add(Cuboid::new(width, height, width))),
         MeshMaterial3d(materials.add(material_color)),
         Transform::from_translation(Vec3::new(position.x, height * 0.5, position.z)),

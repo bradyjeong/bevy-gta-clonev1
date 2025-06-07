@@ -89,6 +89,26 @@ impl TransformFactory {
         Transform::from_xyz(-0.6, -0.35, -1.5)
     }
 
+    /// Transform for main rotor position
+    pub fn main_rotor() -> Transform {
+        Transform::from_xyz(0.0, 1.2, 0.0)
+    }
+
+    /// Transform for tail rotor position  
+    pub fn tail_rotor() -> Transform {
+        Transform::from_xyz(0.0, 0.6, -1.8)
+    }
+    
+    /// Transform for F16 left wing
+    pub fn f16_left_wing() -> Transform {
+        Transform::from_xyz(-8.0, 0.0, 0.0)
+    }
+    
+    /// Transform for F16 right wing
+    pub fn f16_right_wing() -> Transform {
+        Transform::from_xyz(8.0, 0.0, 0.0)
+    }
+
     pub fn wheel_with_rotation(x: f32, y: f32, z: f32) -> Transform {
         Transform::from_xyz(x, y, z).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0))
     }
@@ -123,9 +143,7 @@ impl TransformFactory {
         Transform::from_xyz(-2.0, -0.2, 0.0)
     }
 
-    pub fn tail_rotor() -> Transform {
-        Transform::from_xyz(0.0, 9.5, 2.0)
-    }
+
 
     pub fn tail_rotor_blade() -> Transform {
         Transform::from_xyz(0.08, 2.2, 0.15)

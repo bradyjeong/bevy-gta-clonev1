@@ -26,7 +26,7 @@ pub struct TailRotor;
 
 // NEW LOD SYSTEM
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub enum VehicleType {
     BasicCar,
     SuperCar,
