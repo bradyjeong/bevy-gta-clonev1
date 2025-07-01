@@ -8,7 +8,7 @@ use crate::systems::world::{
     unified_world_streaming_system,
     layered_generation_coordinator,
     road_layer_system,
-    building_layer_system,
+
     vehicle_layer_system,
     vegetation_layer_system,
     unified_lod_system,
@@ -21,10 +21,10 @@ use crate::systems::world::{
     npc_lod_system,
     migrate_legacy_npcs,
     spawn_new_npc_system,
-    setup_new_npcs,
 };
 use crate::systems::effects::update_beacon_visibility;
 use crate::systems::timing_service::{TimingService, update_timing_service, cleanup_timing_service};
+use crate::factories::{initialize_material_factory};
 
 /// New unified world plugin that replaces the old WorldPlugin
 /// This provides a single, coordinated world generation system
@@ -37,47 +37,51 @@ impl Plugin for UnifiedWorldPlugin {
             .init_resource::<UnifiedWorldManager>()
             .init_resource::<TimingService>()
             
-            // Core unified systems - run in order
+            // Core unified systems - broken into groups to avoid Bevy's 12-system tuple limit
+            
+            // Group 1: Timing and streaming (4 systems)
             .add_systems(Update, (
-                // 0. Update timing service first (must run before other systems)
                 update_timing_service,
-                
-                // 1. Main streaming system (loads/unloads chunks)
                 unified_world_streaming_system,
-                
-                // 2. Layered content generation (runs after streaming)
                 layered_generation_coordinator,
                 road_layer_system,
-                building_layer_system,
+            ).chain())
+            
+            // Group 2A: Content generation layers (2 systems)
+            .add_systems(Update, (
                 vehicle_layer_system,
                 vegetation_layer_system,
-                
-                // 3. NPC systems (migration and spawning)
-                migrate_legacy_npcs,
-                spawn_new_npc_system,
-                
-                // 4. LOD and culling systems (runs after generation)
+            ).chain())
+            
+            // Group 2B: NPC systems (separate - incompatible signatures)
+            .add_systems(Update, migrate_legacy_npcs)
+            .add_systems(Update, spawn_new_npc_system)
+            
+            // Group 3: LOD and culling (4 systems)
+            .add_systems(Update, (
                 unified_lod_system,
                 npc_lod_system,
                 unified_distance_culling_system,
                 adaptive_lod_system,
-                
-                // 5. Performance monitoring and cleanup
+            ).chain())
+            
+            // Group 4: Cleanup and legacy (6 systems)
+            .add_systems(Update, (
                 unified_lod_performance_monitor,
                 unified_cleanup_system,
                 cleanup_timing_service,
-                
-                // 6. Legacy systems (keeping for compatibility)
                 optimized_npc_movement,
                 dynamic_terrain_system,
                 debug_player_position,
-                update_beacon_visibility,
-            ).chain()) // Chain ensures proper execution order
+            ).chain())
+            
+            // Group 5: Effects (1 system)
+            .add_systems(Update, update_beacon_visibility)
             
             // Startup systems to initialize the unified world
             .add_systems(Startup, (
+                initialize_material_factory,
                 initialize_unified_world,
-                setup_new_npcs,
             ))
             
             // Debug system to monitor unified world activity
@@ -115,7 +119,7 @@ impl Plugin for MixedWorldPlugin {
                 unified_world_streaming_system,
                 layered_generation_coordinator,
                 road_layer_system,
-                building_layer_system,
+                // building_layer_system, // DISABLED
                 vehicle_layer_system,
                 vegetation_layer_system,
                 unified_lod_system,

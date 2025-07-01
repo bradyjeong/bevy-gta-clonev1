@@ -284,7 +284,7 @@ pub fn sun_system(
         
         // Adjust light intensity and color based on time and weather
         let base_intensity = if time_of_day.is_day() {
-            15000.0 * day_factor
+            100000.0 * day_factor.max(0.95) // Intense Dubai desert sun at noon
         } else {
             100.0 // Minimal moonlight
         };
@@ -296,7 +296,7 @@ pub fn sun_system(
             if day_factor < 0.3 { // Sunrise/sunset
                 Color::srgb(1.0, 0.6, 0.3) // Orange
             } else {
-                Color::srgb(1.0, 0.95, 0.8) // Warm white
+                Color::srgb(1.0, 0.98, 0.9) // Bright Dubai desert sun
             }
         } else {
             Color::srgb(0.7, 0.8, 1.0) // Cool moonlight
@@ -382,9 +382,9 @@ pub fn sun_system(
             commands.spawn((
                 SunLight,
                 DirectionalLight {
-                    illuminance: if time_of_day.is_day() { 15000.0 * day_factor } else { 0.0 },
+                    illuminance: if time_of_day.is_day() { 100000.0 * day_factor.max(0.95) } else { 0.0 },
                     color: if time_of_day.is_day() {
-                        Color::srgb(1.0, 0.95, 0.8)
+                        Color::srgb(1.0, 0.98, 0.9) // Bright desert sun color
                     } else {
                         Color::srgb(0.3, 0.4, 0.7)
                     },
@@ -577,7 +577,7 @@ pub fn cloud_system(
     
     // Determine cloud coverage based on weather
     let (cloud_density, cloud_opacity, cloud_height) = match weather.current_weather {
-        WeatherType::Clear => (0.3, 0.6, 200.0),
+        WeatherType::Clear => (0.0, 0.0, 200.0), // No clouds for Dubai clear skies
         WeatherType::LightRain => (0.7, 0.8, 150.0),
         WeatherType::HeavyRain | WeatherType::Storm => (0.9, 0.95, 100.0),
         WeatherType::Fog => (0.5, 0.4, 50.0),

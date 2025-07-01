@@ -14,6 +14,8 @@ pub mod layered_generation;
 pub mod unified_lod;
 pub mod npc_lod;
 pub mod npc_spawn;
+pub mod optimized_lod;
+pub mod vegetation_lod;
 
 pub use npc::*;
 pub use culling::*;
@@ -31,3 +33,5 @@ pub use layered_generation::*;
 pub use unified_lod::*;
 pub use npc_lod::*;
 pub use npc_spawn::*;
+pub use optimized_lod::*;
+pub use vegetation_lod::*;

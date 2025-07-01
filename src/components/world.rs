@@ -1,5 +1,33 @@
 use bevy::prelude::*;
 
+
+
+/// NPC Behavior Component - replaces old NPCBehavior
+#[derive(Component, Debug, Clone)]
+pub struct NPCBehaviorComponent {
+    pub speed: f32,
+    pub last_update: f32,
+    pub update_interval: f32,
+}
+
+/// Movement Controller Component
+#[derive(Component)]
+pub struct MovementController {
+    pub current_speed: f32,
+    pub max_speed: f32,
+    pub stamina: f32,
+}
+
+/// Building Type Enum
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BuildingType {
+    Residential,
+    Commercial,
+    Industrial,
+    Skyscraper,
+    Generic,
+}
+
 // Legacy NPC component (kept for compatibility during migration)
 #[derive(Component)]
 pub struct NPC {
@@ -28,7 +56,7 @@ pub enum NPCLOD {
 }
 
 // Lightweight state component - always in memory
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct NPCState {
     pub npc_type: NPCType,
     pub appearance: NPCAppearance,
@@ -39,7 +67,7 @@ pub struct NPCState {
     pub last_lod_check: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone, Copy)]
 pub struct NPCAppearance {
     pub height: f32,
     pub build: f32,
@@ -168,11 +196,11 @@ pub struct NPCBodyPart {
     pub animation_rotation: Quat,
 }
 
-// LOD distances for NPCs
-pub const NPC_LOD_FULL_DISTANCE: f32 = 50.0;
-pub const NPC_LOD_MEDIUM_DISTANCE: f32 = 100.0;
-pub const NPC_LOD_LOW_DISTANCE: f32 = 150.0;
-pub const NPC_LOD_CULL_DISTANCE: f32 = 200.0;
+// LOD distances for NPCs - optimized for 60+ FPS target
+pub const NPC_LOD_FULL_DISTANCE: f32 = 25.0;
+pub const NPC_LOD_MEDIUM_DISTANCE: f32 = 50.0;
+pub const NPC_LOD_LOW_DISTANCE: f32 = 75.0;
+pub const NPC_LOD_CULL_DISTANCE: f32 = 100.0;
 
 #[derive(Component)]
 pub struct Cullable {
@@ -188,6 +216,8 @@ impl Cullable {
         }
     }
 }
+
+
 
 // Road system components
 #[derive(Component)]
@@ -220,8 +250,12 @@ pub enum ContentType {
 #[derive(Component)]
 pub struct PerformanceCritical;
 
-#[derive(Component)]
-pub struct Building;
+#[derive(Component, Clone)]
+pub struct Building {
+    pub building_type: BuildingType,
+    pub height: f32,
+    pub scale: Vec3,
+}
 
 #[derive(Component)]
 pub struct Landmark;
@@ -229,14 +263,7 @@ pub struct Landmark;
 #[derive(Component)]
 pub struct Buildable;
 
-#[derive(Component)]
-pub struct SunLight;
 
-#[derive(Component)]
-pub struct SkyDome;
-
-#[derive(Component)]
-pub struct Clouds;
 
 #[derive(Component)]
 pub struct MainCamera;
@@ -253,10 +280,10 @@ pub struct CullingSettings {
 impl Default for CullingSettings {
     fn default() -> Self {
         Self {
-            _npc_cull_distance: 200.0,
-            _car_cull_distance: 300.0,
-            _building_cull_distance: 800.0,
-            _tree_cull_distance: 400.0,
+            _npc_cull_distance: 100.0,
+            _car_cull_distance: 150.0,
+            _building_cull_distance: 300.0,
+            _tree_cull_distance: 250.0,
         }
     }
 }
@@ -276,6 +303,56 @@ impl Default for PerformanceStats {
             culled_entities: 0,
             frame_time: 0.0,
             last_report: 0.0,
+        }
+    }
+}
+
+
+
+
+
+// Mesh caching components
+#[derive(Resource)]
+pub struct MeshCache {
+    pub road_meshes: std::collections::HashMap<String, Handle<Mesh>>,
+    pub npc_body_meshes: std::collections::HashMap<String, Handle<Mesh>>,
+    pub intersection_meshes: std::collections::HashMap<String, Handle<Mesh>>,
+}
+
+impl Default for MeshCache {
+    fn default() -> Self {
+        Self {
+            road_meshes: std::collections::HashMap::new(),
+            npc_body_meshes: std::collections::HashMap::new(),
+            intersection_meshes: std::collections::HashMap::new(),
+        }
+    }
+}
+
+// Entity limit tracking
+#[derive(Resource)]
+pub struct EntityLimits {
+    pub max_buildings: usize,
+    pub max_vehicles: usize,
+    pub max_npcs: usize,
+    pub max_trees: usize,
+    pub building_entities: Vec<(Entity, f32)>, // (entity, spawn_time)
+    pub vehicle_entities: Vec<(Entity, f32)>,
+    pub npc_entities: Vec<(Entity, f32)>,
+    pub tree_entities: Vec<(Entity, f32)>,
+}
+
+impl Default for EntityLimits {
+    fn default() -> Self {
+        Self {
+            max_buildings: 800,    // Reduced from unlimited
+            max_vehicles: 200,     // Reduced from unlimited
+            max_npcs: 150,         // Reduced from unlimited
+            max_trees: 400,        // Reduced from unlimited
+            building_entities: Vec::new(),
+            vehicle_entities: Vec::new(),
+            npc_entities: Vec::new(),
+            tree_entities: Vec::new(),
         }
     }
 }

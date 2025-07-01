@@ -93,7 +93,7 @@ impl WeatherManager {
 pub fn weather_lighting_system(
     weather: Res<WeatherManager>,
     weather_config: Res<WeatherConfig>,
-    mut sun_query: Query<(&mut DirectionalLight, &mut Transform), With<crate::components::SunLight>>,
+    mut sun_query: Query<(&mut DirectionalLight, &mut Transform), With<DirectionalLight>>,
 ) {
     if !weather.is_changed() {
         return;

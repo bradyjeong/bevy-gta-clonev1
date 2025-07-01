@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 use crate::components::{
-    NPCState, NPCRendering, NPCLOD, NPCType, NPCAppearance, ActiveEntity,
+    NPCState, NPCRendering, NPCLOD, NPCAppearance, ActiveEntity,
     NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart,
-    NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE, NPC_LOD_CULL_DISTANCE
+    NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE
 };
 use crate::systems::timing_service::{TimingService, SystemType, EntityTimerType, ManagedTiming};
+use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
 /// NPC LOD system that follows the vehicle LOD architecture
 /// Manages rendering complexity based on distance from active entity
@@ -13,15 +14,16 @@ pub fn npc_lod_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut timing_service: ResMut<TimingService>,
-    active_query: Query<&Transform, With<ActiveEntity>>,
+    active_query: Query<(Entity, &Transform), With<ActiveEntity>>,
     mut npc_query: Query<(Entity, &mut NPCState, Option<&NPCRendering>, &Transform, Option<&ManagedTiming>)>,
+    mut distance_cache: ResMut<DistanceCache>,
 ) {
     // Use unified timing service instead of manual timing checks
     if !timing_service.should_run_system(SystemType::NPCLOD) {
         return;
     }
     
-    let Ok(active_transform) = active_query.single() else { return };
+    let Ok((active_entity, active_transform)) = active_query.single() else { return };
     let player_pos = active_transform.translation;
     
     for (entity, mut npc_state, rendering, transform, managed_timing) in npc_query.iter_mut() {
@@ -36,7 +38,13 @@ pub fn npc_lod_system(
             continue;
         }
         
-        let distance = player_pos.distance(transform.translation);
+        let distance = get_cached_distance(
+            active_entity,
+            entity,
+            player_pos,
+            transform.translation,
+            &mut distance_cache,
+        );
         let new_lod = determine_npc_lod(distance);
         
         if new_lod != npc_state.current_lod {

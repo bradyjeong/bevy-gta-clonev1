@@ -12,14 +12,14 @@ pub struct TimingService {
     /// Performance throttling intervals
     pub vehicle_lod_interval: f32,        // 0.1s - Vehicle LOD checks
     pub npc_lod_interval: f32,            // 0.1s - NPC LOD checks
-    pub weather_debug_interval: f32,      // 5.0s - Weather debug logging  
+      
     pub audio_cleanup_interval: f32,      // 1.0s - Audio entity cleanup
     pub effect_update_interval: f32,      // 0.05s - Effect state updates
     
     /// Last update times for throttled systems
     last_vehicle_lod_check: f32,
     last_npc_lod_check: f32,
-    last_weather_debug: f32,
+    
     last_audio_cleanup: f32,
     last_effect_update: f32,
     
@@ -39,7 +39,7 @@ pub enum EntityTimerType {
     VehicleLOD,
     NPCLOD,
     FootstepAudio,
-    WeatherEffect,
+    
     Custom(String),
 }
 
@@ -49,16 +49,16 @@ impl Default for TimingService {
             current_time: 0.0,
             delta_time: 0.0,
             
-            // Optimal intervals based on system analysis
-            vehicle_lod_interval: 0.1,      // Vehicle LOD (performance critical)
-            npc_lod_interval: 0.1,          // NPC LOD (performance critical)
-            weather_debug_interval: 5.0,    // Weather debug (low priority)
-            audio_cleanup_interval: 1.0,    // Audio cleanup (moderate)
-            effect_update_interval: 0.05,   // Effects (visual smoothness)
+            // Optimized intervals for better FPS
+            vehicle_lod_interval: 0.2,      // REDUCED from 0.1s for distant entities
+            npc_lod_interval: 0.2,          // REDUCED from 0.1s for distant entities  
+            
+            audio_cleanup_interval: 2.0,    // INCREASED from 1.0s (less frequent cleanup)
+            effect_update_interval: 0.1,    // INCREASED from 0.05s (less frequent updates)
             
             last_vehicle_lod_check: 0.0,
             last_npc_lod_check: 0.0,
-            last_weather_debug: 0.0,
+            
             last_audio_cleanup: 0.0,
             last_effect_update: 0.0,
             
@@ -79,7 +79,7 @@ impl TimingService {
         let (interval, last_check) = match system_type {
             SystemType::VehicleLOD => (self.vehicle_lod_interval, &mut self.last_vehicle_lod_check),
             SystemType::NPCLOD => (self.npc_lod_interval, &mut self.last_npc_lod_check),
-            SystemType::WeatherDebug => (self.weather_debug_interval, &mut self.last_weather_debug),
+            
             SystemType::AudioCleanup => (self.audio_cleanup_interval, &mut self.last_audio_cleanup),
             SystemType::EffectUpdate => (self.effect_update_interval, &mut self.last_effect_update),
         };
@@ -137,7 +137,7 @@ impl TimingService {
 pub enum SystemType {
     VehicleLOD,
     NPCLOD,
-    WeatherDebug,
+    
     AudioCleanup,
     EffectUpdate,
 }
