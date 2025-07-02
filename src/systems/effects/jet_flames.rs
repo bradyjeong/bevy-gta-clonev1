@@ -1,7 +1,6 @@
 use bevy::prelude::*;
-use crate::components::{F16, AircraftFlight, JetFlame, FlameEffect, ActiveEntity, ExhaustFlame, VehicleBeacon, WaypointText, ControlsText};
+use crate::components::{F16, AircraftFlight, JetFlame, FlameEffect, ActiveEntity, ExhaustFlame, VehicleBeacon, WaypointText};
 use crate::components::{Player};
-use crate::game_state::GameState;
 
 pub fn update_jet_flames(
     time: Res<Time>,
@@ -163,18 +162,4 @@ pub fn update_beacon_visibility(
     }
 }
 
-// Controls UI system - updates the control instructions based on current state
-pub fn controls_ui_system(
-    current_state: Res<State<GameState>>,
-    mut controls_query: Query<&mut Text, With<ControlsText>>,
-) {
-    for mut text in controls_query.iter_mut() {
-        let controls_text = match **current_state {
-            GameState::Walking => "CONTROLS - Walking:\n\nArrow Keys: Move\nF: Enter Vehicle",
-            GameState::Driving => "CONTROLS - Car/SuperCar:\n\nArrow Keys: Drive\nSPACE: Turbo Boost (SuperCar only)\nHold keys for acceleration\nF: Exit Car\nFind the Bugatti Chiron for max speed!",
-            GameState::Flying => "CONTROLS - Helicopter:\n\nArrow Keys: Move\nQ/E: Up/Down\nF: Exit Helicopter",
-            GameState::Jetting => "CONTROLS - F16 Fighter:\n\nArrow Keys: Fly\nQ/E: Up/Down\nSPACE: Afterburner\nF: Exit F16",
-        };
-        text.0 = controls_text.to_string();
-    }
-}
+

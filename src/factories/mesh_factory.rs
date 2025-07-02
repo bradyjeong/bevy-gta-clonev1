@@ -23,7 +23,8 @@ impl MeshFactory {
     }
 
     pub fn create_helicopter_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        meshes.add(Cuboid::new(3.0, 2.0, 6.0))  // Fixed: matches collider dimensions
+        // Create a more realistic helicopter fuselage shape using a capsule
+        meshes.add(Capsule3d::new(0.8, 4.0))  // Radius, height - helicopter shape
     }
 
     pub fn create_boat_hull(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
@@ -69,15 +70,27 @@ impl MeshFactory {
 
     // HELICOPTER PARTS
     pub fn create_rotor_blade(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        meshes.add(Cuboid::new(10.0, 0.05, 0.2))
+        // Realistic rotor blade shape - thin and aerodynamic
+        meshes.add(Cuboid::new(8.0, 0.02, 0.3))  // Long, thin blade
+    }
+
+    pub fn create_helicopter_cockpit(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
+        // Bubble-shaped cockpit
+        meshes.add(Sphere::new(0.8))
+    }
+
+    pub fn create_helicopter_tail_boom(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
+        // Tapered tail boom
+        meshes.add(Cylinder::new(0.25, 3.5))
     }
 
     pub fn create_tail_rotor(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
         meshes.add(Cylinder::new(0.15, 0.2))
     }
 
-    pub fn create_landing_gear(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        meshes.add(Cuboid::new(0.6, 0.6, 4.0))
+    pub fn create_landing_skid(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
+        // Helicopter skids - long and narrow
+        meshes.add(Cylinder::new(0.04, 3.0))
     }
 
     // WORLD STRUCTURES - Buildings, environment

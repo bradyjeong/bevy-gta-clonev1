@@ -50,7 +50,7 @@ fn main() {
         .add_plugins(TransformSyncPlugin)
         .add_plugins(VegetationLODPlugin)
         .add_plugins(PersistencePlugin)
-        .add_plugins(WorldPlugin)
+        .add_plugins(UnifiedWorldPlugin)
         .add_plugins(UIPlugin)
         .add_plugins(WaterPlugin)
         .add_plugins(GroundDetectionPlugin);
@@ -67,6 +67,7 @@ fn main() {
         ))
         // Setup systems (split to avoid 12-system tuple limit)
         .add_systems(Startup, (
+            setup_unified_entity_factory,
             setup_basic_world,
             setup_dubai_noon_lighting,
             setup_basic_roads,
@@ -77,6 +78,7 @@ fn main() {
             setup_palm_trees,
             setup_new_npcs,
             setup_starter_vehicles,
+            setup_buildings,
         ).after(initialize_simple_services));
         
     app.run();

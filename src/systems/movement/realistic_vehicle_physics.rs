@@ -2,13 +2,14 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::config::GameConfig;
+use crate::systems::input::{ControlManager, is_accelerating, is_braking};
 
 /// CRITICAL: High-performance realistic vehicle physics system
 /// Optimized for 60+ FPS with comprehensive safety checks
 pub fn realistic_vehicle_physics_system(
     time: Res<Time>,
     config: Res<GameConfig>,
-    input: Res<ButtonInput<KeyCode>>,
+    control_manager: Res<ControlManager>,
     mut query: Query<(
         Entity,
         &mut Velocity,
@@ -40,7 +41,7 @@ pub fn realistic_vehicle_physics_system(
         dynamics.speed = velocity.linvel.length();
         
         // STEP 1: Process user input with realistic constraints
-        process_vehicle_input(&input, &mut engine, &vehicle, dt);
+        process_vehicle_input(&control_manager, &mut engine, &vehicle, dt);
         
         // STEP 2: Calculate engine forces with realistic power delivery
         let engine_force = calculate_engine_force(&mut engine, &dynamics, dt);
@@ -86,20 +87,21 @@ pub fn realistic_vehicle_physics_system(
 
 /// Process realistic vehicle input with proper control systems
 fn process_vehicle_input(
-    input: &Res<ButtonInput<KeyCode>>,
+    control_manager: &Res<ControlManager>,
     engine: &mut EnginePhysics,
     _vehicle: &RealisticVehicle,
     dt: f32,
 ) {
+    // Use ControlManager for realistic vehicle input
     // Throttle input with realistic response
-    if input.pressed(KeyCode::ArrowUp) {
+    if is_accelerating(control_manager) {
         engine.throttle_input = (engine.throttle_input + dt * 2.0).clamp(0.0, 1.0);
     } else {
         engine.throttle_input = (engine.throttle_input - dt * 3.0).clamp(0.0, 1.0);
     }
     
     // Brake input with ABS simulation
-    if input.pressed(KeyCode::ArrowDown) {
+    if is_braking(control_manager) {
         engine.brake_input = (engine.brake_input + dt * 4.0).clamp(0.0, 1.0);
     } else {
         engine.brake_input = (engine.brake_input - dt * 5.0).clamp(0.0, 1.0);

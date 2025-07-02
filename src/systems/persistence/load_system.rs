@@ -306,13 +306,4 @@ fn validate_post_load(
     Ok(())
 }
 
-impl Default for SuperCar {
-    fn default() -> Self {
-        Self {
-            max_speed: 120.0,
-            acceleration: 40.0,
-            turbo_boost: false,
-            exhaust_timer: 0.0,
-        }
-    }
-}
+

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use crate::systems::effects::{controls_ui_system, update_waypoint_system};
-use crate::systems::ui::{setup_fps_display, update_fps_display};
+use crate::systems::effects::update_waypoint_system;
+use crate::systems::ui::{setup_fps_display, update_fps_display, controls_ui_system};
 
 pub struct UIPlugin;
 

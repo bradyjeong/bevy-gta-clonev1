@@ -78,7 +78,7 @@ pub struct WorldConfig {
     
     // Content generation parameters
     pub building_density: f32,     // 1.0 - Building spawn density
-    pub tree_density: f32,         // 0.8 - Tree spawn density
+    pub tree_density: f32,         // 2.0 - Tree spawn density
     pub vehicle_density: f32,      // 0.3 - Vehicle spawn density
     pub npc_density: f32,          // 0.2 - NPC spawn density
     
@@ -300,8 +300,8 @@ impl Default for WorldConfig {
             map_size: 4000.0,
             streaming_radius: 800.0,
             lod_distances: [150.0, 300.0, 500.0],
-            building_density: 1.0,
-            tree_density: 0.8,
+            building_density: 0.5,
+            tree_density: 2.0,
             vehicle_density: 0.3,
             npc_density: 0.2,
             cleanup_delay: 30.0,

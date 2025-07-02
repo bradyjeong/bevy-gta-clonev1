@@ -91,7 +91,7 @@ pub fn setup_basic_world(
         InheritedVisibility::VISIBLE,
         ViewVisibility::default(),
         CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP),
-        Damping { linear_damping: 15.0, angular_damping: 10.0 }, // Very high damping to prevent sliding
+        Damping { linear_damping: 2.0, angular_damping: 5.0 }, // Moderate damping for responsive movement
     )).id();
     
     // Add human behavior components separately

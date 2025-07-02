@@ -8,7 +8,7 @@ use crate::systems::world::{
     unified_world_streaming_system,
     layered_generation_coordinator,
     road_layer_system,
-
+    building_layer_system,
     vehicle_layer_system,
     vegetation_layer_system,
     unified_lod_system,
@@ -47,8 +47,9 @@ impl Plugin for UnifiedWorldPlugin {
                 road_layer_system,
             ).chain())
             
-            // Group 2A: Content generation layers (2 systems)
+            // Group 2A: Content generation layers (3 systems)
             .add_systems(Update, (
+                building_layer_system,
                 vehicle_layer_system,
                 vegetation_layer_system,
             ).chain())

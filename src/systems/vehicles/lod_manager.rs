@@ -162,27 +162,59 @@ fn spawn_full_vehicle_mesh(
             mesh_entities.push(body);
         },
         VehicleType::Helicopter => {
-            // Body
+            // Main fuselage - proper helicopter shape
             let body = commands.spawn((
-                Mesh3d(MeshFactory::create_suv_body(meshes)),
-                MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.9, 0.9, 0.9))),
+                Mesh3d(MeshFactory::create_helicopter_body(meshes)),
+                MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.25, 0.28, 0.3))),
                 TransformFactory::helicopter_body(),
                 ChildOf(parent_entity),
                 VisibleChildBundle::default(),
             )).id();
             mesh_entities.push(body);
             
-            // Main rotor blades
+            // Cockpit bubble
+            let cockpit = commands.spawn((
+                Mesh3d(MeshFactory::create_helicopter_cockpit(meshes)),
+                MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgba(0.05, 0.05, 0.08, 0.3))),
+                Transform::from_xyz(0.0, 0.2, 1.0),
+                ChildOf(parent_entity),
+                VisibleChildBundle::default(),
+            )).id();
+            mesh_entities.push(cockpit);
+            
+            // Tail boom
+            let tail = commands.spawn((
+                Mesh3d(MeshFactory::create_helicopter_tail_boom(meshes)),
+                MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.25, 0.28, 0.3))),
+                Transform::from_xyz(0.0, 0.0, 4.0),
+                ChildOf(parent_entity),
+                VisibleChildBundle::default(),
+            )).id();
+            mesh_entities.push(tail);
+            
+            // Main rotor blades - realistic shape
             for i in 0..4 {
                 let angle = i as f32 * std::f32::consts::PI / 2.0;
                 let blade = commands.spawn((
                     Mesh3d(MeshFactory::create_rotor_blade(meshes)),
-                    MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.05, 0.05, 0.05))),
-                    TransformFactory::rotor_with_rotation(angle),
+                    MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.08, 0.08, 0.08))),
+                    Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
                     ChildOf(parent_entity),
                     VisibleChildBundle::default(),
                 )).id();
                 mesh_entities.push(blade);
+            }
+            
+            // Landing skids
+            for x in [-0.8, 0.8] {
+                let skid = commands.spawn((
+                    Mesh3d(MeshFactory::create_landing_skid(meshes)),
+                    MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.35, 0.35, 0.35))),
+                    Transform::from_xyz(x, -1.0, 0.0),
+                    ChildOf(parent_entity),
+                    VisibleChildBundle::default(),
+                )).id();
+                mesh_entities.push(skid);
             }
         },
         VehicleType::F16 => {

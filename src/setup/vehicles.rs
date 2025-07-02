@@ -33,29 +33,27 @@ pub fn setup_simple_vehicles(
     // Supercar
     let supercar_entity = commands.spawn((
         Car,
-        SuperCar {
-            max_speed: 120.0,
-            acceleration: 40.0,
-            turbo_boost: false,
-            exhaust_timer: 0.0,
-        },
+        SuperCar::default(),
         RigidBody::Dynamic,
         Collider::cuboid(1.1, 0.5, 2.4),  // Half-height = 0.5, total height = 1.0
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         Velocity::zero(),
-        Transform::from_xyz(3.0, 0.5, 0.0),  // Fixed: spawn at proper ground height
+        Transform::from_xyz(8.0, 0.5, 0.0),  // Safe distance from player spawn
         Damping { linear_damping: 1.0, angular_damping: 5.0 },
         Cullable { max_distance: 800.0, is_culled: false },
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
     )).id();
 
-    // Supercar body - Fixed: height matches collider
+    // Supercar body - Luxurious copper finish
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(2.0, 1.0, 4.5))),  // Fixed: height 1.0 matches collider
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.05, 0.05, 0.15),
-            metallic: 0.9,
-            reflectance: 0.9,
+            base_color: Color::srgb(0.72, 0.45, 0.2), // Rich copper bronze
+            metallic: 0.95,
+            perceptual_roughness: 0.05,
+            reflectance: 0.95,
+            clearcoat: 1.0,
+            clearcoat_perceptual_roughness: 0.02,
             ..default()
         })),
         Transform::from_xyz(0.0, 0.0, 0.0),
@@ -74,18 +72,84 @@ pub fn setup_simple_helicopter(
         RigidBody::Dynamic,
         Collider::cuboid(1.5, 1.0, 3.0),  // Half-height = 1.0, total height = 2.0
         Velocity::zero(),
-        Transform::from_xyz(120.0, 1.0, 80.0),  // Fixed: spawn at ground+half-height (hovering)
+        Transform::from_xyz(15.0, 1.0, 15.0),  // Safe distance from player spawn
         Damping { linear_damping: 2.0, angular_damping: 8.0 },
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
     )).id();
 
-    // Helicopter body - Fixed: dimensions match collider
+    // Helicopter body - Realistic shape using capsule
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(3.0, 2.0, 6.0))),  // Fixed: dimensions match collider
-        MeshMaterial3d(materials.add(Color::srgb(0.9, 0.9, 0.9))),
+        Mesh3d(meshes.add(Capsule3d::new(0.8, 4.0))),  // Helicopter fuselage shape
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.25, 0.28, 0.3), // Military gunmetal
+            metallic: 0.8,
+            perceptual_roughness: 0.4,
+            reflectance: 0.3,
+            ..default()
+        })),
         Transform::from_xyz(0.0, 0.0, 0.0),
         ChildOf(helicopter_entity),
     ));
+    
+    // Cockpit bubble - rounded cockpit
+    commands.spawn((
+        Mesh3d(meshes.add(Sphere::new(0.8))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgba(0.05, 0.05, 0.08, 0.15),
+            metallic: 0.1,
+            perceptual_roughness: 0.1,
+            alpha_mode: AlphaMode::Blend,
+            ..default()
+        })),
+        Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
+        ChildOf(helicopter_entity),
+    ));
+    
+    // Tail boom - tapered cylinder
+    commands.spawn((
+        Mesh3d(meshes.add(Cylinder::new(0.25, 3.5))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.25, 0.28, 0.3),
+            metallic: 0.8,
+            perceptual_roughness: 0.4,
+            reflectance: 0.3,
+            ..default()
+        })),
+        Transform::from_xyz(0.0, 0.0, 4.5),
+        ChildOf(helicopter_entity),
+    ));
+    
+    // Main rotor blades - thin and aerodynamic
+    for i in 0..4 {
+        let angle = i as f32 * std::f32::consts::PI / 2.0;
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(8.0, 0.02, 0.3))),  // Long thin blade
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.08, 0.08, 0.08),
+                metallic: 0.2,
+                perceptual_roughness: 0.9,
+                ..default()
+            })),
+            Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
+            ChildOf(helicopter_entity),
+            MainRotor,
+        ));
+    }
+    
+    // Landing skids - long narrow cylinders
+    for x in [-0.8, 0.8] {
+        commands.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.04, 3.0))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.35, 0.35, 0.35),
+                metallic: 0.7,
+                perceptual_roughness: 0.6,
+                ..default()
+            })),
+            Transform::from_xyz(x, -1.0, 0.0).with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+            ChildOf(helicopter_entity),
+        ));
+    }
 }
 
 /// Simplified F16 setup

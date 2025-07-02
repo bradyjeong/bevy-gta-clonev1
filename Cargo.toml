@@ -10,9 +10,7 @@ debug-audio = []
 debug-ui = []
 debug-timing = []
 
-[[bin]]
-name = "gta_simple"
-path = "src/main_simple.rs"
+# Removed gta_simple binary - using main.rs as default
 
 [dependencies]
 bevy = { version = "0.16.1", features = ["serialize", "shader_format_glsl"] }

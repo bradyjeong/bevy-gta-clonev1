@@ -22,7 +22,7 @@ pub fn road_network_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     road_query: Query<(Entity, &Transform), With<RoadEntity>>,
-    _keyboard_input: Res<ButtonInput<KeyCode>>,
+
     time: Res<Time>,
     mut timer: Local<RoadGenerationTimer>,
 ) {

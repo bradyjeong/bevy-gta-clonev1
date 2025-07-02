@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Helicopter, F16, ActiveEntity, MainRotor, TailRotor, AircraftFlight};
+use crate::systems::input::{ControlManager, is_accelerating, is_braking, get_steering_input, get_throttle_input, get_pitch_input, get_roll_input, get_yaw_input, is_afterburner_active};
 
 pub fn helicopter_movement(
-    input: Res<ButtonInput<KeyCode>>,
+    control_manager: Res<ControlManager>,
     mut helicopter_query: Query<(&mut Velocity, &Transform), (With<Helicopter>, With<ActiveEntity>)>,
 ) {
     let Ok((mut velocity, transform)) = helicopter_query.single_mut() else {
@@ -17,31 +18,31 @@ pub fn helicopter_movement(
     let mut target_linear_velocity = Vec3::ZERO;
     let mut target_angular_velocity = Vec3::ZERO;
     
+    // Use ControlManager for helicopter movement
     // Forward/backward movement
-    if input.pressed(KeyCode::ArrowUp) {
+    if is_accelerating(&control_manager) {
         let forward = transform.forward();
         target_linear_velocity += forward * speed;
     }
-    if input.pressed(KeyCode::ArrowDown) {
+    if is_braking(&control_manager) {
         let forward = transform.forward();
         target_linear_velocity -= forward * speed;
     }
     
     // Rotation - DIRECT velocity control
-    if input.pressed(KeyCode::ArrowLeft) {
-        target_angular_velocity.y = rotation_speed;
-    } else if input.pressed(KeyCode::ArrowRight) {
-        target_angular_velocity.y = -rotation_speed;
+    let steering = get_steering_input(&control_manager);
+    if steering != 0.0 {
+        target_angular_velocity.y = steering * rotation_speed;
     } else {
         target_angular_velocity.y = 0.0; // Force zero rotation
     }
     
-    // HELICOPTER SPECIFIC: Vertical movement with Shift (up) and Ctrl (down)
-    if input.pressed(KeyCode::ShiftLeft) {
-        target_linear_velocity.y += vertical_speed;
-    }
-    if input.pressed(KeyCode::ControlLeft) {
-        target_linear_velocity.y -= vertical_speed;
+    // HELICOPTER SPECIFIC: Vertical movement using throttle input
+    let throttle = get_throttle_input(&control_manager);
+    if throttle > 0.0 {
+        target_linear_velocity.y += vertical_speed * throttle;
+    } else if throttle < 0.0 {
+        target_linear_velocity.y -= vertical_speed * throttle.abs();
     }
     
     // Set velocity directly
@@ -82,7 +83,7 @@ pub fn rotate_helicopter_rotors(
 }
 
 pub fn f16_movement(
-    input: Res<ButtonInput<KeyCode>>,
+    control_manager: Res<ControlManager>,
     time: Res<Time>,
     mut f16_query: Query<(&mut Velocity, &mut Transform, &mut AircraftFlight), (With<F16>, With<ActiveEntity>)>,
 ) {
@@ -94,42 +95,43 @@ pub fn f16_movement(
     
     // === FLIGHT CONTROL INPUT PROCESSING ===
     
-    // Pitch control (nose up/down) - W/S keys or Arrow Up/Down
-    if input.pressed(KeyCode::KeyW) || input.pressed(KeyCode::ArrowUp) {
-        flight.pitch = (flight.pitch + dt * 3.0).clamp(-1.0, 1.0); // Nose up
-    } else if input.pressed(KeyCode::KeyS) || input.pressed(KeyCode::ArrowDown) {
-        flight.pitch = (flight.pitch - dt * 3.0).clamp(-1.0, 1.0); // Nose down
+    // Use ControlManager for F16 flight controls
+    // Pitch control (nose up/down) 
+    let pitch_input = get_pitch_input(&control_manager);
+    if pitch_input > 0.0 {
+        flight.pitch = (flight.pitch + dt * 3.0 * pitch_input).clamp(-1.0, 1.0); // Nose up
+    } else if pitch_input < 0.0 {
+        flight.pitch = (flight.pitch + dt * 3.0 * pitch_input).clamp(-1.0, 1.0); // Nose down
     } else {
         flight.pitch = flight.pitch * (1.0 - dt * 5.0); // Return to center
     }
     
-    // Roll control (banking left/right) - A/D keys or Arrow Left/Right
-    if input.pressed(KeyCode::KeyA) || input.pressed(KeyCode::ArrowLeft) {
-        flight.roll = (flight.roll + dt * 4.0).clamp(-1.0, 1.0); // Roll left (positive)
-    } else if input.pressed(KeyCode::KeyD) || input.pressed(KeyCode::ArrowRight) {
-        flight.roll = (flight.roll - dt * 4.0).clamp(-1.0, 1.0); // Roll right (negative)
+    // Roll control (banking left/right)
+    let roll_input = get_roll_input(&control_manager);
+    if roll_input != 0.0 {
+        flight.roll = (flight.roll + dt * 4.0 * roll_input).clamp(-1.0, 1.0);
     } else {
         flight.roll = flight.roll * (1.0 - dt * 3.0); // Return to center
     }
     
-    // Yaw control (rudder) - Q/E keys for fine turning
-    if input.pressed(KeyCode::KeyQ) {
-        flight.yaw = (flight.yaw - dt * 2.0).clamp(-1.0, 1.0); // Yaw left
-    } else if input.pressed(KeyCode::KeyE) {
-        flight.yaw = (flight.yaw + dt * 2.0).clamp(-1.0, 1.0); // Yaw right
+    // Yaw control (rudder)
+    let yaw_input = get_yaw_input(&control_manager);
+    if yaw_input != 0.0 {
+        flight.yaw = (flight.yaw + dt * 2.0 * yaw_input).clamp(-1.0, 1.0);
     } else {
         flight.yaw = flight.yaw * (1.0 - dt * 4.0); // Return to center
     }
     
-    // Throttle control - Shift (increase) / Ctrl (decrease)
-    if input.pressed(KeyCode::ShiftLeft) {
-        flight.throttle = (flight.throttle + dt * 1.5).clamp(0.0, 1.0);
-    } else if input.pressed(KeyCode::ControlLeft) {
-        flight.throttle = (flight.throttle - dt * 2.0).clamp(0.0, 1.0);
+    // Throttle control
+    let throttle_input = get_throttle_input(&control_manager);
+    if throttle_input > 0.0 {
+        flight.throttle = (flight.throttle + dt * 1.5 * throttle_input).clamp(0.0, 1.0);
+    } else if throttle_input < 0.0 {
+        flight.throttle = (flight.throttle + dt * 2.0 * throttle_input).clamp(0.0, 1.0);
     }
     
-    // Afterburner - Space key
-    flight.afterburner = input.pressed(KeyCode::Space);
+    // Afterburner
+    flight.afterburner = is_afterburner_active(&control_manager);
     
     // === FLIGHT PHYSICS CALCULATIONS ===
     

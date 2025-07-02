@@ -48,7 +48,7 @@ pub fn interaction_system(
                     
                     // Switch to driving state
                     state.set(GameState::Driving);
-                    info!("Entered car!");
+                    info!("🚗 ActiveEntity transferred from Player({:?}) to Car({:?})", player_entity, car_entity);
                     return;
                 }
             }
@@ -125,12 +125,11 @@ pub fn interaction_system(
                             .insert(Visibility::Visible)
                             .insert(ActiveEntity);
                         
-                        info!("Exited car at position: {:?}", exit_position);
+                        info!("🚗 ActiveEntity transferred from Car({:?}) back to Player({:?})", active_car, player_entity);
                     }
                     
                     // Switch to walking state
                     state.set(GameState::Walking);
-                    info!("Exited car!");
                 }
             }
         }

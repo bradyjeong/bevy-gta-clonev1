@@ -579,9 +579,9 @@ fn spawn_unified_tree(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
-    // Create meshes for different LOD levels
-    let full_mesh = meshes.add(create_detailed_tree_mesh());
-    let medium_mesh = meshes.add(create_medium_tree_mesh());
+    // Create meshes for different LOD levels (palm tree specific)
+    let full_mesh = meshes.add(create_detailed_palm_mesh());
+    let medium_mesh = meshes.add(create_medium_palm_mesh());
     let billboard_mesh = meshes.add(create_billboard_quad());
     
     let tree_entity = commands.spawn((
@@ -604,93 +604,49 @@ fn spawn_unified_tree(
             billboard_mesh,
         ),
         VegetationBillboard::new(
-            Vec3::new(1.0, 3.0, 1.0), // Tree proportions
+            Vec3::new(1.0, 3.0, 1.0), // Palm tree proportions
             Vec2::new(2.0, 3.0),
         ),
         Mesh3d(full_mesh), // Start with full detail mesh
     )).id();
     
-    // Realistic tree trunk with texture variation
-    for trunk_segment in 0..4 {
-        let y_pos = (trunk_segment as f32) * 2.0 + 1.0;
-        let radius = 0.35 - (trunk_segment as f32) * 0.04; // Taper
-        let rotation = (trunk_segment as f32) * 0.1; // Slight twist
+    // Palm tree trunk - single brown cylinder
+    commands.spawn((
+        Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
+        MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
+        Transform::from_xyz(0.0, 4.0, 0.0),
+        ChildOf(tree_entity),
+        VisibleChildBundle::default(),
+    ));
+
+    // Palm fronds - 4 green rectangles arranged in a cross
+    for i in 0..4 {
+        let angle = (i as f32) * std::f32::consts::PI / 2.0;
         
         commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(radius, 2.1))),
-            MeshMaterial3d(materials.add(Color::srgb(
-                0.4 + (trunk_segment as f32) * 0.03, 
-                0.25 + (trunk_segment as f32) * 0.02, 
-                0.15 + (trunk_segment as f32) * 0.01
-            ))), // Varying bark colors
-            Transform::from_xyz(0.0, y_pos, 0.0)
-                .with_rotation(Quat::from_rotation_y(rotation)),
+            Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
+            MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
+            Transform::from_xyz(
+                angle.cos() * 1.2, 
+                7.5, 
+                angle.sin() * 1.2
+            ).with_rotation(
+                Quat::from_rotation_y(angle) * 
+                Quat::from_rotation_z(-0.2) // Slight droop
+            ),
             ChildOf(tree_entity),
             VisibleChildBundle::default(),
         ));
     }
 
-    // Main physics collider
+    // Physics collider for palm trunk
     commands.spawn((
         RigidBody::Fixed,
-        Collider::cylinder(4.0, 0.4),
+        Collider::cylinder(4.0, 0.3),
         CollisionGroups::new(STATIC_GROUP, Group::ALL),
         Transform::from_xyz(0.0, 4.0, 0.0),
         ChildOf(tree_entity),
     ));
-    
-    // Realistic layered foliage (not just one sphere)
-    for layer in 0..3 {
-        let y_offset = 6.0 + (layer as f32) * 1.5;
-        let scale = 1.2 - (layer as f32) * 0.2; // Smaller as we go up
-        
-        // Multiple foliage clumps per layer
-        for clump in 0..5 {
-            let angle = (clump as f32) * std::f32::consts::TAU / 5.0 + (layer as f32) * 0.5;
-            let radius = 1.5 * scale;
-            let x_offset = angle.cos() * radius * 0.7;
-            let z_offset = angle.sin() * radius * 0.7;
-            
-            commands.spawn((
-                Mesh3d(meshes.add(Sphere::new(1.2 * scale))),
-                MeshMaterial3d(materials.add(Color::srgb(
-                    0.15 - (layer as f32) * 0.02, 
-                    0.6 + (layer as f32) * 0.05, 
-                    0.2 - (layer as f32) * 0.03
-                ))), // Gradient from dark to light green
-                Transform::from_xyz(x_offset, y_offset, z_offset)
-                    .with_scale(Vec3::new(0.8, 1.0, 0.8)), // Slightly flattened
-                ChildOf(tree_entity),
-                VisibleChildBundle::default(),
-            ));
-        }
-    }
-
-    // Add some hanging branches
-    for branch in 0..6 {
-        let angle = (branch as f32) * std::f32::consts::TAU / 6.0;
-        let branch_x = angle.cos() * 2.8;
-        let branch_z = angle.sin() * 2.8;
-        
-        commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(0.1, 1.5))),
-            MeshMaterial3d(materials.add(Color::srgb(0.35, 0.2, 0.1))), // Branch color
-            Transform::from_xyz(branch_x, 5.5, branch_z)
-                .with_rotation(Quat::from_rotation_z(0.3)) // Angled down
-                .with_rotation(Quat::from_rotation_y(angle)),
-            ChildOf(tree_entity),
-            VisibleChildBundle::default(),
-        ));
-        
-        // Leaves at branch end
-        commands.spawn((
-            Mesh3d(meshes.add(Sphere::new(0.6))),
-            MeshMaterial3d(materials.add(Color::srgb(0.2, 0.7, 0.3))),
-            Transform::from_xyz(branch_x * 1.2, 4.8, branch_z * 1.2),
-            ChildOf(tree_entity),
-            VisibleChildBundle::default(),
-        ));
-    }
     
     tree_entity
 }
@@ -752,16 +708,16 @@ fn create_marking_material(materials: &mut ResMut<Assets<StandardMaterial>>) -> 
     })
 }
 
-/// Create a detailed tree mesh for full LOD
-fn create_detailed_tree_mesh() -> Mesh {
-    // Create a complex tree mesh with multiple branches
+/// Create a detailed palm tree mesh for full LOD
+fn create_detailed_palm_mesh() -> Mesh {
+    // Create a palm tree trunk mesh
     // For now, use a simple cylinder as placeholder
     // In a real implementation, you'd load from an asset or generate procedurally
     Cylinder::new(0.3, 8.0).mesh().into()
 }
 
-/// Create a medium detail tree mesh
-fn create_medium_tree_mesh() -> Mesh {
+/// Create a medium detail palm tree mesh
+fn create_medium_palm_mesh() -> Mesh {
     // Simpler version with fewer vertices
     Cylinder::new(0.25, 6.0).mesh().into()
 }

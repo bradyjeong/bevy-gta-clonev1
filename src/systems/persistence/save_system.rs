@@ -136,6 +136,32 @@ pub struct SerializableSuperCar {
     pub acceleration: f32,
     pub turbo_boost: bool,
     pub exhaust_timer: f32,
+    // Advanced hypercar physics
+    pub weight: f32,
+    pub power: f32,
+    pub torque: f32,
+    pub drag_coefficient: f32,
+    // Suspension and handling
+    pub suspension_stiffness: f32,
+    pub suspension_damping: f32,
+    pub front_weight_bias: f32,
+    // Traction control system
+    pub traction_control: bool,
+    pub stability_control: bool,
+    pub wheel_spin_threshold: f32,
+    pub current_traction: f32,
+    // Turbo system
+    pub turbo_pressure: f32,
+    pub turbo_lag: f32,
+    pub turbo_cooldown: f32,
+    pub max_turbo_time: f32,
+    pub current_turbo_time: f32,
+    // Engine characteristics
+    pub rpm: f32,
+    pub max_rpm: f32,
+    pub idle_rpm: f32,
+    pub power_band_start: f32,
+    pub power_band_end: f32,
 }
 
 impl From<SuperCar> for SerializableSuperCar {
@@ -145,6 +171,27 @@ impl From<SuperCar> for SerializableSuperCar {
             acceleration: car.acceleration,
             turbo_boost: car.turbo_boost,
             exhaust_timer: car.exhaust_timer,
+            weight: car.weight,
+            power: car.power,
+            torque: car.torque,
+            drag_coefficient: car.drag_coefficient,
+            suspension_stiffness: car.suspension_stiffness,
+            suspension_damping: car.suspension_damping,
+            front_weight_bias: car.front_weight_bias,
+            traction_control: car.traction_control,
+            stability_control: car.stability_control,
+            wheel_spin_threshold: car.wheel_spin_threshold,
+            current_traction: car.current_traction,
+            turbo_pressure: car.turbo_pressure,
+            turbo_lag: car.turbo_lag,
+            turbo_cooldown: car.turbo_cooldown,
+            max_turbo_time: car.max_turbo_time,
+            current_turbo_time: car.current_turbo_time,
+            rpm: car.rpm,
+            max_rpm: car.max_rpm,
+            idle_rpm: car.idle_rpm,
+            power_band_start: car.power_band_start,
+            power_band_end: car.power_band_end,
         }
     }
 }
@@ -156,6 +203,27 @@ impl Into<SuperCar> for SerializableSuperCar {
             acceleration: self.acceleration,
             turbo_boost: self.turbo_boost,
             exhaust_timer: self.exhaust_timer,
+            weight: self.weight,
+            power: self.power,
+            torque: self.torque,
+            drag_coefficient: self.drag_coefficient,
+            suspension_stiffness: self.suspension_stiffness,
+            suspension_damping: self.suspension_damping,
+            front_weight_bias: self.front_weight_bias,
+            traction_control: self.traction_control,
+            stability_control: self.stability_control,
+            wheel_spin_threshold: self.wheel_spin_threshold,
+            current_traction: self.current_traction,
+            turbo_pressure: self.turbo_pressure,
+            turbo_lag: self.turbo_lag,
+            turbo_cooldown: self.turbo_cooldown,
+            max_turbo_time: self.max_turbo_time,
+            current_turbo_time: self.current_turbo_time,
+            rpm: self.rpm,
+            max_rpm: self.max_rpm,
+            idle_rpm: self.idle_rpm,
+            power_band_start: self.power_band_start,
+            power_band_end: self.power_band_end,
         }
     }
 }

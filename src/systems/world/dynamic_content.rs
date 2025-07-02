@@ -154,7 +154,7 @@ fn spawn_dynamic_content_safe(
     
     // Buildings - re-enabled with proper road collision detection
     let on_road = is_on_road_spline(position, road_network, 25.0);
-    if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.008 { // Slightly increased spawn rate
+    if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.004 { // Reduced building density for better performance
         if on_road {
             println!("DEBUG: Skipping building at {:?} - on road", position);
         } else if is_in_water_area(position) {
@@ -174,7 +174,7 @@ fn spawn_dynamic_content_safe(
         }
     }
     // Trees in empty areas (away from roads and buildings)
-    else if !is_on_road_spline(position, road_network, 15.0) && !is_in_water_area(position) && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.003 { // EMERGENCY: 0.03 -> 0.003 (10x reduction)
+    else if !is_on_road_spline(position, road_network, 15.0) && !is_in_water_area(position) && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.15 { // Increased from 0.003 to 0.15 (15%)
         // Ensure no overlap with buildings or roads
         if !has_content_at_position(position, existing_content, 10.0) {
             spawn_dynamic_tree(commands, position, meshes, materials, entity_limits, current_time);
@@ -372,78 +372,46 @@ fn spawn_dynamic_tree(
         },
         Transform::from_xyz(position.x, position.y, position.z),
         VehicleVisibilityBundle::default(),
-        Cullable { max_distance: 200.0, is_culled: false }, // Reduced from 400 to 200
+        Cullable { max_distance: 200.0, is_culled: false },
     )).id();
 
-    // Realistic tree trunk with texture variation
-    let trunk_height = 8.0;
-    for trunk_segment in 0..4 {
-        let y_pos = (trunk_segment as f32) * 2.0 + 1.0;
-        let radius = 0.35 - (trunk_segment as f32) * 0.04; // Taper
-        let rotation = (trunk_segment as f32) * 0.1; // Slight twist
+    // Palm tree trunk - single brown cylinder
+    commands.spawn((
+        Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
+        MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
+        Transform::from_xyz(0.0, 4.0, 0.0),
+        ChildOf(tree_entity),
+        VisibleChildBundle::default(),
+    ));
+
+    // Palm fronds - 4 green rectangles arranged in a cross
+    for i in 0..4 {
+        let angle = (i as f32) * std::f32::consts::PI / 2.0;
         
         commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(radius, 2.1))),
-            MeshMaterial3d(materials.add(Color::srgb(
-                0.4 + (trunk_segment as f32) * 0.03, 
-                0.25 + (trunk_segment as f32) * 0.02, 
-                0.15 + (trunk_segment as f32) * 0.01
-            ))), // Varying bark colors
-            Transform::from_xyz(0.0, y_pos, 0.0)
-                .with_rotation(Quat::from_rotation_y(rotation)),
+            Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
+            MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
+            Transform::from_xyz(
+                angle.cos() * 1.2, 
+                7.5, 
+                angle.sin() * 1.2
+            ).with_rotation(
+                Quat::from_rotation_y(angle) * 
+                Quat::from_rotation_z(-0.2) // Slight droop
+            ),
             ChildOf(tree_entity),
             VisibleChildBundle::default(),
         ));
     }
 
-    // Main physics collider
+    // Physics collider for palm trunk
     commands.spawn((
         RigidBody::Fixed,
-        Collider::cylinder(4.0, 0.4),
+        Collider::cylinder(4.0, 0.3),
         CollisionGroups::new(STATIC_GROUP, Group::ALL),
         Transform::from_xyz(0.0, 4.0, 0.0),
         ChildOf(tree_entity),
     ));
-
-    // Optimized foliage - merged into fewer, larger meshes
-    // Main canopy (replaces 15 individual clumps)
-    commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(3.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.15, 0.6, 0.2))), // Dark green base
-        Transform::from_xyz(0.0, 7.0, 0.0)
-            .with_scale(Vec3::new(1.0, 0.8, 1.0)), // Slightly flattened
-        ChildOf(tree_entity),
-        VisibleChildBundle::default(),
-    ));
-    
-    // Upper canopy layer
-    commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(2.2))),
-        MeshMaterial3d(materials.add(Color::srgb(0.2, 0.65, 0.25))), // Lighter green
-        Transform::from_xyz(0.0, 8.5, 0.0)
-            .with_scale(Vec3::new(0.9, 0.7, 0.9)),
-        ChildOf(tree_entity),
-        VisibleChildBundle::default(),
-    ));
-
-    // Simplified hanging branches - reduced from 6 to 2
-    for branch in 0..2 {
-        let angle = (branch as f32) * std::f32::consts::PI; // Opposite sides
-        let branch_x = angle.cos() * 2.5;
-        let branch_z = angle.sin() * 2.5;
-        
-        // Combined branch with leaves (single mesh)
-        commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(0.12, 2.0))),
-            MeshMaterial3d(materials.add(Color::srgb(0.25, 0.5, 0.15))), // Branch-leaf blend
-            Transform::from_xyz(branch_x, 5.0, branch_z)
-                .with_rotation(Quat::from_rotation_z(0.4)) // Angled down
-                .with_rotation(Quat::from_rotation_y(angle))
-                .with_scale(Vec3::new(1.5, 1.0, 1.5)), // Wider to suggest leaves
-            ChildOf(tree_entity),
-            VisibleChildBundle::default(),
-        ));
-    }
     
     // Track the new tree
     entity_limits.tree_entities.push((tree_entity, current_time));

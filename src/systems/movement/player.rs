@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use rand::Rng;
+
 use std::cell::RefCell;
 use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation, HumanBehavior};
+use crate::systems::input::{ControlManager, ControlAction, is_accelerating, is_braking, get_steering_input};
 
 thread_local! {
     static MOVEMENT_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
@@ -10,7 +11,7 @@ thread_local! {
 
 pub fn human_player_movement(
     time: Res<Time>,
-    input: Res<ButtonInput<KeyCode>>,
+    control_manager: Res<ControlManager>,
     mut player_query: Query<
         (
             &mut ExternalForce,
@@ -41,27 +42,23 @@ pub fn human_player_movement(
     let input_active = behavior.input_delay_timer <= 0.0;
     let mut input_direction = Vec3::ZERO;
     let mut rotation_input = 0.0;
-    let is_running = input.pressed(KeyCode::ShiftLeft);
+    let is_running = control_manager.is_control_active(ControlAction::Turbo);
 
     if input_active {
-        // Forward/backward movement
-        if input.pressed(KeyCode::ArrowUp) {
+        // Forward/backward movement using ControlManager
+        if is_accelerating(&control_manager) {
             input_direction += *transform.forward();
         }
-        if input.pressed(KeyCode::ArrowDown) {
+        if is_braking(&control_manager) {
             input_direction -= *transform.forward();
         }
         
-        // Rotation
-        if input.pressed(KeyCode::ArrowLeft) {
-            rotation_input = 1.0;
-        } else if input.pressed(KeyCode::ArrowRight) {
-            rotation_input = -1.0;
-        }
+        // Rotation using ControlManager
+        rotation_input = get_steering_input(&control_manager);
 
         // Add reaction delay for new inputs
-        if input.any_just_pressed([KeyCode::ArrowUp, KeyCode::ArrowDown, 
-                                  KeyCode::ArrowLeft, KeyCode::ArrowRight]) {
+        if is_accelerating(&control_manager) || is_braking(&control_manager) || 
+           get_steering_input(&control_manager).abs() > 0.0 {
             behavior.input_delay_timer = behavior.reaction_time;
         }
     }

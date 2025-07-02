@@ -175,7 +175,6 @@ impl UnifiedEntityFactory {
             vehicle_config.tire_physics.clone(),
             VehicleAudioState::default(),
             Car,
-            ActiveEntity,
             Cullable::new(200.0),
             MovementTracker::new(safe_position, 10.0), // Track vehicle movement with 10m threshold
         ));
