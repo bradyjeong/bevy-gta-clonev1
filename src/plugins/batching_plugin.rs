@@ -31,8 +31,8 @@ impl Plugin for BatchingPlugin {
         app.add_systems(PreUpdate, frame_counter_system)
             .add_systems(PreUpdate, mark_transform_dirty_system)
             .add_systems(PreUpdate, mark_visibility_dirty_system)
-            .add_systems(PreUpdate, mark_physics_dirty_system)
-            .add_systems(PreUpdate, movement_based_lod_marking_system);
+            .add_systems(PreUpdate, mark_physics_dirty_system);
+            // .add_systems(PreUpdate, movement_based_lod_marking_system); // Removed - functionality moved to unified systems
 
         // Batch processing systems - run in Update
         app.add_systems(Update, (
@@ -43,16 +43,15 @@ impl Plugin for BatchingPlugin {
         ).chain());
 
         // Optimized LOD systems - run in Update after batch processing
-        app.add_systems(Update, optimized_unified_lod_system)
-            .add_systems(Update, optimized_distance_culling_system)
-            .add_systems(Update, optimized_npc_lod_system);
+        app.add_systems(Update, master_unified_lod_system)
+            .add_systems(Update, new_unified_distance_culling_system);
 
         // Cleanup and monitoring systems - run in PostUpdate
         app.add_systems(PostUpdate, (
             dirty_flag_cleanup_system,
             dirty_flags_metrics_system,
-            optimized_lod_performance_monitor,
-            periodic_lod_marking_system,
+            // optimized_lod_performance_monitor, // Removed - functionality moved to unified_lod.rs
+            // periodic_lod_marking_system, // Removed - functionality moved to unified systems
         ));
 
         // Add test systems for development/debugging
@@ -143,7 +142,7 @@ impl Plugin for EnhancedBatchingPlugin {
             app.add_systems(PreUpdate, mark_visibility_dirty_system);
             
             app.add_systems(Update, batch_culling_system)
-                .add_systems(Update, optimized_distance_culling_system);
+                .add_systems(Update, new_unified_distance_culling_system);
         }
 
         if self.enable_physics_batching {
@@ -153,12 +152,11 @@ impl Plugin for EnhancedBatchingPlugin {
         }
 
         if self.enable_lod_batching {
-            app.add_systems(PreUpdate, movement_based_lod_marking_system);
+            // app.add_systems(PreUpdate, movement_based_lod_marking_system); // Removed - functionality moved to unified systems
             
             app.add_systems(Update, batch_lod_processing_system)
-                .add_systems(Update, optimized_unified_lod_system)
-                .add_systems(Update, optimized_npc_lod_system)
-                .add_systems(Update, periodic_lod_marking_system);
+                .add_systems(Update, master_unified_lod_system);
+                // .add_systems(Update, periodic_lod_marking_system); // Removed - functionality moved to unified systems
         }
 
         // Cleanup systems
@@ -166,8 +164,8 @@ impl Plugin for EnhancedBatchingPlugin {
 
         // Performance monitoring systems
         if self.enable_performance_monitoring {
-            app.add_systems(PostUpdate, dirty_flags_metrics_system)
-                .add_systems(PostUpdate, optimized_lod_performance_monitor);
+            app.add_systems(PostUpdate, dirty_flags_metrics_system);
+                // .add_systems(PostUpdate, optimized_lod_performance_monitor); // Removed - functionality moved to unified_lod.rs
         }
     }
 }

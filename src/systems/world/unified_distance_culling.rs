@@ -177,11 +177,20 @@ pub fn new_unified_distance_culling_system(
     let current_time = timer.elapsed;
     let current_frame = frame_counter.frame;
     
-    // Process entities in batches to maintain performance
+    // Time budgeting - max 4ms per frame
+    let start_time = std::time::Instant::now();
+    const MAX_FRAME_TIME: std::time::Duration = std::time::Duration::from_millis(4);
+    
+    // Reduced entity processing per frame
     let mut processed = 0;
-    const MAX_ENTITIES_PER_FRAME: usize = 50;
+    const MAX_ENTITIES_PER_FRAME: usize = 15;
     
     for (entity, mut cullable, transform, mut visibility) in cullable_query.iter_mut() {
+        // Early exit if time budget exceeded
+        if start_time.elapsed() > MAX_FRAME_TIME {
+            break;
+        }
+        
         if processed >= MAX_ENTITIES_PER_FRAME {
             break;
         }

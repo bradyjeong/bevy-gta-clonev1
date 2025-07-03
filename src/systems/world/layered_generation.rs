@@ -32,7 +32,8 @@ pub fn layered_generation_coordinator(
     for (chunk_coord, chunk) in &world_manager.chunks {
         if matches!(chunk.state, ChunkState::Loading) {
             // Check if enough time has passed since last update (prevent frame drops)
-            if current_time - chunk.last_update > 0.1 {
+            // PERFORMANCE: Increased from 0.1 to 0.2 seconds to reduce generation frequency
+            if current_time - chunk.last_update > 0.2 {
                 chunks_to_update.push(*chunk_coord);
             }
         }
@@ -256,8 +257,8 @@ fn generate_buildings_for_chunk(
     let distance_from_center = Vec2::new(chunk_center.x, chunk_center.z).length();
     let building_density = (1.0 - (distance_from_center / 2000.0).min(0.8)).max(0.1);
     
-    // Generate building positions
-    let building_attempts = (building_density * 20.0) as usize;
+    // Generate building positions - REDUCED: From 20 to 8 attempts
+    let building_attempts = (building_density * 8.0) as usize;
     
     for _ in 0..building_attempts {
         let local_x = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
@@ -374,8 +375,8 @@ fn generate_vehicles_for_chunk(
     let chunk_center = coord.to_world_pos();
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
     
-    // Generate vehicles only on roads
-    let vehicle_attempts = 5; // Conservative number to prevent overcrowding
+    // Generate vehicles only on roads - REDUCED: From 5 to 2 attempts
+    let vehicle_attempts = 2; // Conservative number to prevent overcrowding
     
     for _ in 0..vehicle_attempts {
         let local_x = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));

@@ -9,7 +9,9 @@ pub fn car_movement(
     control_manager: Res<ControlManager>,
     config: Res<GameConfig>,
     mut car_query: Query<(&mut Velocity, &Transform), (With<Car>, With<ActiveEntity>, Without<SuperCar>)>,
+    _time: Res<Time>,
 ) {
+    let start_time = std::time::Instant::now();
     let Ok((mut velocity, transform)) = car_query.single_mut() else {
         return;
     };
@@ -54,6 +56,12 @@ pub fn car_movement(
     // Apply unified physics safety systems
     PhysicsUtilities::validate_velocity(&mut velocity, &config);
     PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 1.0);
+    
+    // Performance monitoring
+    let processing_time = start_time.elapsed().as_millis() as f32;
+    if processing_time > 1.0 {
+        warn!("Car movement took {:.2}ms (> 1ms budget)", processing_time);
+    }
 }
 
 pub fn supercar_movement(

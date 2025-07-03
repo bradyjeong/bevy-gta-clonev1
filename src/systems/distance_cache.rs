@@ -46,9 +46,10 @@ impl DistanceCache {
     pub fn advance_frame(&mut self) {
         self.current_frame += 1;
         
-        // Clean up old entries every 60 frames (~1 second at 60 FPS)
-        if self.current_frame % 60 == 0 {
-            self.cleanup_old_entries();
+        // Clean up old entries every 120 frames (~2 seconds at 60 FPS)
+        // Spread cleanup over multiple frames to prevent spikes
+        if self.current_frame % 120 == 0 {
+            self.cleanup_old_entries_gradually();
         }
         
         // Prevent cache from growing too large
@@ -137,14 +138,24 @@ impl DistanceCache {
         }
     }
 
-    /// Clean up entries older than 10 frames
-    fn cleanup_old_entries(&mut self) {
+    /// Clean up entries older than 10 frames gradually
+    fn cleanup_old_entries_gradually(&mut self) {
         let cutoff_frame = self.current_frame.saturating_sub(10);
-        let initial_size = self.cache.len();
+        let _initial_size = self.cache.len();
         
-        self.cache.retain(|_, (_, _, last_frame)| *last_frame >= cutoff_frame);
+        // Only clean up a limited number of entries per frame (max 50)
+        let mut removed = 0;
+        const MAX_CLEANUP_PER_FRAME: usize = 50;
         
-        let removed = initial_size - self.cache.len();
+        self.cache.retain(|_, (_, _, last_frame)| {
+            if *last_frame < cutoff_frame && removed < MAX_CLEANUP_PER_FRAME {
+                removed += 1;
+                false
+            } else {
+                true
+            }
+        });
+        
         self.stats.cleanups += removed as u64;
     }
 

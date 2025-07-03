@@ -6,7 +6,7 @@ use crate::systems::input::{ControlManager, is_accelerating, is_braking};
 use crate::systems::physics_utils::PhysicsUtilities;
 
 /// CRITICAL: High-performance realistic vehicle physics system
-/// Optimized for 60+ FPS with comprehensive safety checks
+/// Optimized for 60+ FPS with comprehensive safety checks and entity limits
 pub fn realistic_vehicle_physics_system(
     time: Res<Time>,
     config: Res<GameConfig>,
@@ -21,11 +21,53 @@ pub fn realistic_vehicle_physics_system(
         &mut VehicleSuspension,
         &mut TirePhysics,
     ), With<ActiveEntity>>,
+    active_query: Query<&Transform, (With<ActiveEntity>, Without<RealisticVehicle>)>,
     // rapier_context: Query<&RapierContext>, // TODO: Fix RapierContext integration
 ) {
-    let dt = time.delta_secs().clamp(0.001, 0.05); // Clamp delta time for stability
+    let start_time = std::time::Instant::now();
+    let dt = time.delta_secs().clamp(0.001, 0.05);
+    let max_processing_time = 5.0; // 5ms time budget
     
-    for (_entity, mut velocity, mut transform, mut vehicle, mut dynamics, mut engine, mut suspension, mut tire_physics) in query.iter_mut() {
+    // Get active entity position for distance calculations
+    let active_pos = active_query.single().map(|t| t.translation).unwrap_or_default();
+    
+    // Sort vehicles by distance and importance for priority processing
+    let mut vehicles_with_distance: Vec<_> = query.iter_mut()
+        .map(|(entity, velocity, transform, vehicle, dynamics, engine, suspension, tire_physics)| {
+            let distance = active_pos.distance(transform.translation);
+            (distance, entity, velocity, transform, vehicle, dynamics, engine, suspension, tire_physics)
+        })
+        .collect();
+    
+    vehicles_with_distance.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+    
+    let mut processed_count = 0;
+    let max_physics_entities = 8; // Limit active physics simulations
+    
+    for (distance, _entity, mut velocity, mut transform, mut vehicle, mut dynamics, mut engine, mut suspension, mut tire_physics) in vehicles_with_distance {
+        // Check time budget
+        if start_time.elapsed().as_millis() as f32 > max_processing_time {
+            break;
+        }
+        
+        // Skip physics for vehicles beyond 200m (state-only updates)
+        if distance > 200.0 {
+            vehicle.physics_enabled = false;
+            continue;
+        }
+        
+        // Use simplified physics for vehicles beyond 100m
+        if distance > 100.0 {
+            process_simplified_vehicle_physics(&mut velocity, &mut transform, &mut vehicle, dt);
+            continue;
+        }
+        
+        // Limit active physics simulations
+        if processed_count >= max_physics_entities {
+            vehicle.physics_enabled = false;
+            continue;
+        }
+        
         // Performance check: Skip if physics disabled for LOD
         if !vehicle.physics_enabled {
             continue;
@@ -83,7 +125,41 @@ pub fn realistic_vehicle_physics_system(
         
         // Update last update time for performance tracking
         vehicle.last_update_time = time.elapsed_secs();
+        
+        processed_count += 1;
     }
+    
+    // Report performance metrics
+    let processing_time = start_time.elapsed().as_millis() as f32;
+    if processing_time > 3.0 {
+        warn!("Vehicle physics processing took {:.2}ms (> 3ms budget)", processing_time);
+    }
+}
+
+/// Simplified physics processing for distant vehicles
+fn process_simplified_vehicle_physics(
+    velocity: &mut Velocity,
+    transform: &mut Transform,
+    vehicle: &mut RealisticVehicle,
+    dt: f32,
+) {
+    // Simple damping and gravity
+    velocity.linvel *= 0.995;
+    velocity.angvel *= 0.98;
+    velocity.linvel.y -= 9.81 * dt;
+    
+    // Basic ground collision
+    if transform.translation.y < 0.1 {
+        transform.translation.y = 0.1;
+        velocity.linvel.y = velocity.linvel.y.max(0.0);
+    }
+    
+    // Clamp velocity for stability
+    if velocity.linvel.length() > 50.0 {
+        velocity.linvel = velocity.linvel.normalize() * 50.0;
+    }
+    
+    vehicle.physics_enabled = false;
 }
 
 /// Process realistic vehicle input with proper control systems

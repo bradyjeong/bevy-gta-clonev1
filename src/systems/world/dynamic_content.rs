@@ -57,13 +57,16 @@ pub fn dynamic_content_system(
         // Update timer
         timer.timer += time.delta_secs();
         
-        // Only process dynamic content every 2.0 seconds OR when player moves significantly
+        // PERFORMANCE: Frame time budgeting - max 3ms per frame
+        let frame_start_time = std::time::Instant::now();
+        
+        // CRITICAL PERFORMANCE OPTIMIZATION: Process every 8.0 seconds OR when player moves significantly
         let movement_threshold = 100.0;
         let player_moved = timer.last_player_pos
             .map(|last_pos| active_pos.distance(last_pos) > movement_threshold)
             .unwrap_or(true);
         
-        let should_update = timer.timer >= 2.0 || player_moved;
+        let should_update = timer.timer >= 8.0 || player_moved;
         
         if !should_update {
             return;
@@ -73,7 +76,7 @@ pub fn dynamic_content_system(
         timer.last_player_pos = Some(active_pos);
         
         // EMERGENCY PERFORMANCE MODE - Drastically reduce entity spawning
-        let active_radius = 150.0;   // HALVED: Minimal spawn radius
+        let active_radius = 100.0;   // REDUCED: Minimal spawn radius from 150.0 to 100.0
         let cleanup_radius = 2500.0;  // Match road cleanup radius to prevent premature despawning
         let spawn_density = 120.0;   // INCREASED: Much higher spacing between entities
         
@@ -107,7 +110,7 @@ pub fn dynamic_content_system(
         // Phase 3: TRUE CIRCULAR SPAWNING using polar coordinates
         // Generate content in concentric circles around the active entity
         let mut spawn_attempts = 0;
-        let max_spawn_attempts = 50; // Reduced spawn attempts for better performance
+        let max_spawn_attempts = 15; // REDUCED: From 50 to 15 for better performance
         
         for radius_step in (spawn_density as i32..active_radius as i32).step_by(spawn_density as usize) {
             let radius = radius_step as f32;
@@ -117,6 +120,11 @@ pub fn dynamic_content_system(
             for i in 0..points_on_circle {
                 spawn_attempts += 1;
                 if spawn_attempts > max_spawn_attempts { break; }
+                
+                // PERFORMANCE: Check frame time budget
+                if frame_start_time.elapsed().as_millis() > 3 {
+                    break; // Exit early to maintain frame rate
+                }
                 
                 let angle = (i as f32 / points_on_circle as f32) * 2.0 * std::f32::consts::PI;
                 let spawn_x = active_pos.x + radius * angle.cos();
@@ -129,6 +137,11 @@ pub fn dynamic_content_system(
                 }
             }
             if spawn_attempts > max_spawn_attempts { break; }
+            
+            // PERFORMANCE: Check frame time budget between radius loops
+            if frame_start_time.elapsed().as_millis() > 3 {
+                break; // Exit early to maintain frame rate
+            }
         }
     }
 }

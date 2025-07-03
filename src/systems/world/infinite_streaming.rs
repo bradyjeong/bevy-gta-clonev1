@@ -22,10 +22,10 @@ pub const LOCAL_STREAMING_RADIUS: f32 = 5000.0;    // 5km local visibility
 pub const DETAIL_STREAMING_RADIUS: f32 = 2000.0;   // 2km detail visibility
 pub const MICRO_STREAMING_RADIUS: f32 = 500.0;     // 500m micro visibility
 
-/// Maximum entities per frame for smooth streaming
-pub const MAX_CHUNKS_LOADED_PER_FRAME: usize = 6;
-pub const MAX_CHUNKS_UNLOADED_PER_FRAME: usize = 8;
-pub const MAX_CONTENT_GENERATED_PER_FRAME: usize = 10;
+/// Maximum entities per frame for smooth streaming - REDUCED FOR PERFORMANCE
+pub const MAX_CHUNKS_LOADED_PER_FRAME: usize = 2;  // REDUCED: From 6 to 2
+pub const MAX_CHUNKS_UNLOADED_PER_FRAME: usize = 4;  // REDUCED: From 8 to 4
+pub const MAX_CONTENT_GENERATED_PER_FRAME: usize = 5;  // REDUCED: From 10 to 5
 
 /// Hierarchical coordinate system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

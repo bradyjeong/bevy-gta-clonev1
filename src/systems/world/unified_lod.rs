@@ -147,8 +147,17 @@ pub fn master_unified_lod_system(
     
     lod_coordinator.frame_counter = frame_counter.frame;
     
+    // Time budgeting - max 3ms per frame for entire LOD system
+    let start_time = std::time::Instant::now();
+    const MAX_FRAME_TIME: std::time::Duration = std::time::Duration::from_millis(3);
+    
     // Update chunk LOD levels based on distance
     update_chunk_lod_levels(&mut world_manager, active_pos);
+    
+    // Early exit if time budget exceeded
+    if start_time.elapsed() > MAX_FRAME_TIME {
+        return;
+    }
     
     // Update chunk entity visibility
     {
@@ -171,12 +180,18 @@ pub fn master_unified_lod_system(
         }
     }
     
-    // Process entity-type specific LOD updates
-    process_vehicle_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut vehicle_query, &mut distance_cache, time.elapsed_secs());
-    process_npc_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut npc_query, &mut distance_cache, time.elapsed_secs());
-    {
+    // Process entity-type specific LOD updates with time budgeting
+    if start_time.elapsed() < MAX_FRAME_TIME {
+        process_vehicle_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut vehicle_query, &mut distance_cache, time.elapsed_secs(), start_time, MAX_FRAME_TIME);
+    }
+    
+    if start_time.elapsed() < MAX_FRAME_TIME {
+        process_npc_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut npc_query, &mut distance_cache, time.elapsed_secs(), start_time, MAX_FRAME_TIME);
+    }
+    
+    if start_time.elapsed() < MAX_FRAME_TIME {
         let mut vegetation_query = visibility_param_set.p1();
-        process_vegetation_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut vegetation_query, &mut distance_cache, frame_counter.frame);
+        process_vegetation_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut vegetation_query, &mut distance_cache, frame_counter.frame, start_time, MAX_FRAME_TIME);
     }
 }
 
@@ -242,13 +257,26 @@ fn process_vehicle_lod(
     vehicle_query: &mut Query<(Entity, &mut VehicleState, &Transform, Option<&VehicleRendering>), Without<ActiveEntity>>,
     distance_cache: &mut ResMut<DistanceCache>,
     _current_time: f32,
+    start_time: std::time::Instant,
+    max_frame_time: std::time::Duration,
 ) {
     let config = lod_coordinator.lod_plugin_configs.entry(EntityType::Vehicle)
         .or_insert_with(LODPluginConfig::vehicle);
     
     let mut processed = 0;
+    const MAX_ENTITIES_PER_FRAME: usize = 10;
     
     for (entity, mut vehicle_state, transform, rendering) in vehicle_query.iter_mut() {
+        // Early exit if time budget exceeded
+        if start_time.elapsed() > max_frame_time {
+            break;
+        }
+        
+        // Limit entities processed per frame
+        if processed >= MAX_ENTITIES_PER_FRAME {
+            break;
+        }
+        
         let distance = get_cached_distance(
             active_entity,
             entity,
@@ -286,6 +314,10 @@ fn process_vehicle_lod(
     }
     
     lod_coordinator.performance_stats.entities_processed.insert(EntityType::Vehicle, processed);
+    
+    // Track processing time for performance monitoring
+    let processing_time = start_time.elapsed().as_secs_f32() * 1000.0; // Convert to ms
+    lod_coordinator.performance_stats.processing_times.insert(EntityType::Vehicle, processing_time);
 }
 
 /// NPC LOD processing plugin - replaces world/npc_lod.rs
@@ -297,13 +329,26 @@ fn process_npc_lod(
     npc_query: &mut Query<(Entity, &mut NPCState, &Transform, Option<&NPCRendering>), (Without<ActiveEntity>, Without<VehicleState>)>,
     distance_cache: &mut ResMut<DistanceCache>,
     current_time: f32,
+    start_time: std::time::Instant,
+    max_frame_time: std::time::Duration,
 ) {
     let config = lod_coordinator.lod_plugin_configs.entry(EntityType::NPC)
         .or_insert_with(LODPluginConfig::npc);
     
     let mut processed = 0;
+    const MAX_ENTITIES_PER_FRAME: usize = 10;
     
     for (entity, mut npc_state, transform, rendering) in npc_query.iter_mut() {
+        // Early exit if time budget exceeded
+        if start_time.elapsed() > max_frame_time {
+            break;
+        }
+        
+        // Limit entities processed per frame
+        if processed >= MAX_ENTITIES_PER_FRAME {
+            break;
+        }
+        
         let distance = get_cached_distance(
             active_entity,
             entity,
@@ -342,6 +387,10 @@ fn process_npc_lod(
     }
     
     lod_coordinator.performance_stats.entities_processed.insert(EntityType::NPC, processed);
+    
+    // Track processing time for performance monitoring
+    let processing_time = start_time.elapsed().as_secs_f32() * 1000.0; // Convert to ms
+    lod_coordinator.performance_stats.processing_times.insert(EntityType::NPC, processing_time);
 }
 
 /// Vegetation LOD processing plugin - replaces world/vegetation_lod.rs
@@ -353,13 +402,26 @@ fn process_vegetation_lod(
     vegetation_query: &mut Query<(Entity, &mut VegetationLOD, &Transform, &mut Visibility, &mut Mesh3d), (With<VegetationMeshLOD>, Without<ActiveEntity>, Without<VehicleState>, Without<NPCState>)>,
     distance_cache: &mut ResMut<DistanceCache>,
     current_frame: u64,
+    start_time: std::time::Instant,
+    max_frame_time: std::time::Duration,
 ) {
     let config = lod_coordinator.lod_plugin_configs.entry(EntityType::Vegetation)
         .or_insert_with(LODPluginConfig::vegetation);
     
     let mut processed = 0;
+    const MAX_ENTITIES_PER_FRAME: usize = 10;
     
     for (entity, mut veg_lod, transform, mut visibility, _mesh_handle) in vegetation_query.iter_mut() {
+        // Early exit if time budget exceeded
+        if start_time.elapsed() > max_frame_time {
+            break;
+        }
+        
+        // Limit entities processed per frame
+        if processed >= MAX_ENTITIES_PER_FRAME {
+            break;
+        }
+        
         let distance = get_cached_distance(
             active_entity,
             entity,
@@ -407,6 +469,10 @@ fn process_vegetation_lod(
     }
     
     lod_coordinator.performance_stats.entities_processed.insert(EntityType::Vegetation, processed);
+    
+    // Track processing time for performance monitoring
+    let processing_time = start_time.elapsed().as_secs_f32() * 1000.0; // Convert to ms
+    lod_coordinator.performance_stats.processing_times.insert(EntityType::Vegetation, processing_time);
 }
 
 /// Component to signal vehicle LOD updates (replaces vehicles/lod_manager.rs functionality)

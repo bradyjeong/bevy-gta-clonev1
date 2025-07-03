@@ -21,16 +21,16 @@ pub fn spawn_new_npc_system(
     _config: Res<GameConfig>,
 ) {
     // Limit NPC spawning to avoid performance issues (unified entity limits)
-    if npc_query.iter().count() >= 100 {
+    if npc_query.iter().count() >= 20 {  // REDUCED: From 100 to 20 NPCs max
         return;
     }
     
     // Spawn new NPCs occasionally using unified spawning pipeline
-    if timing_service.current_time % 5.0 < 0.1 {
+    if timing_service.current_time % 10.0 < 0.1 {  // REDUCED: From 5.0 to 10.0 seconds
         let mut rng = thread_rng();
         
         // Try to find a valid spawn position using unified validation
-        for _ in 0..10 { // Max 10 attempts to find valid position
+        for _ in 0..5 { // REDUCED: From 10 to 5 attempts
             let x = rng.gen_range(-50.0..50.0);
             let z = rng.gen_range(-50.0..50.0);
             let position = Vec2::new(x, z);

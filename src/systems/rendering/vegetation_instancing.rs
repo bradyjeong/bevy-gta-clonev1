@@ -8,7 +8,7 @@ use crate::components::world::*;
 use crate::components::player::ActiveEntity;
 use crate::GameConfig;
 
-/// System to collect vegetation entities for instancing
+/// System to collect vegetation entities for instancing with performance optimization
 pub fn collect_vegetation_instances_system(
     mut commands: Commands,
     vegetation_query: Query<(Entity, &Transform, &VegetationBatchable, &GlobalTransform), 
@@ -22,10 +22,14 @@ pub fn collect_vegetation_instances_system(
     frame_counter: Res<FrameCounter>,
     _game_config: Res<GameConfig>,
     mut last_update: Local<f32>,
+    mut vegetation_groups: Local<HashMap<(VegetationType, Option<Handle<Mesh>>, Option<Handle<StandardMaterial>>), Vec<(Entity, Transform)>>>,
     time: Res<Time>,
 ) {
+    let start_time = std::time::Instant::now();
     let current_time = time.elapsed_secs();
-    if current_time - *last_update < config.update_interval {
+    
+    // Update every 3-4 frames instead of every frame
+    if current_time - *last_update < config.update_interval * 3.0 {
         return;
     }
     *last_update = current_time;
@@ -33,10 +37,18 @@ pub fn collect_vegetation_instances_system(
     let Ok(active_transform) = active_query.single() else { return };
     let active_pos = active_transform.translation;
     
-    // Group vegetation by type and material
-    let mut vegetation_groups: HashMap<(VegetationType, Option<Handle<Mesh>>, Option<Handle<StandardMaterial>>), Vec<(Entity, Transform)>> = HashMap::new();
+    // Reuse existing HashMap to avoid recreating every frame
+    vegetation_groups.clear();
+    
+    let max_processing_time = 3.0; // 3ms time budget
+    let mut processed_count = 0;
     
     for (entity, transform, batchable, global_transform) in vegetation_query.iter() {
+        // Check time budget
+        if start_time.elapsed().as_millis() as f32 > max_processing_time {
+            break;
+        }
+        
         let distance = active_pos.distance(global_transform.translation());
         
         // Skip if too far away
@@ -46,15 +58,21 @@ pub fn collect_vegetation_instances_system(
         
         let key = (batchable.vegetation_type, batchable.mesh_id.clone(), batchable.material_id.clone());
         vegetation_groups.entry(key).or_default().push((entity, *transform));
+        
+        processed_count += 1;
     }
     
-    // Process each vegetation type
-    for ((vegetation_type, _mesh_id, _material_id), entities) in vegetation_groups {
+    // Process each vegetation type with time budgeting
+    for ((vegetation_type, _mesh_id, _material_id), entities) in vegetation_groups.iter() {
+        if start_time.elapsed().as_millis() as f32 > max_processing_time {
+            break;
+        }
+        
         match vegetation_type {
             VegetationType::PalmFrond => {
                 process_palm_frond_instances(
                     &mut commands,
-                    entities,
+                    entities.clone(),
                     &mut palm_frond_query,
                     &config,
                     frame_counter.frame,
@@ -63,7 +81,7 @@ pub fn collect_vegetation_instances_system(
             VegetationType::LeafCluster => {
                 process_leaf_cluster_instances(
                     &mut commands,
-                    entities,
+                    entities.clone(),
                     &mut leaf_cluster_query,
                     &config,
                     frame_counter.frame,
@@ -72,7 +90,7 @@ pub fn collect_vegetation_instances_system(
             VegetationType::TreeTrunk => {
                 process_tree_trunk_instances(
                     &mut commands,
-                    entities,
+                    entities.clone(),
                     &mut tree_trunk_query,
                     &config,
                     frame_counter.frame,
@@ -81,13 +99,19 @@ pub fn collect_vegetation_instances_system(
             VegetationType::Bush => {
                 process_bush_instances(
                     &mut commands,
-                    entities,
+                    entities.clone(),
                     &mut bush_query,
                     &config,
                     frame_counter.frame,
                 );
             },
         }
+    }
+    
+    // Report performance metrics
+    let processing_time = start_time.elapsed().as_millis() as f32;
+    if processing_time > 2.0 {
+        warn!("Vegetation instancing took {:.2}ms (> 2ms budget), processed {} entities", processing_time, processed_count);
     }
 }
 

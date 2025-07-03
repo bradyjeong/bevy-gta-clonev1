@@ -50,7 +50,7 @@ pub struct BatchProcessingStats {
     pub frame_rate_impact: f32,
 }
 
-/// Enhanced batch culling system with intelligent grouping
+/// Enhanced batch culling system with intelligent grouping and entity limits
 pub fn batch_culling_system_enhanced(
     mut commands: Commands,
     mut dirty_visibility_query: Query<(Entity, &DirtyVisibility, &Transform, &mut Visibility, Option<&UnifiedCullable>)>,
@@ -73,6 +73,12 @@ pub fn batch_culling_system_enhanced(
     let mut distance_groups: HashMap<u32, Vec<_>> = HashMap::new();
     let mut entities_to_process: Vec<_> = dirty_visibility_query.iter_mut().collect();
     
+    // Limit total entities processed per frame
+    let max_entities_per_frame = 30;
+    if entities_to_process.len() > max_entities_per_frame {
+        entities_to_process.truncate(max_entities_per_frame);
+    }
+    
     // Sort by priority first, then group by distance buckets
     entities_to_process.sort_by(|a, b| b.1.priority.cmp(&a.1.priority));
     
@@ -88,10 +94,10 @@ pub fn batch_culling_system_enhanced(
     }
     
     let batch_size = batch_processor.adaptive_batch_sizes.get(&BatchType::Culling)
-        .copied().unwrap_or(config.batching.visibility_batch_size);
+        .copied().unwrap_or(config.batching.visibility_batch_size).min(30); // Cap batch size
     
     let mut total_processed = 0;
-    let max_processing_time = config.batching.max_processing_time_ms;
+    let max_processing_time = config.batching.max_processing_time_ms.min(2.0); // 2ms time budget
     
     // Process distance groups in order (closest first)
     let mut sorted_buckets: Vec<_> = distance_groups.keys().copied().collect();
