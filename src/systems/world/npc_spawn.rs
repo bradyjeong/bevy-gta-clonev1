@@ -208,29 +208,4 @@ pub fn migrate_legacy_npcs(
     }
 }
 
-/// Setup system to spawn initial NPCs with new architecture
-pub fn setup_new_npcs(
-    mut commands: Commands,
-    ground_service: Res<GroundDetectionService>,
-) {
-    let mut rng = thread_rng();
-    
-    // Spawn fewer NPCs initially - LOD system will handle performance
-    let mut spawned_count = 0;
-    let max_attempts = 100; // Prevent infinite loop
-    let mut attempts = 0;
-    
-    while spawned_count < 25 && attempts < max_attempts {
-        attempts += 1;
-        let x = rng.gen_range(-900.0..900.0);
-        let z = rng.gen_range(-900.0..900.0);
-        let position = Vec2::new(x, z);
-        
-        if ground_service.is_spawn_position_valid(position) {
-            spawn_simple_npc_with_ground_detection_simple(&mut commands, position, &ground_service);
-            spawned_count += 1;
-        }
-    }
-    
-    println!("DEBUG: Spawned {} NPCs with ground detection (attempted {} positions)", spawned_count, attempts);
-}
+

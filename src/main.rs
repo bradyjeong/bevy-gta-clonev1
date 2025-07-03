@@ -7,8 +7,8 @@ use gta_game::*;
 use gta_game::components::world::{MeshCache, EntityLimits};
 use gta_game::systems::{SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, TransformSyncPlugin, UnifiedDistanceCalculatorPlugin};
 use gta_game::systems::world::road_network::RoadNetwork;
-use gta_game::setup::vehicles::{setup_simple_helicopter, setup_simple_f16, setup_simple_vehicles};
-use gta_game::systems::world::npc_spawn::setup_new_npcs;
+use gta_game::setup_initial_aircraft_unified;
+use gta_game::setup_initial_npcs_unified;
 use gta_game::setup::world::setup_dubai_noon_lighting;
 use gta_game::services::{initialize_simple_services, update_timing_service_system, GroundDetectionPlugin};
 use gta_game::systems::{service_example_vehicle_creation, service_example_config_validation, service_example_timing_check, UnifiedPerformancePlugin, PerformanceIntegrationPlugin};
@@ -78,14 +78,12 @@ fn main() {
             setup_basic_world,
             setup_dubai_noon_lighting,
             setup_basic_roads,
-            setup_simple_helicopter,
+            setup_initial_aircraft_unified,
         ).after(initialize_simple_services))
         .add_systems(Startup, (
-            setup_simple_f16,
             setup_palm_trees,
-            setup_new_npcs,
-            setup_starter_vehicles,
-            setup_simple_vehicles,  // Add Bugatti Chiron SuperCar
+            setup_initial_npcs_unified,
+            setup_initial_vehicles_unified,
             setup_buildings,
         ).after(initialize_simple_services));
         
