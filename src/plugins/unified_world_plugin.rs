@@ -11,10 +11,11 @@ use crate::systems::world::{
     building_layer_system,
     vehicle_layer_system,
     vegetation_layer_system,
-    unified_lod_system,
-    unified_lod_performance_monitor,
+    master_unified_lod_system,
+    master_lod_performance_monitor,
+    initialize_master_lod_system,
     adaptive_lod_system,
-    unified_distance_culling_system,
+    // unified_distance_culling_system, // Disabled due to conflicts - using main one from unified_distance_culling.rs
     unified_cleanup_system,
     
     // NPC systems
@@ -22,6 +23,7 @@ use crate::systems::world::{
     migrate_legacy_npcs,
     spawn_new_npc_system,
 };
+use crate::systems::batching::frame_counter_system;
 use crate::systems::effects::update_beacon_visibility;
 use crate::systems::timing_service::{TimingService, update_timing_service, cleanup_timing_service};
 use crate::factories::{initialize_material_factory};
@@ -37,6 +39,10 @@ impl Plugin for UnifiedWorldPlugin {
             // Resources
             .init_resource::<UnifiedWorldManager>()
             .init_resource::<TimingService>()
+            .init_resource::<crate::components::FrameCounter>()
+            
+            // PreUpdate frame counter
+            .add_systems(PreUpdate, frame_counter_system)
             
             // Core unified systems - broken into groups to avoid Bevy's 12-system tuple limit
             
@@ -61,15 +67,15 @@ impl Plugin for UnifiedWorldPlugin {
             
             // Group 3: LOD and culling (4 systems)
             .add_systems(Update, (
-                unified_lod_system,
+                master_unified_lod_system,
                 npc_lod_system,
-                unified_distance_culling_system,
+                // unified_distance_culling_system, // Disabled due to conflicts
                 adaptive_lod_system,
             ).chain())
             
             // Group 4: Cleanup and legacy (6 systems)
             .add_systems(Update, (
-                unified_lod_performance_monitor,
+                master_lod_performance_monitor,
                 unified_cleanup_system,
                 cleanup_timing_service,
                 optimized_npc_movement,
@@ -84,6 +90,7 @@ impl Plugin for UnifiedWorldPlugin {
             .add_systems(Startup, (
                 initialize_material_factory,
                 initialize_unified_world,
+                initialize_master_lod_system,
             ))
             
             // Debug system to monitor unified world activity
@@ -124,9 +131,9 @@ impl Plugin for MixedWorldPlugin {
                 // building_layer_system, // DISABLED
                 vehicle_layer_system,
                 vegetation_layer_system,
-                unified_lod_system,
+                master_unified_lod_system,
                 npc_lod_system,
-                unified_distance_culling_system,
+                // unified_distance_culling_system, // Disabled due to conflicts
                 
                 // OLD SYSTEMS (for comparison - comment out when ready)
                 // road_network_system,
@@ -141,7 +148,7 @@ impl Plugin for MixedWorldPlugin {
                 dynamic_terrain_system,
                 debug_player_position,
                 update_beacon_visibility,
-                unified_lod_performance_monitor,
+                master_lod_performance_monitor,
                 adaptive_lod_system,
             ));
     }

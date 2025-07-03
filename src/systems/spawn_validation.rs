@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use std::collections::{HashMap, HashSet};
+use crate::components::ContentType;
 
 
 // Universal spawn validation system to prevent entity overlap and collision issues
@@ -16,6 +17,18 @@ pub enum SpawnableType {
 }
 
 impl SpawnableType {
+    /// Convert from unified ContentType to SpawnableType
+    pub fn from_content_type(content_type: ContentType) -> Self {
+        match content_type {
+            ContentType::Vehicle => SpawnableType::Vehicle,
+            ContentType::NPC => SpawnableType::NPC,
+            ContentType::Building => SpawnableType::Building,
+            ContentType::Tree => SpawnableType::Tree,
+            ContentType::Road => SpawnableType::EnvironmentObject,
+            _ => SpawnableType::EnvironmentObject,
+        }
+    }
+    
     /// Get the minimum clearance radius for this entity type
     pub fn clearance_radius(&self) -> f32 {
         match self {

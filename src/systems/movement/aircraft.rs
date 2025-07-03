@@ -2,9 +2,12 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Helicopter, F16, ActiveEntity, MainRotor, TailRotor, AircraftFlight};
 use crate::systems::input::{ControlManager, ControlAction};
+use crate::systems::physics_utils::PhysicsUtilities;
+use crate::config::GameConfig;
 
 pub fn helicopter_movement(
     control_manager: Res<ControlManager>,
+    config: Res<GameConfig>,
     mut helicopter_query: Query<(&mut Velocity, &Transform), (With<Helicopter>, With<ActiveEntity>)>,
 ) {
     let Ok((mut velocity, transform)) = helicopter_query.single_mut() else {
@@ -49,16 +52,9 @@ pub fn helicopter_movement(
     velocity.linvel = target_linear_velocity;
     velocity.angvel = target_angular_velocity;
     
-    // Ground collision: prevent helicopter from going underground
-    let ground_level = 0.5; // Minimum altitude above ground for helicopter
-    if transform.translation.y < ground_level {
-        // Stop downward movement
-        if velocity.linvel.y < 0.0 {
-            velocity.linvel.y = 0.0;
-        }
-        // Add small upward force to keep helicopter above ground
-        velocity.linvel.y += 5.0;
-    }
+    // Use unified velocity validation and ground collision
+    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.5, 5.0);
 }
 
 pub fn rotate_helicopter_rotors(
@@ -85,6 +81,7 @@ pub fn rotate_helicopter_rotors(
 pub fn f16_movement(
     control_manager: Res<ControlManager>,
     time: Res<Time>,
+    config: Res<GameConfig>,
     mut f16_query: Query<(&mut Velocity, &mut Transform, &mut AircraftFlight), (With<F16>, With<ActiveEntity>)>,
 ) {
     let Ok((mut velocity, transform, mut flight)) = f16_query.single_mut() else {
@@ -201,24 +198,9 @@ pub fn f16_movement(
         velocity.linvel += force_delta;
     }
     
-    // Safety check: clamp velocity to prevent physics instability
-    velocity.linvel = velocity.linvel.clamp_length_max(flight.max_speed);
-    
-    // Additional safety: ensure velocity components are finite
-    if !velocity.linvel.is_finite() {
-        velocity.linvel = Vec3::ZERO;
-    }
-    
-    // Ground collision: prevent F16 from going underground
-    let ground_level = 1.0; // Minimum altitude above ground
-    if transform.translation.y < ground_level {
-        // Stop downward movement and apply bounce
-        if velocity.linvel.y < 0.0 {
-            velocity.linvel.y = 0.0;
-        }
-        // Add small upward force to keep aircraft above ground
-        velocity.linvel.y += 10.0 * dt;
-    }
+    // Use unified physics safety systems
+    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 1.0, 10.0);
     
     // === STALL HANDLING ===
     

@@ -5,7 +5,7 @@ use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 // Import our modular components
 use gta_game::*;
 use gta_game::components::world::{MeshCache, EntityLimits};
-use gta_game::systems::{SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, TransformSyncPlugin};
+use gta_game::systems::{SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, TransformSyncPlugin, UnifiedDistanceCalculatorPlugin};
 use gta_game::systems::world::road_network::RoadNetwork;
 use gta_game::setup::vehicles::{setup_simple_helicopter, setup_simple_f16};
 use gta_game::systems::world::npc_spawn::setup_new_npcs;
@@ -48,6 +48,7 @@ fn main() {
         .add_plugins(VehiclePlugin)
         .add_plugins(SpawnValidationPlugin)
         .add_plugins(DistanceCachePlugin)
+        .add_plugins(UnifiedDistanceCalculatorPlugin)
         .add_plugins(DistanceCacheDebugPlugin)
         .add_plugins(TransformSyncPlugin)
         .add_plugins(VegetationLODPlugin)

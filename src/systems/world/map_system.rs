@@ -236,70 +236,31 @@ fn spawn_building(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     building: &BuildingTemplate,
-    lod_level: usize,
+    _lod_level: usize,
 ) -> Entity {
-    // FACTORY PATTERN: Building creation using rendering factory
-    let (size, color, material_type) = match (&building.building_type, lod_level) {
-        (BuildingType::Skyscraper, 0) => (
-            Vec3::new(building.scale.x, building.height, building.scale.z),
-            Color::srgb(0.7, 0.7, 0.8),
-            BuildingMaterialType::Concrete
-        ),
-        (BuildingType::Skyscraper, _) => (
-            Vec3::new(building.scale.x * 0.8, building.height * 0.8, building.scale.z * 0.8),
-            Color::srgb(0.6, 0.6, 0.7),
-            BuildingMaterialType::Concrete
-        ),
-        (BuildingType::Residential, 0) => (
-            Vec3::new(building.scale.x, building.scale.y, building.scale.z),
-            Color::srgb(0.8, 0.6, 0.4),
-            BuildingMaterialType::Brick
-        ),
-        (BuildingType::Commercial, _) => (
-            Vec3::new(building.scale.x, building.scale.y * 1.5, building.scale.z),
-            Color::srgb(0.5, 0.7, 0.9),
-            BuildingMaterialType::Glass
-        ),
-        _ => (
-            Vec3::new(building.scale.x * 0.5, building.scale.y * 0.5, building.scale.z * 0.5),
-            Color::srgb(0.5, 0.5, 0.5),
-            BuildingMaterialType::Concrete
-        ),
-    };
+    // REPLACED: Use UnifiedEntityFactory for building spawning
+    // This eliminates duplicate building spawning code
+    use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+    use crate::GameConfig;
     
-    let (mesh, material) = RenderingFactory::create_mesh_and_material(
-        meshes,
-        materials,
-        &StandardRenderingPattern::Building { color, building_type: material_type }
-    );
+    let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
+    let current_time = 0.0; // Placeholder time
     
-    // Ensure building is properly grounded on terrain surface
-    let ground_level = -0.05; // Match terrain level from dynamic_terrain_system
-    let building_height = building.scale.y;
-    let grounded_position = Vec3::new(
-        building.position.x, 
-        ground_level + building_height / 2.0, // Position mesh at half-height above ground
-        building.position.z
-    );
-    
-    commands.spawn((
-        Mesh3d(mesh),
-        MeshMaterial3d(material),
-        Transform::from_translation(grounded_position),
-        RigidBody::Fixed,
-        // Collider positioned to match mesh - centered at same Y position with same half-extents
-        Collider::cuboid(building.scale.x / 2.0, building.scale.y / 2.0, building.scale.z / 2.0),
-        CollisionGroups::new(STATIC_GROUP, Group::ALL),
-        Cullable {
-            max_distance: match lod_level {
-                0 => 500.0,
-                1 => 800.0,
-                _ => 1200.0,
-            },
-            is_culled: false,
-        },
-        Building,
-    )).id()
+    match factory.spawn_building_consolidated(commands, meshes, materials, building.position, current_time) {
+        Ok(entity) => {
+            // Add map-specific components to maintain compatibility
+            commands.entity(entity).insert(Building);
+            entity
+        }
+        Err(_) => {
+            // Fallback to empty entity if spawn fails
+            commands.spawn((
+                Transform::from_translation(building.position),
+                Visibility::Hidden,
+                Building,
+            )).id()
+        }
+    }
 }
 
 fn spawn_vegetation(

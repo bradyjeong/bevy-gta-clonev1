@@ -4,6 +4,7 @@ use std::time::Instant;
 use std::collections::HashMap;
 use crate::components::*;
 use crate::systems::distance_cache::DistanceCache;
+use crate::systems::unified_distance_calculator::{UnifiedDistanceCalculator, distance_utils};
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 use crate::config::GameConfig;
 use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
@@ -56,6 +57,7 @@ pub fn batch_culling_system_enhanced(
     active_query: Query<&Transform, (With<ActiveEntity>, Without<DirtyVisibility>)>,
     mut batch_processor: ResMut<BatchProcessor>,
     _distance_cache: ResMut<DistanceCache>,
+    mut distance_calculator: ResMut<UnifiedDistanceCalculator>,
     mut performance_tracker: ResMut<UnifiedPerformanceTracker>,
     config: Res<GameConfig>,
     _time: Res<Time>,
@@ -64,6 +66,9 @@ pub fn batch_culling_system_enhanced(
     let Ok(active_transform) = active_query.single() else { return };
     let active_pos = active_transform.translation;
     
+    // Set reference position for efficient distance calculations
+    distance_calculator.set_reference_position(active_pos);
+    
     // Group entities by distance ranges for efficient batch processing
     let mut distance_groups: HashMap<u32, Vec<_>> = HashMap::new();
     let mut entities_to_process: Vec<_> = dirty_visibility_query.iter_mut().collect();
@@ -71,9 +76,13 @@ pub fn batch_culling_system_enhanced(
     // Sort by priority first, then group by distance buckets
     entities_to_process.sort_by(|a, b| b.1.priority.cmp(&a.1.priority));
     
-    // Create distance-based groups (100m buckets)
+    // Create distance-based groups (100m buckets) using unified distance calculator
     for entity_data in entities_to_process {
-        let distance = active_pos.distance(entity_data.2.translation);
+        let distance = distance_utils::calculate_distance_to_reference(
+            &mut distance_calculator,
+            entity_data.0,
+            entity_data.2.translation,
+        ).unwrap_or_else(|| active_pos.distance(entity_data.2.translation));
         let distance_bucket = (distance / 100.0) as u32;
         distance_groups.entry(distance_bucket).or_default().push(entity_data);
     }
@@ -106,7 +115,11 @@ pub fn batch_culling_system_enhanced(
             // Batch process entities at similar distances
             for &mut (ref entity, ref _dirty_vis, ref transform, ref mut visibility, ref cullable) in batch {
                 if let Some(cull) = cullable {
-                    let distance = active_pos.distance(transform.translation);
+                    let distance = distance_utils::calculate_distance_to_reference(
+                        &mut distance_calculator,
+                        *entity,
+                        transform.translation,
+                    ).unwrap_or_else(|| active_pos.distance(transform.translation));
                     let should_be_visible = !cull.is_culled && distance <= cull.config.cull_distance;
                     
                     let new_visibility = if should_be_visible {

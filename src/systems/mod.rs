@@ -17,6 +17,7 @@ pub mod input;
 pub mod persistence;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
 pub mod distance_cache;
+pub mod unified_distance_calculator;
 pub mod transform_sync;
 pub mod distance_cache_debug;
 pub mod batching;
@@ -58,6 +59,7 @@ pub use input::*;
 pub use persistence::*;
 // pub use realistic_physics_safeguards::*; // DISABLED - conflicts with Rapier
 pub use distance_cache::*;
+pub use unified_distance_calculator::*;
 pub use distance_cache_debug::*;
 pub use transform_sync::*;
 // Essential batching systems (non-conflicting with batch_processing.rs)

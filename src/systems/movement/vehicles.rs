@@ -2,9 +2,12 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Car, SuperCar, ActiveEntity, ExhaustFlame};
 use crate::systems::input::{ControlManager, ControlAction};
+use crate::systems::physics_utils::PhysicsUtilities;
+use crate::config::GameConfig;
 
 pub fn car_movement(
     control_manager: Res<ControlManager>,
+    config: Res<GameConfig>,
     mut car_query: Query<(&mut Velocity, &Transform), (With<Car>, With<ActiveEntity>, Without<SuperCar>)>,
 ) {
     let Ok((mut velocity, transform)) = car_query.single_mut() else {
@@ -47,11 +50,16 @@ pub fn car_movement(
     // Set velocity directly
     velocity.linvel = target_linear_velocity;
     velocity.angvel = target_angular_velocity;
+    
+    // Apply unified physics safety systems
+    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 1.0);
 }
 
 pub fn supercar_movement(
     time: Res<Time>,
     control_manager: Res<ControlManager>,
+    config: Res<GameConfig>,
     mut supercar_query: Query<(&mut Velocity, &Transform, &mut SuperCar), (With<Car>, With<ActiveEntity>, With<SuperCar>)>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -161,6 +169,10 @@ pub fn supercar_movement(
     // Set final velocity
     velocity.linvel = target_linear_velocity;
     velocity.angvel = target_angular_velocity;
+    
+    // Apply unified physics safety systems
+    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 1.0);
 }
 
 fn update_turbo_system(supercar: &mut SuperCar, dt: f32, turbo_requested: bool, current_speed_mph: f32) {

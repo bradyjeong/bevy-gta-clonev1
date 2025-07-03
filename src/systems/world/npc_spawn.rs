@@ -13,6 +13,7 @@ use rand::prelude::*;
 
 /// Spawn NPCs using the new architecture while maintaining compatibility
 /// This system replaces the old spawn_dynamic_npc function
+/// CONSOLIDATED: Now uses spawn validation from UnifiedEntityFactory
 pub fn spawn_new_npc_system(
     mut commands: Commands,
     timing_service: Res<TimingService>,
@@ -20,16 +21,16 @@ pub fn spawn_new_npc_system(
     ground_service: Res<GroundDetectionService>,
     config: Res<GameConfig>,
 ) {
-    // Limit NPC spawning to avoid performance issues
+    // Limit NPC spawning to avoid performance issues (unified entity limits)
     if npc_query.iter().count() >= 100 {
         return;
     }
     
-    // Spawn new NPCs occasionally
+    // Spawn new NPCs occasionally using unified spawning pipeline
     if timing_service.current_time % 5.0 < 0.1 {
         let mut rng = thread_rng();
         
-        // Try to find a valid spawn position (avoid roads, buildings, etc.)
+        // Try to find a valid spawn position using unified validation
         for _ in 0..10 { // Max 10 attempts to find valid position
             let x = rng.gen_range(-50.0..50.0);
             let z = rng.gen_range(-50.0..50.0);

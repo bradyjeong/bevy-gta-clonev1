@@ -308,54 +308,37 @@ fn spawn_unified_building(
     commands: &mut Commands,
     chunk_coord: ChunkCoord,
     position: Vec3,
-    distance_from_center: f32,
+    _distance_from_center: f32,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
-    // Determine building type based on distance from center
-    let building_type = if distance_from_center < 500.0 {
-        if LAYERED_RNG.with(|rng| rng.borrow_mut().gen_bool(0.3)) { BuildingType::Skyscraper } else { BuildingType::Commercial }
-    } else if distance_from_center < 1000.0 {
-        if LAYERED_RNG.with(|rng| rng.borrow_mut().gen_bool(0.6)) { BuildingType::Residential } else { BuildingType::Commercial }
-    } else {
-        BuildingType::Residential
-    };
+    // REPLACED: Use UnifiedEntityFactory for building spawning
+    // This eliminates duplicate building spawning code
+    use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+    use crate::GameConfig;
     
-    let (width, height) = match building_type {
-        BuildingType::Skyscraper => (LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(8.0..12.0)), LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(40.0..80.0))),
-        BuildingType::Commercial => (LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(10.0..16.0)), LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(8.0..20.0))),
-        BuildingType::Residential => (LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(6.0..10.0)), LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(6.0..15.0))),
-    };
+    let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
+    let current_time = 0.0; // Placeholder time
     
-    let material_color = match building_type {
-        BuildingType::Skyscraper => Color::srgb(0.7, 0.7, 0.8),
-        BuildingType::Commercial => Color::srgb(0.5, 0.7, 0.9),
-        BuildingType::Residential => Color::srgb(0.8, 0.6, 0.4),
-    };
-    
-    // Building positioned with base on terrain surface (y=-0.05) and mesh at half-height above ground
-    let ground_level = -0.05; // Match terrain level from dynamic_terrain_system
-    let building_mesh_y = ground_level + height / 2.0; // Mesh center at half-height above ground
-    
-    commands.spawn((
-        GenericBundleFactory::unified_chunk(
-            (chunk_coord.x, chunk_coord.z),
-            ContentLayer::Buildings,
-            ContentType::Building,
-            Vec3::new(position.x, building_mesh_y, position.z),
-            300.0,
-        ),
-        Building {
-            building_type: crate::components::world::BuildingType::Generic,
-            height,
-            scale: Vec3::new(width, height, width),
-        },
-        Mesh3d(meshes.add(Cuboid::new(width, height, width))),
-        MeshMaterial3d(materials.add(material_color)),
-        RigidBody::Fixed,
-        Collider::cuboid(width * 0.5, height * 0.5, width * 0.5),
-        CollisionGroups::new(STATIC_GROUP, Group::ALL),
-    )).id()
+    match factory.spawn_building_consolidated(commands, meshes, materials, position, current_time) {
+        Ok(entity) => {
+            // Add chunk-specific components to maintain compatibility
+            commands.entity(entity).insert((
+                UnifiedChunkEntity {
+                    coord: chunk_coord,
+                    layer: ContentLayer::Buildings,
+                },
+            ));
+            entity
+        }
+        Err(_) => {
+            // Fallback to empty entity if spawn fails
+            commands.spawn((
+                Transform::from_translation(position),
+                Visibility::Hidden,
+            )).id()
+        }
+    }
 }
 
 /// Layer 3: Vehicle Generation System
@@ -444,45 +427,33 @@ fn spawn_unified_vehicle(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
-    let car_colors = [
-        Color::srgb(1.0, 0.0, 0.0), // Red
-        Color::srgb(0.0, 0.0, 1.0), // Blue
-        Color::srgb(0.0, 1.0, 0.0), // Green
-        Color::srgb(1.0, 1.0, 0.0), // Yellow
-        Color::srgb(0.5, 0.5, 0.5), // Gray
-        Color::srgb(1.0, 1.0, 1.0), // White
-        Color::srgb(0.0, 0.0, 0.0), // Black
-    ];
+    // REPLACED: Use UnifiedEntityFactory for vehicle spawning
+    // This eliminates duplicate vehicle spawning code
+    use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+    use crate::GameConfig;
     
-    let color = car_colors[LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(0..car_colors.len()))];
+    let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
+    let current_time = 0.0; // Placeholder time
     
-    let car_entity = commands.spawn((
-        GenericBundleFactory::unified_chunk(
-            (chunk_coord.x, chunk_coord.z),
-            ContentLayer::Vehicles,
-            ContentType::Vehicle,
-            Vec3::new(position.x, 0.5, position.z),
-            150.0,
-        ),
-        Car,
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 0.5, 2.0),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Velocity::zero(),
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
-    )).id();
-    
-    // Car body
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),  // Fixed: height matches collider
-        MeshMaterial3d(materials.add(color)),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        ChildOf(car_entity),
-        VisibleChildBundle::default(),
-    ));
-    
-    car_entity
+    match factory.spawn_vehicle_consolidated(commands, meshes, materials, position, current_time) {
+        Ok(entity) => {
+            // Add chunk-specific components to maintain compatibility
+            commands.entity(entity).insert((
+                UnifiedChunkEntity {
+                    coord: chunk_coord,
+                    layer: ContentLayer::Vehicles,
+                },
+            ));
+            entity
+        }
+        Err(_) => {
+            // Fallback to empty entity if spawn fails
+            commands.spawn((
+                Transform::from_translation(position),
+                Visibility::Hidden,
+            )).id()
+        }
+    }
 }
 
 /// Layer 4: Vegetation Generation System
@@ -571,76 +542,33 @@ fn spawn_unified_tree(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
-    // Create meshes for different LOD levels (palm tree specific)
-    let full_mesh = meshes.add(create_detailed_palm_mesh());
-    let medium_mesh = meshes.add(create_medium_palm_mesh());
-    let billboard_mesh = meshes.add(create_billboard_quad());
+    // REPLACED: Use UnifiedEntityFactory for tree spawning
+    // This eliminates duplicate tree spawning code
+    use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+    use crate::GameConfig;
     
-    let tree_entity = commands.spawn((
-        UnifiedChunkEntity {
-            coord: chunk_coord,
-            layer: ContentLayer::Vegetation,
-        },
-        Transform::from_xyz(position.x, 0.0, position.z),
-        Visibility::default(),
-        InheritedVisibility::VISIBLE,
-        ViewVisibility::default(),
-        Cullable { max_distance: 300.0, is_culled: false }, // Extended range for billboard LOD
-        DynamicContent {
-            content_type: ContentType::Tree,
-        },
-        VegetationLOD::new(),
-        VegetationMeshLOD::new(
-            full_mesh.clone(),
-            Some(medium_mesh),
-            billboard_mesh,
-        ),
-        VegetationBillboard::new(
-            Vec3::new(1.0, 3.0, 1.0), // Palm tree proportions
-            Vec2::new(2.0, 3.0),
-        ),
-        Mesh3d(full_mesh), // Start with full detail mesh
-    )).id();
+    let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
+    let current_time = 0.0; // Placeholder time
     
-    // Palm tree trunk - single brown cylinder
-    commands.spawn((
-        Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
-        Transform::from_xyz(0.0, 4.0, 0.0),
-        ChildOf(tree_entity),
-        VisibleChildBundle::default(),
-    ));
-
-    // Palm fronds - 4 green rectangles arranged in a cross
-    for i in 0..4 {
-        let angle = (i as f32) * std::f32::consts::PI / 2.0;
-        
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
-            MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
-            Transform::from_xyz(
-                angle.cos() * 1.2, 
-                7.5, 
-                angle.sin() * 1.2
-            ).with_rotation(
-                Quat::from_rotation_y(angle) * 
-                Quat::from_rotation_z(-0.2) // Slight droop
-            ),
-            ChildOf(tree_entity),
-            VisibleChildBundle::default(),
-        ));
+    match factory.spawn_tree_consolidated(commands, meshes, materials, position, current_time) {
+        Ok(entity) => {
+            // Add chunk-specific components to maintain compatibility
+            commands.entity(entity).insert((
+                UnifiedChunkEntity {
+                    coord: chunk_coord,
+                    layer: ContentLayer::Vegetation,
+                },
+            ));
+            entity
+        }
+        Err(_) => {
+            // Fallback to empty entity if spawn fails
+            commands.spawn((
+                Transform::from_translation(position),
+                Visibility::Hidden,
+            )).id()
+        }
     }
-
-    // Physics collider for palm trunk
-    commands.spawn((
-        RigidBody::Fixed,
-        Collider::cylinder(4.0, 0.3),
-        CollisionGroups::new(STATIC_GROUP, Group::ALL),
-        Transform::from_xyz(0.0, 4.0, 0.0),
-        ChildOf(tree_entity),
-    ));
-    
-    tree_entity
 }
 
 // Utility functions

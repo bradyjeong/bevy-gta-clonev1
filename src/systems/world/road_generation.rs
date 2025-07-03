@@ -279,6 +279,7 @@ fn find_nearest_road_position(position: Vec3, road_network: &RoadNetwork) -> Opt
     nearest_pos
 }
 
+#[allow(dead_code)]
 fn find_closest_point_on_road(position: Vec3, road: &crate::systems::world::road_network::RoadSpline) -> Option<Vec3> {
     let mut closest_pos = None;
     let mut min_distance = f32::INFINITY;

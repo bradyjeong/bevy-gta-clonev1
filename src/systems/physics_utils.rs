@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;
 use crate::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
+use crate::systems::input::{ControlManager, ControlAction};
 
 /// Unified physics utilities for consistent physics behavior across all movement systems
 #[derive(Default)]
@@ -245,10 +246,45 @@ impl PhysicsBodySetup {
     }
 }
 
+/// Unified input processing results for all movement systems
+#[derive(Clone, Debug, Default)]
+pub struct MovementInputs {
+    pub throttle: f32,
+    pub brake: f32,
+    pub steering: f32,
+    pub pitch: f32,
+    pub roll: f32,
+    pub yaw: f32,
+    pub thrust: f32,
+    pub forward: f32,
+    pub backward: f32,
+    pub left: f32,
+    pub right: f32,
+    pub jump: f32,
+}
+
 /// Input processing utilities for consistent control handling
 pub struct InputProcessor;
 
 impl InputProcessor {
+    /// Unified input processing for all movement systems
+    pub fn process_unified_inputs(control_manager: &ControlManager) -> MovementInputs {
+        MovementInputs {
+            throttle: control_manager.get_control_value(ControlAction::Throttle),
+            brake: control_manager.get_control_value(ControlAction::Brake),
+            steering: control_manager.get_control_value(ControlAction::Steer),
+            pitch: control_manager.get_control_value(ControlAction::Pitch),
+            roll: control_manager.get_control_value(ControlAction::Roll),
+            yaw: control_manager.get_control_value(ControlAction::Yaw),
+            thrust: control_manager.get_control_value(ControlAction::Throttle), // Use Throttle for thrust
+            forward: control_manager.get_control_value(ControlAction::Accelerate), // Use Accelerate for forward
+            backward: control_manager.get_control_value(ControlAction::Brake), // Use Brake for backward
+            left: 0.0, // No direct left action, use steering negative
+            right: 0.0, // No direct right action, use steering positive  
+            jump: 0.0, // No jump action in current ControlAction enum
+        }
+    }
+
     /// Process acceleration input with smooth ramping
     pub fn process_acceleration_input(
         current_input: f32,

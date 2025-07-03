@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::config::GameConfig;
 use crate::systems::input::{ControlManager, is_accelerating, is_braking};
+use crate::systems::physics_utils::PhysicsUtilities;
 
 /// CRITICAL: High-performance realistic vehicle physics system
 /// Optimized for 60+ FPS with comprehensive safety checks
@@ -320,34 +321,20 @@ fn apply_forces_to_vehicle(
     velocity.angvel *= 0.995;
 }
 
-/// Apply critical physics safeguards to prevent instability
+/// Apply critical physics safeguards to prevent instability (UNIFIED)
 fn apply_physics_safeguards(
     velocity: &mut Velocity,
     transform: &mut Transform,
     config: &GameConfig,
 ) {
-    // Clamp velocities to safe ranges
-    velocity.linvel = velocity.linvel.clamp_length_max(config.physics.max_velocity);
-    velocity.angvel = velocity.angvel.clamp_length_max(config.physics.max_angular_velocity);
+    // Use unified velocity validation
+    PhysicsUtilities::validate_velocity(velocity, config);
     
-    // Ensure all values are finite
-    if !velocity.linvel.is_finite() {
-        velocity.linvel = Vec3::ZERO;
-    }
-    if !velocity.angvel.is_finite() {
-        velocity.angvel = Vec3::ZERO;
-    }
+    // Use unified ground collision system
+    PhysicsUtilities::apply_ground_collision(velocity, transform, 0.1, 2.0);
     
-    // Prevent vehicles from going underground
-    // Disable ground clamping - let physics handle it
-    if false && transform.translation.y < 0.1 {
-        transform.translation.y = 0.1;
-        if velocity.linvel.y < 0.0 {
-            velocity.linvel.y = 0.0;
-        }
-    }
-    
-    // Disable world bounds clamping - let physics handle it
+    // Use unified world bounds system
+    PhysicsUtilities::apply_world_bounds(transform, velocity, config);
 }
 
 /// System to update vehicle wheel positions and rotations
