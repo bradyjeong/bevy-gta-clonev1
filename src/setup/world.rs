@@ -85,13 +85,12 @@ pub fn setup_basic_world(
         Collider::capsule(Vec3::new(0.0, -0.4, 0.0), Vec3::new(0.0, 1.0, 0.0), 0.4),
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         Velocity::zero(),
-        ExternalForce::default(),
         Transform::from_xyz(0.0, player_y, 0.0),
         Visibility::Visible,
         InheritedVisibility::VISIBLE,
         ViewVisibility::default(),
         CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP),
-        Damping { linear_damping: 2.0, angular_damping: 5.0 }, // Moderate damping for responsive movement
+        Damping { linear_damping: 1.2, angular_damping: 3.5 }, // Balanced damping to prevent overspin
     )).id();
     
     // Add human behavior components separately

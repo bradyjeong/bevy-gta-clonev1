@@ -10,8 +10,7 @@ thread_local! {
     static ENVIRONMENT_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
 }
 
-// This function is deprecated - replaced by the curved road network system
-// Keeping for backwards compatibility, but now it just initializes the road network
+// NOTE: Basic road setup using the unified road network system
 pub fn setup_basic_roads(
     _commands: Commands,
     mut road_network: ResMut<crate::systems::world::road_network::RoadNetwork>,

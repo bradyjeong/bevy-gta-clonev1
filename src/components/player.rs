@@ -22,7 +22,6 @@ pub struct HumanMovement {
     pub max_speed: f32,
     pub current_speed: f32,
     pub target_velocity: Vec3,
-    pub momentum: Vec3,
     pub stamina: f32,
     pub max_stamina: f32,
     pub stamina_drain_rate: f32,
@@ -33,12 +32,11 @@ pub struct HumanMovement {
 impl Default for HumanMovement {
     fn default() -> Self {
         Self {
-            acceleration: 25.0,
-            deceleration: 35.0,
-            max_speed: 1.5,
+            acceleration: 32.0,
+            deceleration: 50.0,
+            max_speed: 4.5,
             current_speed: 0.0,
             target_velocity: Vec3::ZERO,
-            momentum: Vec3::ZERO,
             stamina: 100.0,
             max_stamina: 100.0,
             stamina_drain_rate: 12.0,
@@ -65,9 +63,9 @@ impl Default for HumanAnimation {
     fn default() -> Self {
         Self {
             walk_cycle_time: 0.0,
-            step_frequency: 3.5,
-            head_bob_amplitude: 0.04,
-            body_sway_amplitude: 0.02,
+            step_frequency: 3.0,
+            head_bob_amplitude: 0.025,
+            body_sway_amplitude: 0.015,
             breathing_rate: 1.4,
             idle_fidget_timer: 0.0,
             next_fidget_time: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(3.0..8.0)),
@@ -91,7 +89,7 @@ pub struct HumanBehavior {
 impl Default for HumanBehavior {
     fn default() -> Self {
         Self {
-            reaction_time: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.01..0.05)),
+            reaction_time: 0.0,
             input_delay_timer: 0.0,
             movement_variation: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.95..1.05)),
             directional_drift: Vec3::ZERO,

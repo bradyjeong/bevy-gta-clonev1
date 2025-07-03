@@ -60,7 +60,7 @@ Completely replaced arcade-style controls with realistic flight dynamics:
   - Engine state (thrust, afterburner, spool time)
 
 ### Physics Integration
-- Force-based movement system instead of direct velocity control
+- Velocity-based movement system with unified physics approach
 - Realistic rotational dynamics based on control input effectiveness
 - Proper integration with Bevy's physics system (bevy_rapier3d)
 

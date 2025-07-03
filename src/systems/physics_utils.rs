@@ -24,7 +24,7 @@ impl PhysicsUtilities {
         }
     }
     
-    /// Validate and clamp external force to safe ranges
+    /// Validate and clamp external force to safe ranges (for vehicles)
     pub fn validate_external_force(force: &mut ExternalForce, max_force: f32) {
         // Clamp force magnitude
         force.force = force.force.clamp_length_max(max_force);
@@ -60,7 +60,7 @@ impl PhysicsUtilities {
         }
     }
     
-    /// Apply external force with validation for force-based systems
+    /// Apply external force with validation for vehicle force-based systems
     pub fn apply_external_force_safe(
         external_force: &mut ExternalForce,
         force: Vec3,

@@ -153,8 +153,7 @@ pub fn spawn_simple_npc(
     )).id()
 }
 
-/// Legacy spawn function for backward compatibility
-#[deprecated(note = "Use spawn_npc_with_unified_factory instead")]
+/// NPC spawn using unified factory (replaces legacy functions)
 pub fn spawn_npc_with_new_architecture(
     commands: &mut Commands,
     position: Vec3,
@@ -186,7 +185,7 @@ pub fn spawn_npc_with_new_architecture(
     )).id()
 }
 
-/// Legacy compatibility system - converts old NPC entities to new architecture
+/// Migration system - converts old NPC entities to unified architecture
 pub fn migrate_legacy_npcs(
     mut commands: Commands,
     legacy_npc_query: Query<(Entity, &crate::components::NPC, &Transform), Without<NPCState>>,
@@ -204,7 +203,7 @@ pub fn migrate_legacy_npcs(
             ManagedTiming::new(EntityTimerType::NPCLOD),
         ));
         
-        println!("DEBUG: Migrated legacy NPC entity {:?} to new architecture", entity);
+        println!("DEBUG: Migrated NPC entity {:?} to unified architecture", entity);
     }
 }
 

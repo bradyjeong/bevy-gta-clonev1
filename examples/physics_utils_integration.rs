@@ -41,24 +41,25 @@ fn example_vehicle_physics_with_utilities(
     }
 }
 
-// Example system showing external force application
+// Example system showing velocity-based movement
 fn example_player_movement_with_utilities(
     time: Res<Time>,
     config: Res<GameConfig>,
-    mut player_query: Query<(&mut ExternalForce, &Transform), With<ExamplePlayer>>,
+    mut player_query: Query<(&mut Velocity, &Transform), With<ExamplePlayer>>,
 ) {
     let dt = time.delta_secs();
     
-    for (mut external_force, transform) in player_query.iter_mut() {
+    for (mut velocity, transform) in player_query.iter_mut() {
         // Simulate input processing
         let input_force = Vec3::new(1.0, 0.0, 0.0) * 50.0;
         let input_torque = Vec3::new(0.0, 1.0, 0.0) * 10.0;
         
-        // Use utilities for safe force application
-        PhysicsUtilities::apply_external_force_safe(
-            &mut external_force,
+        // Use utilities for safe velocity-based movement
+        PhysicsUtilities::apply_force_safe(
+            &mut velocity,
             input_force,
             input_torque,
+            dt,
             1000.0 // max force
         );
         

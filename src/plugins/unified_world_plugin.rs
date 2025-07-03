@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::systems::world::{
-    // Legacy systems (to be phased out)
+    // Migration and compatibility systems
     optimized_npc_movement, debug_player_position, dynamic_terrain_system,
     
     // Unified world systems

@@ -20,7 +20,7 @@ impl Plugin for VehiclePlugin {
             // LOD system runs after safeguards
             vehicle_lod_system,
             
-            // Movement systems (legacy but stable)
+            // Movement systems (force-based for vehicles)
             car_movement.run_if(in_state(GameState::Driving)),
             supercar_movement.run_if(in_state(GameState::Driving)),
             helicopter_movement.run_if(in_state(GameState::Flying)),

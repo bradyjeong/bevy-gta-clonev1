@@ -171,8 +171,8 @@ impl ControlManager {
     fn init_default_physics_configs(&mut self) {
         // Player walking physics
         self.physics_configs.insert(ConfigVehicleType::Walking, VehiclePhysicsConfig {
-            max_speed: 15.0,
-            acceleration: 25.0,
+            max_speed: 20.0,
+            acceleration: 40.0,
             turn_speed: 3.0,
             brake_force: 40.0,
             max_acceleration: 30.0,

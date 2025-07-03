@@ -14,7 +14,7 @@ pub fn human_player_movement(
     control_manager: Res<ControlManager>,
     mut player_query: Query<
         (
-            &mut ExternalForce,
+            &mut Velocity,
             &Transform,
             &mut HumanMovement,
             &mut HumanAnimation,
@@ -23,7 +23,7 @@ pub fn human_player_movement(
         (With<Player>, With<ActiveEntity>),
     >,
 ) {
-    let Ok((mut velocity, transform, mut movement, mut animation, mut behavior)) = 
+    let Ok((mut velocity, transform, mut movement, mut animation, behavior)) = 
         player_query.single_mut() else {
         // Debug: Check if player exists but doesn't have ActiveEntity
         let all_players = player_query.iter().count();
@@ -35,34 +35,23 @@ pub fn human_player_movement(
 
     let dt = time.delta_secs();
 
-    // Update behavior timers
-    behavior.input_delay_timer = (behavior.input_delay_timer - dt).max(0.0);
-
-    // Process input with human reaction time using UNIFIED control system
-    let input_active = behavior.input_delay_timer <= 0.0;
-    let mut input_direction = Vec3::ZERO;
-    let mut rotation_input = 0.0;
+    // Velocity-based movement system (unified approach)
+    let mut target_linear_velocity = Vec3::ZERO;
+    let mut target_angular_velocity = Vec3::ZERO;
+    
     let is_running = control_manager.is_control_active(ControlAction::Turbo);
-
-    if input_active {
-        // Forward/backward movement using unified ControlManager
-        if control_manager.is_control_active(ControlAction::Accelerate) {
-            input_direction += *transform.forward();
-        }
-        if control_manager.is_control_active(ControlAction::Brake) {
-            input_direction -= *transform.forward();
-        }
-        
-        // Rotation using unified ControlManager
-        rotation_input = control_manager.get_control_value(ControlAction::Steer);
-
-        // Add reaction delay for new inputs
-        if control_manager.is_control_active(ControlAction::Accelerate) || 
-           control_manager.is_control_active(ControlAction::Brake) || 
-           control_manager.get_control_value(ControlAction::Steer).abs() > 0.0 {
-            behavior.input_delay_timer = behavior.reaction_time;
-        }
+    
+    // Process input direction using UNIFIED control system
+    let mut input_direction = Vec3::ZERO;
+    if control_manager.is_control_active(ControlAction::Accelerate) {
+        input_direction += *transform.forward();
     }
+    if control_manager.is_control_active(ControlAction::Brake) {
+        input_direction -= *transform.forward();
+    }
+    
+    // Rotation using unified ControlManager
+    let rotation_input = control_manager.get_control_value(ControlAction::Steer);
 
     // Handle stamina system
     let is_moving = input_direction.length() > 0.0;
@@ -82,7 +71,7 @@ pub fn human_player_movement(
     };
 
     let base_speed = if is_running && movement.stamina > 10.0 {
-        movement.max_speed * 1.3
+        movement.max_speed * 1.8
         } else {
         movement.max_speed
     };
@@ -91,47 +80,32 @@ pub fn human_player_movement(
                              behavior.personality_speed_modifier * 
                              behavior.movement_variation;
 
-    // Natural acceleration/deceleration
+    // Calculate target linear velocity based on input (velocity-based system)
     if input_direction.length() > 0.0 {
         input_direction = input_direction.normalize();
-        movement.target_velocity = input_direction * effective_max_speed;
+        target_linear_velocity = input_direction * effective_max_speed;
         
-        // Removed directional drift to prevent unwanted sliding
+        // Update movement tracking for animation
+        movement.target_velocity = target_linear_velocity;
+        movement.current_speed = target_linear_velocity.length();
     } else {
+        target_linear_velocity = Vec3::ZERO;
         movement.target_velocity = Vec3::ZERO;
+        movement.current_speed = 0.0;
     }
 
-    // Apply acceleration/deceleration with momentum
-    let acceleration_rate = if movement.target_velocity.length() > movement.current_speed {
-        movement.acceleration
-    } else {
-        movement.deceleration
-    };
-
-    if movement.target_velocity.length() > 0.0 {
-        movement.momentum = movement.momentum.lerp(movement.target_velocity, 
-                                                  acceleration_rate * dt);
-        movement.current_speed = movement.momentum.length();
-        
-        // Apply force through physics
-        velocity.force = movement.momentum * 80.0;
-    } else {
-        // Clear momentum and force when no input
-        movement.momentum = Vec3::ZERO;
-        movement.current_speed = 0.0;
-        velocity.force = Vec3::ZERO;
+    // Calculate target angular velocity (velocity-based system)
+    if rotation_input != 0.0 {
+        target_angular_velocity.y = rotation_input * 1.8; // Human rotation speed
     }
     
-    // Handle rotation through physics
-    if rotation_input != 0.0 {
-        velocity.torque = Vec3::Y * rotation_input * 3.0; // More responsive turning
-    } else {
-        velocity.torque = Vec3::ZERO;
-    }
+    // Apply velocity directly (unified physics approach)
+    velocity.linvel = target_linear_velocity;
+    velocity.angvel = target_angular_velocity;
     
     // Update animation state only
-    animation.is_walking = movement.current_speed > 0.5;
-    animation.is_running = is_running && movement.current_speed > movement.max_speed * 1.2;
+    animation.is_walking = movement.current_speed > 0.3;
+    animation.is_running = is_running && movement.current_speed > movement.max_speed * 1.0;
 }
 
 pub fn human_player_animation(
@@ -171,37 +145,35 @@ pub fn human_player_animation(
     let idle_sway = (time_elapsed * 0.7).sin() * 0.5 + (time_elapsed * 1.1).cos() * 0.3;
 
     // Apply head bobbing and breathing
-    if let Ok(_head_transform) = head_query.single_mut() {
-        let _head_bob = if animation.is_walking {
+    if let Ok(mut head_transform) = head_query.single_mut() {
+        let head_bob = if animation.is_walking {
             walk_cycle * animation.head_bob_amplitude
         } else {
             breathing_cycle * 0.008
         };
 
-        let _head_sway = if animation.is_walking {
+        let head_sway = if animation.is_walking {
             walk_cycle * 0.5 * animation.body_sway_amplitude
         } else {
             idle_sway * 0.005
         };
 
-        // Disable micro-movements that cause shake
-        // head_transform.translation.y = 1.2 + head_bob;
-        // head_transform.translation.x = head_sway;
+        head_transform.translation.y = 1.2 + head_bob;
+        head_transform.translation.x = head_sway;
     }
 
     // Apply torso swaying and breathing
     if let Ok(mut torso_transform) = torso_query.single_mut() {
-        let _body_sway = if animation.is_walking {
+        let body_sway = if animation.is_walking {
             walk_cycle * animation.body_sway_amplitude
         } else {
-            idle_sway * 0.003
+            idle_sway * 0.005
         };
 
-        let _body_breathing = breathing_cycle * 0.005;
+        let body_breathing = breathing_cycle * 0.008;
 
-        // Disable micro-movements that cause shake  
-        // torso_transform.translation.y = 0.6 + body_breathing;
-        // torso_transform.translation.x = body_sway;
+        torso_transform.translation.y = 0.6 + body_breathing;
+        torso_transform.translation.x = body_sway;
 
         // Slight forward lean when running
         if animation.is_running {
