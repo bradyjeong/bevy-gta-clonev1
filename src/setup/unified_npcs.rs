@@ -1,13 +1,9 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use rand::prelude::*;
 
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::GameConfig;
-use crate::systems::world::unified_distance_culling::UnifiedCullable;
-
-use crate::components::world::NPC;
 
 /// UNIFIED NPC SETUP SYSTEM
 /// Consolidates setup_new_npcs (good patterns) and setup_npcs (bad patterns)
@@ -69,50 +65,4 @@ pub fn setup_initial_npcs_unified(
     println!("✅ UNIFIED NPC SETUP: Spawned {} NPCs with ground detection (attempted {} positions)", spawned_count, attempts);
 }
 
-/// Legacy spawn function for compatibility - creates NPC with simplified approach
-/// Used if UnifiedEntityFactory is not available
-#[allow(dead_code)]
-pub fn spawn_npc_legacy(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    position: Vec3,
-    ground_service: &GroundDetectionService,
-) -> Entity {
-    let mut rng = thread_rng();
-    
-    // Ground detection
-    let ground_height = ground_service.get_ground_height_simple(Vec2::new(position.x, position.z));
-    let spawn_position = Vec3::new(position.x, ground_height + 0.1, position.z);
-    
-    // Random NPC colors (from old setup_npcs)
-    let npc_colors = [
-        Color::srgb(0.8, 0.6, 0.4), // Skin tone 1
-        Color::srgb(0.6, 0.4, 0.3), // Skin tone 2
-        Color::srgb(0.9, 0.7, 0.5), // Skin tone 3
-        Color::srgb(0.7, 0.5, 0.4), // Skin tone 4
-    ];
-    let color = npc_colors[rng.gen_range(0..npc_colors.len())];
-    
-    // Random target position for movement
-    let target_x = rng.gen_range(-900.0..900.0);
-    let target_z = rng.gen_range(-900.0..900.0);
-    let target_position = Vec3::new(target_x, ground_height + 0.1, target_z);
-    
-    commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
-        MeshMaterial3d(materials.add(color)),
-        Transform::from_translation(spawn_position),
-        RigidBody::Dynamic,
-        Collider::capsule(Vec3::new(0.0, -0.9, 0.0), Vec3::new(0.0, 0.9, 0.0), 0.3),
-        Velocity::zero(),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        NPC {
-            target_position,
-            speed: rng.gen_range(2.0..5.0),
-            last_update: 0.0,
-            update_interval: rng.gen_range(0.05..0.2),
-        },
-        UnifiedCullable::npc(),
-    )).id()
-}
+

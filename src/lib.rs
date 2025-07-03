@@ -25,7 +25,7 @@ pub use systems::performance_integration::*;
 
 pub use plugins::*;
 pub use factories::*;
-pub use setup::{setup_basic_world, setup_initial_aircraft_unified, setup_palm_trees, setup_initial_npcs_unified, setup_buildings, setup_basic_roads, setup_initial_vehicles_unified};
+pub use setup::{setup_basic_world, setup_initial_aircraft_unified, setup_palm_trees, setup_initial_npcs_unified, setup_initial_vehicles_unified};
 
 pub use constants::*;
 pub use config::*;

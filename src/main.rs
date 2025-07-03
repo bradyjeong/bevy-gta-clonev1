@@ -83,7 +83,6 @@ fn main() {
             setup_palm_trees,
             setup_initial_npcs_unified,
             setup_initial_vehicles_unified,
-            setup_buildings,
         ).after(initialize_simple_services));
         
     app.run();

@@ -10,14 +10,11 @@ use crate::systems::world::unified_world::{
 use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType};
 use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh, generate_intersection_mesh};
 
-// STANDARDIZED Y-COORDINATE LAYERS (prevents z-fighting):
+// UNIFIED Y-COORDINATE SYSTEM (prevents z-fighting):
 // - Terrain:      y = -0.15  (15cm below ground)
-// - Alleys:       y = -1.0   (below ground level)
-// - Side Streets: y = -0.5   (slightly below ground)
-// - Main Streets: y =  0.0   (ground level)
-// - Highways:     y =  3.0   (elevated like overpasses)
-// - Road Markings:y = road_height + 0.01 (1cm above road surface)
-// All layers have sufficient separation to prevent visual conflicts
+// - All Roads:    y =  0.0   (unified ground level - highways, main streets, side streets, alleys)
+// - Road Markings:y =  0.01  (1cm above road surface)
+// Unified road height prevents overlapping geometry and z-fighting issues
 
 thread_local! {
     static LAYERED_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());

@@ -7,14 +7,11 @@ use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_marking
 use crate::bundles::VisibleChildBundle;
 
 // MAIN ROAD GENERATION SYSTEM (Replaces old grid system)
-// STANDARDIZED Y-COORDINATE LAYERS (prevents z-fighting):
+// UNIFIED Y-COORDINATE SYSTEM (prevents z-fighting):
 // - Terrain:      y = -0.15  (15cm below ground)  
-// - Alleys:       y = -1.0   (below ground level)
-// - Side Streets: y = -0.5   (slightly below ground)
-// - Main Streets: y =  0.0   (ground level)
-// - Highways:     y =  3.0   (elevated like overpasses)
-// - Road Markings:y = road_height + 0.01 (1cm above road surface)
-// All layers have sufficient separation to prevent visual conflicts
+// - All Roads:    y =  0.0   (unified ground level - highways, main streets, side streets, alleys)
+// - Road Markings:y =  0.01  (1cm above road surface)
+// Unified road height prevents overlapping geometry and z-fighting issues
 
 // Add timer to reduce frequency of road checks
 #[derive(Resource, Default)]
@@ -287,22 +284,4 @@ fn find_nearest_road_position(position: Vec3, road_network: &RoadNetwork) -> Opt
     nearest_pos
 }
 
-#[allow(dead_code)]
-fn find_closest_point_on_road(position: Vec3, road: &crate::systems::world::road_network::RoadSpline) -> Option<Vec3> {
-    let mut closest_pos = None;
-    let mut min_distance = f32::INFINITY;
-    
-    let samples = 30; // More samples for better accuracy
-    for i in 0..samples {
-        let t = i as f32 / (samples - 1) as f32;
-        let road_point = road.evaluate(t);
-        let distance = position.distance(road_point);
-        
-        if distance < min_distance {
-            min_distance = distance;
-            closest_pos = Some(road_point);
-        }
-    }
-    
-    closest_pos
-}
+

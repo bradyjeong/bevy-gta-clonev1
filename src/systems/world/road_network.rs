@@ -238,6 +238,11 @@ impl RoadNetwork {
         
         let mut new_roads = Vec::new();
         
+        // UNIFIED GENERATION: Handle spawn chunk (0,0) with premium roads
+        if chunk_x == 0 && chunk_z == 0 {
+            return self.generate_premium_spawn_roads(base_x, base_z, chunk_size);
+        }
+        
         // Generate non-overlapping road grid to prevent z-fighting
         // Use alternating pattern to ensure roads don't overlap
         let mut roads_added = Vec::new();
@@ -314,6 +319,75 @@ impl RoadNetwork {
         }
         
         new_roads
+    }
+    
+    // Generate premium roads for spawn chunk (0,0) - respects chunk boundaries
+    fn generate_premium_spawn_roads(&mut self, base_x: f32, base_z: f32, chunk_size: f32) -> Vec<u32> {
+        let mut spawn_roads = Vec::new();
+        let height = 0.0; // Unified ground level for all roads
+        
+        // Calculate chunk boundaries to prevent overlap
+        let chunk_min_x = base_x;
+        let chunk_max_x = base_x + chunk_size;
+        let chunk_min_z = base_z;
+        let chunk_max_z = base_z + chunk_size;
+        
+        // Premium highways within chunk boundaries only
+        let highway_configs = [
+            // Main highway (horizontal through center)
+            (Vec3::new(chunk_min_x, height, base_z + chunk_size * 0.5), 
+             Vec3::new(base_x + chunk_size * 0.3, height, base_z + chunk_size * 0.6), 
+             Vec3::new(chunk_max_x, height, base_z + chunk_size * 0.5), RoadType::Highway),
+            
+            // Cross highway (vertical through center)
+            (Vec3::new(base_x + chunk_size * 0.5, height, chunk_min_z),
+             Vec3::new(base_x + chunk_size * 0.6, height, base_z + chunk_size * 0.3),
+             Vec3::new(base_x + chunk_size * 0.5, height, chunk_max_z), RoadType::Highway),
+        ];
+        
+        // Premium main streets within chunk boundaries
+        let main_street_configs = [
+            // Main street parallel to highway
+            (Vec3::new(chunk_min_x, height, base_z + chunk_size * 0.25),
+             Vec3::new(base_x + chunk_size * 0.3, height, base_z + chunk_size * 0.3),
+             Vec3::new(chunk_max_x, height, base_z + chunk_size * 0.25), RoadType::MainStreet),
+            
+            // Cross main street
+            (Vec3::new(base_x + chunk_size * 0.25, height, chunk_min_z),
+             Vec3::new(base_x + chunk_size * 0.3, height, base_z + chunk_size * 0.3),
+             Vec3::new(base_x + chunk_size * 0.25, height, chunk_max_z), RoadType::MainStreet),
+        ];
+        
+        // Generate roads within chunk boundaries
+        for (start, control, end, road_type) in highway_configs.iter().chain(main_street_configs.iter()) {
+            let road_id = self.add_curved_road(*start, *control, *end, *road_type);
+            spawn_roads.push(road_id);
+        }
+        
+        // Add some side streets for density
+        for i in 0..3 {
+            for j in 0..3 {
+                if i == 1 && j == 1 { continue; } // Skip center where highways cross
+                
+                let sub_x = base_x + (i as f32 + 0.5) * chunk_size / 4.0;
+                let sub_z = base_z + (j as f32 + 0.5) * chunk_size / 4.0;
+                
+                // Horizontal side street
+                let start = Vec3::new(sub_x - 30.0, height, sub_z);
+                let end = Vec3::new(sub_x + 30.0, height, sub_z);
+                let road_id = self.add_road(start, end, RoadType::SideStreet);
+                spawn_roads.push(road_id);
+                
+                // Vertical side street 
+                let start = Vec3::new(sub_x, height, sub_z - 30.0);
+                let end = Vec3::new(sub_x, height, sub_z + 30.0);
+                let road_id = self.add_road(start, end, RoadType::SideStreet);
+                spawn_roads.push(road_id);
+            }
+        }
+        
+        println!("🛣️ Generated {} premium roads within chunk (0,0) boundaries", spawn_roads.len());
+        spawn_roads
     }
 }
 

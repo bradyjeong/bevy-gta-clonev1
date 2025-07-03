@@ -1,53 +1,11 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use rand::prelude::*;
-use std::cell::RefCell;
-use crate::components::*;
 use crate::constants::*;
 use crate::bundles::VisibleChildBundle;
+use crate::components::world::Cullable;
 
-thread_local! {
-    static ENVIRONMENT_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
-
-// NOTE: Basic road setup using the unified world system
-// Roads are now generated dynamically by the unified world manager
-pub fn setup_basic_roads(
-    _commands: Commands,
-    mut world_manager: ResMut<crate::systems::world::unified_world::UnifiedWorldManager>,
-    _meshes: ResMut<Assets<Mesh>>,
-    _materials: ResMut<Assets<StandardMaterial>>,
-) {
-    // Initialize the road network with a few starter roads around spawn
-    // The main curved road generation will happen through the unified road system
-    
-    // Clear any existing roads
-    world_manager.road_network.reset();
-    
-    // Generate initial curved roads around spawn area for immediate gameplay
-    let spawn_roads = [
-        // Main curved highway through center - Elevated (highway height)
-        (Vec3::new(-200.0, 3.0, 0.0), Vec3::new(-50.0, 3.0, 30.0), Vec3::new(200.0, 3.0, 0.0), crate::systems::world::road_network::RoadType::Highway),
-        (Vec3::new(0.0, 3.0, -200.0), Vec3::new(30.0, 3.0, -50.0), Vec3::new(0.0, 3.0, 200.0), crate::systems::world::road_network::RoadType::Highway),
-        
-        // Curved main streets - Ground level (main street height)
-        (Vec3::new(-100.0, 0.0, -100.0), Vec3::new(-30.0, 0.0, -80.0), Vec3::new(100.0, 0.0, -100.0), crate::systems::world::road_network::RoadType::MainStreet),
-        (Vec3::new(-100.0, 0.0, 100.0), Vec3::new(-30.0, 0.0, 80.0), Vec3::new(100.0, 0.0, 100.0), crate::systems::world::road_network::RoadType::MainStreet),
-        
-        // Side streets with gentle curves - Below ground (side street height)
-        (Vec3::new(-80.0, -0.5, -50.0), Vec3::new(-60.0, -0.5, -20.0), Vec3::new(-40.0, -0.5, 50.0), crate::systems::world::road_network::RoadType::SideStreet),
-        (Vec3::new(40.0, -0.5, -50.0), Vec3::new(60.0, -0.5, -20.0), Vec3::new(80.0, -0.5, 50.0), crate::systems::world::road_network::RoadType::SideStreet),
-    ];
-    
-    for (start, control, end, road_type) in spawn_roads {
-        world_manager.road_network.add_curved_road(start, control, end, road_type);
-    }
-    
-    // Force generate the spawn chunk to create initial visible roads
-    world_manager.road_network.generate_chunk_roads(0, 0);
-    
-    println!("🛣️ Unified road network initialized at ground level!");
-}
+// NOTE: Roads are now fully dynamic - no static setup needed
+// The dynamic road system guarantees immediate spawn area roads
 
 pub fn setup_palm_trees(
     mut commands: Commands,
@@ -132,68 +90,4 @@ pub fn setup_palm_trees(
 
 
 
-// Disabled - Buildings are now fully dynamic
-#[allow(dead_code)]
-pub fn setup_buildings(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
 
-    
-    // BUILDINGS - Add Dubai-style skyscrapers and structures
-    let building_positions = [
-        // Downtown district (tall buildings)
-        (-300.0, 150.0), (-250.0, 120.0), (-200.0, 180.0), (-150.0, 100.0),
-        (200.0, 140.0), (250.0, 160.0), (300.0, 120.0), (350.0, 200.0),
-        
-        // Business district
-        (-600.0, 80.0), (-550.0, 90.0), (-500.0, 70.0),
-        (500.0, 85.0), (550.0, 95.0), (600.0, 75.0),
-        
-        // Residential areas (shorter buildings)
-        (-150.0, 30.0), (-100.0, 25.0), (-50.0, 35.0),
-        (100.0, 28.0), (150.0, 32.0), (200.0, 26.0),
-        
-        // Scattered buildings
-        (-800.0, 60.0), (-400.0, 45.0), (400.0, 55.0), (800.0, 65.0),
-    ];
-
-    for (i, &(x, z)) in building_positions.iter().enumerate() {
-        let height = match i {
-            0..=7 => ENVIRONMENT_RNG.with(|rng| rng.borrow_mut().gen_range(100.0..200.0)), // Downtown towers
-            8..=13 => ENVIRONMENT_RNG.with(|rng| rng.borrow_mut().gen_range(60.0..100.0)), // Business buildings  
-            14..=19 => ENVIRONMENT_RNG.with(|rng| rng.borrow_mut().gen_range(20.0..40.0)), // Residential
-            _ => ENVIRONMENT_RNG.with(|rng| rng.borrow_mut().gen_range(40.0..80.0)), // Mixed
-        };
-        
-        let width = ENVIRONMENT_RNG.with(|rng| rng.borrow_mut().gen_range(15.0..30.0));
-        let depth = ENVIRONMENT_RNG.with(|rng| rng.borrow_mut().gen_range(15.0..30.0));
-        
-        // Building colors
-        let building_colors = [
-            Color::srgb(0.8, 0.8, 0.9), // Light gray/white
-            Color::srgb(0.7, 0.7, 0.8), // Medium gray
-            Color::srgb(0.9, 0.85, 0.7), // Beige/sand
-            Color::srgb(0.6, 0.7, 0.8), // Blue tint
-            Color::srgb(0.8, 0.75, 0.65), // Warm beige
-        ];
-        
-        let color = building_colors[ENVIRONMENT_RNG.with(|rng| rng.borrow_mut().gen_range(0..building_colors.len()))];
-        
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(width, height, depth))),
-            MeshMaterial3d(materials.add(color)),
-            Transform::from_xyz(x, height / 2.0, z), // Visual mesh centered at its height  
-            RigidBody::Fixed,
-            Collider::cuboid(width / 2.0 + 2.0, height / 2.0 + 10.0, depth / 2.0 + 2.0), // Large collider extending way below ground
-            Cullable { max_distance: 800.0, is_culled: false },
-            CollisionGroups::new(STATIC_GROUP, Group::ALL),
-            Building {
-                building_type: BuildingType::Generic,
-                height: 30.0,
-                scale: Vec3::new(20.0, 30.0, 20.0),
-            },
-        ));
-    }
-}
