@@ -4,7 +4,7 @@ use crate::components::{
     NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart,
     NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE
 };
-use crate::factories::{RenderingFactory, StandardRenderingPattern, RenderingBundleType};
+use crate::factories::{RenderingFactory, StandardRenderingPattern};
 use crate::systems::timing_service::{TimingService, SystemType, EntityTimerType, ManagedTiming};
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 

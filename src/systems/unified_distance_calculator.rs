@@ -23,7 +23,7 @@ struct DistanceRequest {
     entity2: Entity,
     pos1: Vec3,
     pos2: Vec3,
-    callback_id: u32,
+    _callback_id: u32,
 }
 
 /// Result of a distance calculation
@@ -54,7 +54,7 @@ impl UnifiedDistanceCalculator {
             entity2,
             pos1,
             pos2,
-            callback_id,
+            _callback_id: callback_id,
         });
         callback_id
     }

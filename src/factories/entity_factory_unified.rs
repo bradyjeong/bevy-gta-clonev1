@@ -4,8 +4,7 @@ use rand::Rng;
 use std::collections::HashMap;
 use crate::components::*;
 use crate::bundles::{
-    VisibleChildBundle, VehicleBundle, NPCBundle, BuildingBundle, DynamicContentBundle, 
-    DynamicPhysicsBundle, VegetationBundle, StaticPhysicsBundle
+    VisibleChildBundle, DynamicContentBundle, DynamicPhysicsBundle, VegetationBundle
 };
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};

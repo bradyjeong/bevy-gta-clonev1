@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
-use crate::factories::{RenderingFactory, StandardRenderingPattern, RenderingBundleType, BuildingMaterialType};
+
 use crate::systems::world::road_network::{RoadSpline, RoadNetwork};
 use crate::systems::world::road_generation::is_on_road_spline;
 use std::collections::HashMap;

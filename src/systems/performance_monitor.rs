@@ -537,7 +537,7 @@ pub struct PerformanceSummary {
 pub fn unified_performance_monitoring_system(
     mut tracker: ResMut<UnifiedPerformanceTracker>,
     diagnostics: Res<DiagnosticsStore>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     if !tracker.enabled {
         return;

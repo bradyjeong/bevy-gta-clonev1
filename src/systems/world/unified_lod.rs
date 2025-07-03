@@ -241,7 +241,7 @@ fn process_vehicle_lod(
     active_pos: Vec3,
     vehicle_query: &mut Query<(Entity, &mut VehicleState, &Transform, Option<&VehicleRendering>), Without<ActiveEntity>>,
     distance_cache: &mut ResMut<DistanceCache>,
-    current_time: f32,
+    _current_time: f32,
 ) {
     let config = lod_coordinator.lod_plugin_configs.entry(EntityType::Vehicle)
         .or_insert_with(LODPluginConfig::vehicle);
@@ -359,7 +359,7 @@ fn process_vegetation_lod(
     
     let mut processed = 0;
     
-    for (entity, mut veg_lod, transform, mut visibility, mut mesh_handle) in vegetation_query.iter_mut() {
+    for (entity, mut veg_lod, transform, mut visibility, _mesh_handle) in vegetation_query.iter_mut() {
         let distance = get_cached_distance(
             active_entity,
             entity,
@@ -448,7 +448,7 @@ pub fn initialize_master_lod_system(mut commands: Commands) {
 pub fn master_lod_performance_monitor(
     lod_coordinator: Res<MasterLODCoordinator>,
     world_manager: Res<UnifiedWorldManager>,
-    chunk_query: Query<&UnifiedChunkEntity>,
+    _chunk_query: Query<&UnifiedChunkEntity>,
     vehicle_query: Query<&VehicleState>,
     npc_query: Query<&NPCState>,
     vegetation_query: Query<&VegetationLOD>,

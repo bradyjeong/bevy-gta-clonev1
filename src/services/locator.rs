@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::sync::{Arc, RwLock, OnceLock};
 use super::traits::*;
 use super::container::ServiceContainer;
-use crate::systems::timing_service::{SystemType, EntityTimerType, TimingStats};
+// Removed unused import
 
 /// Global service locator for runtime service discovery
 /// This provides a fallback when dependency injection is not available

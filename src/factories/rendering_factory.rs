@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::factories::{MeshFactory, MaterialFactory};
-use crate::bundles::{VisibleBundle, VisibleChildBundle};
+
 
 /// PHASE 2.2: Rendering Factory Standardization
 /// Eliminates 200+ duplicate rendering patterns by providing unified mesh + material + visibility creation
@@ -139,7 +139,7 @@ impl RenderingFactory {
                 }).id();
                 
                 if let Some(parent_id) = parent {
-                    commands.entity(entity).set_parent(parent_id);
+                    commands.entity(entity).insert(ChildOf(parent_id));
                 }
                 entity
             },

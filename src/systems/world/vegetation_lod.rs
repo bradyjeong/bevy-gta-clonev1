@@ -87,7 +87,7 @@ pub fn vegetation_billboard_mesh_generator(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
+    _asset_server: Res<AssetServer>,
 ) {
     // Generate a simple quad mesh for billboards
     let billboard_mesh = create_billboard_quad();

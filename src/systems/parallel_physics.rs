@@ -7,7 +7,7 @@ use bevy::prelude::*;
 pub struct ParallelPhysicsPlugin;
 
 impl Plugin for ParallelPhysicsPlugin {
-    fn build(&self, app: &mut App) {
+    fn build(&self, _app: &mut App) {
         // No systems added - parallel physics disabled
     }
 }

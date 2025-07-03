@@ -9,7 +9,7 @@ pub fn integrate_existing_performance_metrics(
     performance_stats: Res<PerformanceStats>,
     dirty_flags_metrics: Res<DirtyFlagsMetrics>,
     control_manager: Option<Res<ControlManager>>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     // Integrate existing PerformanceStats
     tracker.update_entity_counts(

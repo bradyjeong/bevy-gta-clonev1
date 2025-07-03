@@ -25,7 +25,6 @@ impl SpawnableType {
             ContentType::Building => SpawnableType::Building,
             ContentType::Tree => SpawnableType::Tree,
             ContentType::Road => SpawnableType::EnvironmentObject,
-            _ => SpawnableType::EnvironmentObject,
         }
     }
     

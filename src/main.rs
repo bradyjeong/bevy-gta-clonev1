@@ -7,7 +7,7 @@ use gta_game::*;
 use gta_game::components::world::{MeshCache, EntityLimits};
 use gta_game::systems::{SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, TransformSyncPlugin, UnifiedDistanceCalculatorPlugin};
 use gta_game::systems::world::road_network::RoadNetwork;
-use gta_game::setup::vehicles::{setup_simple_helicopter, setup_simple_f16};
+use gta_game::setup::vehicles::{setup_simple_helicopter, setup_simple_f16, setup_simple_vehicles};
 use gta_game::systems::world::npc_spawn::setup_new_npcs;
 use gta_game::setup::world::setup_dubai_noon_lighting;
 use gta_game::services::{initialize_simple_services, update_timing_service_system, GroundDetectionPlugin};
@@ -85,6 +85,7 @@ fn main() {
             setup_palm_trees,
             setup_new_npcs,
             setup_starter_vehicles,
+            setup_simple_vehicles,  // Add Bugatti Chiron SuperCar
             setup_buildings,
         ).after(initialize_simple_services));
         

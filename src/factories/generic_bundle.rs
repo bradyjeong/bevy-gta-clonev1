@@ -4,7 +4,7 @@ use crate::config::*;
 use crate::components::*;
 use crate::systems::distance_cache::MovementTracker;
 use crate::bundles::*;
-use crate::systems::world::unified_world::{UnifiedChunkEntity, ContentLayer};
+use crate::systems::world::unified_world::UnifiedChunkEntity;
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 /// Type alias for old NPCBehavior to maintain compatibility
@@ -600,7 +600,7 @@ impl GenericBundleFactory {
     pub fn dynamic_content(
         content_type: ContentType,
         position: Vec3,
-        max_distance: f32,
+        _max_distance: f32,
     ) -> DynamicContentBundle {
         DynamicContentBundle {
             dynamic_content: DynamicContent { content_type },
@@ -618,7 +618,7 @@ impl GenericBundleFactory {
         position: Vec3,
         collider: Collider,
         collision_groups: CollisionGroups,
-        max_distance: f32,
+        _max_distance: f32,
     ) -> DynamicPhysicsBundle {
         DynamicPhysicsBundle {
             dynamic_content: DynamicContent { content_type },
@@ -660,7 +660,7 @@ impl GenericBundleFactory {
     /// Create vegetation bundle for trees
     pub fn vegetation(
         position: Vec3,
-        max_distance: f32,
+        _max_distance: f32,
     ) -> VegetationBundle {
         VegetationBundle {
             dynamic_content: DynamicContent { content_type: ContentType::Tree },
@@ -694,7 +694,7 @@ impl GenericBundleFactory {
         layer: crate::systems::world::unified_world::ContentLayer,
         content_type: ContentType,
         position: Vec3,
-        max_distance: f32,
+        _max_distance: f32,
     ) -> UnifiedChunkBundle {
         UnifiedChunkBundle {
             chunk_entity: UnifiedChunkEntity { 

@@ -4,8 +4,7 @@ use crate::components::{
     NPCState, NPCType, NPCLOD, Cullable, NPCBehaviorType, NPCAppearance, NPCGender,
     NPC_LOD_CULL_DISTANCE
 };
-use crate::bundles::NPCBundle;
-use crate::factories::generic_bundle::{GenericBundleFactory, NPCBundleSpec};
+
 use crate::config::GameConfig;
 use crate::systems::timing_service::{TimingService, EntityTimerType, ManagedTiming};
 use crate::services::ground_detection::GroundDetectionService;
@@ -19,7 +18,7 @@ pub fn spawn_new_npc_system(
     timing_service: Res<TimingService>,
     npc_query: Query<Entity, With<NPCState>>,
     ground_service: Res<GroundDetectionService>,
-    config: Res<GameConfig>,
+    _config: Res<GameConfig>,
 ) {
     // Limit NPC spawning to avoid performance issues (unified entity limits)
     if npc_query.iter().count() >= 100 {

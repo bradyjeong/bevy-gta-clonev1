@@ -1,11 +1,8 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
 use crate::components::*;
-use crate::constants::*;
-use crate::bundles::{VehicleVisibilityBundle, VisibleChildBundle};
-use crate::factories::generic_bundle::GenericBundleFactory;
+use crate::bundles::VisibleChildBundle;
 use crate::systems::world::unified_world::{
     UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState,
     UNIFIED_CHUNK_SIZE,
@@ -628,29 +625,4 @@ fn create_marking_material(materials: &mut ResMut<Assets<StandardMaterial>>) -> 
     })
 }
 
-/// Create a detailed palm tree mesh for full LOD
-fn create_detailed_palm_mesh() -> Mesh {
-    // Create a palm tree trunk mesh
-    // For now, use a simple cylinder as placeholder
-    // In a real implementation, you'd load from an asset or generate procedurally
-    Cylinder::new(0.3, 8.0).mesh().into()
-}
 
-/// Create a medium detail palm tree mesh
-fn create_medium_palm_mesh() -> Mesh {
-    // Simpler version with fewer vertices
-    Cylinder::new(0.25, 6.0).mesh().into()
-}
-
-/// Create a billboard quad mesh
-fn create_billboard_quad() -> Mesh {
-    Plane3d::default().mesh().size(2.0, 3.0).into()
-}
-
-// Building types (matching existing enum)
-#[derive(Clone, Copy)]
-enum BuildingType {
-    Residential,
-    Commercial,
-    Skyscraper,
-}

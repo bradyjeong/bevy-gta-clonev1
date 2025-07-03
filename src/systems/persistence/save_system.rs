@@ -198,33 +198,36 @@ impl From<SuperCar> for SerializableSuperCar {
 
 impl Into<SuperCar> for SerializableSuperCar {
     fn into(self) -> SuperCar {
-        SuperCar {
-            max_speed: self.max_speed,
-            acceleration: self.acceleration,
-            turbo_boost: self.turbo_boost,
-            exhaust_timer: self.exhaust_timer,
-            weight: self.weight,
-            power: self.power,
-            torque: self.torque,
-            drag_coefficient: self.drag_coefficient,
-            suspension_stiffness: self.suspension_stiffness,
-            suspension_damping: self.suspension_damping,
-            front_weight_bias: self.front_weight_bias,
-            traction_control: self.traction_control,
-            stability_control: self.stability_control,
-            wheel_spin_threshold: self.wheel_spin_threshold,
-            current_traction: self.current_traction,
-            turbo_pressure: self.turbo_pressure,
-            turbo_lag: self.turbo_lag,
-            turbo_cooldown: self.turbo_cooldown,
-            max_turbo_time: self.max_turbo_time,
-            current_turbo_time: self.current_turbo_time,
-            rpm: self.rpm,
-            max_rpm: self.max_rpm,
-            idle_rpm: self.idle_rpm,
-            power_band_start: self.power_band_start,
-            power_band_end: self.power_band_end,
-        }
+        let mut supercar = SuperCar::default();
+        
+        // Update with saved values
+        supercar.max_speed = self.max_speed;
+        supercar.acceleration = self.acceleration;
+        supercar.turbo_boost = self.turbo_boost;
+        supercar.exhaust_timer = self.exhaust_timer;
+        supercar.weight = self.weight;
+        supercar.power = self.power;
+        supercar.torque = self.torque;
+        supercar.drag_coefficient = self.drag_coefficient;
+        supercar.suspension_stiffness = self.suspension_stiffness;
+        supercar.suspension_damping = self.suspension_damping;
+        supercar.front_weight_bias = self.front_weight_bias;
+        supercar.traction_control = self.traction_control;
+        supercar.stability_control = self.stability_control;
+        supercar.wheel_spin_threshold = self.wheel_spin_threshold;
+        supercar.current_traction = self.current_traction;
+        supercar.turbo_pressure = self.turbo_pressure;
+        supercar.turbo_lag = self.turbo_lag;
+        supercar.turbo_cooldown = self.turbo_cooldown;
+        supercar.max_turbo_time = self.max_turbo_time;
+        supercar.current_turbo_time = self.current_turbo_time;
+        supercar.rpm = self.rpm;
+        supercar.max_rpm = self.max_rpm;
+        supercar.idle_rpm = self.idle_rpm;
+        supercar.power_band_start = self.power_band_start;
+        supercar.power_band_end = self.power_band_end;
+        
+        supercar
     }
 }
 

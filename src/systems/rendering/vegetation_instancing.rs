@@ -20,7 +20,7 @@ pub fn collect_vegetation_instances_system(
     mut bush_query: Query<&mut InstancedBush>,
     config: Res<VegetationInstancingConfig>,
     frame_counter: Res<FrameCounter>,
-    game_config: Res<GameConfig>,
+    _game_config: Res<GameConfig>,
     mut last_update: Local<f32>,
     time: Res<Time>,
 ) {
@@ -312,7 +312,7 @@ pub fn update_vegetation_instancing_system(
     mut bush_query: Query<(Entity, &mut InstancedBush), With<DirtyVegetationInstancing>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    config: Res<VegetationInstancingConfig>,
+    _config: Res<VegetationInstancingConfig>,
 ) {
     let start_time = Instant::now();
     

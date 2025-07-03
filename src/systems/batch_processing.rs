@@ -16,13 +16,13 @@ use crate::systems::performance_monitor::{UnifiedPerformanceTracker, Performance
 #[derive(Resource, Default)]
 pub struct BatchProcessor {
     /// Entity groups organized by batch type
-    entity_groups: HashMap<BatchType, Vec<Entity>>,
+    _entity_groups: HashMap<BatchType, Vec<Entity>>,
     /// Processing statistics for optimization
     pub processing_stats: BatchProcessingStats,
     /// Adaptive batch sizes based on performance
     pub adaptive_batch_sizes: HashMap<BatchType, usize>,
     /// Frame timing for batch optimization
-    frame_timings: Vec<f32>,
+    _frame_timings: Vec<f32>,
     /// Last optimization time
     pub last_optimization: f32,
 }
@@ -292,7 +292,7 @@ pub fn batch_visibility_manager_system(
     visibility_query: Query<(Entity, &mut Visibility, &Transform, Option<&UnifiedCullable>)>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     mut batch_processor: ResMut<BatchProcessor>,
-    mut distance_cache: ResMut<DistanceCache>,
+    _distance_cache: ResMut<DistanceCache>,
     mut performance_tracker: ResMut<UnifiedPerformanceTracker>,
     config: Res<GameConfig>,
     time: Res<Time>,
@@ -396,7 +396,7 @@ fn process_visibility_state_batch(
 ) {
     for (entity, _visibility, _transform, cullable, distance) in batch {
         if let Some(cull) = cullable {
-            let should_be_visible = *distance <= cull.config.cull_distance && !cull.is_culled;
+            let _should_be_visible = *distance <= cull.config.cull_distance && !cull.is_culled;
             
             let new_visibility = match state {
                 VisibilityState::NeedsToShow => Visibility::Visible,

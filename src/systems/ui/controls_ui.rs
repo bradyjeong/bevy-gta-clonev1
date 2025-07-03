@@ -67,6 +67,9 @@ fn generate_dynamic_controls_text(state: GameState, input_config: &InputConfig) 
                 controls.push(format!("{}: Exit Car", format_key_name(key)));
             }
             
+            controls.push("\nSPECIAL CONTROLS:".to_string());
+            controls.push("F3: Performance Monitor".to_string());
+            controls.push("F4: Bugatti Dashboard (SuperCar only)".to_string());
             controls.push("\nHold keys for acceleration".to_string());
             controls.push("Find the Bugatti Chiron for max speed!".to_string());
             

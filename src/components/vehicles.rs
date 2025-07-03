@@ -1,5 +1,21 @@
 use bevy::prelude::*;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DrivingMode {
+    Comfort,    // Reduced power, softer suspension
+    Sport,      // Enhanced response, firmer suspension
+    Track,      // Maximum performance, no limits
+    Custom,     // User-defined settings
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ExhaustMode {
+    Quiet,      // Minimal exhaust noise
+    Normal,     // Standard exhaust note
+    Sport,      // Enhanced exhaust sounds
+    Track,      // Maximum exhaust intensity
+}
+
 // Legacy marker components (kept for compatibility)
 #[derive(Component)]
 pub struct Car;
@@ -28,12 +44,14 @@ pub struct SuperCar {
     pub wheel_spin_threshold: f32,
     pub current_traction: f32,    // 0.0-1.0, current grip level
     
-    // Turbo system
+    // Turbo system (quad-turbo W16)
     pub turbo_pressure: f32,      // 0.0-1.0, builds up over time
     pub turbo_lag: f32,           // seconds to full boost
     pub turbo_cooldown: f32,      // prevents overheating
     pub max_turbo_time: f32,      // maximum continuous boost
     pub current_turbo_time: f32,  // current boost duration
+    pub turbo_stage: u8,          // 0-4 turbos active
+    pub turbo_pressure_buildup: f32, // Dynamic pressure buildup rate
     
     // Engine characteristics
     pub rpm: f32,                 // current engine RPM
@@ -41,6 +59,44 @@ pub struct SuperCar {
     pub idle_rpm: f32,            // idle RPM
     pub power_band_start: f32,    // RPM where peak power begins
     pub power_band_end: f32,      // RPM where peak power ends
+    pub gear: u8,                 // current gear (1-7)
+    pub gear_ratios: Vec<f32>,    // gear ratios for each gear
+    pub shift_rpm: f32,           // RPM to shift up
+    pub downshift_rpm: f32,       // RPM to shift down
+    
+    // Hypercar driving modes
+    pub driving_mode: DrivingMode,
+    pub launch_control: bool,
+    pub launch_control_engaged: bool,
+    pub launch_rpm_limit: f32,
+    pub sport_mode_active: bool,
+    pub track_mode_active: bool,
+    
+    // Advanced aerodynamics
+    pub downforce: f32,           // Current downforce in N
+    pub active_aero: bool,        // Active aerodynamics system
+    pub rear_wing_angle: f32,     // 0.0-1.0 wing angle
+    pub front_splitter_level: f32, // 0.0-1.0 splitter extension
+    
+    // Performance metrics
+    pub g_force_lateral: f32,     // Current lateral G-force
+    pub g_force_longitudinal: f32, // Current longitudinal G-force
+    pub performance_timer: f32,   // Timer for performance calculations
+    pub zero_to_sixty_time: f32,  // Tracked 0-60 time
+    pub is_timing_launch: bool,   // Whether we're timing acceleration
+    
+    // Enhanced engine simulation
+    pub engine_temperature: f32,  // Engine temperature (0.0-1.0)
+    pub oil_pressure: f32,        // Oil pressure (0.0-1.0)
+    pub fuel_consumption_rate: f32, // L/100km equivalent
+    pub rev_limiter_active: bool, // Rev limiter cutting ignition
+    
+    // Sound system integration
+    pub exhaust_note_mode: ExhaustMode,
+    pub engine_note_intensity: f32,
+    pub turbo_whistle_intensity: f32,
+    pub backfire_timer: f32,
+    pub pops_and_bangs: bool,
 }
 
 impl Default for SuperCar {
@@ -48,7 +104,7 @@ impl Default for SuperCar {
         Self {
             // Bugatti Chiron specifications
             max_speed: 261.0,            // mph - actual Chiron top speed
-            acceleration: 150.0,         // enhanced for 0-60 in 2.4s feel
+            acceleration: 180.0,         // enhanced for hypercar feel (0-60 in 2.4s)
             turbo_boost: false,
             exhaust_timer: 0.0,
             
@@ -59,22 +115,24 @@ impl Default for SuperCar {
             drag_coefficient: 0.35,      // excellent aerodynamics
             
             // Premium suspension and handling
-            suspension_stiffness: 8.5,   // adaptive suspension
-            suspension_damping: 4.2,     // excellent damping control
+            suspension_stiffness: 9.2,   // adaptive suspension - stiffer for hypercar
+            suspension_damping: 4.8,     // excellent damping control
             front_weight_bias: 0.43,     // rear-mid engine layout
             
             // Advanced traction systems
             traction_control: true,
             stability_control: true,
-            wheel_spin_threshold: 0.15,  // very low for maximum grip
+            wheel_spin_threshold: 0.12,  // very low for maximum grip
             current_traction: 1.0,       // start with perfect grip
             
             // Quad-turbo system
             turbo_pressure: 0.0,
-            turbo_lag: 0.8,              // minimal lag for modern turbos
+            turbo_lag: 0.6,              // minimal lag for modern turbos
             turbo_cooldown: 0.0,
-            max_turbo_time: 15.0,        // 15 seconds of boost before cooldown
+            max_turbo_time: 18.0,        // 18 seconds of boost before cooldown
             current_turbo_time: 0.0,
+            turbo_stage: 0,              // start with no turbos active
+            turbo_pressure_buildup: 1.2, // aggressive buildup rate
             
             // W16 engine characteristics
             rpm: 800.0,                  // idle RPM
@@ -82,6 +140,44 @@ impl Default for SuperCar {
             idle_rpm: 800.0,
             power_band_start: 2000.0,    // turbos kick in early
             power_band_end: 6000.0,      // peak power range
+            gear: 1,                     // start in first gear
+            gear_ratios: vec![3.6, 2.4, 1.8, 1.4, 1.1, 0.9, 0.75], // 7-speed dual-clutch
+            shift_rpm: 6200.0,           // shift up RPM
+            downshift_rpm: 3500.0,       // shift down RPM
+            
+            // Hypercar driving modes
+            driving_mode: DrivingMode::Sport, // default to sport mode
+            launch_control: true,
+            launch_control_engaged: false,
+            launch_rpm_limit: 3500.0,    // launch control RPM limit
+            sport_mode_active: true,
+            track_mode_active: false,
+            
+            // Advanced aerodynamics
+            downforce: 0.0,              // calculated dynamically
+            active_aero: true,           // Chiron has active aerodynamics
+            rear_wing_angle: 0.0,        // start in low-drag position
+            front_splitter_level: 0.0,   // start retracted
+            
+            // Performance metrics
+            g_force_lateral: 0.0,
+            g_force_longitudinal: 0.0,
+            performance_timer: 0.0,
+            zero_to_sixty_time: 0.0,
+            is_timing_launch: false,
+            
+            // Enhanced engine simulation
+            engine_temperature: 0.7,     // normal operating temperature
+            oil_pressure: 0.8,           // good oil pressure
+            fuel_consumption_rate: 22.5, // L/100km - realistic for hypercar
+            rev_limiter_active: false,
+            
+            // Sound system integration
+            exhaust_note_mode: ExhaustMode::Sport,
+            engine_note_intensity: 0.8,
+            turbo_whistle_intensity: 0.6,
+            backfire_timer: 0.0,
+            pops_and_bangs: true,        // aggressive exhaust tuning
         }
     }
 }

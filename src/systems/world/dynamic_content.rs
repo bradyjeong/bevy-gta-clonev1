@@ -4,13 +4,7 @@ use rand::Rng;
 use std::cell::RefCell;
 use crate::components::*;
 use crate::components::world::EntityLimits;
-use crate::constants::*;
-use crate::bundles::{VehicleVisibilityBundle, VisibleChildBundle};
-use crate::factories::{
-    generic_bundle::GenericBundleFactory, 
-    entity_factory_unified::UnifiedEntityFactory,
-    RenderingFactory, StandardRenderingPattern, RenderingBundleType, VehicleBodyType
-};
+use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
 
@@ -51,7 +45,7 @@ pub fn dynamic_content_system(
     existing_vehicles_query: Query<&Transform, (With<Car>, Without<DynamicContent>)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut entity_limits: ResMut<EntityLimits>,
+    _entity_limits: ResMut<EntityLimits>,
     mut unified_factory: ResMut<UnifiedEntityFactory>,
     road_network: Res<RoadNetwork>,
     time: Res<Time>,
@@ -222,7 +216,7 @@ fn spawn_dynamic_content_safe_unified(
     // Buildings - 8% spawn rate, not on roads
     if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.08 {
         if !on_road && !is_in_water_area(position) {
-            if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+            if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
                 commands,
                 meshes,
                 materials,
@@ -239,7 +233,7 @@ fn spawn_dynamic_content_safe_unified(
     
     // Vehicles - 4% spawn rate, only on roads  
     else if on_road && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.04 {
-        if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+        if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
             commands,
             meshes,
             materials,
@@ -255,7 +249,7 @@ fn spawn_dynamic_content_safe_unified(
     
     // Trees - 5% spawn rate, not on roads, not in water
     else if !on_road && !is_in_water_area(position) && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.05 {
-        if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+        if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
             commands,
             meshes,
             materials,
@@ -271,7 +265,7 @@ fn spawn_dynamic_content_safe_unified(
     
     // NPCs - 1% spawn rate, anywhere
     else if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.01 {
-        if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+        if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
             commands,
             meshes,
             materials,

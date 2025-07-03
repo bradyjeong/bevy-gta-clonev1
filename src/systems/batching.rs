@@ -275,7 +275,7 @@ pub fn batch_physics_processing_system(
     
     let mut processed = 0;
     
-    for (entity, _dirty_physics, mut velocity, rigid_body) in 
+    for (entity, _dirty_physics, _velocity, rigid_body) in 
         entities_to_process.into_iter().skip(start_offset).take(batch_size) {
         
         // Check processing time limit
@@ -284,8 +284,8 @@ pub fn batch_physics_processing_system(
         }
         
         // Apply physics constraints and validation
-        let max_velocity = config.physics.max_velocity;
-        let max_angular_velocity = config.physics.max_angular_velocity;
+        let _max_velocity = config.physics.max_velocity;
+        let _max_angular_velocity = config.physics.max_angular_velocity;
         
         // DISABLE VELOCITY CLAMPING - CAUSES MICRO-JITTER
         // Let physics engine handle velocity limits naturally
@@ -337,8 +337,8 @@ pub fn batch_transform_processing_system(
         }
         
         // Apply transform validation and constraints
-        let max_coord = config.physics.max_world_coord;
-        let min_coord = config.physics.min_world_coord;
+        let _max_coord = config.physics.max_world_coord;
+        let _min_coord = config.physics.min_world_coord;
         
         // Clamp position to world bounds
         // Disable transform clamping to prevent shake

@@ -144,7 +144,7 @@ pub struct OptimizationResult {
 pub fn performance_dashboard_system(
     mut dashboard: ResMut<PerformanceDashboard>,
     diagnostics: Res<DiagnosticsStore>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     // Update frame analyzer
     if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {

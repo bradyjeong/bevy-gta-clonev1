@@ -13,10 +13,10 @@ thread_local! {
 // This function is deprecated - replaced by the curved road network system
 // Keeping for backwards compatibility, but now it just initializes the road network
 pub fn setup_basic_roads(
-    mut commands: Commands,
+    _commands: Commands,
     mut road_network: ResMut<crate::systems::world::road_network::RoadNetwork>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    _meshes: ResMut<Assets<Mesh>>,
+    _materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Initialize the road network with a few starter roads around spawn
     // The main curved road generation will happen through the road_network_system

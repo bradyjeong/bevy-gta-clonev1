@@ -9,7 +9,7 @@ pub fn integrate_vegetation_with_instancing_system(
     frame_counter: Res<FrameCounter>,
 ) {
     // Convert existing vegetation entities to use instancing
-    for (entity, transform) in vegetation_query.iter().take(10) { // Process 10 per frame
+    for (entity, _transform) in vegetation_query.iter().take(10) { // Process 10 per frame
         // Determine vegetation type based on entity components
         let vegetation_type = determine_vegetation_type(&commands, entity);
         
@@ -29,7 +29,7 @@ pub fn integrate_vegetation_with_instancing_system(
 }
 
 /// Helper function to determine vegetation type from entity components
-fn determine_vegetation_type(commands: &Commands, entity: Entity) -> VegetationType {
+fn determine_vegetation_type(_commands: &Commands, _entity: Entity) -> VegetationType {
     // This is a simplified example - in reality you'd check the entity's components
     // to determine the appropriate vegetation type
     

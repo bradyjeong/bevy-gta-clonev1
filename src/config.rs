@@ -184,6 +184,9 @@ pub struct AudioConfig {
     // Volume levels
     pub master_volume: f32,       // 1.0 - Master volume
     pub engine_volume: f32,       // 0.8 - Engine volume
+    pub turbo_volume: f32,        // 0.9 - Turbo whistle volume
+    pub exhaust_volume: f32,      // 0.85 - Exhaust volume
+    pub backfire_volume: f32,     // 0.7 - Backfire volume
     
     pub footstep_volume: f32,     // 0.5 - Footstep volume
     
@@ -419,6 +422,9 @@ impl Default for AudioConfig {
         Self {
             master_volume: 1.0,
             engine_volume: 0.8,
+            turbo_volume: 0.9,
+            exhaust_volume: 0.85,
+            backfire_volume: 0.7,
             
             footstep_volume: 0.5,
             footstep_intervals: FootstepConfig::default(),

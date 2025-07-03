@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
 use crate::components::{NPC, Cullable, ActiveEntity};
-use crate::systems::input::{ControlManager, ControlAction};
+use crate::systems::input::ControlManager;
 
 thread_local! {
     static NPC_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());

@@ -25,7 +25,7 @@ pub fn sync_transforms_system(
 ) {
     let dt = time.delta_secs().min(0.016); // Cap at 60fps for stability
     
-    for (mut transform, mut sync) in query.iter_mut() {
+    for (mut transform, sync) in query.iter_mut() {
         // Smooth position
         transform.translation = transform.translation.lerp(
             sync.target_translation, 

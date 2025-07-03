@@ -4,9 +4,9 @@ use crate::components::{Player, ActiveEntity};
 /// Basic safety system - only handles extreme cases, avoids velocity manipulation
 pub fn player_collision_resolution_system(
     mut player_query: Query<(Entity, &mut Transform), (With<Player>, With<ActiveEntity>)>,
-    mut commands: Commands,
+    _commands: Commands,
 ) {
-    let Ok((player_entity, mut player_transform)) = player_query.single_mut() else {
+    let Ok((_player_entity, mut player_transform)) = player_query.single_mut() else {
         return;
     };
 

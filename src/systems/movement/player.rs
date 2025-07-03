@@ -171,14 +171,14 @@ pub fn human_player_animation(
     let idle_sway = (time_elapsed * 0.7).sin() * 0.5 + (time_elapsed * 1.1).cos() * 0.3;
 
     // Apply head bobbing and breathing
-    if let Ok(mut head_transform) = head_query.single_mut() {
-        let head_bob = if animation.is_walking {
+    if let Ok(_head_transform) = head_query.single_mut() {
+        let _head_bob = if animation.is_walking {
             walk_cycle * animation.head_bob_amplitude
         } else {
             breathing_cycle * 0.008
         };
 
-        let head_sway = if animation.is_walking {
+        let _head_sway = if animation.is_walking {
             walk_cycle * 0.5 * animation.body_sway_amplitude
         } else {
             idle_sway * 0.005
@@ -191,13 +191,13 @@ pub fn human_player_animation(
 
     // Apply torso swaying and breathing
     if let Ok(mut torso_transform) = torso_query.single_mut() {
-        let body_sway = if animation.is_walking {
+        let _body_sway = if animation.is_walking {
             walk_cycle * animation.body_sway_amplitude
         } else {
             idle_sway * 0.003
         };
 
-        let body_breathing = breathing_cycle * 0.005;
+        let _body_breathing = breathing_cycle * 0.005;
 
         // Disable micro-movements that cause shake  
         // torso_transform.translation.y = 0.6 + body_breathing;
