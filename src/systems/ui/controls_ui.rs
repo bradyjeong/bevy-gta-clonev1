@@ -149,16 +149,32 @@ fn generate_dynamic_controls_text(state: GameState, input_config: &InputConfig) 
 
 fn format_key_name(key: KeyCode) -> String {
     match key {
-        KeyCode::ArrowUp => "↑".to_string(),
-        KeyCode::ArrowDown => "↓".to_string(),
-        KeyCode::ArrowLeft => "←".to_string(),
-        KeyCode::ArrowRight => "→".to_string(),
+        KeyCode::ArrowUp => "UP".to_string(),
+        KeyCode::ArrowDown => "DOWN".to_string(),
+        KeyCode::ArrowLeft => "LEFT".to_string(),
+        KeyCode::ArrowRight => "RIGHT".to_string(),
         KeyCode::Space => "SPACE".to_string(),
         KeyCode::ShiftLeft => "SHIFT".to_string(),
         KeyCode::ControlLeft => "CTRL".to_string(),
         KeyCode::KeyF => "F".to_string(),
         KeyCode::KeyQ => "Q".to_string(),
         KeyCode::KeyE => "E".to_string(),
-        _ => format!("{:?}", key),
+        KeyCode::KeyW => "W".to_string(),
+        KeyCode::KeyA => "A".to_string(),
+        KeyCode::KeyS => "S".to_string(),
+        KeyCode::KeyD => "D".to_string(),
+        KeyCode::F1 => "F1".to_string(),
+        KeyCode::F2 => "F2".to_string(),
+        KeyCode::F3 => "F3".to_string(),
+        KeyCode::F4 => "F4".to_string(),
+        // Extract just the key part from debug format (removes "Key" prefix)
+        _ => {
+            let debug_str = format!("{:?}", key);
+            if debug_str.starts_with("Key") {
+                debug_str.strip_prefix("Key").unwrap_or(&debug_str).to_string()
+            } else {
+                debug_str
+            }
+        }
     }
 }

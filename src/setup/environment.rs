@@ -4,7 +4,7 @@ use rand::prelude::*;
 use std::cell::RefCell;
 use crate::components::*;
 use crate::constants::*;
-use crate::bundles::{VehicleVisibilityBundle, VisibleChildBundle};
+use crate::bundles::VisibleChildBundle;
 
 thread_local! {
     static ENVIRONMENT_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
