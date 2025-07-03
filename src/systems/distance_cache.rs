@@ -203,6 +203,18 @@ impl MovementTracker {
     }
 }
 
+impl DistanceCache {
+    /// Get the current cache size
+    pub fn len(&self) -> usize {
+        self.cache.len()
+    }
+
+    /// Check if cache is empty
+    pub fn is_empty(&self) -> bool {
+        self.cache.is_empty()
+    }
+}
+
 /// System to manage the distance cache and track entity movement
 pub fn distance_cache_management_system(
     mut cache: ResMut<DistanceCache>,

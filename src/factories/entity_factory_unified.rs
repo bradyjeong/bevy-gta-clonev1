@@ -1,27 +1,141 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use rand::Rng;
+use std::collections::HashMap;
 use crate::components::*;
-use crate::bundles::{VisibleChildBundle};
+use crate::bundles::{
+    VisibleChildBundle, VehicleBundle, NPCBundle, BuildingBundle, DynamicContentBundle, 
+    DynamicPhysicsBundle, VegetationBundle, StaticPhysicsBundle
+};
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};
 use crate::systems::audio::realistic_vehicle_audio::{VehicleAudioState, VehicleAudioSources};
 use crate::systems::distance_cache::MovementTracker;
+use crate::systems::world::road_network::RoadNetwork;
+use crate::systems::world::road_generation::is_on_road_spline;
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 use crate::GameConfig;
 
 /// Unified Entity Factory - Single point of all entity creation
 /// Consolidates EntityFactory, UnifiedEntityFactory, RealisticVehicleFactory functionality
-/// Uses builder pattern with fluent interfaces for type-safe entity construction
+/// Phase 2.1: Enhanced with centralized spawn logic and entity limit management
 #[derive(Resource)]
 pub struct UnifiedEntityFactory {
     pub config: GameConfig,
+    /// Entity limit management with configurable thresholds
+    pub entity_limits: EntityLimitManager,
+    /// Position validation cache for performance
+    pub position_cache: HashMap<(i32, i32), f32>, // (grid_x, grid_z) -> ground_height
+}
+
+/// Entity limit manager with configurable thresholds and automatic cleanup
+#[derive(Debug, Clone)]
+pub struct EntityLimitManager {
+    pub max_buildings: usize,
+    pub max_vehicles: usize,
+    pub max_npcs: usize,
+    pub max_trees: usize,
+    pub max_particles: usize,
+    
+    // Entity tracking with timestamps for FIFO cleanup
+    pub building_entities: Vec<(Entity, f32)>,
+    pub vehicle_entities: Vec<(Entity, f32)>,
+    pub npc_entities: Vec<(Entity, f32)>,
+    pub tree_entities: Vec<(Entity, f32)>,
+    pub particle_entities: Vec<(Entity, f32)>,
+}
+
+impl Default for EntityLimitManager {
+    fn default() -> Self {
+        Self {
+            // Configurable limits based on AGENT.md
+            max_buildings: (1000.0 * 0.08) as usize, // 8% of 1000 = 80 buildings
+            max_vehicles: (500.0 * 0.04) as usize,   // 4% of 500 = 20 vehicles  
+            max_npcs: (200.0 * 0.01) as usize,       // 1% of 200 = 2 NPCs
+            max_trees: (2000.0 * 0.05) as usize,     // 5% of 2000 = 100 trees
+            max_particles: 50,
+            
+            building_entities: Vec::new(),
+            vehicle_entities: Vec::new(),
+            npc_entities: Vec::new(),
+            tree_entities: Vec::new(),
+            particle_entities: Vec::new(),
+        }
+    }
+}
+
+impl EntityLimitManager {
+    /// Check if entity limit has been reached and despawn oldest if needed
+    pub fn enforce_limit(&mut self, commands: &mut Commands, entity_type: ContentType, entity: Entity, timestamp: f32) {
+        match entity_type {
+            ContentType::Building => {
+                if self.building_entities.len() >= self.max_buildings {
+                    if let Some((oldest_entity, _)) = self.building_entities.first().copied() {
+                        commands.entity(oldest_entity).despawn();
+                        self.building_entities.remove(0);
+                    }
+                }
+                self.building_entities.push((entity, timestamp));
+            }
+            ContentType::Vehicle => {
+                if self.vehicle_entities.len() >= self.max_vehicles {
+                    if let Some((oldest_entity, _)) = self.vehicle_entities.first().copied() {
+                        commands.entity(oldest_entity).despawn();
+                        self.vehicle_entities.remove(0);
+                    }
+                }
+                self.vehicle_entities.push((entity, timestamp));
+            }
+            ContentType::NPC => {
+                if self.npc_entities.len() >= self.max_npcs {
+                    if let Some((oldest_entity, _)) = self.npc_entities.first().copied() {
+                        commands.entity(oldest_entity).despawn();
+                        self.npc_entities.remove(0);
+                    }
+                }
+                self.npc_entities.push((entity, timestamp));
+            }
+            ContentType::Tree => {
+                if self.tree_entities.len() >= self.max_trees {
+                    if let Some((oldest_entity, _)) = self.tree_entities.first().copied() {
+                        commands.entity(oldest_entity).despawn();
+                        self.tree_entities.remove(0);
+                    }
+                }
+                self.tree_entities.push((entity, timestamp));
+            }
+            _ => {} // Other types don't have limits
+        }
+    }
+    
+    /// Get current entity counts for each type
+    pub fn get_counts(&self) -> (usize, usize, usize, usize) {
+        (
+            self.building_entities.len(),
+            self.vehicle_entities.len(), 
+            self.npc_entities.len(),
+            self.tree_entities.len()
+        )
+    }
 }
 
 impl UnifiedEntityFactory {
-    /// Create new factory - configuration is accessed via services
+    /// Create new factory with default configuration
     pub fn new() -> Self {
         Self {
             config: GameConfig::default(),
+            entity_limits: EntityLimitManager::default(),
+            position_cache: HashMap::new(),
+        }
+    }
+    
+    /// Create factory with custom configuration
+    pub fn with_config(config: GameConfig) -> Self {
+        Self {
+            config,
+            entity_limits: EntityLimitManager::default(),
+            position_cache: HashMap::new(),
         }
     }
     
@@ -39,6 +153,433 @@ impl UnifiedEntityFactory {
             Vec3::splat(self.config.physics.min_world_coord),
             Vec3::splat(self.config.physics.max_world_coord),
         ))
+    }
+    
+    /// Get ground height at position with caching for performance
+    pub fn get_ground_height(&mut self, position: Vec2) -> f32 {
+        let grid_x = (position.x / 10.0) as i32; // 10m grid resolution
+        let grid_z = (position.y / 10.0) as i32;
+        
+        if let Some(&cached_height) = self.position_cache.get(&(grid_x, grid_z)) {
+            return cached_height;
+        }
+        
+        // Simple ground detection - would be enhanced with actual terrain data
+        let ground_height = -0.05; // Match terrain level
+        
+        // Cache for future use
+        self.position_cache.insert((grid_x, grid_z), ground_height);
+        ground_height
+    }
+    
+    /// Check if position is valid for spawning (not on roads, water, etc.)
+    pub fn is_spawn_position_valid(
+        &self, 
+        position: Vec3, 
+        content_type: ContentType,
+        road_network: Option<&RoadNetwork>
+    ) -> bool {
+        // Check if on road (invalid for buildings and trees)
+        if let Some(roads) = road_network {
+            let road_tolerance: f32 = match content_type {
+                ContentType::Building => 25.0,
+                ContentType::Tree => 15.0,
+                ContentType::Vehicle => -8.0, // Negative means vehicles NEED roads
+                ContentType::NPC => 0.0, // NPCs can be anywhere
+                _ => 10.0,
+            };
+            
+            let on_road = is_on_road_spline(position, roads, road_tolerance.abs());
+            
+            match content_type {
+                ContentType::Vehicle => {
+                    if !on_road { return false; } // Vehicles need roads
+                }
+                ContentType::Building | ContentType::Tree => {
+                    if on_road { return false; } // Buildings/trees avoid roads
+                }
+                _ => {} // NPCs and others don't care about roads
+            }
+        }
+        
+        // Check if in water area
+        if self.is_in_water_area(position) && !matches!(content_type, ContentType::Vehicle) {
+            return false;
+        }
+        
+        true
+    }
+    
+    /// Check if position is in water area
+    fn is_in_water_area(&self, position: Vec3) -> bool {
+        // Lake position and size (must match water.rs setup)
+        let lake_center = Vec3::new(300.0, -2.0, 300.0);
+        let lake_size = 200.0;
+        let buffer = 20.0; // Extra buffer around lake
+        
+        let distance = Vec2::new(
+            position.x - lake_center.x,
+            position.z - lake_center.z,
+        ).length();
+        
+        distance < (lake_size / 2.0 + buffer)
+    }
+    
+    /// Check for content collision with existing entities
+    pub fn has_content_collision(
+        &self,
+        position: Vec3, 
+        content_type: ContentType,
+        existing_content: &[(Vec3, ContentType, f32)]
+    ) -> bool {
+        let min_distance = match content_type {
+            ContentType::Building => 35.0,
+            ContentType::Vehicle => 25.0,
+            ContentType::Tree => 10.0,
+            ContentType::NPC => 5.0,
+            _ => 15.0,
+        };
+        
+        existing_content.iter().any(|(existing_pos, _, radius)| {
+            let required_distance = min_distance + radius + 2.0; // 2.0 buffer
+            position.distance(*existing_pos) < required_distance
+        })
+    }
+}
+
+/// CONSOLIDATED SPAWN METHODS - Phase 2.1 Enhanced
+/// These methods consolidate all duplicate spawn logic from multiple systems
+impl UnifiedEntityFactory {
+    /// Master spawn method - automatically determines best spawn logic and handles limits
+    pub fn spawn_entity_consolidated(
+        &mut self,
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        content_type: ContentType,
+        position: Vec3,
+        road_network: Option<&RoadNetwork>,
+        existing_content: &[(Vec3, ContentType, f32)],
+        current_time: f32,
+    ) -> Result<Option<Entity>, BundleError> {
+        // Validate position first
+        let validated_position = self.validate_position(position)?;
+        
+        // Check if position is valid for this content type
+        if !self.is_spawn_position_valid(validated_position, content_type, road_network) {
+            return Ok(None); // Position not valid, but no error
+        }
+        
+        // Check for collisions with existing content
+        if self.has_content_collision(validated_position, content_type, existing_content) {
+            return Ok(None); // Collision detected, but no error
+        }
+        
+        // Spawn the appropriate entity type
+        let entity = match content_type {
+            ContentType::Building => {
+                self.spawn_building_consolidated(commands, meshes, materials, validated_position, current_time)?
+            }
+            ContentType::Vehicle => {
+                self.spawn_vehicle_consolidated(commands, meshes, materials, validated_position, current_time)?
+            }
+            ContentType::NPC => {
+                self.spawn_npc_consolidated(commands, meshes, materials, validated_position, current_time)?
+            }
+            ContentType::Tree => {
+                self.spawn_tree_consolidated(commands, meshes, materials, validated_position, current_time)?
+            }
+            _ => return Ok(None), // Unsupported content type
+        };
+        
+        // Enforce entity limits and track the new entity
+        self.entity_limits.enforce_limit(commands, content_type, entity, current_time);
+        
+        Ok(Some(entity))
+    }
+    
+    /// Consolidated building spawn with all features from dynamic_content.rs and layered_generation.rs
+    pub fn spawn_building_consolidated(
+        &mut self,
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        position: Vec3,
+        current_time: f32,
+    ) -> Result<Entity, BundleError> {
+        let mut rng = rand::thread_rng();
+        
+        // Determine building size and type
+        let height = rng.gen_range(8.0..30.0);
+        let width = rng.gen_range(8.0..15.0);
+        
+        // Building positioned with base on terrain surface
+        let ground_level = self.get_ground_height(Vec2::new(position.x, position.z));
+        let building_mesh_y = ground_level + height / 2.0;
+        let final_position = Vec3::new(position.x, building_mesh_y, position.z);
+        
+        // Create material with random color
+        let building_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(
+                rng.gen_range(0.5..0.9),
+                rng.gen_range(0.5..0.9),
+                rng.gen_range(0.5..0.9),
+            ),
+            ..default()
+        });
+        
+        // Create building entity using enhanced bundle system
+        let building_entity = commands.spawn((
+            // Use dynamic content bundle for compatibility
+            DynamicContentBundle {
+                dynamic_content: DynamicContent { content_type: ContentType::Building },
+                transform: Transform::from_translation(final_position),
+                visibility: Visibility::default(),
+                inherited_visibility: InheritedVisibility::VISIBLE,
+                view_visibility: ViewVisibility::default(),
+                cullable: UnifiedCullable::building(),
+            },
+            // Building-specific components
+            Building {
+                building_type: BuildingType::Generic,
+                height,
+                scale: Vec3::new(width, height, width),
+            },
+            // Physics components  
+            RigidBody::Fixed,
+            Collider::cuboid(width / 2.0, height / 2.0, width / 2.0),
+            CollisionGroups::new(self.config.physics.static_group, Group::ALL),
+            // Visual components
+            Mesh3d(meshes.add(Cuboid::new(width, height, width))),
+            MeshMaterial3d(building_material),
+            // Debug name
+            Name::new(format!("Building_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
+        )).id();
+        
+        Ok(building_entity)
+    }
+    
+    /// Consolidated vehicle spawn with enhanced bundles and physics
+    pub fn spawn_vehicle_consolidated(
+        &mut self,
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        position: Vec3,
+        current_time: f32,
+    ) -> Result<Entity, BundleError> {
+        let mut rng = rand::thread_rng();
+        
+        // Random vehicle color
+        let car_colors = [
+            Color::srgb(1.0, 0.0, 0.0), Color::srgb(0.0, 0.0, 1.0), Color::srgb(0.0, 1.0, 0.0),
+            Color::srgb(1.0, 1.0, 0.0), Color::srgb(1.0, 0.0, 1.0), Color::srgb(0.0, 1.0, 1.0),
+            Color::srgb(0.5, 0.5, 0.5), Color::srgb(1.0, 1.0, 1.0), Color::srgb(0.0, 0.0, 0.0),
+        ];
+        let color = car_colors[rng.gen_range(0..car_colors.len())];
+        
+        // Position vehicle on ground surface
+        let ground_level = self.get_ground_height(Vec2::new(position.x, position.z));
+        let final_position = Vec3::new(position.x, ground_level + 0.5, position.z);
+        
+        // Create vehicle entity using consolidated bundle approach
+        let vehicle_entity = commands.spawn((
+            // Dynamic content bundle for compatibility
+            DynamicPhysicsBundle {
+                dynamic_content: DynamicContent { content_type: ContentType::Vehicle },
+                transform: Transform::from_translation(final_position),
+                visibility: Visibility::default(),
+                inherited_visibility: InheritedVisibility::VISIBLE,
+                view_visibility: ViewVisibility::default(),
+                rigid_body: RigidBody::Dynamic,
+                collider: Collider::cuboid(1.0, 0.5, 2.0),
+                collision_groups: CollisionGroups::new(
+                    self.config.physics.vehicle_group,
+                    self.config.physics.static_group | self.config.physics.vehicle_group | self.config.physics.character_group
+                ),
+                velocity: Velocity::default(),
+                cullable: UnifiedCullable::vehicle(),
+            },
+            // Vehicle-specific components
+            Car,
+            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+            Damping { linear_damping: 1.0, angular_damping: 5.0 },
+            MovementTracker::new(final_position, 10.0),
+            Name::new(format!("Vehicle_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
+        )).id();
+        
+        // Add car body as child entity
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
+            MeshMaterial3d(materials.add(color)),
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+        ));
+        
+        Ok(vehicle_entity)
+    }
+    
+    /// Consolidated NPC spawn using enhanced state system
+    pub fn spawn_npc_consolidated(
+        &mut self,
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        position: Vec3,
+        current_time: f32,
+    ) -> Result<Entity, BundleError> {
+        let mut rng = rand::thread_rng();
+        
+        // Random NPC appearance
+        let npc_colors = [
+            Color::srgb(0.8, 0.6, 0.4), Color::srgb(0.6, 0.4, 0.3),
+            Color::srgb(0.9, 0.7, 0.5), Color::srgb(0.7, 0.5, 0.4),
+        ];
+        let color = npc_colors[rng.gen_range(0..npc_colors.len())];
+        
+        // Position NPC on ground
+        let ground_level = self.get_ground_height(Vec2::new(position.x, position.z));
+        let final_position = Vec3::new(position.x, ground_level + 1.0, position.z);
+        
+        // Random target position for movement
+        let target_x = rng.gen_range(-900.0..900.0);
+        let target_z = rng.gen_range(-900.0..900.0);
+        let target_position = Vec3::new(target_x, ground_level + 1.0, target_z);
+        
+        // Create NPC entity using consolidated approach
+        let npc_entity = commands.spawn((
+            // Dynamic physics bundle
+            DynamicPhysicsBundle {
+                dynamic_content: DynamicContent { content_type: ContentType::NPC },
+                transform: Transform::from_translation(final_position),
+                visibility: Visibility::default(),
+                inherited_visibility: InheritedVisibility::VISIBLE,
+                view_visibility: ViewVisibility::default(),
+                rigid_body: RigidBody::Dynamic,
+                collider: Collider::capsule(Vec3::new(0.0, -0.9, 0.0), Vec3::new(0.0, 0.9, 0.0), 0.3),
+                collision_groups: CollisionGroups::new(
+                    self.config.physics.character_group,
+                    Group::ALL
+                ),
+                velocity: Velocity::default(),
+                cullable: UnifiedCullable::npc(),
+            },
+            // NPC-specific components
+            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+            MovementTracker::new(final_position, 5.0),
+            NPC {
+                target_position,
+                speed: rng.gen_range(2.0..5.0),
+                last_update: current_time,
+                update_interval: rng.gen_range(0.05..0.2),
+            },
+            // Visual mesh
+            Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
+            MeshMaterial3d(materials.add(color)),
+            Name::new(format!("NPC_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
+        )).id();
+        
+        Ok(npc_entity)
+    }
+    
+    /// Consolidated tree spawn with LOD support
+    pub fn spawn_tree_consolidated(
+        &mut self,
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        position: Vec3,
+        current_time: f32,
+    ) -> Result<Entity, BundleError> {
+        // Position tree on ground
+        let ground_level = self.get_ground_height(Vec2::new(position.x, position.z));
+        let final_position = Vec3::new(position.x, ground_level, position.z);
+        
+        // Create tree entity using vegetation bundle
+        let tree_entity = commands.spawn((
+            VegetationBundle {
+                dynamic_content: DynamicContent { content_type: ContentType::Tree },
+                transform: Transform::from_translation(final_position),
+                visibility: Visibility::default(),
+                inherited_visibility: InheritedVisibility::VISIBLE,
+                view_visibility: ViewVisibility::default(),
+                cullable: UnifiedCullable::vegetation(),
+            },
+            Name::new(format!("Tree_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
+        )).id();
+        
+        // Add palm tree trunk as child
+        commands.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
+            MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
+            Transform::from_xyz(0.0, 4.0, 0.0),
+            ChildOf(tree_entity),
+            VisibleChildBundle::default(),
+        ));
+        
+        // Add palm fronds as children
+        for i in 0..4 {
+            let angle = (i as f32) * std::f32::consts::PI / 2.0;
+            
+            commands.spawn((
+                Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
+                MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
+                Transform::from_xyz(
+                    angle.cos() * 1.2, 
+                    7.5, 
+                    angle.sin() * 1.2
+                ).with_rotation(
+                    Quat::from_rotation_y(angle) * 
+                    Quat::from_rotation_z(-0.2) // Slight droop
+                ),
+                ChildOf(tree_entity),
+                VisibleChildBundle::default(),
+            ));
+        }
+        
+        // Add physics collider as child
+        commands.spawn((
+            RigidBody::Fixed,
+            Collider::cylinder(4.0, 0.3),
+            CollisionGroups::new(self.config.physics.static_group, Group::ALL),
+            Transform::from_xyz(0.0, 4.0, 0.0),
+            ChildOf(tree_entity),
+        ));
+        
+        Ok(tree_entity)
+    }
+    
+    /// Batch spawn multiple entities of the same type efficiently
+    pub fn spawn_batch_consolidated(
+        &mut self,
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        content_type: ContentType,
+        positions: Vec<Vec3>,
+        road_network: Option<&RoadNetwork>,
+        existing_content: &[(Vec3, ContentType, f32)],
+        current_time: f32,
+    ) -> Result<Vec<Entity>, BundleError> {
+        let mut spawned_entities = Vec::new();
+        
+        for position in positions {
+            if let Some(entity) = self.spawn_entity_consolidated(
+                commands,
+                meshes,
+                materials,
+                content_type,
+                position,
+                road_network,
+                existing_content,
+                current_time,
+            )? {
+                spawned_entities.push(entity);
+            }
+        }
+        
+        Ok(spawned_entities)
     }
 }
 
@@ -1069,8 +1610,8 @@ impl Default for UnifiedEntityFactory {
     }
 }
 
-/// System to initialize UnifiedEntityFactory as a resource
-pub fn setup_unified_entity_factory(mut commands: Commands) {
+/// System to initialize UnifiedEntityFactory as a resource (basic version)
+pub fn setup_unified_entity_factory_basic(mut commands: Commands) {
     commands.insert_resource(UnifiedEntityFactory::default());
 }
 

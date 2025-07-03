@@ -6,6 +6,11 @@ use crate::components::*;
 use crate::components::world::EntityLimits;
 use crate::constants::*;
 use crate::bundles::{VehicleVisibilityBundle, VisibleChildBundle};
+use crate::factories::{
+    generic_bundle::GenericBundleFactory, 
+    entity_factory_unified::UnifiedEntityFactory,
+    RenderingFactory, StandardRenderingPattern, RenderingBundleType, VehicleBodyType
+};
 use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
 
@@ -47,6 +52,7 @@ pub fn dynamic_content_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut entity_limits: ResMut<EntityLimits>,
+    mut unified_factory: ResMut<UnifiedEntityFactory>,
     road_network: Res<RoadNetwork>,
     time: Res<Time>,
     mut timer: Local<DynamicContentTimer>,
@@ -125,7 +131,7 @@ pub fn dynamic_content_system(
                 
                 // Only spawn if no content exists nearby
                 if !has_content_at_position(spawn_pos, &existing_content, spawn_density * 0.8) {
-                    spawn_dynamic_content_safe(&mut commands, spawn_pos, &existing_content, &mut meshes, &mut materials, &mut entity_limits, &road_network, time.elapsed_secs());
+                    spawn_dynamic_content_safe_unified(&mut commands, spawn_pos, &existing_content, &mut meshes, &mut materials, &mut unified_factory, &road_network, time.elapsed_secs());
                 }
             }
             if spawn_attempts > max_spawn_attempts { break; }
@@ -270,12 +276,13 @@ fn spawn_building(
     let building_mesh_y = building_base_y + height / 2.0;
     
     let building_entity = commands.spawn((
-        DynamicContent {
-            content_type: ContentType::Building,
-        },
+        GenericBundleFactory::dynamic_content(
+            ContentType::Building,
+            Vec3::new(position.x, building_mesh_y, position.z),
+            300.0,
+        ),
         Mesh3d(meshes.add(Cuboid::new(width, height, width))),
         MeshMaterial3d(building_material),
-        Transform::from_translation(Vec3::new(position.x, building_mesh_y, position.z)),
         RigidBody::Fixed,
         Collider::cuboid(width / 2.0, height / 2.0, width / 2.0),
         Building {
@@ -283,7 +290,6 @@ fn spawn_building(
             height,
             scale: Vec3::new(width, height, width),
         },
-        Cullable { max_distance: 300.0, is_culled: false },
     )).id();
     
     // Track the new building
@@ -322,29 +328,26 @@ fn spawn_vehicle(
     
     // Create car parent entity with physics
     let car_entity = commands.spawn((
-        DynamicContent {
-            content_type: ContentType::Vehicle,
-        },
-        Car,
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 0.5, 2.0),  // Half-height = 0.5, total height = 1.0
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Velocity::zero(),
-        Transform::from_xyz(position.x, 0.5, position.z),  // Fixed: spawn at ground+half-height
-        VehicleVisibilityBundle::default(),
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
-        Cullable { max_distance: 150.0, is_culled: false },
+        GenericBundleFactory::dynamic_vehicle(
+            Vec3::new(position.x, 0.5, position.z),  // Fixed: spawn at ground+half-height
+            CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
+            Damping { linear_damping: 1.0, angular_damping: 5.0 },
+        ),
     )).id();
 
-    // Car body (main hull) - Fixed: height matches collider
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),  // Fixed: height 1.0 matches collider
-        MeshMaterial3d(materials.add(color)),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        ChildOf(car_entity),
-        VisibleChildBundle::default(),
-    ));
+    // Car body (main hull) - FACTORY PATTERN
+    RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::VehicleBody { 
+            vehicle_type: VehicleBodyType::BasicCar, 
+            color 
+        },
+        Vec3::ZERO,
+        RenderingBundleType::Child,
+        Some(car_entity),
+    );
     
     // Track the new vehicle
     entity_limits.vehicle_entities.push((car_entity, current_time));
@@ -375,34 +378,15 @@ fn spawn_dynamic_tree(
         Cullable { max_distance: 200.0, is_culled: false },
     )).id();
 
-    // Palm tree trunk - single brown cylinder
-    commands.spawn((
-        Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
-        Transform::from_xyz(0.0, 4.0, 0.0),
-        ChildOf(tree_entity),
-        VisibleChildBundle::default(),
-    ));
-
-    // Palm fronds - 4 green rectangles arranged in a cross
-    for i in 0..4 {
-        let angle = (i as f32) * std::f32::consts::PI / 2.0;
-        
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
-            MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
-            Transform::from_xyz(
-                angle.cos() * 1.2, 
-                7.5, 
-                angle.sin() * 1.2
-            ).with_rotation(
-                Quat::from_rotation_y(angle) * 
-                Quat::from_rotation_z(-0.2) // Slight droop
-            ),
-            ChildOf(tree_entity),
-            VisibleChildBundle::default(),
-        ));
-    }
+    // Create complete tree using factory pattern
+    let _ = RenderingFactory::create_complete_tree(
+        commands,
+        meshes,
+        materials,
+        Vec3::new(0.0, 4.0, 0.0),
+        8.0,
+        4,
+    );
 
     // Physics collider for palm trunk
     commands.spawn((
@@ -447,15 +431,15 @@ fn spawn_dynamic_npc(
     let target_z = CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(-900.0..900.0));
     
     let npc_entity = commands.spawn((
-        DynamicContent {
-            content_type: ContentType::NPC,
-        },
+        GenericBundleFactory::dynamic_physics(
+            ContentType::NPC,
+            Vec3::new(position.x, 1.0, position.z), // TODO: Replace with ground detection
+            Collider::capsule(Vec3::new(0.0, -0.9, 0.0), Vec3::new(0.0, 0.9, 0.0), 0.3),
+            CollisionGroups::new(CHARACTER_GROUP, Group::ALL),
+            100.0,
+        ),
         Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
         MeshMaterial3d(materials.add(color)),
-        RigidBody::Dynamic,
-        Collider::capsule(Vec3::new(0.0, -0.9, 0.0), Vec3::new(0.0, 0.9, 0.0), 0.3),
-        Velocity::zero(),
-        Transform::from_xyz(position.x, 1.0, position.z), // TODO: Replace with ground detection
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         NPC {
             target_position: Vec3::new(target_x, 1.0, target_z), // TODO: Replace with ground detection
@@ -463,9 +447,90 @@ fn spawn_dynamic_npc(
             last_update: 0.0,
             update_interval: CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.05..0.2)),
         },
-        Cullable { max_distance: 100.0, is_culled: false },
     )).id();
     
     // Track the new NPC
     entity_limits.npc_entities.push((npc_entity, current_time));
+}
+
+/// NEW UNIFIED SPAWN FUNCTION - Phase 2.1
+/// This replaces spawn_dynamic_content_safe using the unified factory
+fn spawn_dynamic_content_safe_unified(
+    commands: &mut Commands,
+    position: Vec3,
+    existing_content: &[(Vec3, ContentType, f32)],
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    unified_factory: &mut ResMut<UnifiedEntityFactory>,
+    road_network: &RoadNetwork,
+    current_time: f32,
+) {
+    // Ultra-reduced spawn rates from AGENT.md (buildings 8%, vehicles 4%, trees 5%, NPCs 1%)
+    let on_road = is_on_road_spline(position, road_network, 25.0);
+    
+    // Buildings - 8% spawn rate, not on roads
+    if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.08 {
+        if !on_road && !is_in_water_area(position) {
+            if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+                commands,
+                meshes,
+                materials,
+                ContentType::Building,
+                position,
+                Some(road_network),
+                existing_content,
+                current_time,
+            ) {
+                println!("DEBUG: Spawned building using unified factory at {:?}", position);
+            }
+        }
+    }
+    
+    // Vehicles - 4% spawn rate, only on roads  
+    else if on_road && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.04 {
+        if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+            commands,
+            meshes,
+            materials,
+            ContentType::Vehicle,
+            position,
+            Some(road_network),
+            existing_content,
+            current_time,
+        ) {
+            println!("DEBUG: Spawned vehicle using unified factory at {:?}", position);
+        }
+    }
+    
+    // Trees - 5% spawn rate, not on roads, not in water
+    else if !on_road && !is_in_water_area(position) && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.05 {
+        if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+            commands,
+            meshes,
+            materials,
+            ContentType::Tree,
+            position,
+            Some(road_network),
+            existing_content,
+            current_time,
+        ) {
+            println!("DEBUG: Spawned tree using unified factory at {:?}", position);
+        }
+    }
+    
+    // NPCs - 1% spawn rate, anywhere
+    else if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.01 {
+        if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+            commands,
+            meshes,
+            materials,
+            ContentType::NPC,
+            position,
+            Some(road_network),
+            existing_content,
+            current_time,
+        ) {
+            println!("DEBUG: Spawned NPC using unified factory at {:?}", position);
+        }
+    }
 }

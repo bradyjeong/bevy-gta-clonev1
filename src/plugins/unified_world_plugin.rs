@@ -26,6 +26,7 @@ use crate::systems::effects::update_beacon_visibility;
 use crate::systems::timing_service::{TimingService, update_timing_service, cleanup_timing_service};
 use crate::factories::{initialize_material_factory};
 
+
 /// New unified world plugin that replaces the old WorldPlugin
 /// This provides a single, coordinated world generation system
 pub struct UnifiedWorldPlugin;

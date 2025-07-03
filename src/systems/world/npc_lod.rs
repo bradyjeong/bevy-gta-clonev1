@@ -4,6 +4,7 @@ use crate::components::{
     NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart,
     NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE
 };
+use crate::factories::{RenderingFactory, StandardRenderingPattern, RenderingBundleType};
 use crate::systems::timing_service::{TimingService, SystemType, EntityTimerType, ManagedTiming};
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
@@ -140,8 +141,23 @@ fn spawn_npc_full_lod(
             animation_offset: Vec3::ZERO,
             animation_rotation: Quat::IDENTITY,
         },
-        Mesh3d(meshes.add(Sphere::new(0.12 * appearance.build))),
-        MeshMaterial3d(materials.add(appearance.skin_tone)),
+        // FACTORY PATTERN: Head creation using rendering factory
+        {
+            let (mesh, material) = RenderingFactory::create_mesh_and_material(
+                meshes, 
+                materials, 
+                &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
+            );
+            (Mesh3d(mesh), MeshMaterial3d(material))
+        }.0,
+        {
+            let (mesh, material) = RenderingFactory::create_mesh_and_material(
+                meshes, 
+                materials, 
+                &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
+            );
+            (Mesh3d(mesh), MeshMaterial3d(material))
+        }.1,
         Transform::from_xyz(0.0, appearance.height * 0.85, 0.0),
     )).id();
     body_entities.push(head_entity);

@@ -5,6 +5,7 @@ use std::cell::RefCell;
 use crate::components::*;
 use crate::constants::*;
 use crate::bundles::{VehicleVisibilityBundle, VisibleChildBundle};
+use crate::factories::generic_bundle::GenericBundleFactory;
 use crate::systems::world::unified_world::{
     UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState,
     UNIFIED_CHUNK_SIZE,
@@ -337,10 +338,13 @@ fn spawn_unified_building(
     let building_mesh_y = ground_level + height / 2.0; // Mesh center at half-height above ground
     
     commands.spawn((
-        UnifiedChunkEntity {
-            coord: chunk_coord,
-            layer: ContentLayer::Buildings,
-        },
+        GenericBundleFactory::unified_chunk(
+            (chunk_coord.x, chunk_coord.z),
+            ContentLayer::Buildings,
+            ContentType::Building,
+            Vec3::new(position.x, building_mesh_y, position.z),
+            300.0,
+        ),
         Building {
             building_type: crate::components::world::BuildingType::Generic,
             height,
@@ -348,18 +352,9 @@ fn spawn_unified_building(
         },
         Mesh3d(meshes.add(Cuboid::new(width, height, width))),
         MeshMaterial3d(materials.add(material_color)),
-        Transform::from_translation(Vec3::new(position.x, building_mesh_y, position.z)),
         RigidBody::Fixed,
-        // Collider positioned to match mesh - centered at same Y position with same half-extents
         Collider::cuboid(width * 0.5, height * 0.5, width * 0.5),
         CollisionGroups::new(STATIC_GROUP, Group::ALL),
-        Cullable { 
-            max_distance: 300.0, 
-            is_culled: false 
-        },
-        DynamicContent {
-            content_type: ContentType::Building,
-        },
     )).id()
 }
 
@@ -462,23 +457,20 @@ fn spawn_unified_vehicle(
     let color = car_colors[LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(0..car_colors.len()))];
     
     let car_entity = commands.spawn((
-        UnifiedChunkEntity {
-            coord: chunk_coord,
-            layer: ContentLayer::Vehicles,
-        },
+        GenericBundleFactory::unified_chunk(
+            (chunk_coord.x, chunk_coord.z),
+            ContentLayer::Vehicles,
+            ContentType::Vehicle,
+            Vec3::new(position.x, 0.5, position.z),
+            150.0,
+        ),
         Car,
         RigidBody::Dynamic,
         Collider::cuboid(1.0, 0.5, 2.0),
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         Velocity::zero(),
-        Transform::from_xyz(position.x, 0.5, position.z),  // Fixed: spawn at ground+half-height
-        VehicleVisibilityBundle::default(),
-        Cullable { max_distance: 150.0, is_culled: false },
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
         Damping { linear_damping: 1.0, angular_damping: 5.0 },
-        DynamicContent {
-            content_type: ContentType::Vehicle,
-        },
     )).id();
     
     // Car body

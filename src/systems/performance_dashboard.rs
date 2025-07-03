@@ -8,7 +8,7 @@ pub struct PerformanceDashboard {
     pub gpu_profiler: GPUProfiler,
     pub memory_tracker: AdvancedMemoryTracker,
     pub frame_analyzer: FrameAnalyzer,
-    pub bottleneck_detector: BottleneckDetector,
+    pub bottleneck_detector: DashboardBottleneckDetector,
     pub optimization_engine: AutoOptimizer,
     pub last_report: Instant,
     pub report_interval: Duration,
@@ -20,7 +20,7 @@ impl Default for PerformanceDashboard {
             gpu_profiler: GPUProfiler::default(),
             memory_tracker: AdvancedMemoryTracker::default(),
             frame_analyzer: FrameAnalyzer::default(),
-            bottleneck_detector: BottleneckDetector::default(),
+            bottleneck_detector: DashboardBottleneckDetector::default(),
             optimization_engine: AutoOptimizer::default(),
             last_report: Instant::now(),
             report_interval: Duration::from_secs(10),
@@ -63,8 +63,11 @@ impl Default for FrameAnalyzer {
     }
 }
 
+// Use unified performance monitoring structs from performance_monitor.rs
+use crate::systems::performance_monitor::{PerformanceAlert, AlertSeverity};
+
 #[derive(Default)]
-pub struct BottleneckDetector {
+pub struct DashboardBottleneckDetector {
     pub system_timings: HashMap<String, f32>,
     pub critical_systems: Vec<String>,
     pub performance_alerts: Vec<PerformanceAlert>,
@@ -85,21 +88,6 @@ pub struct FrameStats {
     pub triangles: u32,
     pub culled_entities: u32,
     pub gpu_memory_used: usize,
-}
-
-#[derive(Clone)]
-pub struct PerformanceAlert {
-    pub severity: AlertSeverity,
-    pub message: String,
-    pub system: String,
-    pub timestamp: Instant,
-}
-
-#[derive(Clone)]
-pub enum AlertSeverity {
-    Info,
-    Warning,
-    Critical,
 }
 
 #[derive(Default)]
@@ -215,7 +203,7 @@ fn calculate_variance(data: &[f32]) -> f32 {
 }
 
 fn detect_performance_bottlenecks(
-    detector: &mut BottleneckDetector,
+    detector: &mut DashboardBottleneckDetector,
     target_fps: f32,
     consistency_score: f32,
     fps_history: &[f32],
@@ -229,19 +217,23 @@ fn detect_performance_bottlenecks(
     if let Some(&latest_fps) = fps_history.last() {
         if latest_fps < target_fps * 0.8 {
             detector.performance_alerts.push(PerformanceAlert {
+                category: crate::systems::performance_monitor::PerformanceCategory::System,
                 severity: AlertSeverity::Warning,
                 message: format!("FPS dropped to {:.1}, target: {:.1}", latest_fps, target_fps),
-                system: "Frame Rate".to_string(),
                 timestamp: Instant::now(),
+                value: latest_fps,
+                threshold: target_fps,
             });
         }
         
         if latest_fps < target_fps * 0.5 {
             detector.performance_alerts.push(PerformanceAlert {
+                category: crate::systems::performance_monitor::PerformanceCategory::System,
                 severity: AlertSeverity::Critical,
                 message: format!("Critical FPS drop: {:.1}", latest_fps),
-                system: "Frame Rate".to_string(),
                 timestamp: Instant::now(),
+                value: latest_fps,
+                threshold: target_fps * 0.5,
             });
         }
     }
@@ -249,10 +241,12 @@ fn detect_performance_bottlenecks(
     // Check frame time consistency
     if consistency_score < 0.7 {
         detector.performance_alerts.push(PerformanceAlert {
+            category: crate::systems::performance_monitor::PerformanceCategory::System,
             severity: AlertSeverity::Warning,
             message: format!("Frame time inconsistent: {:.1}% consistency", consistency_score * 100.0),
-            system: "Frame Timing".to_string(),
             timestamp: Instant::now(),
+            value: consistency_score * 100.0,
+            threshold: 70.0,
         });
     }
 }
@@ -402,8 +396,9 @@ fn generate_performance_report(dashboard: &PerformanceDashboard) {
                 AlertSeverity::Info => "ℹ️",
                 AlertSeverity::Warning => "⚠️",
                 AlertSeverity::Critical => "🚨",
+                AlertSeverity::Emergency => "🔥",
             };
-            println!("   {} {}: {}", severity_icon, alert.system, alert.message);
+            println!("   {} {:?}: {}", severity_icon, alert.category, alert.message);
         }
     }
     

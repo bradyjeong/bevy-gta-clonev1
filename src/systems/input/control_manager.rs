@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use crate::game_state::GameState;
-use crate::components::{Car, SuperCar, ActiveEntity};
+use crate::components::{Car, SuperCar, ActiveEntity, Player, Helicopter, F16, NPC};
 use super::input_config::InputAction;
 use super::input_manager::InputManager;
 use super::vehicle_control_config::{VehicleType as ConfigVehicleType, VehicleControlConfig as ExistingVehicleControlConfig};
@@ -27,10 +27,55 @@ pub enum ControlAction {
     Afterburner,
     EmergencyBrake,
     
+    // AI/NPC Actions
+    NPCMove,
+    NPCTurn,
+    NPCWander,
+    
     // Interaction
     Interact,
     DebugInfo,
     EmergencyReset,
+}
+
+/// Trait for entities that can be controlled
+pub trait Controllable {
+    /// Get the entity type for control mapping
+    fn get_control_type(&self) -> ControlEntityType;
+    
+    /// Apply control actions to the entity
+    fn apply_controls(&mut self, controls: &HashMap<ControlAction, f32>, dt: f32);
+}
+
+/// Types of entities that can be controlled
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ControlEntityType {
+    Player,
+    Vehicle,
+    SuperVehicle,
+    Helicopter,
+    Aircraft,
+    NPC,
+}
+
+/// AI control decision for NPCs
+#[derive(Debug, Clone)]
+pub struct AIControlDecision {
+    pub movement_direction: Vec3,
+    pub rotation_target: f32,
+    pub speed_factor: f32,
+    pub action_priority: f32,
+}
+
+impl Default for AIControlDecision {
+    fn default() -> Self {
+        Self {
+            movement_direction: Vec3::ZERO,
+            rotation_target: 0.0,
+            speed_factor: 1.0,
+            action_priority: 0.0,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -84,6 +129,12 @@ pub struct ControlManager {
     // Current control state - maps action to normalized value
     active_controls: HashMap<ControlAction, f32>,
     
+    // AI control decisions for NPCs
+    ai_decisions: HashMap<Entity, AIControlDecision>,
+    
+    // Entity type tracking
+    entity_types: HashMap<Entity, ControlEntityType>,
+    
     // Performance monitoring
     last_update_time: Option<Instant>,
     max_update_time_us: u128,
@@ -100,6 +151,8 @@ impl Default for ControlManager {
         let mut control_manager = ControlManager {
             physics_configs: HashMap::new(),
             active_controls: HashMap::new(),
+            ai_decisions: HashMap::new(),
+            entity_types: HashMap::new(),
             last_update_time: None,
             max_update_time_us: 0,
             validation_failures: 0,
@@ -496,9 +549,133 @@ impl ControlManager {
         self.emergency_brake_active = false;
         self.stability_intervention = false;
     }
+    
+    /// Register an entity for control management
+    pub fn register_entity(&mut self, entity: Entity, entity_type: ControlEntityType) {
+        self.entity_types.insert(entity, entity_type);
+    }
+    
+    /// Unregister an entity
+    pub fn unregister_entity(&mut self, entity: Entity) {
+        self.entity_types.remove(&entity);
+        self.ai_decisions.remove(&entity);
+    }
+    
+    /// Update AI control decision for an NPC entity
+    pub fn update_ai_decision(&mut self, entity: Entity, decision: AIControlDecision) {
+        self.ai_decisions.insert(entity, decision);
+    }
+    
+    /// Get AI control decision for an entity
+    pub fn get_ai_decision(&self, entity: Entity) -> Option<&AIControlDecision> {
+        self.ai_decisions.get(&entity)
+    }
+    
+    /// Convert AI decision to control actions
+    pub fn ai_decision_to_controls(&self, decision: &AIControlDecision) -> HashMap<ControlAction, f32> {
+        let mut controls = HashMap::new();
+        
+        if decision.movement_direction.length() > 0.1 {
+            controls.insert(ControlAction::NPCMove, decision.speed_factor);
+        }
+        
+        if decision.rotation_target.abs() > 0.1 {
+            controls.insert(ControlAction::NPCTurn, decision.rotation_target);
+        }
+        
+        controls
+    }
+    
+    /// Process unified controls for any entity type
+    pub fn process_entity_controls(&mut self, 
+        entity: Entity,
+        input_manager: Option<&InputManager>,
+        current_state: Option<&GameState>,
+        current_velocity: &Velocity,
+        current_transform: &Transform,
+    ) -> Result<HashMap<ControlAction, f32>, String> {
+        
+        let entity_type = self.entity_types.get(&entity)
+            .copied()
+            .unwrap_or(ControlEntityType::Vehicle);
+            
+        let mut controls = HashMap::new();
+        
+        match entity_type {
+            ControlEntityType::Player | 
+            ControlEntityType::Vehicle | 
+            ControlEntityType::SuperVehicle |
+            ControlEntityType::Helicopter |
+            ControlEntityType::Aircraft => {
+                // Use input manager for player-controlled entities
+                if let (Some(input_mgr), Some(state)) = (input_manager, current_state) {
+                    self.update_controls(input_mgr, state, current_velocity, current_transform)?;
+                    controls = self.active_controls.clone();
+                }
+            }
+            ControlEntityType::NPC => {
+                // Use AI decision for NPCs
+                if let Some(decision) = self.ai_decisions.get(&entity) {
+                    controls = self.ai_decision_to_controls(decision);
+                }
+            }
+        }
+        
+        Ok(controls)
+    }
 }
 
-/// System to process control actions each frame
+/// System to process control actions each frame - UNIFIED for all entity types
+pub fn unified_control_system(
+    input_manager: Res<InputManager>,
+    mut control_manager: ResMut<ControlManager>,
+    current_state: Res<State<GameState>>,
+    // All entity queries
+    active_entities: Query<(Entity, &Velocity, &Transform), With<ActiveEntity>>,
+    player_query: Query<Entity, (With<Player>, With<ActiveEntity>)>,
+    car_query: Query<Entity, (With<Car>, With<ActiveEntity>, Without<SuperCar>)>,
+    supercar_query: Query<Entity, (With<SuperCar>, With<ActiveEntity>)>,
+    helicopter_query: Query<Entity, (With<Helicopter>, With<ActiveEntity>)>,
+    f16_query: Query<Entity, (With<F16>, With<ActiveEntity>)>,
+) {
+    // Register entity types for active entities
+    for player_entity in player_query.iter() {
+        control_manager.register_entity(player_entity, ControlEntityType::Player);
+    }
+    for car_entity in car_query.iter() {
+        control_manager.register_entity(car_entity, ControlEntityType::Vehicle);
+    }
+    for supercar_entity in supercar_query.iter() {
+        control_manager.register_entity(supercar_entity, ControlEntityType::SuperVehicle);
+    }
+    for heli_entity in helicopter_query.iter() {
+        control_manager.register_entity(heli_entity, ControlEntityType::Helicopter);
+    }
+    for f16_entity in f16_query.iter() {
+        control_manager.register_entity(f16_entity, ControlEntityType::Aircraft);
+    }
+    
+    // Process controls for each active entity
+    for (entity, velocity, transform) in active_entities.iter() {
+        match control_manager.process_entity_controls(
+            entity,
+            Some(&input_manager),
+            Some(&**current_state),
+            velocity,
+            transform,
+        ) {
+            Ok(_controls) => {
+                // Controls successfully processed and stored in control_manager
+            }
+            Err(e) => {
+                error!("Control processing failed for entity {:?}: {}", entity, e);
+                control_manager.clear_all_controls();
+            }
+        }
+    }
+}
+
+/// Legacy system - kept for backwards compatibility but now uses unified control manager
 pub fn control_action_system(
     input_manager: Res<InputManager>,
     mut control_manager: ResMut<ControlManager>,
@@ -520,7 +697,7 @@ pub fn control_action_system(
         return; // No active entity found
     };
     
-    // Update control state
+    // Update control state using legacy method
     if let Err(e) = control_manager.update_controls(
         &input_manager,
         &**current_state,
@@ -605,4 +782,80 @@ pub fn get_yaw_input(control_manager: &ControlManager) -> f32 {
 
 pub fn get_throttle_input(control_manager: &ControlManager) -> f32 {
     control_manager.get_control_value(ControlAction::Throttle)
+}
+
+/// System to process NPC AI decisions and convert them to control actions
+pub fn npc_ai_control_system(
+    time: Res<Time>,
+    mut control_manager: ResMut<ControlManager>,
+    mut npc_query: Query<(Entity, &Transform, &mut NPC), Without<ActiveEntity>>,
+    active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
+) {
+    let current_time = time.elapsed_secs();
+    
+    // Get player position for AI decision making
+    let player_pos = if let Ok(active_transform) = active_query.single() {
+        active_transform.translation
+    } else {
+        Vec3::ZERO
+    };
+    
+    for (entity, transform, mut npc) in npc_query.iter_mut() {
+        // Register NPC entity
+        control_manager.register_entity(entity, ControlEntityType::NPC);
+        
+        // Only update NPCs at their specific intervals (staggered updates)
+        if current_time - npc.last_update < npc.update_interval {
+            continue;
+        }
+        npc.last_update = current_time;
+        
+        let current_pos = transform.translation;
+        let target_pos = npc.target_position;
+        
+        // Calculate distance to target
+        let distance = current_pos.distance(target_pos);
+        
+        // Reduce update frequency for distant NPCs
+        let distance_to_player = current_pos.distance(player_pos);
+        if distance_to_player > 100.0 {
+            npc.update_interval = 0.5; // Very slow updates for distant NPCs
+        } else if distance_to_player > 50.0 {
+            npc.update_interval = 0.2; // Slower updates for far NPCs
+        } else {
+            npc.update_interval = 0.05; // Normal updates for close NPCs
+        }
+        
+        // Create AI decision
+        let mut ai_decision = AIControlDecision::default();
+        
+        // If close to target, pick a new random target
+        if distance < 5.0 {
+            npc.target_position = Vec3::new(
+                rand::random::<f32>() * 1800.0 - 900.0,
+                1.0,
+                rand::random::<f32>() * 1800.0 - 900.0,
+            );
+            ai_decision.action_priority = 0.1; // Low priority when choosing new target
+        } else {
+            // Move towards target
+            let direction = (target_pos - current_pos).normalize();
+            ai_decision.movement_direction = direction;
+            ai_decision.speed_factor = 1.0;
+            
+            // Calculate rotation needed
+            let current_forward = transform.forward();
+            let dot_product = current_forward.dot(direction);
+            let cross_product = current_forward.cross(direction);
+            
+            if dot_product < 0.99 { // Not already facing the right direction
+                ai_decision.rotation_target = if cross_product.y > 0.0 { 1.0 } else { -1.0 };
+            }
+            
+            ai_decision.action_priority = distance / 100.0; // Higher priority for closer targets
+        }
+        
+        // Update AI decision in control manager
+        control_manager.update_ai_decision(entity, ai_decision);
+    }
 }

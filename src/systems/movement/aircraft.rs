@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Helicopter, F16, ActiveEntity, MainRotor, TailRotor, AircraftFlight};
-use crate::systems::input::{ControlManager, is_accelerating, is_braking, get_steering_input, get_throttle_input, get_pitch_input, get_roll_input, get_yaw_input, is_afterburner_active};
+use crate::systems::input::{ControlManager, ControlAction};
 
 pub fn helicopter_movement(
     control_manager: Res<ControlManager>,
@@ -18,19 +18,19 @@ pub fn helicopter_movement(
     let mut target_linear_velocity = Vec3::ZERO;
     let mut target_angular_velocity = Vec3::ZERO;
     
-    // Use ControlManager for helicopter movement
+    // Use UNIFIED ControlManager for helicopter movement
     // Forward/backward movement
-    if is_accelerating(&control_manager) {
+    if control_manager.is_control_active(ControlAction::Accelerate) {
         let forward = transform.forward();
         target_linear_velocity += forward * speed;
     }
-    if is_braking(&control_manager) {
+    if control_manager.is_control_active(ControlAction::Brake) {
         let forward = transform.forward();
         target_linear_velocity -= forward * speed;
     }
     
     // Rotation - DIRECT velocity control
-    let steering = get_steering_input(&control_manager);
+    let steering = control_manager.get_control_value(ControlAction::Steer);
     if steering != 0.0 {
         target_angular_velocity.y = steering * rotation_speed;
     } else {
@@ -38,7 +38,7 @@ pub fn helicopter_movement(
     }
     
     // HELICOPTER SPECIFIC: Vertical movement using throttle input
-    let throttle = get_throttle_input(&control_manager);
+    let throttle = control_manager.get_control_value(ControlAction::Throttle);
     if throttle > 0.0 {
         target_linear_velocity.y += vertical_speed * throttle;
     } else if throttle < 0.0 {
@@ -95,9 +95,9 @@ pub fn f16_movement(
     
     // === FLIGHT CONTROL INPUT PROCESSING ===
     
-    // Use ControlManager for F16 flight controls
+    // Use UNIFIED ControlManager for F16 flight controls
     // Pitch control (nose up/down) 
-    let pitch_input = get_pitch_input(&control_manager);
+    let pitch_input = control_manager.get_control_value(ControlAction::Pitch);
     if pitch_input > 0.0 {
         flight.pitch = (flight.pitch + dt * 3.0 * pitch_input).clamp(-1.0, 1.0); // Nose up
     } else if pitch_input < 0.0 {
@@ -107,7 +107,7 @@ pub fn f16_movement(
     }
     
     // Roll control (banking left/right)
-    let roll_input = get_roll_input(&control_manager);
+    let roll_input = control_manager.get_control_value(ControlAction::Roll);
     if roll_input != 0.0 {
         flight.roll = (flight.roll + dt * 4.0 * roll_input).clamp(-1.0, 1.0);
     } else {
@@ -115,7 +115,7 @@ pub fn f16_movement(
     }
     
     // Yaw control (rudder)
-    let yaw_input = get_yaw_input(&control_manager);
+    let yaw_input = control_manager.get_control_value(ControlAction::Yaw);
     if yaw_input != 0.0 {
         flight.yaw = (flight.yaw + dt * 2.0 * yaw_input).clamp(-1.0, 1.0);
     } else {
@@ -123,7 +123,7 @@ pub fn f16_movement(
     }
     
     // Throttle control
-    let throttle_input = get_throttle_input(&control_manager);
+    let throttle_input = control_manager.get_control_value(ControlAction::Throttle);
     if throttle_input > 0.0 {
         flight.throttle = (flight.throttle + dt * 1.5 * throttle_input).clamp(0.0, 1.0);
     } else if throttle_input < 0.0 {
@@ -131,7 +131,7 @@ pub fn f16_movement(
     }
     
     // Afterburner
-    flight.afterburner = is_afterburner_active(&control_manager);
+    flight.afterburner = control_manager.is_control_active(ControlAction::Afterburner);
     
     // === FLIGHT PHYSICS CALCULATIONS ===
     

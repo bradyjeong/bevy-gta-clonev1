@@ -1,0 +1,306 @@
+use bevy::prelude::*;
+use crate::systems::batch_processing::*;
+use crate::plugins::BatchingSystemSet;
+
+/// Enhanced batch processing plugin with intelligent grouping and adaptive optimization
+pub struct EnhancedBatchProcessingPlugin {
+    pub enable_adaptive_batch_sizes: bool,
+    pub enable_parallel_distribution: bool,
+    pub enable_distance_grouping: bool,
+    pub enable_performance_monitoring: bool,
+}
+
+impl Default for EnhancedBatchProcessingPlugin {
+    fn default() -> Self {
+        Self {
+            enable_adaptive_batch_sizes: true,
+            enable_parallel_distribution: true,
+            enable_distance_grouping: true,
+            enable_performance_monitoring: true,
+        }
+    }
+}
+
+impl Plugin for EnhancedBatchProcessingPlugin {
+    fn build(&self, app: &mut App) {
+        // Initialize batch processor resource
+        app.add_systems(Startup, initialize_simple_batch_processor_system);
+
+        // Enhanced batch processing systems - run in Update after regular batching
+        app.add_systems(Update, (
+            simple_batch_culling_system,
+            simple_batch_physics_system,
+            simple_batch_visibility_system,
+        ).chain().after(BatchingSystemSet::ProcessBatches));
+
+        // Performance optimization systems
+        if self.enable_adaptive_batch_sizes {
+            app.add_systems(PostUpdate, simple_batch_size_optimization_system);
+        }
+
+        // Performance monitoring and reporting
+        if self.enable_performance_monitoring {
+            app.add_systems(PostUpdate, simple_batch_performance_monitor_system);
+        }
+
+        // System sets for organization
+        app.configure_sets(Update, (
+            EnhancedBatchSystemSet::GroupingAndDistribution,
+            EnhancedBatchSystemSet::EnhancedProcessing,
+            EnhancedBatchSystemSet::OptimizationAndMonitoring,
+        ).chain());
+    }
+}
+
+/// System sets for enhanced batch processing
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub enum EnhancedBatchSystemSet {
+    GroupingAndDistribution,
+    EnhancedProcessing,
+    OptimizationAndMonitoring,
+}
+
+/// Batch processing configuration for runtime adjustment
+#[derive(Resource, Debug, Clone)]
+pub struct EnhancedBatchConfig {
+    /// Enable distance-based grouping for spatial optimization
+    pub enable_distance_grouping: bool,
+    /// Enable complexity-based grouping for physics optimization
+    pub enable_complexity_grouping: bool,
+    /// Enable adaptive batch size adjustment
+    pub enable_adaptive_sizing: bool,
+    /// Maximum entities per batch group
+    pub max_batch_group_size: usize,
+    /// Distance bucket size for spatial grouping (in meters)
+    pub distance_bucket_size: f32,
+    /// Target frame time for adaptive optimization (in milliseconds)
+    pub target_frame_time_ms: f32,
+    /// Minimum batch efficiency threshold
+    pub min_batch_efficiency: f32,
+}
+
+impl Default for EnhancedBatchConfig {
+    fn default() -> Self {
+        Self {
+            enable_distance_grouping: true,
+            enable_complexity_grouping: true,
+            enable_adaptive_sizing: true,
+            max_batch_group_size: 200,
+            distance_bucket_size: 100.0,
+            target_frame_time_ms: 16.67, // ~60 FPS
+            min_batch_efficiency: 10.0,
+        }
+    }
+}
+
+/// Integration helper for adding enhanced batch processing to existing plugins
+pub struct BatchProcessingIntegration;
+
+impl BatchProcessingIntegration {
+    /// Add enhanced batch processing to an existing app
+    pub fn add_to_app(app: &mut App) {
+        app.add_plugins(EnhancedBatchProcessingPlugin::default());
+    }
+
+    /// Add with custom configuration
+    pub fn add_with_config(app: &mut App, config: EnhancedBatchConfig) {
+        app.insert_resource(config)
+            .add_plugins(EnhancedBatchProcessingPlugin::default());
+    }
+
+    /// Add minimal batch processing (for lower-end systems)
+    pub fn add_minimal(app: &mut App) {
+        let minimal_plugin = EnhancedBatchProcessingPlugin {
+            enable_adaptive_batch_sizes: false,
+            enable_parallel_distribution: false,
+            enable_distance_grouping: true,
+            enable_performance_monitoring: false,
+        };
+        app.add_plugins(minimal_plugin);
+    }
+
+    /// Add maximum performance batch processing (for high-end systems)
+    pub fn add_maximum_performance(app: &mut App) {
+        let max_perf_config = EnhancedBatchConfig {
+            enable_distance_grouping: true,
+            enable_complexity_grouping: true,
+            enable_adaptive_sizing: true,
+            max_batch_group_size: 500,
+            distance_bucket_size: 50.0,
+            target_frame_time_ms: 8.33, // ~120 FPS
+            min_batch_efficiency: 20.0,
+        };
+        
+        app.insert_resource(max_perf_config)
+            .add_plugins(EnhancedBatchProcessingPlugin::default());
+    }
+}
+
+/// Utilities for batch processing configuration
+pub mod batch_config_utils {
+    use super::*;
+
+    /// Calculate optimal batch configuration based on system specs
+    pub fn calculate_optimal_config(
+        estimated_entity_count: usize,
+        target_fps: f32,
+        cpu_cores: usize,
+    ) -> EnhancedBatchConfig {
+        let target_frame_time_ms = 1000.0 / target_fps;
+        
+        // Base batch group size on entity count and CPU cores
+        let base_group_size = (estimated_entity_count / (cpu_cores * 4)).max(50).min(1000);
+        
+        // Adjust distance bucket size based on entity density
+        let distance_bucket_size = if estimated_entity_count > 10000 {
+            50.0 // Smaller buckets for high entity count
+        } else if estimated_entity_count > 5000 {
+            75.0 // Medium buckets for medium entity count
+        } else {
+            100.0 // Larger buckets for low entity count
+        };
+        
+        EnhancedBatchConfig {
+            enable_distance_grouping: true,
+            enable_complexity_grouping: cpu_cores >= 4,
+            enable_adaptive_sizing: true,
+            max_batch_group_size: base_group_size,
+            distance_bucket_size,
+            target_frame_time_ms,
+            min_batch_efficiency: if cpu_cores >= 8 { 20.0 } else { 10.0 },
+        }
+    }
+
+    /// Get recommended batch processing level based on hardware
+    pub fn get_recommended_level(cpu_cores: usize, ram_gb: usize) -> &'static str {
+        match (cpu_cores, ram_gb) {
+            (8.., 16..) => "maximum_performance",
+            (4..8, 8..16) => "high_performance",
+            (2..4, 4..8) => "balanced",
+            _ => "minimal",
+        }
+    }
+
+    /// Validate batch processing configuration
+    pub fn validate_config(config: &EnhancedBatchConfig) -> Result<(), String> {
+        if config.max_batch_group_size == 0 {
+            return Err("max_batch_group_size must be greater than 0".to_string());
+        }
+        
+        if config.distance_bucket_size <= 0.0 {
+            return Err("distance_bucket_size must be positive".to_string());
+        }
+        
+        if config.target_frame_time_ms <= 0.0 {
+            return Err("target_frame_time_ms must be positive".to_string());
+        }
+        
+        if config.min_batch_efficiency < 0.0 {
+            return Err("min_batch_efficiency cannot be negative".to_string());
+        }
+        
+        Ok(())
+    }
+}
+
+/// Batch processing diagnostics and debugging
+pub mod batch_diagnostics {
+    use super::*;
+
+    /// Get current batch processing statistics
+    pub fn get_batch_stats(batch_processor: &SimpleBatchProcessor) -> String {
+        let stats = &batch_processor.processing_stats;
+        
+        format!(
+            "Enhanced Batch Processing Stats:\n\
+            - Frame Rate: {:.1} FPS\n\
+            - Total Batches: {}\n\
+            - Efficiency by Type:\n{}",
+            stats.frame_rate_impact,
+            stats.total_batches_processed,
+            format_efficiency_stats(stats)
+        )
+    }
+
+    fn format_efficiency_stats(stats: &SimpleBatchStats) -> String {
+        let mut result = String::new();
+        
+        for (batch_type, &efficiency) in &stats.batch_efficiency {
+            let processed = stats.entities_processed_per_type.get(batch_type).copied().unwrap_or(0);
+            let time = stats.processing_time_per_type.get(batch_type).copied().unwrap_or(0.0);
+            
+            result.push_str(&format!(
+                "    {:?}: {:.1} entities/ms ({} entities, {:.2}ms)\n",
+                batch_type, efficiency, processed, time
+            ));
+        }
+        
+        result
+    }
+
+    /// Check if batch processing is performing optimally
+    pub fn is_performing_optimally(
+        batch_processor: &SimpleBatchProcessor,
+        config: &EnhancedBatchConfig,
+    ) -> bool {
+        let stats = &batch_processor.processing_stats;
+        
+        // Check if frame rate is near target
+        let target_fps = 1000.0 / config.target_frame_time_ms;
+        let fps_ratio = stats.frame_rate_impact / target_fps;
+        
+        if fps_ratio < 0.9 {
+            return false; // FPS too low
+        }
+        
+        // Check if batch efficiency is above minimum threshold
+        for &efficiency in stats.batch_efficiency.values() {
+            if efficiency < config.min_batch_efficiency {
+                return false; // Efficiency too low
+            }
+        }
+        
+        true
+    }
+
+    /// Get optimization suggestions based on current performance
+    pub fn get_optimization_suggestions(
+        batch_processor: &BatchProcessor,
+        config: &EnhancedBatchConfig,
+    ) -> Vec<String> {
+        let mut suggestions = Vec::new();
+        let stats = &batch_processor.processing_stats;
+        
+        // Check frame rate
+        let target_fps = 1000.0 / config.target_frame_time_ms;
+        let fps_ratio = stats.frame_rate_impact / target_fps;
+        
+        if fps_ratio < 0.85 {
+            suggestions.push("Consider reducing batch sizes to improve frame rate".to_string());
+            suggestions.push("Enable distance grouping to reduce processing overhead".to_string());
+        } else if fps_ratio > 1.2 {
+            suggestions.push("Frame rate is high - consider increasing batch sizes for better throughput".to_string());
+        }
+        
+        // Check batch efficiency
+        for (batch_type, &efficiency) in &stats.batch_efficiency {
+            if efficiency < config.min_batch_efficiency {
+                suggestions.push(format!(
+                    "Low efficiency for {:?} batches ({:.1} entities/ms) - consider optimization",
+                    batch_type, efficiency
+                ));
+            }
+        }
+        
+        // Check processing time distribution
+        if stats.peak_processing_time > config.target_frame_time_ms * 0.5 {
+            suggestions.push("Peak processing time is high - consider parallel distribution".to_string());
+        }
+        
+        if suggestions.is_empty() {
+            suggestions.push("Batch processing is performing optimally".to_string());
+        }
+        
+        suggestions
+    }
+}

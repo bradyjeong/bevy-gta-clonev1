@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::systems::distance_cache::MovementTracker;
+use crate::systems::world::unified_world::{UnifiedChunkEntity, ContentLayer};
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 /// Bundle for entities that need to be visible and inherit visibility from parents
 #[derive(Bundle)]
@@ -66,7 +68,7 @@ pub struct VehicleBundle {
     pub additional_mass: AdditionalMassProperties,
     pub velocity: Velocity,
     pub damping: Damping,
-    pub cullable: Cullable,
+    pub cullable: UnifiedCullable,
 }
 
 /// Complete NPC bundle with physics and state  
@@ -83,7 +85,7 @@ pub struct NPCBundle {
     pub collision_groups: CollisionGroups,
     pub additional_mass: AdditionalMassProperties,
     pub velocity: Velocity,
-    pub cullable: Cullable,
+    pub cullable: UnifiedCullable,
     pub movement_tracker: MovementTracker,
 }
 
@@ -96,7 +98,7 @@ pub struct BuildingBundle {
     pub rigid_body: RigidBody,
     pub collider: Collider,
     pub collision_groups: CollisionGroups,
-    pub cullable: Cullable,
+    pub cullable: UnifiedCullable,
 }
 
 /// Generic physics bundle for any physics object
@@ -112,4 +114,82 @@ pub struct PhysicsBundle {
     pub damping: Damping,
     pub friction: Friction,
     pub restitution: Restitution,
+}
+
+/// Bundle for dynamic content entities in the world
+#[derive(Bundle)]
+pub struct DynamicContentBundle {
+    pub dynamic_content: DynamicContent,
+    pub transform: Transform,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
+    pub cullable: UnifiedCullable,
+}
+
+/// Bundle for dynamic content with physics
+#[derive(Bundle)]
+pub struct DynamicPhysicsBundle {
+    pub dynamic_content: DynamicContent,
+    pub transform: Transform,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
+    pub rigid_body: RigidBody,
+    pub collider: Collider,
+    pub collision_groups: CollisionGroups,
+    pub velocity: Velocity,
+    pub cullable: UnifiedCullable,
+}
+
+/// Bundle for vehicle entities with complete setup
+#[derive(Bundle)]
+pub struct DynamicVehicleBundle {
+    pub dynamic_content: DynamicContent,
+    pub car: Car,
+    pub transform: Transform,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
+    pub rigid_body: RigidBody,
+    pub collider: Collider,
+    pub collision_groups: CollisionGroups,
+    pub velocity: Velocity,
+    pub damping: Damping,
+    pub locked_axes: LockedAxes,
+    pub cullable: UnifiedCullable,
+}
+
+/// Bundle for trees and vegetation
+#[derive(Bundle)]
+pub struct VegetationBundle {
+    pub dynamic_content: DynamicContent,
+    pub transform: Transform,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
+    pub cullable: UnifiedCullable,
+}
+
+/// Bundle for simple static physics objects
+#[derive(Bundle)]
+pub struct StaticPhysicsBundle {
+    pub transform: Transform,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub rigid_body: RigidBody,
+    pub collider: Collider,
+    pub collision_groups: CollisionGroups,
+}
+
+/// Bundle for unified chunk entities 
+#[derive(Bundle)]
+pub struct UnifiedChunkBundle {
+    pub chunk_entity: UnifiedChunkEntity,
+    pub dynamic_content: DynamicContent,
+    pub transform: Transform,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
+    pub cullable: UnifiedCullable,
 }

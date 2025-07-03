@@ -11,7 +11,8 @@ use gta_game::setup::vehicles::{setup_simple_helicopter, setup_simple_f16};
 use gta_game::systems::world::npc_spawn::setup_new_npcs;
 use gta_game::setup::world::setup_dubai_noon_lighting;
 use gta_game::services::{initialize_simple_services, update_timing_service_system, GroundDetectionPlugin};
-use gta_game::systems::{service_example_vehicle_creation, service_example_config_validation, service_example_timing_check};
+use gta_game::systems::{service_example_vehicle_creation, service_example_config_validation, service_example_timing_check, UnifiedPerformancePlugin, PerformanceIntegrationPlugin};
+use gta_game::components::DirtyFlagsMetrics;
 
 fn main() {
     let mut app = App::new();
@@ -29,6 +30,7 @@ fn main() {
         .init_resource::<GameConfig>()
         .init_resource::<CullingSettings>()
         .init_resource::<PerformanceStats>()
+        .init_resource::<DirtyFlagsMetrics>()
         
         .init_resource::<MeshCache>()
         .init_resource::<EntityLimits>()
@@ -53,7 +55,11 @@ fn main() {
         .add_plugins(UnifiedWorldPlugin)
         .add_plugins(UIPlugin)
         .add_plugins(WaterPlugin)
-        .add_plugins(GroundDetectionPlugin);
+        .add_plugins(GroundDetectionPlugin)
+        
+        // Unified Performance Monitoring
+        .add_plugins(UnifiedPerformancePlugin)
+        .add_plugins(PerformanceIntegrationPlugin);
         
     app
         // Service initialization systems

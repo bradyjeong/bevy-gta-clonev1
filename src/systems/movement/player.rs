@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 
 use std::cell::RefCell;
 use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation, HumanBehavior};
-use crate::systems::input::{ControlManager, ControlAction, is_accelerating, is_braking, get_steering_input};
+use crate::systems::input::{ControlManager, ControlAction};
 
 thread_local! {
     static MOVEMENT_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
@@ -38,27 +38,28 @@ pub fn human_player_movement(
     // Update behavior timers
     behavior.input_delay_timer = (behavior.input_delay_timer - dt).max(0.0);
 
-    // Process input with human reaction time
+    // Process input with human reaction time using UNIFIED control system
     let input_active = behavior.input_delay_timer <= 0.0;
     let mut input_direction = Vec3::ZERO;
     let mut rotation_input = 0.0;
     let is_running = control_manager.is_control_active(ControlAction::Turbo);
 
     if input_active {
-        // Forward/backward movement using ControlManager
-        if is_accelerating(&control_manager) {
+        // Forward/backward movement using unified ControlManager
+        if control_manager.is_control_active(ControlAction::Accelerate) {
             input_direction += *transform.forward();
         }
-        if is_braking(&control_manager) {
+        if control_manager.is_control_active(ControlAction::Brake) {
             input_direction -= *transform.forward();
         }
         
-        // Rotation using ControlManager
-        rotation_input = get_steering_input(&control_manager);
+        // Rotation using unified ControlManager
+        rotation_input = control_manager.get_control_value(ControlAction::Steer);
 
         // Add reaction delay for new inputs
-        if is_accelerating(&control_manager) || is_braking(&control_manager) || 
-           get_steering_input(&control_manager).abs() > 0.0 {
+        if control_manager.is_control_active(ControlAction::Accelerate) || 
+           control_manager.is_control_active(ControlAction::Brake) || 
+           control_manager.get_control_value(ControlAction::Steer).abs() > 0.0 {
             behavior.input_delay_timer = behavior.reaction_time;
         }
     }

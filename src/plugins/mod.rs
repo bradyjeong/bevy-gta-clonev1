@@ -9,6 +9,7 @@ pub mod input_plugin;
 pub mod vegetation_lod_plugin;
 
 pub mod batching_plugin;
+
 pub mod service_plugin;
 
 

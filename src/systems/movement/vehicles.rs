@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Car, SuperCar, ActiveEntity, ExhaustFlame};
-use crate::systems::input::{ControlManager, ControlAction, is_accelerating, is_braking, get_steering_input, is_turbo_active};
+use crate::systems::input::{ControlManager, ControlAction};
 
 pub fn car_movement(
     control_manager: Res<ControlManager>,
@@ -17,22 +17,22 @@ pub fn car_movement(
     let mut target_linear_velocity = Vec3::ZERO;
     let mut target_angular_velocity = Vec3::ZERO;
     
-    // Use ControlManager unified controls
-    if is_accelerating(&control_manager) {
+    // Use UNIFIED ControlManager controls
+    if control_manager.is_control_active(ControlAction::Accelerate) {
         let accel_value = control_manager.get_control_value(ControlAction::Accelerate);
         let forward = transform.forward();
         target_linear_velocity += forward * speed * accel_value;
     }
     
-    if is_braking(&control_manager) {
+    if control_manager.is_control_active(ControlAction::Brake) {
         let brake_value = control_manager.get_control_value(ControlAction::Brake);
         let forward = transform.forward();
         target_linear_velocity -= forward * speed * brake_value;
     }
     
     // Steering (only when moving)
-    if is_accelerating(&control_manager) || is_braking(&control_manager) {
-        let steering = get_steering_input(&control_manager);
+    if control_manager.is_control_active(ControlAction::Accelerate) || control_manager.is_control_active(ControlAction::Brake) {
+        let steering = control_manager.get_control_value(ControlAction::Steer);
         if steering.abs() > 0.1 {
             target_angular_velocity.y = steering * rotation_speed;
         }
@@ -72,8 +72,8 @@ pub fn supercar_movement(
     let speed_ratio = current_speed_mph / supercar.max_speed;
     supercar.rpm = supercar.idle_rpm + (supercar.max_rpm - supercar.idle_rpm) * speed_ratio;
     
-    // Advanced turbo system - use ControlManager
-    let turbo_requested = is_turbo_active(&control_manager);
+    // Advanced turbo system - use UNIFIED ControlManager
+    let turbo_requested = control_manager.is_control_active(ControlAction::Turbo);
     update_turbo_system(&mut supercar, dt, turbo_requested, current_speed_mph);
     
     // Traction control system
@@ -96,7 +96,7 @@ pub fn supercar_movement(
     let mut target_angular_velocity = Vec3::ZERO;
     
     // Forward/backward movement with realistic physics - use ControlManager
-    if is_accelerating(&control_manager) {
+    if control_manager.is_control_active(ControlAction::Accelerate) {
         let accel_value = control_manager.get_control_value(ControlAction::Accelerate);
         let forward = transform.forward();
         let acceleration_force = forward * max_acceleration * accel_value;
@@ -109,7 +109,7 @@ pub fn supercar_movement(
         // Spawn enhanced exhaust effects
         spawn_exhaust_effects(&mut commands, &mut meshes, &mut materials, &supercar, transform, dt);
         
-    } else if is_braking(&control_manager) {
+    } else if control_manager.is_control_active(ControlAction::Brake) {
         // Braking with advanced brake system
         let brake_value = control_manager.get_control_value(ControlAction::Brake);
         let braking_force = supercar.acceleration * 1.5 * brake_value;
@@ -126,8 +126,8 @@ pub fn supercar_movement(
         target_linear_velocity *= 0.9;
     }
     
-    // Advanced steering with stability control - use ControlManager
-    let steering_input = get_steering_input(&control_manager);
+    // Advanced steering with stability control - use UNIFIED ControlManager
+    let steering_input = control_manager.get_control_value(ControlAction::Steer);
     
     if steering_input != 0.0 {
         // Speed-dependent steering sensitivity

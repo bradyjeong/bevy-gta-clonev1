@@ -76,8 +76,8 @@ pub fn mark_visibility_dirty_system(
     }
 }
 
-/// System to mark vegetation entities as dirty when they change
-pub fn mark_vegetation_instancing_dirty_system(
+/// System to mark vegetation entities as dirty when they change (batch processing version)
+pub fn batch_mark_vegetation_instancing_dirty_system(
     mut commands: Commands,
     changed_vegetation: Query<Entity, (Changed<Transform>, With<VegetationBatchable>, Without<DirtyVegetationInstancing>)>,
     frame_counter: Res<FrameCounter>,

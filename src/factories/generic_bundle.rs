@@ -4,6 +4,8 @@ use crate::config::*;
 use crate::components::*;
 use crate::systems::distance_cache::MovementTracker;
 use crate::bundles::*;
+use crate::systems::world::unified_world::{UnifiedChunkEntity, ContentLayer};
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 /// Type alias for old NPCBehavior to maintain compatibility
 pub type NPCBehavior = NPCBehaviorComponent;
@@ -141,9 +143,9 @@ impl BundleSpec for VehicleBundleSpec {
                 angular_damping: vehicle_config.angular_damping 
             },
             cullable: if self.include_visibility {
-                Cullable { max_distance: config.world.lod_distances[2], is_culled: false }
+                UnifiedCullable::vehicle()
             } else {
-                Cullable { max_distance: 50.0, is_culled: false }
+                UnifiedCullable::vehicle()
             },
         }
     }
@@ -235,10 +237,7 @@ impl BundleSpec for NPCBundleSpec {
             collision_groups: CollisionGroups::new(config.physics.character_group, Group::ALL),
             additional_mass: AdditionalMassProperties::Mass(70.0 * build),
             velocity: Velocity::zero(),
-            cullable: Cullable { 
-                max_distance: config.world.lod_distances[1], 
-                is_culled: false 
-            },
+            cullable: UnifiedCullable::npc(),
             movement_tracker: MovementTracker::new(self.position, 8.0), // Track NPC movement with 8m threshold
         }
     }
@@ -316,10 +315,7 @@ impl BundleSpec for BuildingBundleSpec {
                 Collider::ball(0.1) // Minimal collider for LOD
             },
             collision_groups: CollisionGroups::new(config.physics.static_group, Group::ALL),
-            cullable: Cullable { 
-                max_distance: config.world.lod_distances[self.lod_level.min(2) as usize], 
-                is_culled: false 
-            },
+            cullable: UnifiedCullable::building(),
         }
     }
     
@@ -595,5 +591,122 @@ impl GenericBundleFactory {
             is_dynamic,
         };
         Self::create(spec, config)
+    }
+}
+
+/// Bundle utility functions for common entity patterns
+impl GenericBundleFactory {
+    /// Create dynamic content bundle for world entities
+    pub fn dynamic_content(
+        content_type: ContentType,
+        position: Vec3,
+        max_distance: f32,
+    ) -> DynamicContentBundle {
+        DynamicContentBundle {
+            dynamic_content: DynamicContent { content_type },
+            transform: Transform::from_translation(position),
+            visibility: Visibility::Inherited,
+            inherited_visibility: InheritedVisibility::VISIBLE,
+            view_visibility: ViewVisibility::default(),
+            cullable: UnifiedCullable::vegetation(),
+        }
+    }
+    
+    /// Create dynamic physics bundle for moving objects
+    pub fn dynamic_physics(
+        content_type: ContentType,
+        position: Vec3,
+        collider: Collider,
+        collision_groups: CollisionGroups,
+        max_distance: f32,
+    ) -> DynamicPhysicsBundle {
+        DynamicPhysicsBundle {
+            dynamic_content: DynamicContent { content_type },
+            transform: Transform::from_translation(position),
+            visibility: Visibility::Inherited,
+            inherited_visibility: InheritedVisibility::VISIBLE,
+            view_visibility: ViewVisibility::default(),
+            rigid_body: RigidBody::Dynamic,
+            collider,
+            collision_groups,
+            velocity: Velocity::zero(),
+            cullable: UnifiedCullable::vegetation(),
+        }
+    }
+    
+    /// Create vehicle bundle for cars
+    pub fn dynamic_vehicle(
+        position: Vec3,
+        collision_groups: CollisionGroups,
+        damping: Damping,
+    ) -> DynamicVehicleBundle {
+        DynamicVehicleBundle {
+            dynamic_content: DynamicContent { content_type: ContentType::Vehicle },
+            car: Car,
+            transform: Transform::from_xyz(position.x, position.y, position.z),
+            visibility: Visibility::Visible,
+            inherited_visibility: InheritedVisibility::VISIBLE,
+            view_visibility: ViewVisibility::default(),
+            rigid_body: RigidBody::Dynamic,
+            collider: Collider::cuboid(1.0, 0.5, 2.0),
+            collision_groups,
+            velocity: Velocity::zero(),
+            damping,
+            locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+            cullable: UnifiedCullable::vehicle(),
+        }
+    }
+    
+    /// Create vegetation bundle for trees
+    pub fn vegetation(
+        position: Vec3,
+        max_distance: f32,
+    ) -> VegetationBundle {
+        VegetationBundle {
+            dynamic_content: DynamicContent { content_type: ContentType::Tree },
+            transform: Transform::from_translation(position),
+            visibility: Visibility::Inherited,
+            inherited_visibility: InheritedVisibility::VISIBLE,
+            view_visibility: ViewVisibility::default(),
+            cullable: UnifiedCullable::vegetation(),
+        }
+    }
+    
+    /// Create static physics bundle for immobile objects
+    pub fn static_physics(
+        position: Vec3,
+        collider: Collider,
+        collision_groups: CollisionGroups,
+    ) -> StaticPhysicsBundle {
+        StaticPhysicsBundle {
+            transform: Transform::from_translation(position),
+            visibility: Visibility::Inherited,
+            inherited_visibility: InheritedVisibility::VISIBLE,
+            rigid_body: RigidBody::Fixed,
+            collider,
+            collision_groups,
+        }
+    }
+    
+    /// Create unified chunk bundle
+    pub fn unified_chunk(
+        chunk_coord: (i32, i32),
+        layer: crate::systems::world::unified_world::ContentLayer,
+        content_type: ContentType,
+        position: Vec3,
+        max_distance: f32,
+    ) -> UnifiedChunkBundle {
+        UnifiedChunkBundle {
+            chunk_entity: UnifiedChunkEntity { 
+                coord: crate::systems::world::unified_world::ChunkCoord::new(chunk_coord.0, chunk_coord.1), 
+                layer 
+            },
+            dynamic_content: DynamicContent { content_type },
+            transform: Transform::from_translation(position),
+            visibility: Visibility::Inherited,
+            inherited_visibility: InheritedVisibility::VISIBLE,
+            view_visibility: ViewVisibility::default(),
+            cullable: UnifiedCullable::vegetation(),
+        }
     }
 }

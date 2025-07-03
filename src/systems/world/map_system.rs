@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
+use crate::factories::{RenderingFactory, StandardRenderingPattern, RenderingBundleType, BuildingMaterialType};
 use crate::systems::world::road_network::{RoadSpline, RoadNetwork};
 use crate::systems::world::road_generation::is_on_road_spline;
 use std::collections::HashMap;
@@ -237,28 +238,40 @@ fn spawn_building(
     building: &BuildingTemplate,
     lod_level: usize,
 ) -> Entity {
-    let (mesh, material_color) = match (&building.building_type, lod_level) {
+    // FACTORY PATTERN: Building creation using rendering factory
+    let (size, color, material_type) = match (&building.building_type, lod_level) {
         (BuildingType::Skyscraper, 0) => (
-            meshes.add(Cuboid::new(building.scale.x, building.height, building.scale.z)),
-            Color::srgb(0.7, 0.7, 0.8)
+            Vec3::new(building.scale.x, building.height, building.scale.z),
+            Color::srgb(0.7, 0.7, 0.8),
+            BuildingMaterialType::Concrete
         ),
         (BuildingType::Skyscraper, _) => (
-            meshes.add(Cuboid::new(building.scale.x * 0.8, building.height * 0.8, building.scale.z * 0.8)),
-            Color::srgb(0.6, 0.6, 0.7)
+            Vec3::new(building.scale.x * 0.8, building.height * 0.8, building.scale.z * 0.8),
+            Color::srgb(0.6, 0.6, 0.7),
+            BuildingMaterialType::Concrete
         ),
         (BuildingType::Residential, 0) => (
-            meshes.add(Cuboid::new(building.scale.x, building.scale.y, building.scale.z)),
-            Color::srgb(0.8, 0.6, 0.4)
+            Vec3::new(building.scale.x, building.scale.y, building.scale.z),
+            Color::srgb(0.8, 0.6, 0.4),
+            BuildingMaterialType::Brick
         ),
         (BuildingType::Commercial, _) => (
-            meshes.add(Cuboid::new(building.scale.x, building.scale.y * 1.5, building.scale.z)),
-            Color::srgb(0.5, 0.7, 0.9)
+            Vec3::new(building.scale.x, building.scale.y * 1.5, building.scale.z),
+            Color::srgb(0.5, 0.7, 0.9),
+            BuildingMaterialType::Glass
         ),
         _ => (
-            meshes.add(Cuboid::new(building.scale.x * 0.5, building.scale.y * 0.5, building.scale.z * 0.5)),
-            Color::srgb(0.5, 0.5, 0.5)
+            Vec3::new(building.scale.x * 0.5, building.scale.y * 0.5, building.scale.z * 0.5),
+            Color::srgb(0.5, 0.5, 0.5),
+            BuildingMaterialType::Concrete
         ),
     };
+    
+    let (mesh, material) = RenderingFactory::create_mesh_and_material(
+        meshes,
+        materials,
+        &StandardRenderingPattern::Building { color, building_type: material_type }
+    );
     
     // Ensure building is properly grounded on terrain surface
     let ground_level = -0.05; // Match terrain level from dynamic_terrain_system
@@ -271,7 +284,7 @@ fn spawn_building(
     
     commands.spawn((
         Mesh3d(mesh),
-        MeshMaterial3d(materials.add(material_color)),
+        MeshMaterial3d(material),
         Transform::from_translation(grounded_position),
         RigidBody::Fixed,
         // Collider positioned to match mesh - centered at same Y position with same half-extents

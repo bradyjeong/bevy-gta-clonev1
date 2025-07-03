@@ -5,7 +5,7 @@ pub mod camera;
 pub mod effects;
 pub mod audio;
 pub mod human_behavior;
-
+pub mod physics_utils;
 
 pub mod vehicles;
 pub mod ui;
@@ -29,16 +29,23 @@ pub mod player_collision_resolution;
 
 pub mod parallel_physics;
 pub mod performance_dashboard;
+pub mod performance_monitor;
+pub mod performance_integration;
+pub mod batch_processing;
 
 pub use movement::*;
 pub use parallel_physics::*;
 pub use performance_dashboard::*;
+pub use performance_monitor::*;
+pub use performance_integration::*;
+pub use batch_processing::*;
 pub use world::*;
 pub use interaction::*;
 pub use camera::*;
 pub use effects::*;
 pub use audio::*;
 pub use human_behavior::*;
+pub use physics_utils::*;
 
 
 pub use vehicles::*;
@@ -53,7 +60,20 @@ pub use persistence::*;
 pub use distance_cache::*;
 pub use distance_cache_debug::*;
 pub use transform_sync::*;
-pub use batching::*;
+// Essential batching systems (non-conflicting with batch_processing.rs)
+pub use batching::{
+    frame_counter_system,
+    mark_transform_dirty_system,
+    mark_visibility_dirty_system,
+    mark_physics_dirty_system,
+    batch_transform_processing_system,
+    batch_physics_processing_system,
+    batch_lod_processing_system,
+    batch_culling_system,
+    dirty_flag_cleanup_system,
+    dirty_flags_metrics_system,
+    // NOTE: batch_mark_vegetation_instancing_dirty_system renamed to avoid conflict
+};
 pub use batching_test::*;
 pub use entity_creation_system::*;
 pub use simple_service_example::*;

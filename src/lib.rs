@@ -20,6 +20,8 @@ pub use systems::camera::*;
 pub use systems::interaction::*;
 pub use systems::world::*;
 pub use systems::effects::*;
+pub use systems::performance_monitor::*;
+pub use systems::performance_integration::*;
 
 pub use plugins::*;
 pub use factories::*;
