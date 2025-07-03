@@ -164,7 +164,7 @@ impl UnifiedEntityFactory {
         }
         
         // Simple ground detection - would be enhanced with actual terrain data
-        let ground_height = -0.05; // Match terrain level
+        let ground_height = -0.15; // Match terrain level at y = -0.15
         
         // Cache for future use
         self.position_cache.insert((grid_x, grid_z), ground_height);

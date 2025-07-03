@@ -21,6 +21,10 @@ impl RoadType {
         }
     }
     
+    pub fn height(&self) -> f32 {
+        0.0  // All roads at same height - proper intersection handling prevents overlap
+    }
+    
     pub fn priority(&self) -> i32 {
         match self {
             RoadType::Highway => 4,
@@ -234,40 +238,47 @@ impl RoadNetwork {
         
         let mut new_roads = Vec::new();
         
-        // Generate main arterial roads (ensure every chunk has some roads)
-        // Always generate at least one main road per chunk for better coverage
-        if chunk_x % 2 == 0 {
-            // Vertical main road with curves - At ground level
-            let start = Vec3::new(base_x, 0.0, base_z - chunk_size * 0.5);
-            let control = Vec3::new(base_x + rand::random::<f32>() * 20.0 - 10.0, 0.0, base_z + chunk_size * 0.2);
-            let _control2 = Vec3::new(base_x + rand::random::<f32>() * 20.0 - 10.0, 0.0, base_z + chunk_size * 0.8);
-            let end = Vec3::new(base_x, 0.0, base_z + chunk_size * 1.5);
+        // Generate non-overlapping road grid to prevent z-fighting
+        // Use alternating pattern to ensure roads don't overlap
+        let mut roads_added = Vec::new();
+        
+        if chunk_x % 2 == 0 && chunk_z % 2 != 0 {
+            // Vertical roads only on even X, odd Z chunks
+            let road_type = RoadType::MainStreet;
+            let height = road_type.height();
+            let start = Vec3::new(base_x, height, base_z - chunk_size * 0.5);
+            let control = Vec3::new(base_x + rand::random::<f32>() * 20.0 - 10.0, height, base_z + chunk_size * 0.2);
+            let end = Vec3::new(base_x, height, base_z + chunk_size * 1.5);
             
-            let road_id = self.add_curved_road(start, control, end, RoadType::MainStreet);
+            let road_id = self.add_curved_road(start, control, end, road_type);
             new_roads.push(road_id);
-        } else {
-            // For odd x chunks, add a diagonal or side street to ensure coverage
-            let start = Vec3::new(base_x + chunk_size * 0.2, 0.0, base_z);
-            let end = Vec3::new(base_x + chunk_size * 0.8, 0.0, base_z + chunk_size);
-            let road_id = self.add_road(start, end, RoadType::SideStreet);
-            new_roads.push(road_id);
+            roads_added.push("vertical");
+            println!("🛣️ DEBUG: Generated VERTICAL MainStreet in chunk ({}, {})", chunk_x, chunk_z);
         }
         
-        if chunk_z % 2 == 0 {
-            // Horizontal main road with curves - At ground level  
-            let start = Vec3::new(base_x - chunk_size * 0.5, 0.0, base_z);
-            let control = Vec3::new(base_x + chunk_size * 0.2, 0.0, base_z + rand::random::<f32>() * 20.0 - 10.0);
-            let _control2 = Vec3::new(base_x + chunk_size * 0.8, 0.0, base_z + rand::random::<f32>() * 20.0 - 10.0);
-            let end = Vec3::new(base_x + chunk_size * 1.5, 0.0, base_z);
+        if chunk_z % 2 == 0 && chunk_x % 2 != 0 {
+            // Horizontal roads only on odd X, even Z chunks  
+            let road_type = RoadType::MainStreet;
+            let height = road_type.height();
+            let start = Vec3::new(base_x - chunk_size * 0.5, height, base_z);
+            let control = Vec3::new(base_x + chunk_size * 0.2, height, base_z + rand::random::<f32>() * 20.0 - 10.0);
+            let end = Vec3::new(base_x + chunk_size * 1.5, height, base_z);
             
-            let road_id = self.add_curved_road(start, control, end, RoadType::MainStreet);
+            let road_id = self.add_curved_road(start, control, end, road_type);
             new_roads.push(road_id);
-        } else {
-            // For odd z chunks, add another side street to ensure coverage
-            let start = Vec3::new(base_x, 0.0, base_z + chunk_size * 0.2);
-            let end = Vec3::new(base_x + chunk_size, 0.0, base_z + chunk_size * 0.8);
-            let road_id = self.add_road(start, end, RoadType::SideStreet);
+            roads_added.push("horizontal");
+            println!("🛣️ DEBUG: Generated HORIZONTAL MainStreet in chunk ({}, {})", chunk_x, chunk_z);
+        }
+        
+        // Add side streets only where no main roads exist
+        if roads_added.is_empty() {
+            let road_type = RoadType::SideStreet;
+            let height = road_type.height();
+            let start = Vec3::new(base_x + chunk_size * 0.2, height, base_z + chunk_size * 0.2);
+            let end = Vec3::new(base_x + chunk_size * 0.8, height, base_z + chunk_size * 0.8);
+            let road_id = self.add_road(start, end, road_type);
             new_roads.push(road_id);
+            println!("🛣️ DEBUG: Generated SideStreet in chunk ({}, {}) - no main roads", chunk_x, chunk_z);
         }
         
         // Generate side streets (much fewer)
@@ -281,18 +292,22 @@ impl RoadNetwork {
                 let offset_z = (rand::random::<f32>() - 0.5) * 30.0;
                 
                 if rand::random::<f32>() < 0.8 { // 80% chance for side street
-                    let start = Vec3::new(sub_x + offset_x, 0.0, sub_z - 40.0);
-                    let end = Vec3::new(sub_x + offset_x, 0.0, sub_z + 40.0);
+                    let road_type = RoadType::SideStreet;
+                    let height = road_type.height();
+                    let start = Vec3::new(sub_x + offset_x, height, sub_z - 40.0);
+                    let end = Vec3::new(sub_x + offset_x, height, sub_z + 40.0);
                     
-                    let road_id = self.add_road(start, end, RoadType::SideStreet);
+                    let road_id = self.add_road(start, end, road_type);
                     new_roads.push(road_id);
                 }
                 
                 if rand::random::<f32>() < 0.8 { // 80% chance for side street
-                    let start = Vec3::new(sub_x - 40.0, 0.0, sub_z + offset_z);
-                    let end = Vec3::new(sub_x + 40.0, 0.0, sub_z + offset_z);
+                    let road_type = RoadType::SideStreet;
+                    let height = road_type.height();
+                    let start = Vec3::new(sub_x - 40.0, height, sub_z + offset_z);
+                    let end = Vec3::new(sub_x + 40.0, height, sub_z + offset_z);
                     
-                    let road_id = self.add_road(start, end, RoadType::SideStreet);
+                    let road_id = self.add_road(start, end, road_type);
                     new_roads.push(road_id);
                 }
             }

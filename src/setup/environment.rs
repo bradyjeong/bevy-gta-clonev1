@@ -10,42 +10,43 @@ thread_local! {
     static ENVIRONMENT_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
 }
 
-// NOTE: Basic road setup using the unified road network system
+// NOTE: Basic road setup using the unified world system
+// Roads are now generated dynamically by the unified world manager
 pub fn setup_basic_roads(
     _commands: Commands,
-    mut road_network: ResMut<crate::systems::world::road_network::RoadNetwork>,
+    mut world_manager: ResMut<crate::systems::world::unified_world::UnifiedWorldManager>,
     _meshes: ResMut<Assets<Mesh>>,
     _materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Initialize the road network with a few starter roads around spawn
-    // The main curved road generation will happen through the road_network_system
+    // The main curved road generation will happen through the unified road system
     
     // Clear any existing roads
-    road_network.reset();
+    world_manager.road_network.reset();
     
     // Generate initial curved roads around spawn area for immediate gameplay
     let spawn_roads = [
-        // Main curved highway through center
-        (Vec3::new(-200.0, 0.1, 0.0), Vec3::new(-50.0, 0.1, 30.0), Vec3::new(200.0, 0.1, 0.0), crate::systems::world::road_network::RoadType::Highway),
-        (Vec3::new(0.0, 0.1, -200.0), Vec3::new(30.0, 0.1, -50.0), Vec3::new(0.0, 0.1, 200.0), crate::systems::world::road_network::RoadType::Highway),
+        // Main curved highway through center - Elevated (highway height)
+        (Vec3::new(-200.0, 3.0, 0.0), Vec3::new(-50.0, 3.0, 30.0), Vec3::new(200.0, 3.0, 0.0), crate::systems::world::road_network::RoadType::Highway),
+        (Vec3::new(0.0, 3.0, -200.0), Vec3::new(30.0, 3.0, -50.0), Vec3::new(0.0, 3.0, 200.0), crate::systems::world::road_network::RoadType::Highway),
         
-        // Curved main streets
-        (Vec3::new(-100.0, 0.1, -100.0), Vec3::new(-30.0, 0.1, -80.0), Vec3::new(100.0, 0.1, -100.0), crate::systems::world::road_network::RoadType::MainStreet),
-        (Vec3::new(-100.0, 0.1, 100.0), Vec3::new(-30.0, 0.1, 80.0), Vec3::new(100.0, 0.1, 100.0), crate::systems::world::road_network::RoadType::MainStreet),
+        // Curved main streets - Ground level (main street height)
+        (Vec3::new(-100.0, 0.0, -100.0), Vec3::new(-30.0, 0.0, -80.0), Vec3::new(100.0, 0.0, -100.0), crate::systems::world::road_network::RoadType::MainStreet),
+        (Vec3::new(-100.0, 0.0, 100.0), Vec3::new(-30.0, 0.0, 80.0), Vec3::new(100.0, 0.0, 100.0), crate::systems::world::road_network::RoadType::MainStreet),
         
-        // Side streets with gentle curves
-        (Vec3::new(-80.0, 0.1, -50.0), Vec3::new(-60.0, 0.1, -20.0), Vec3::new(-40.0, 0.1, 50.0), crate::systems::world::road_network::RoadType::SideStreet),
-        (Vec3::new(40.0, 0.1, -50.0), Vec3::new(60.0, 0.1, -20.0), Vec3::new(80.0, 0.1, 50.0), crate::systems::world::road_network::RoadType::SideStreet),
+        // Side streets with gentle curves - Below ground (side street height)
+        (Vec3::new(-80.0, -0.5, -50.0), Vec3::new(-60.0, -0.5, -20.0), Vec3::new(-40.0, -0.5, 50.0), crate::systems::world::road_network::RoadType::SideStreet),
+        (Vec3::new(40.0, -0.5, -50.0), Vec3::new(60.0, -0.5, -20.0), Vec3::new(80.0, -0.5, 50.0), crate::systems::world::road_network::RoadType::SideStreet),
     ];
     
     for (start, control, end, road_type) in spawn_roads {
-        road_network.add_curved_road(start, control, end, road_type);
+        world_manager.road_network.add_curved_road(start, control, end, road_type);
     }
     
     // Force generate the spawn chunk to create initial visible roads
-    road_network.generate_chunk_roads(0, 0);
+    world_manager.road_network.generate_chunk_roads(0, 0);
     
-    println!("🛣️ Advanced curved road network initialized!");
+    println!("🛣️ Unified road network initialized at ground level!");
 }
 
 pub fn setup_palm_trees(

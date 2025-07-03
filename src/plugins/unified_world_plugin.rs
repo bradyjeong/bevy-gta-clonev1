@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 use crate::systems::world::{
-    // Migration and compatibility systems
     optimized_npc_movement, debug_player_position, dynamic_terrain_system,
-    
-    // Unified world systems
     UnifiedWorldManager, 
     unified_world_streaming_system,
     layered_generation_coordinator,
@@ -15,10 +12,7 @@ use crate::systems::world::{
     master_lod_performance_monitor,
     initialize_master_lod_system,
     adaptive_lod_system,
-    // unified_distance_culling_system, // Disabled due to conflicts - using main one from unified_distance_culling.rs
     unified_cleanup_system,
-    
-    // NPC systems
     npc_lod_system,
     migrate_legacy_npcs,
     spawn_new_npc_system,
@@ -29,8 +23,9 @@ use crate::systems::timing_service::{TimingService, update_timing_service, clean
 use crate::factories::{initialize_material_factory};
 
 
-/// New unified world plugin that replaces the old WorldPlugin
-/// This provides a single, coordinated world generation system
+/// Unified world plugin providing coordinated world generation and management.
+/// This plugin handles streaming, LOD, content generation, and NPC management
+/// through a layered architecture with unified resource management.
 pub struct UnifiedWorldPlugin;
 
 impl Plugin for UnifiedWorldPlugin {
@@ -44,9 +39,7 @@ impl Plugin for UnifiedWorldPlugin {
             // PreUpdate frame counter
             .add_systems(PreUpdate, frame_counter_system)
             
-            // Core unified systems - broken into groups to avoid Bevy's 12-system tuple limit
-            
-            // Group 1: Timing and streaming (4 systems)
+            // Timing and streaming systems
             .add_systems(Update, (
                 update_timing_service,
                 unified_world_streaming_system,
@@ -54,26 +47,25 @@ impl Plugin for UnifiedWorldPlugin {
                 road_layer_system,
             ).chain())
             
-            // Group 2A: Content generation layers (3 systems)
+            // Content generation layers
             .add_systems(Update, (
                 building_layer_system,
                 vehicle_layer_system,
                 vegetation_layer_system,
             ).chain())
             
-            // Group 2B: NPC systems (separate - incompatible signatures)
+            // NPC systems
             .add_systems(Update, migrate_legacy_npcs)
             .add_systems(Update, spawn_new_npc_system)
             
-            // Group 3: LOD and culling (4 systems)
+            // LOD and performance systems
             .add_systems(Update, (
                 master_unified_lod_system,
                 npc_lod_system,
-                // unified_distance_culling_system, // Disabled due to conflicts
                 adaptive_lod_system,
             ).chain())
             
-            // Group 4: Cleanup and legacy (6 systems)
+            // Management and cleanup systems
             .add_systems(Update, (
                 master_lod_performance_monitor,
                 unified_cleanup_system,
@@ -83,7 +75,7 @@ impl Plugin for UnifiedWorldPlugin {
                 debug_player_position,
             ).chain())
             
-            // Group 5: Effects (1 system)
+            // Effects system
             .add_systems(Update, update_beacon_visibility)
             
             // Startup systems to initialize the unified world
@@ -107,57 +99,7 @@ fn initialize_unified_world(mut world_manager: ResMut<UnifiedWorldManager>) {
     println!("DEBUG: Unified world system initialized!");
 }
 
-/// Migration helper - use this plugin to test unified system alongside old system
-pub struct MixedWorldPlugin;
 
-impl Plugin for MixedWorldPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            // Both old and new resources
-            .init_resource::<UnifiedWorldManager>()
-            .init_resource::<crate::systems::world::RoadNetwork>()
-            .init_resource::<crate::systems::world::MapSystem>()
-            
-            .add_systems(Startup, (
-                initialize_unified_world,
-                reset_road_network_once,
-            ))
-            
-            .add_systems(Update, (
-                // NEW UNIFIED SYSTEMS (primary)
-                unified_world_streaming_system,
-                layered_generation_coordinator,
-                road_layer_system,
-                // building_layer_system, // DISABLED
-                vehicle_layer_system,
-                vegetation_layer_system,
-                master_unified_lod_system,
-                npc_lod_system,
-                // unified_distance_culling_system, // Disabled due to conflicts
-                
-                // OLD SYSTEMS (for comparison - comment out when ready)
-                // road_network_system,
-                // map_streaming_system,
-                // map_lod_system,
-                // dynamic_content_system,
-                // vehicle_separation_system,
-                // distance_culling_system,
-                
-                // SHARED SYSTEMS
-                optimized_npc_movement,
-                dynamic_terrain_system,
-                debug_player_position,
-                update_beacon_visibility,
-                master_lod_performance_monitor,
-                adaptive_lod_system,
-            ));
-    }
-}
-
-fn reset_road_network_once(mut road_network: ResMut<crate::systems::world::RoadNetwork>) {
-    road_network.reset();
-    println!("DEBUG: Legacy road network reset on startup!");
-}
 
 fn debug_unified_world_activity(
     world_manager: Res<UnifiedWorldManager>,

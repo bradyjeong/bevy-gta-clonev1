@@ -187,8 +187,8 @@ fn generate_center_line_mesh(road: &RoadSpline, dashed: bool) -> Mesh {
         
         let base_idx = vertices.len() as u32;
         
-        vertices.push([left_pos.x, left_pos.y + 0.01, left_pos.z]); // Slightly above road
-        vertices.push([right_pos.x, right_pos.y + 0.01, right_pos.z]);
+        vertices.push([left_pos.x, left_pos.y, left_pos.z]); // At road surface level
+        vertices.push([right_pos.x, right_pos.y, right_pos.z]);
         
         normals.push([0.0, 1.0, 0.0]);
         normals.push([0.0, 1.0, 0.0]);
@@ -258,8 +258,8 @@ fn generate_lane_markings_mesh(road: &RoadSpline, lanes: u32) -> Mesh {
             
             let base_idx = vertices.len() as u32;
             
-            vertices.push([left_pos.x, left_pos.y + 0.01, left_pos.z]);
-            vertices.push([right_pos.x, right_pos.y + 0.01, right_pos.z]);
+            vertices.push([left_pos.x, left_pos.y, left_pos.z]);
+            vertices.push([right_pos.x, right_pos.y, right_pos.z]);
             
             normals.push([0.0, 1.0, 0.0]);
             normals.push([0.0, 1.0, 0.0]);
@@ -322,10 +322,10 @@ fn generate_edge_lines_mesh(road: &RoadSpline) -> Mesh {
         let base_idx = vertices.len() as u32;
         
         // Add vertices for both edge lines
-        vertices.push([left_inner.x, left_inner.y + 0.01, left_inner.z]);
-        vertices.push([left_outer.x, left_outer.y + 0.01, left_outer.z]);
-        vertices.push([right_inner.x, right_inner.y + 0.01, right_inner.z]);
-        vertices.push([right_outer.x, right_outer.y + 0.01, right_outer.z]);
+        vertices.push([left_inner.x, left_inner.y, left_inner.z]);
+        vertices.push([left_outer.x, left_outer.y, left_outer.z]);
+        vertices.push([right_inner.x, right_inner.y, right_inner.z]);
+        vertices.push([right_outer.x, right_outer.y, right_outer.z]);
         
         for _ in 0..4 {
             normals.push([0.0, 1.0, 0.0]);

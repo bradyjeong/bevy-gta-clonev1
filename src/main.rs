@@ -6,7 +6,7 @@ use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use gta_game::*;
 use gta_game::components::world::{MeshCache, EntityLimits};
 use gta_game::systems::{SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, TransformSyncPlugin, UnifiedDistanceCalculatorPlugin};
-use gta_game::systems::world::road_network::RoadNetwork;
+
 use gta_game::setup_initial_aircraft_unified;
 use gta_game::setup_initial_npcs_unified;
 use gta_game::setup::world::setup_dubai_noon_lighting;
@@ -34,7 +34,6 @@ fn main() {
         
         .init_resource::<MeshCache>()
         .init_resource::<EntityLimits>()
-        .init_resource::<RoadNetwork>()
         .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
         .insert_resource(AmbientLight {
             color: Color::srgb(1.0, 0.9, 0.7),
@@ -77,7 +76,7 @@ fn main() {
             setup_unified_entity_factory,
             setup_basic_world,
             setup_dubai_noon_lighting,
-            setup_basic_roads,
+            // setup_basic_roads, // DISABLED: Conflicts with unified road system - causes darker road materials
             setup_initial_aircraft_unified,
         ).after(initialize_simple_services))
         .add_systems(Startup, (

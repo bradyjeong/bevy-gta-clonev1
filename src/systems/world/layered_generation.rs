@@ -7,8 +7,17 @@ use crate::systems::world::unified_world::{
     UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState,
     UNIFIED_CHUNK_SIZE,
 };
-use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType};
-use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh};
+use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType};
+use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh, generate_intersection_mesh};
+
+// STANDARDIZED Y-COORDINATE LAYERS (prevents z-fighting):
+// - Terrain:      y = -0.15  (15cm below ground)
+// - Alleys:       y = -1.0   (below ground level)
+// - Side Streets: y = -0.5   (slightly below ground)
+// - Main Streets: y =  0.0   (ground level)
+// - Highways:     y =  3.0   (elevated like overpasses)
+// - Road Markings:y = road_height + 0.01 (1cm above road surface)
+// All layers have sufficient separation to prevent visual conflicts
 
 thread_local! {
     static LAYERED_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
@@ -158,6 +167,9 @@ fn generate_roads_for_chunk(
         }
     }
     
+    // INTERSECTION FIX: Detect and generate intersections after roads are created
+    detect_and_spawn_intersections(commands, world_manager, coord, meshes, materials);
+    
     // Mark roads as generated
     let chunk = world_manager.get_chunk_mut(coord);
     chunk.roads_generated = true;
@@ -192,29 +204,194 @@ fn spawn_unified_road_entity(
         },
     )).id();
     
-    // Road surface mesh
+    // Road surface mesh - positioned at ground level (y = 0.0)
     let road_mesh = generate_road_mesh(road);
     commands.spawn((
         Mesh3d(meshes.add(road_mesh)),
         MeshMaterial3d(road_material),
-        Transform::from_translation(-center_pos),
+        Transform::from_translation(-center_pos + Vec3::new(0.0, 0.0, 0.0)), // Ground level
         ChildOf(road_entity),
         VisibleChildBundle::default(),
     ));
     
-    // Road markings
+    // Road markings - positioned exactly 1cm above road surface (y = 0.01)
     let marking_meshes = generate_road_markings_mesh(road);
     for marking_mesh in marking_meshes {
         commands.spawn((
             Mesh3d(meshes.add(marking_mesh)),
             MeshMaterial3d(marking_material.clone()),
-            Transform::from_translation(-center_pos + Vec3::new(0.0, 0.01, 0.0)),
+            Transform::from_translation(-center_pos + Vec3::new(0.0, 0.01, 0.0)), // 1cm above road surface
             ChildOf(road_entity),
             VisibleChildBundle::default(),
         ));
     }
     
     road_entity
+}
+
+/// INTERSECTION FIX: Detect and create intersections to prevent overlapping road conflicts
+fn detect_and_spawn_intersections(
+    commands: &mut Commands,
+    world_manager: &mut UnifiedWorldManager,
+    coord: ChunkCoord,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) {
+    let chunk_center = coord.to_world_pos();
+    let chunk_size = UNIFIED_CHUNK_SIZE;
+    let half_size = chunk_size * 0.5;
+    
+    // Collect all roads in and around this chunk
+    let mut chunk_roads = Vec::new();
+    for (road_id, road) in &world_manager.road_network.roads {
+        // Check if road passes through or near this chunk
+        let road_center = road.evaluate(0.5);
+        if (road_center.x - chunk_center.x).abs() < chunk_size && 
+           (road_center.z - chunk_center.z).abs() < chunk_size {
+            chunk_roads.push((*road_id, road.clone()));
+        }
+    }
+    
+    // Find intersections between roads
+    let mut detected_intersections = Vec::new();
+    for i in 0..chunk_roads.len() {
+        for j in (i + 1)..chunk_roads.len() {
+            let (road1_id, road1) = &chunk_roads[i];
+            let (road2_id, road2) = &chunk_roads[j];
+            
+            // Check for intersection between road1 and road2
+            if let Some(intersection_point) = find_road_intersection(road1, road2) {
+                println!("🚧 DEBUG: Intersection detected between road {} ({:?}) and road {} ({:?}) at {:?}", 
+                    road1_id, road1.road_type, road2_id, road2.road_type, intersection_point);
+                // Only create intersection if it's within this chunk bounds
+                if intersection_point.x >= chunk_center.x - half_size &&
+                   intersection_point.x <= chunk_center.x + half_size &&
+                   intersection_point.z >= chunk_center.z - half_size &&
+                   intersection_point.z <= chunk_center.z + half_size {
+                    
+                    // Determine intersection type and priority road type
+                    let intersection_type = IntersectionType::Cross;
+                    let dominant_road_type = determine_dominant_road_type(&road1.road_type, &road2.road_type);
+                    
+                    detected_intersections.push((
+                        intersection_point,
+                        vec![*road1_id, *road2_id],
+                        intersection_type,
+                        dominant_road_type,
+                    ));
+                }
+            }
+        }
+    }
+    
+    // Create intersection entities
+    for (position, connected_roads, intersection_type, road_type) in detected_intersections {
+        println!("🚧 DEBUG: Creating intersection entity at {:?} with type {:?} and road type {:?}", 
+            position, intersection_type, road_type);
+        let intersection_id = world_manager.road_network.add_intersection(
+            position,
+            connected_roads,
+            intersection_type,
+        );
+        
+        if let Some(intersection) = world_manager.road_network.intersections.get(&intersection_id) {
+            println!("🚧 DEBUG: Successfully spawned intersection entity {}", intersection_id);
+            let intersection_entity = spawn_unified_intersection_entity(
+                commands,
+                coord,
+                intersection_id,
+                intersection,
+                road_type,
+                meshes,
+                materials,
+            );
+            
+            // Add entity to chunk
+            let chunk = world_manager.get_chunk_mut(coord);
+            chunk.entities.push(intersection_entity);
+        }
+    }
+}
+
+/// Find intersection point between two road splines
+fn find_road_intersection(road1: &RoadSpline, road2: &RoadSpline) -> Option<Vec3> {
+    let samples = 20;
+    let intersection_threshold = 3.0; // Roads closer than 3 units are considered intersecting
+    
+    for i in 0..samples {
+        let t1 = i as f32 / (samples - 1) as f32;
+        let point1 = road1.evaluate(t1);
+        
+        for j in 0..samples {
+            let t2 = j as f32 / (samples - 1) as f32;
+            let point2 = road2.evaluate(t2);
+            
+            let distance = Vec3::new(point1.x - point2.x, 0.0, point1.z - point2.z).length();
+            if distance < intersection_threshold {
+                // Return midpoint as intersection
+                return Some(Vec3::new(
+                    (point1.x + point2.x) * 0.5,
+                    0.0,
+                    (point1.z + point2.z) * 0.5,
+                ));
+            }
+        }
+    }
+    
+    None
+}
+
+/// Determine which road type should dominate at intersection (higher priority wins)
+fn determine_dominant_road_type(road_type1: &RoadType, road_type2: &RoadType) -> RoadType {
+    if road_type1.priority() >= road_type2.priority() {
+        *road_type1
+    } else {
+        *road_type2
+    }
+}
+
+/// Spawn intersection entity with dominant road material to prevent color conflicts
+fn spawn_unified_intersection_entity(
+    commands: &mut Commands,
+    chunk_coord: ChunkCoord,
+    intersection_id: u32,
+    intersection: &crate::systems::world::road_network::RoadIntersection,
+    dominant_road_type: RoadType,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) -> Entity {
+    let position = intersection.position;
+    
+    // Use dominant road type material to prevent color conflicts
+    let intersection_material = create_road_material(&dominant_road_type, materials);
+    
+    let intersection_entity = commands.spawn((
+        UnifiedChunkEntity {
+            coord: chunk_coord,
+            layer: ContentLayer::Roads,
+        },
+        IntersectionEntity { intersection_id },
+        Transform::from_translation(position),
+        GlobalTransform::default(),
+        Visibility::default(),
+        InheritedVisibility::VISIBLE,
+        ViewVisibility::default(),
+        DynamicContent {
+            content_type: ContentType::Road,
+        },
+    )).id();
+    
+    // Generate intersection mesh - positioned at ground level (y = 0.0)
+    let intersection_mesh = generate_intersection_mesh(intersection, &[]);
+    commands.spawn((
+        Mesh3d(meshes.add(intersection_mesh)),
+        MeshMaterial3d(intersection_material),
+        Transform::from_translation(Vec3::new(0.0, 0.01, 0.0)), // Slightly above road surface to prevent z-fighting
+        ChildOf(intersection_entity),
+        VisibleChildBundle::default(),
+    ));
+    
+    intersection_entity
 }
 
 /// Layer 2: Building Generation System

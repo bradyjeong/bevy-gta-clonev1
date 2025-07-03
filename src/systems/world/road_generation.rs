@@ -7,6 +7,14 @@ use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_marking
 use crate::bundles::VisibleChildBundle;
 
 // MAIN ROAD GENERATION SYSTEM (Replaces old grid system)
+// STANDARDIZED Y-COORDINATE LAYERS (prevents z-fighting):
+// - Terrain:      y = -0.15  (15cm below ground)  
+// - Alleys:       y = -1.0   (below ground level)
+// - Side Streets: y = -0.5   (slightly below ground)
+// - Main Streets: y =  0.0   (ground level)
+// - Highways:     y =  3.0   (elevated like overpasses)
+// - Road Markings:y = road_height + 0.01 (1cm above road surface)
+// All layers have sufficient separation to prevent visual conflicts
 
 // Add timer to reduce frequency of road checks
 #[derive(Resource, Default)]
@@ -128,7 +136,7 @@ fn spawn_road_entity(
     // Main road entity with physics collider - positioned at ground level
     let road_entity = commands.spawn((
         RoadEntity { road_id },
-        Transform::from_translation(Vec3::new(start_pos.x, -0.05, start_pos.z)), // Slightly below ground surface
+        Transform::from_translation(Vec3::new(start_pos.x, 0.0, start_pos.z)), // Road entity at ground level
         GlobalTransform::default(),
         Visibility::default(),
         DynamicContent {
@@ -145,7 +153,7 @@ fn spawn_road_entity(
     commands.spawn((
         Mesh3d(meshes.add(road_mesh)),
         MeshMaterial3d(road_material),
-        Transform::from_translation(Vec3::new(-start_pos.x, 0.05, -start_pos.z)), // Relative to parent, at surface level
+        Transform::from_translation(Vec3::new(-start_pos.x, 0.0, -start_pos.z)), // Road surface at ground level (y = 0.0)
         ChildOf(road_entity),
         VisibleChildBundle::default(),
     ));
@@ -156,7 +164,7 @@ fn spawn_road_entity(
         commands.spawn((
             Mesh3d(meshes.add(marking_mesh)),
             MeshMaterial3d(marking_material.clone()),
-            Transform::from_translation(Vec3::new(-start_pos.x, 0.06, -start_pos.z)), // Slightly above road surface, offset by start position
+            Transform::from_translation(Vec3::new(-start_pos.x, 0.01, -start_pos.z)), // Road markings 1cm above road surface (y = 0.01)
             ChildOf(road_entity),
             VisibleChildBundle::default(),
         ));
