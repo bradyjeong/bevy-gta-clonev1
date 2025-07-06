@@ -8,6 +8,7 @@ bevy = { workspace = true }
 bevy_rapier3d = { workspace = true }
 serde = { workspace = true }
 bytemuck = { workspace = true }
+rand = { workspace = true }
 
 # Internal dependencies
 engine_core = { path = "../engine_core" }
