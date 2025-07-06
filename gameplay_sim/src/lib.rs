@@ -16,6 +16,9 @@ pub struct SimulationPlugin;
 
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
+        // Initialize resources
+        app.insert_resource(systems::distance_cache::DistanceCache::new());
+        
         // Movement systems
         app.add_systems(Update, (
             systems::movement::player::human_player_movement,
@@ -30,6 +33,24 @@ impl Plugin for SimulationPlugin {
             systems::movement::aircraft::f16_movement,
             systems::movement::aircraft::rotate_helicopter_rotors,
             systems::movement::vehicles::car_movement,
+        ));
+        
+        // Physics systems
+        app.add_systems(Update, (
+            systems::player_collision_resolution::player_collision_resolution_system,
+            systems::player_collision_resolution::player_movement_validation_system,
+        ));
+        
+        // Core simulation systems  
+        app.add_systems(Update, (
+            systems::human_behavior::human_emotional_state_system,
+            systems::interaction::interaction_system,
+            systems::spawn_validation::spawn_validation_system,
+            systems::spawn_validation::entity_cleanup_system,
+            systems::distance_cache::distance_cache_maintenance_system,
+            systems::distance_cache::distance_cache_debug_system,
+            systems::world::performance::performance_monitoring_system,
+            systems::world::culling::distance_culling_system,
         ));
     }
 }
