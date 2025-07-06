@@ -356,7 +356,7 @@ impl UnifiedEntityFactory {
             // Physics components  
             RigidBody::Fixed,
             Collider::cuboid(width / 2.0, height / 2.0, width / 2.0),
-            CollisionGroups::new(self.config.physics.static_group, Group::ALL),
+            CollisionGroups::new(self.config.physics.static_group(), Group::ALL),
             // Visual components
             Mesh3d(meshes.add(Cuboid::new(width, height, width))),
             MeshMaterial3d(building_material),
@@ -402,8 +402,8 @@ impl UnifiedEntityFactory {
                 rigid_body: RigidBody::Dynamic,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
-                    self.config.physics.vehicle_group,
-                    self.config.physics.static_group | self.config.physics.vehicle_group | self.config.physics.character_group
+                    self.config.physics.vehicle_group(),
+                    Group::from_bits_truncate(self.config.physics.static_group | self.config.physics.vehicle_group | self.config.physics.character_group)
                 ),
                 velocity: Velocity::default(),
                 cullable: UnifiedCullable::vehicle(),
@@ -467,7 +467,7 @@ impl UnifiedEntityFactory {
                 rigid_body: RigidBody::Dynamic,
                 collider: Collider::capsule(Vec3::new(0.0, -0.9, 0.0), Vec3::new(0.0, 0.9, 0.0), 0.3),
                 collision_groups: CollisionGroups::new(
-                    self.config.physics.character_group,
+                    self.config.physics.character_group(),
                     Group::ALL
                 ),
                 velocity: Velocity::default(),
@@ -550,7 +550,7 @@ impl UnifiedEntityFactory {
         commands.spawn((
             RigidBody::Fixed,
             Collider::cylinder(4.0, 0.3),
-            CollisionGroups::new(self.config.physics.static_group, Group::ALL),
+            CollisionGroups::new(self.config.physics.static_group(), Group::ALL),
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(tree_entity),
         ));
@@ -682,8 +682,8 @@ impl UnifiedEntityFactory {
                 vehicle_config.body_size.z / 2.0,
             ),
             CollisionGroups::new(
-                Group::from_bits_truncate(self.config.physics.vehicle_group.bits()),
-                Group::from_bits_truncate(self.config.physics.static_group.bits() | self.config.physics.character_group.bits()),
+                self.config.physics.vehicle_group(),
+                Group::from_bits_truncate(self.config.physics.static_group | self.config.physics.character_group),
             ),
             AdditionalMassProperties::Mass(vehicle_config.mass),
             Damping {
@@ -1260,7 +1260,7 @@ impl UnifiedEntityFactory {
             validated_position,
             ColliderShape::Box(Vec3::new(size.x, 0.2, size.y)),
             1000.0, // Large mass for terrain
-            self.config.physics.static_group,
+            self.config.physics.static_group(),
             false, // Static terrain
             &self.config,
         )?;
@@ -1299,7 +1299,7 @@ impl UnifiedEntityFactory {
             validated_position,
             ColliderShape::Cylinder { radius: trunk_radius, height },
             100.0 * height, // Mass proportional to height
-            self.config.physics.static_group,
+            self.config.physics.static_group(),
             false, // Static tree
             &self.config,
         )?;
@@ -1352,7 +1352,7 @@ impl UnifiedEntityFactory {
             validated_position,
             ColliderShape::Cylinder { radius: size.x / 2.0, height: depth },
             10000.0, // Heavy water body
-            self.config.physics.static_group,
+            self.config.physics.static_group(),
             false, // Static water body
             &self.config,
         )?;
@@ -1447,7 +1447,7 @@ impl UnifiedEntityFactory {
             validated_position,
             ColliderShape::Sphere(0.1),
             0.1, // Very light particle
-            self.config.physics.static_group,
+            self.config.physics.static_group(),
             true, // Dynamic particle
             &self.config,
         )?;
@@ -1521,8 +1521,8 @@ impl UnifiedEntityFactory {
             RigidBody::Fixed,
             Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0),
             CollisionGroups::new(
-                self.config.physics.static_group,
-                self.config.physics.vehicle_group | self.config.physics.character_group
+                self.config.physics.static_group(),
+                Group::from_bits_truncate(self.config.physics.vehicle_group | self.config.physics.character_group)
             ),
             RoadEntity { road_id: 0 },
             Name::new("Road Segment"),

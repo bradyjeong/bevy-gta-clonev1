@@ -68,7 +68,7 @@ pub fn mark_visibility_dirty_system(
     
     // Boost priority for stale dirty flags
     for mut dirty in existing_dirty.iter_mut() {
-        if dirty.is_stale(current_frame, config.batching.priority_boost_frames) {
+        if dirty.is_stale(current_frame, config.batching.priority_boost_frames.into()) {
             dirty.priority = DirtyPriority::High;
         }
     }
@@ -112,7 +112,7 @@ pub fn mark_physics_dirty_system(
     
     // Boost priority for stale dirty flags
     for mut dirty in existing_dirty.iter_mut() {
-        if dirty.is_stale(current_frame, config.batching.priority_boost_frames) {
+        if dirty.is_stale(current_frame, config.batching.priority_boost_frames.into()) {
             dirty.priority = DirtyPriority::Critical;
         }
     }
@@ -394,7 +394,7 @@ pub fn dirty_flag_cleanup_system(
     let mut cleaned = 0;
     
     // This is a simplified cleanup - in reality you'd check the marked_frame
-    if current_frame % (max_stale * 2) == 0 {
+    if current_frame % (max_stale as u64 * 2) == 0 {
         for entity in stale_transform.iter().take(10) {
             commands.entity(entity).remove::<DirtyTransform>();
             cleaned += 1;

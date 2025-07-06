@@ -100,7 +100,7 @@ pub struct VehiclePhysicsConfig {
 pub struct WorldConfig {
     pub chunk_size: f32,
     pub streaming_radius: f32,
-    pub lake_position: (f32, f32, f32),
+    pub lake_position: Vec3,
     pub lake_size: f32,
     pub lake_depth: f32,
     pub active_radius: f32,
@@ -153,12 +153,12 @@ pub struct VehicleConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VehicleTypeConfig {
-    pub body_size: (f32, f32, f32),
-    pub collider_size: (f32, f32, f32),
+    pub body_size: Vec3,
+    pub collider_size: Vec3,
     pub mass: f32,
     pub linear_damping: f32,
     pub angular_damping: f32,
-    pub default_color: (f32, f32, f32),
+    pub default_color: Color,
     pub max_speed: f32,
     pub acceleration: f32,
 }
@@ -194,7 +194,7 @@ pub struct BatchingConfig {
     pub physics_batch_size: usize,
     pub lod_batch_size: usize,
     pub max_processing_time_ms: f32,
-    pub priority_boost_frames: u32,
+    pub priority_boost_frames: u64,
     pub lod_distance_threshold: f32,
     pub cleanup_stale_flags: bool,
     pub cleanup_interval: f32,
@@ -323,7 +323,7 @@ impl Default for WorldConfig {
         Self {
             chunk_size: 200.0,
             streaming_radius: 800.0,
-            lake_position: (300.0, -2.0, 300.0),
+            lake_position: Vec3::new(300.0, -2.0, 300.0),
             lake_size: 200.0,
             lake_depth: 10.0,
             active_radius: 100.0,
@@ -381,26 +381,25 @@ impl Default for PerformanceConfig {
 }
 
 impl GameConfig {
+    pub fn validate_and_clamp(&mut self) {
+        // Add validation and clamping logic here if needed
+        // For now, this is a placeholder to satisfy the interface
+    }
+
     /// Load configuration from RON file
     pub fn load_from_file(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let config_str = std::fs::read_to_string(path)?;
         let config: GameConfig = ron::from_str(&config_str)?;
         Ok(config)
     }
-    
+
     /// Save configuration to RON file
     pub fn save_to_file(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         let config_str = ron::to_string(self)?;
         std::fs::write(path, config_str)?;
         Ok(())
     }
-    
-    /// Get lake position as Vec3
-    pub fn get_lake_position(&self) -> Vec3 {
-        let (x, y, z) = self.world.lake_position;
-        Vec3::new(x, y, z)
-    }
-    
+
     /// Validate configuration values
     pub fn validate(&mut self) {
         // Clamp spawn rates to valid ranges
@@ -426,53 +425,65 @@ impl GameConfig {
         self.entity_limits.npcs = self.entity_limits.npcs.max(1);
         self.entity_limits.trees = self.entity_limits.trees.max(1);
     }
-    
-    /// Validate and clamp configuration values
-    pub fn validate_and_clamp(&mut self) {
-        self.validate();
+}
+
+impl PhysicsConfig {
+    /// Convert u32 group to Rapier Group
+    pub fn static_group(&self) -> Group {
+        Group::from_bits_truncate(self.static_group)
     }
+    
+    pub fn vehicle_group(&self) -> Group {
+        Group::from_bits_truncate(self.vehicle_group)
+    }
+    
+    pub fn character_group(&self) -> Group {
+        Group::from_bits_truncate(self.character_group)
+    }
+
+
 }
 
 impl Default for VehicleConfig {
     fn default() -> Self {
         Self {
             basic_car: VehicleTypeConfig {
-                body_size: (4.0, 2.0, 8.0),
-                collider_size: (3.8, 1.8, 7.8),
+                body_size: Vec3::new(4.0, 2.0, 8.0),
+                collider_size: Vec3::new(3.8, 1.8, 7.8),
                 mass: 1500.0,
                 linear_damping: 0.1,
                 angular_damping: 0.1,
-                default_color: (0.8, 0.2, 0.2),
+                default_color: Color::srgb(0.8, 0.2, 0.2),
                 max_speed: 180.0,
                 acceleration: 15.0,
             },
             super_car: VehicleTypeConfig {
-                body_size: (4.2, 1.8, 8.5),
-                collider_size: (4.0, 1.6, 8.3),
+                body_size: Vec3::new(4.2, 1.8, 8.5),
+                collider_size: Vec3::new(4.0, 1.6, 8.3),
                 mass: 1800.0,
                 linear_damping: 0.08,
                 angular_damping: 0.08,
-                default_color: (0.2, 0.8, 0.2),
+                default_color: Color::srgb(0.2, 0.8, 0.2),
                 max_speed: 220.0,
                 acceleration: 20.0,
             },
             helicopter: VehicleTypeConfig {
-                body_size: (12.0, 3.0, 12.0),
-                collider_size: (11.8, 2.8, 11.8),
+                body_size: Vec3::new(12.0, 3.0, 12.0),
+                collider_size: Vec3::new(11.8, 2.8, 11.8),
                 mass: 3000.0,
                 linear_damping: 0.05,
                 angular_damping: 0.05,
-                default_color: (0.2, 0.2, 0.8),
+                default_color: Color::srgb(0.2, 0.2, 0.8),
                 max_speed: 200.0,
                 acceleration: 10.0,
             },
             f16: VehicleTypeConfig {
-                body_size: (8.0, 2.0, 15.0),
-                collider_size: (7.8, 1.8, 14.8),
+                body_size: Vec3::new(8.0, 2.0, 15.0),
+                collider_size: Vec3::new(7.8, 1.8, 14.8),
                 mass: 8000.0,
                 linear_damping: 0.02,
                 angular_damping: 0.02,
-                default_color: (0.5, 0.5, 0.5),
+                default_color: Color::srgb(0.5, 0.5, 0.5),
                 max_speed: 500.0,
                 acceleration: 25.0,
             },

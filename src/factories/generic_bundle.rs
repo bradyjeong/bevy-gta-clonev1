@@ -135,7 +135,7 @@ impl BundleSpec for VehicleBundleSpec {
             } else {
                 Collider::ball(0.1) // Minimal collider
             },
-            collision_groups: CollisionGroups::new(config.physics.vehicle_group, Group::ALL),
+            collision_groups: CollisionGroups::new(config.physics.vehicle_group(), Group::ALL),
             additional_mass: AdditionalMassProperties::Mass(mass),
             velocity: Velocity::zero(),
             damping: Damping { 
@@ -234,7 +234,7 @@ impl BundleSpec for NPCBundleSpec {
             visibility: Visibility::Inherited,
             rigid_body: if self.include_physics { RigidBody::Dynamic } else { RigidBody::Fixed },
             collider: Collider::capsule_y(config.npc.capsule_height, config.npc.capsule_radius),
-            collision_groups: CollisionGroups::new(config.physics.character_group, Group::ALL),
+            collision_groups: CollisionGroups::new(config.physics.character_group(), Group::ALL),
             additional_mass: AdditionalMassProperties::Mass(70.0 * build),
             velocity: Velocity::zero(),
             cullable: UnifiedCullable::npc(),
@@ -314,7 +314,7 @@ impl BundleSpec for BuildingBundleSpec {
             } else {
                 Collider::ball(0.1) // Minimal collider for LOD
             },
-            collision_groups: CollisionGroups::new(config.physics.static_group, Group::ALL),
+            collision_groups: CollisionGroups::new(config.physics.static_group(), Group::ALL),
             cullable: UnifiedCullable::building(),
         }
     }

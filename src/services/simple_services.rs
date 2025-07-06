@@ -71,9 +71,9 @@ impl PhysicsService {
     
     pub fn get_collision_groups(&self) -> (bevy_rapier3d::prelude::Group, bevy_rapier3d::prelude::Group, bevy_rapier3d::prelude::Group) {
         (
-            self.physics_config.static_group,
-            self.physics_config.vehicle_group,
-            self.physics_config.character_group,
+            self.physics_config.static_group(),
+            self.physics_config.vehicle_group(),
+            self.physics_config.character_group(),
         )
     }
 }
