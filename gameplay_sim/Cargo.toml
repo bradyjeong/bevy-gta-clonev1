@@ -14,3 +14,4 @@ rand = { workspace = true }
 engine_core = { path = "../engine_core" }
 engine_bevy = { path = "../engine_bevy" }
 game_core = { path = "../game_core" }
+game_bin = { path = "../game_bin" }

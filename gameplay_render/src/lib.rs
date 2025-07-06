@@ -1,6 +1,12 @@
 //! Gameplay rendering - LOD, culling, effects
 #![warn(missing_docs)]
 
+// Phase A: Compatibility shims for workspace migration
+pub mod components { pub use game_core::components::*; }
+pub mod bundles { pub use game_core::bundles::*; }
+pub mod config { pub use game_core::config::*; }
+pub mod constants { pub use game_core::constants::*; }
+
 use bevy::prelude::*;
 pub use engine_core;
 pub use engine_bevy;

@@ -1,6 +1,21 @@
 //! Gameplay simulation - physics, AI, rules
 #![warn(missing_docs)]
 
+// Phase A: Compatibility shims for workspace migration
+pub mod components { pub use game_core::components::*; }
+pub mod bundles { pub use game_core::bundles::*; }
+pub mod config { pub use game_core::config::*; }
+pub mod constants { pub use game_core::constants::*; }
+pub mod factories {
+    // TEMP: Forward to the old monolith until factories are migrated
+    pub use game_bin::factories::*;
+}
+pub mod services {
+    // TEMP: Forward to the old monolith until services are migrated
+    pub use game_bin::services::*;
+}
+
+
 use bevy::prelude::*;
 pub use engine_core;
 pub use engine_bevy;
@@ -45,10 +60,8 @@ impl Plugin for SimulationPlugin {
         app.add_systems(Update, (
             systems::human_behavior::human_emotional_state_system,
             systems::interaction::interaction_system,
-            systems::spawn_validation::spawn_validation_system,
-            systems::spawn_validation::entity_cleanup_system,
-            systems::distance_cache::distance_cache_maintenance_system,
-            systems::distance_cache::distance_cache_debug_system,
+            systems::spawn_validation::cleanup_despawned_entities,
+            systems::distance_cache::distance_cache_management_system,
             systems::world::performance::performance_monitoring_system,
             systems::world::culling::distance_culling_system,
         ));
