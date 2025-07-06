@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
-use crate::constants::*;
+use game_core::components::*;
+use game_core::constants::*;
 
 use crate::systems::world::road_network::{RoadSpline, RoadNetwork};
 use crate::systems::world::road_generation::is_on_road_spline;
@@ -241,7 +241,7 @@ fn spawn_building(
     // REPLACED: Use UnifiedEntityFactory for building spawning
     // This eliminates duplicate building spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::config::GameConfig;
+    use game_core::config::GameConfig;
     
     let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
     let current_time = 0.0; // Placeholder time

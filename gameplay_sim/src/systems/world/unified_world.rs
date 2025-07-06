@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
-use crate::components::*;
+use game_core::components::*;
 use crate::systems::world::road_network::RoadNetwork;
 
 // UNIFIED WORLD GENERATION SYSTEM

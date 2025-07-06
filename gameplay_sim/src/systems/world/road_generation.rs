@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
+use game_core::components::*;
 use crate::systems::world::road_network::RoadNetwork;
-use crate::components::RoadEntity;
+use game_core::components::RoadEntity;
 use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh};
-use crate::bundles::VisibleChildBundle;
+use game_core::bundles::VisibleChildBundle;
 
 // MAIN ROAD GENERATION SYSTEM (Replaces old grid system)
 // UNIFIED Y-COORDINATE SYSTEM (prevents z-fighting):
@@ -121,7 +121,7 @@ fn spawn_road_entity(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    use crate::constants::*;
+    use game_core::constants::*;
     
     // Calculate road start position for better distance calculations
     let start_pos = road.evaluate(0.0);
@@ -238,8 +238,8 @@ fn is_point_on_road_spline(position: Vec3, road: &crate::systems::world::road_ne
 // System to update the old road detection calls
 pub fn update_road_dependent_systems(
     road_network: Res<RoadNetwork>,
-    mut vehicle_query: Query<&mut Transform, (With<crate::components::Car>, Without<ActiveEntity>)>,
-    mut npc_query: Query<&mut Transform, (With<NPC>, Without<crate::components::Car>, Without<ActiveEntity>)>,
+    mut vehicle_query: Query<&mut Transform, (With<game_core::components::Car>, Without<ActiveEntity>)>,
+    mut npc_query: Query<&mut Transform, (With<NPC>, Without<game_core::components::Car>, Without<ActiveEntity>)>,
 ) {
     // Update vehicle positions to stay on roads
     for mut transform in vehicle_query.iter_mut() {

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
-use crate::components::*;
-use crate::bundles::VisibleChildBundle;
+use game_core::components::*;
+use game_core::bundles::VisibleChildBundle;
 use crate::systems::world::unified_world::{
     UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState,
     UNIFIED_CHUNK_SIZE,
@@ -487,7 +487,7 @@ fn spawn_unified_building(
     // REPLACED: Use UnifiedEntityFactory for building spawning
     // This eliminates duplicate building spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::config::GameConfig;
+    use game_core::config::GameConfig;
     
     let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
     let current_time = 0.0; // Placeholder time
@@ -602,7 +602,7 @@ fn spawn_unified_vehicle(
     // REPLACED: Use UnifiedEntityFactory for vehicle spawning
     // This eliminates duplicate vehicle spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::config::GameConfig;
+    use game_core::config::GameConfig;
     
     let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
     let current_time = 0.0; // Placeholder time
@@ -717,7 +717,7 @@ fn spawn_unified_tree(
     // REPLACED: Use UnifiedEntityFactory for tree spawning
     // This eliminates duplicate tree spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::config::GameConfig;
+    use game_core::config::GameConfig;
     
     let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
     let current_time = 0.0; // Placeholder time

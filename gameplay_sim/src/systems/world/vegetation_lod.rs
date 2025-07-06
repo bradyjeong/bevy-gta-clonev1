@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::components::*;
+use game_core::components::*;
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
 /// Frame counter for LOD updates

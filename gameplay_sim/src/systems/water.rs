@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use game_core::components::*;
-// use game_core::factories::{MaterialFactory, RenderingFactory, StandardRenderingPattern, RenderingBundleType};
+// use crate::factories::{MaterialFactory, RenderingFactory, StandardRenderingPattern, RenderingBundleType};
 
 pub fn setup_lake(
     mut commands: Commands,
@@ -83,7 +83,7 @@ pub fn setup_yacht(
         &mut meshes,
         &mut materials,
         StandardRenderingPattern::VehicleBody { 
-            vehicle_type: crate::factories::VehicleBodyType::Boat, 
+            vehicle_type: game_core::factories::VehicleBodyType::Boat, 
             color: Color::srgb(0.9, 0.9, 0.9) 
         },
         yacht_position,

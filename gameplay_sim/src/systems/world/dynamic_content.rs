@@ -2,12 +2,12 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
-use crate::components::*;
-use crate::components::world::EntityLimits;
+use game_core::components::*;
+use game_core::components::world::EntityLimits;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
-use crate::config::GameConfig;
+use game_core::config::GameConfig;
 
 
 thread_local! {

@@ -1,8 +1,5 @@
 use bevy::prelude::*;
-
-// Note: This file's functionality has been temporarily simplified
-// due to import issues with Parent and Children components.
-// The main visibility fix systems are available in src/systems/visibility_fix.rs
+use bevy::hierarchy::{Parent, Children};
 
 /// Placeholder system for visibility fixes
 pub fn fix_missing_inherited_visibility() {

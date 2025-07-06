@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use crate::systems::world::road_network::{RoadSpline, RoadType, IntersectionType, RoadIntersection};
-use crate::components::world::MeshCache;
+use game_core::components::world::MeshCache;
 
 // PROPER ROAD MESH GENERATION (Like GTA) - OPTIMIZED WITH CACHING
 
