@@ -1,0 +1,15 @@
+[package]
+name = "gameplay_render"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { workspace = true }
+bevy_rapier3d = { workspace = true }
+serde = { workspace = true }
+bytemuck = { workspace = true }
+
+# Internal dependencies
+engine_core = { path = "../engine_core" }
+engine_bevy = { path = "../engine_bevy" }
+gameplay_sim = { path = "../gameplay_sim" }

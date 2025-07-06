@@ -1962,6 +1962,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "engine_bevy"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_rapier3d",
+ "engine_core",
+ "ron",
+ "serde",
+]
+
+[[package]]
+name = "engine_core"
+version = "0.1.0"
+dependencies = [
+ "rand",
+ "ron",
+ "serde",
+]
+
+[[package]]
 name = "enumn"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2162,6 +2182,43 @@ dependencies = [
  "futures-io",
  "parking",
  "pin-project-lite",
+]
+
+[[package]]
+name = "gameplay_render"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_rapier3d",
+ "bytemuck",
+ "engine_bevy",
+ "engine_core",
+ "gameplay_sim",
+ "serde",
+]
+
+[[package]]
+name = "gameplay_sim"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_rapier3d",
+ "engine_bevy",
+ "engine_core",
+ "rand",
+ "ron",
+ "serde",
+]
+
+[[package]]
+name = "gameplay_ui"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "engine_bevy",
+ "engine_core",
+ "gameplay_sim",
+ "serde",
 ]
 
 [[package]]
@@ -2384,6 +2441,11 @@ dependencies = [
  "bevy_rapier3d",
  "bytemuck",
  "chrono",
+ "engine_bevy",
+ "engine_core",
+ "gameplay_render",
+ "gameplay_sim",
+ "gameplay_ui",
  "rand",
  "ron",
  "serde",
