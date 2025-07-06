@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "game_core",
     "game_bin",
     "engine_core", 
     "engine_bevy",

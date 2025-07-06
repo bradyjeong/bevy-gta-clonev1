@@ -2185,6 +2185,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "game_core"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_rapier3d",
+ "chrono",
+ "engine_bevy",
+ "engine_core",
+ "rand",
+ "ron",
+ "serde",
+]
+
+[[package]]
 name = "gameplay_render"
 version = "0.1.0"
 dependencies = [
@@ -2193,7 +2207,7 @@ dependencies = [
  "bytemuck",
  "engine_bevy",
  "engine_core",
- "gameplay_sim",
+ "game_core",
  "serde",
 ]
 
@@ -2205,6 +2219,7 @@ dependencies = [
  "bevy_rapier3d",
  "engine_bevy",
  "engine_core",
+ "game_core",
  "rand",
  "ron",
  "serde",
@@ -2217,7 +2232,7 @@ dependencies = [
  "bevy",
  "engine_bevy",
  "engine_core",
- "gameplay_sim",
+ "game_core",
  "serde",
 ]
 
@@ -2443,6 +2458,7 @@ dependencies = [
  "chrono",
  "engine_bevy",
  "engine_core",
+ "game_core",
  "gameplay_render",
  "gameplay_sim",
  "gameplay_ui",
