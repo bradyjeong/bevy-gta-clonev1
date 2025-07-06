@@ -2221,6 +2221,7 @@ dependencies = [
  "engine_bevy",
  "engine_core",
  "game_core",
+ "gta_game_legacy",
  "rand",
  "ron",
  "serde",
@@ -2464,6 +2465,21 @@ dependencies = [
  "gameplay_render",
  "gameplay_sim",
  "gameplay_ui",
+ "rand",
+ "ron",
+ "serde",
+]
+
+[[package]]
+name = "gta_game_legacy"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_rapier3d",
+ "chrono",
+ "engine_bevy",
+ "engine_core",
+ "game_core",
  "rand",
  "ron",
  "serde",

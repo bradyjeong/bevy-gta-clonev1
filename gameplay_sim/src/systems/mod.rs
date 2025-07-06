@@ -11,5 +11,6 @@ pub mod player_collision_resolution;
 pub mod realistic_physics_safeguards;
 pub mod spawn_validation;
 pub mod unified_distance_calculator;
-pub mod water;
+// TEMP: Disabled until factory migration
+// pub mod water;
 pub mod world;

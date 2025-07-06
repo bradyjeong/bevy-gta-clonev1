@@ -3,18 +3,18 @@ use bevy_rapier3d::prelude::*;
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 
 // Import our modular components
-use gta_game::*;
-use gta_game::components::world::{MeshCache, EntityLimits};
-use gta_game::systems::{SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, TransformSyncPlugin, UnifiedDistanceCalculatorPlugin};
-use gta_game::systems::world::unified_distance_culling::UnifiedDistanceCullingPlugin;
-use gta_game::systems::config_loader::ConfigLoaderPlugin;
+use gta_game_legacy::*;
+use gta_game_legacy::components::world::{MeshCache, EntityLimits};
+use gta_game_legacy::systems::{SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, TransformSyncPlugin, UnifiedDistanceCalculatorPlugin};
+use gta_game_legacy::systems::world::unified_distance_culling::UnifiedDistanceCullingPlugin;
+use gta_game_legacy::systems::config_loader::ConfigLoaderPlugin;
 
-use gta_game::setup::{setup_initial_aircraft_unified, setup_initial_npcs_unified, setup_palm_trees, setup_initial_vehicles_unified};
-use gta_game::systems::world::unified_factory_setup::setup_unified_entity_factory;
-use gta_game::setup::world::setup_dubai_noon_lighting;
-use gta_game::services::{initialize_simple_services, update_timing_service_system, GroundDetectionPlugin};
-use gta_game::systems::{service_example_vehicle_creation, service_example_config_validation, service_example_timing_check, UnifiedPerformancePlugin, PerformanceIntegrationPlugin};
-use gta_game::components::DirtyFlagsMetrics;
+use gta_game_legacy::setup::{setup_initial_aircraft_unified, setup_initial_npcs_unified, setup_palm_trees, setup_initial_vehicles_unified};
+use gta_game_legacy::systems::world::unified_factory_setup::setup_unified_entity_factory;
+use gta_game_legacy::setup::world::setup_dubai_noon_lighting;
+use gta_game_legacy::services::{initialize_simple_services, update_timing_service_system, GroundDetectionPlugin};
+use gta_game_legacy::systems::{service_example_vehicle_creation, service_example_config_validation, service_example_timing_check, UnifiedPerformancePlugin, PerformanceIntegrationPlugin};
+use gta_game_legacy::components::DirtyFlagsMetrics;
 
 fn main() {
     let mut app = App::new();

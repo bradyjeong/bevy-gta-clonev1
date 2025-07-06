@@ -8,11 +8,11 @@ pub mod config { pub use game_core::config::*; }
 pub mod constants { pub use game_core::constants::*; }
 pub mod factories {
     // TEMP: Forward to the old monolith until factories are migrated
-    pub use game_bin::factories::*;
+    pub use gta_game_legacy::factories::*;
 }
 pub mod services {
-    // TEMP: Forward to the old monolith until services are migrated
-    pub use game_bin::services::*;
+    // TEMP: Forward to the old monolith until services are migrated  
+    pub use gta_game_legacy::services::*;
 }
 
 
