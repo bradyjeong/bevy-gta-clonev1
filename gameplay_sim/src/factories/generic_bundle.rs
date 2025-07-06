@@ -699,7 +699,7 @@ impl GenericBundleFactory {
         UnifiedChunkBundle {
             chunk_entity: UnifiedChunkEntity { 
                 coord: crate::systems::world::unified_world::ChunkCoord::new(chunk_coord.0, chunk_coord.1), 
-                layer 
+                layer: layer.to_layer_id()
             },
             dynamic_content: DynamicContent { content_type },
             transform: Transform::from_translation(position),

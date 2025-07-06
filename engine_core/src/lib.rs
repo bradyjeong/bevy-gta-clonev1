@@ -6,7 +6,11 @@
 
 pub mod math;
 pub mod utils;
+pub mod timing;
+pub mod performance;
 pub mod prelude;
 
 pub use math::*;
 pub use utils::*;
+pub use timing::*;
+pub use performance::*;

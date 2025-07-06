@@ -190,29 +190,8 @@ impl DistanceCache {
     }
 }
 
-/// Component to track entities that have moved significantly
-#[derive(Component)]
-pub struct MovementTracker {
-    pub last_position: Vec3,
-    pub movement_threshold: f32,
-}
-
-impl MovementTracker {
-    pub fn new(position: Vec3, threshold: f32) -> Self {
-        Self {
-            last_position: position,
-            movement_threshold: threshold,
-        }
-    }
-
-    pub fn has_moved_significantly(&self, current_position: Vec3) -> bool {
-        self.last_position.distance(current_position) > self.movement_threshold
-    }
-
-    pub fn update_position(&mut self, position: Vec3) {
-        self.last_position = position;
-    }
-}
+// Re-export the canonical MovementTracker from game_core
+pub use game_core::components::spatial::MovementTracker;
 
 impl DistanceCache {
     /// Get the current cache size

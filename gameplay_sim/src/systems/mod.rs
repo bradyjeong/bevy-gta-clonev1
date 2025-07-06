@@ -14,3 +14,4 @@ pub mod unified_distance_calculator;
 // TEMP: Disabled until factory migration
 // pub mod water;
 pub mod world;
+pub mod timing_service;

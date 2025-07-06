@@ -2,6 +2,7 @@ pub mod player;
 pub mod vehicles;
 pub mod world;
 pub mod placeholders;
+pub mod spatial;
 pub mod effects;
 pub mod water;
 pub mod lod;
@@ -36,3 +37,6 @@ pub use dirty_flags::*;
 
 // Instanced vegetation components
 pub use instanced_vegetation::*;
+
+// Spatial components (canonical versions)
+pub use spatial::{UnifiedCullable, MovementTracker, UnifiedChunkEntity, ChunkCoord, DistanceCullingConfig, CullingCategory};

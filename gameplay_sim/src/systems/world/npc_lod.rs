@@ -4,8 +4,9 @@ use game_core::components::{
     NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart,
     NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE
 };
-// use crate::factories::{RenderingFactory, StandardRenderingPattern};
-// use crate::systems::timing_service::{TimingService, SystemType, EntityTimerType, ManagedTiming};
+use crate::factories::{RenderingFactory, StandardRenderingPattern};
+use engine_bevy::services::{TimingService, ManagedTiming};
+use engine_core::timing::{SystemType, EntityTimerType};
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
 /// NPC LOD system that follows the vehicle LOD architecture

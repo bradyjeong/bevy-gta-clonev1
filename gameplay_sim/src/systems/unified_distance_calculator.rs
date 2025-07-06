@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::systems::distance_cache::DistanceCache;
-// use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
+use engine_bevy::services::UnifiedPerformanceTracker;
+use engine_core::performance::PerformanceCategory;
 
 /// Unified distance calculator that batches calculations and leverages caching
 #[derive(Resource)]

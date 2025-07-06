@@ -263,7 +263,7 @@ impl Plugin for SpawnValidationPlugin {
 
 /// System to clean up registry when entities are despawned
 /// Optimized to run less frequently and avoid querying all entities
-fn cleanup_despawned_entities(
+pub fn cleanup_despawned_entities(
     mut registry: ResMut<SpawnRegistry>,
     query: Query<Entity>,
     time: Res<Time>,

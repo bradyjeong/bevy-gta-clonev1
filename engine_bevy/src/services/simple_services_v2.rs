@@ -91,14 +91,14 @@ impl Default for PhysicsService {
 
 /// Simple timing service
 #[derive(Resource)]
-pub struct TimingService {
+pub struct LegacyTimingService {
     pub current_time: f32,
     pub delta_time: f32,
     system_intervals: std::collections::HashMap<String, f32>,
     last_run_times: std::collections::HashMap<String, f32>,
 }
 
-impl TimingService {
+impl LegacyTimingService {
     pub fn new() -> Self {
         Self {
             current_time: 0.0,
@@ -133,7 +133,7 @@ impl TimingService {
     }
 }
 
-impl Default for TimingService {
+impl Default for LegacyTimingService {
     fn default() -> Self {
         Self::new()
     }
@@ -143,14 +143,14 @@ impl Default for TimingService {
 pub fn initialize_simple_services_v2(mut commands: Commands) {
     commands.insert_resource(ConfigService::new());
     commands.insert_resource(PhysicsService::new());
-    commands.insert_resource(TimingService::new());
+    commands.insert_resource(LegacyTimingService::new());
     
     info!("✅ SIMPLE SERVICES V2: Initialized config, physics, and timing services");
 }
 
 /// System to update timing service
 pub fn update_timing_service_v2(
-    mut timing_service: ResMut<TimingService>,
+    mut timing_service: ResMut<LegacyTimingService>,
     time: Res<Time>,
 ) {
     timing_service.update_time(&time);

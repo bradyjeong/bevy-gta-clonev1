@@ -28,6 +28,11 @@ chrono = { workspace = true }
 game_core = { path = "game_core" }
 engine_core = { path = "engine_core" }
 engine_bevy = { path = "engine_bevy" }
+gameplay_sim = { path = "gameplay_sim", optional = true }
+
+[features]
+default = []
+modern = ["gameplay_sim"]
 
 [workspace.dependencies]
 bevy = { version = "0.16.1", features = ["serialize", "shader_format_glsl"] }

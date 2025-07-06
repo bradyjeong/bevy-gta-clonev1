@@ -1,10 +1,7 @@
 //! Gameplay simulation - physics, AI, rules
 #![warn(missing_docs)]
 
-pub mod services {
-    // TEMP: Forward to the old monolith until services are migrated  
-    pub use gta_game_legacy::services::*;
-}
+pub mod services;
 
 
 use bevy::prelude::*;

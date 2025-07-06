@@ -188,7 +188,7 @@ fn spawn_unified_road_entity(
     let road_entity = commands.spawn((
         UnifiedChunkEntity {
             coord: chunk_coord,
-            layer: ContentLayer::Roads,
+            layer: ContentLayer::Roads.to_layer_id(),
         },
         RoadEntity { road_id },
         Transform::from_translation(center_pos),
@@ -234,8 +234,8 @@ fn detect_and_spawn_intersections(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let chunk_center = coord.to_world_pos();
     let chunk_size = UNIFIED_CHUNK_SIZE;
+    let chunk_center = coord.to_world_pos(chunk_size);
     let half_size = chunk_size * 0.5;
     
     // Collect all roads in and around this chunk
@@ -365,7 +365,7 @@ fn spawn_unified_intersection_entity(
     let intersection_entity = commands.spawn((
         UnifiedChunkEntity {
             coord: chunk_coord,
-            layer: ContentLayer::Roads,
+            layer: ContentLayer::Roads.to_layer_id(),
         },
         IntersectionEntity { intersection_id },
         Transform::from_translation(position),
@@ -424,7 +424,7 @@ fn generate_buildings_for_chunk(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let chunk_center = coord.to_world_pos();
+    let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
     
     // Determine building density based on distance from center
@@ -498,7 +498,7 @@ fn spawn_unified_building(
             commands.entity(entity).insert((
                 UnifiedChunkEntity {
                     coord: chunk_coord,
-                    layer: ContentLayer::Buildings,
+                    layer: ContentLayer::Buildings.to_layer_id(),
                 },
             ));
             entity
@@ -546,7 +546,7 @@ fn generate_vehicles_for_chunk(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let chunk_center = coord.to_world_pos();
+    let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
     
     // Generate vehicles only on roads - REDUCED: From 5 to 2 attempts
@@ -613,7 +613,7 @@ fn spawn_unified_vehicle(
             commands.entity(entity).insert((
                 UnifiedChunkEntity {
                     coord: chunk_coord,
-                    layer: ContentLayer::Vehicles,
+                    layer: ContentLayer::Vehicles.to_layer_id(),
                 },
             ));
             entity
@@ -661,7 +661,7 @@ fn generate_vegetation_for_chunk(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let chunk_center = coord.to_world_pos();
+    let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
     
     // Generate trees and vegetation in open areas
@@ -728,7 +728,7 @@ fn spawn_unified_tree(
             commands.entity(entity).insert((
                 UnifiedChunkEntity {
                     coord: chunk_coord,
-                    layer: ContentLayer::Vegetation,
+                    layer: ContentLayer::Vegetation.to_layer_id(),
                 },
             ));
             entity

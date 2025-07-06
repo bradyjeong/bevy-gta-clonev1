@@ -8,7 +8,8 @@ use game_core::bundles::{
 };
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};
-use crate::systems::audio::realistic_vehicle_audio::{VehicleAudioState, VehicleAudioSources};
+// TODO: Move to gameplay_render with audio events
+// use crate::systems::audio::realistic_vehicle_audio::{VehicleAudioState, VehicleAudioSources};
 use crate::systems::distance_cache::MovementTracker;
 use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
@@ -66,7 +67,7 @@ impl Default for EntityLimitManager {
 
 impl EntityLimitManager {
     /// Configure entity limits from game config
-    pub fn configure_from_config(&mut self, config: &crate::config::GameConfig) {
+    pub fn configure_from_config(&mut self, config: &game_core::config::GameConfig) {
         self.max_buildings = config.entity_limits.buildings;
         self.max_vehicles = config.entity_limits.vehicles;
         self.max_npcs = config.entity_limits.npcs;
@@ -722,7 +723,8 @@ impl UnifiedEntityFactory {
             vehicle_config.engine.clone(),
             vehicle_config.suspension.clone(),
             vehicle_config.tire_physics.clone(),
-            VehicleAudioState::default(),
+            // TODO: Restore when audio system is implemented
+            // VehicleAudioState::default(),
             Car,
             Cullable::new(200.0),
             MovementTracker::new(safe_position, 10.0), // Track vehicle movement with 10m threshold
@@ -1120,12 +1122,13 @@ impl UnifiedEntityFactory {
         )).id();
         
         // Add audio sources component to vehicle
-        commands.entity(vehicle_entity).insert(VehicleAudioSources {
+        // TODO: Restore when audio system is implemented
+        /*commands.entity(vehicle_entity).insert(VehicleAudioSources {
             engine_source,
             tire_source,
             wind_source,
             brake_source,
-        });
+        });*/
         
         Ok(())
     }

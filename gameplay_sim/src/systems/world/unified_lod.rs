@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use game_core::components::*;
 use crate::systems::world::unified_world::{
-    UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkState, UNIFIED_STREAMING_RADIUS,
+    UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkState, UNIFIED_STREAMING_RADIUS, UNIFIED_CHUNK_SIZE,
 };
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
@@ -166,7 +166,7 @@ pub fn master_unified_lod_system(
         if let Some(chunk) = world_manager.get_chunk(chunk_entity.coord) {
             let should_be_visible = match chunk.state {
                 ChunkState::Loaded { lod_level } => {
-                    should_layer_be_visible(chunk_entity.layer, lod_level, chunk.distance_to_player)
+                    should_layer_be_visible(ContentLayer::from_layer_id(chunk_entity.layer), lod_level, chunk.distance_to_player)
                 }
                 _ => false,
             };
@@ -199,7 +199,7 @@ fn update_chunk_lod_levels(world_manager: &mut UnifiedWorldManager, active_pos: 
     let chunks_to_update: Vec<_> = world_manager.chunks.iter()
         .filter_map(|(coord, chunk)| {
             if let ChunkState::Loaded { lod_level } = chunk.state {
-                let distance = active_pos.distance(chunk.coord.to_world_pos());
+                let distance = active_pos.distance(chunk.coord.to_world_pos(UNIFIED_CHUNK_SIZE));
                 Some((*coord, distance, lod_level))
             } else {
                 None
@@ -654,7 +654,7 @@ pub fn unified_cleanup_system(
             let distance_to_any_chunk = world_manager
                 .chunks
                 .values()
-                .map(|chunk| transform.translation.distance(chunk.coord.to_world_pos()))
+                .map(|chunk| transform.translation.distance(chunk.coord.to_world_pos(UNIFIED_CHUNK_SIZE)))
                 .fold(f32::INFINITY, f32::min);
             
             if distance_to_any_chunk > UNIFIED_STREAMING_RADIUS * 2.0 {

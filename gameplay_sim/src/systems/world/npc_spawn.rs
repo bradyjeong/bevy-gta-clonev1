@@ -6,8 +6,9 @@ use game_core::components::{
 };
 
 use game_core::config::GameConfig;
-// use game_core::systems::timing_service::{TimingService, EntityTimerType, ManagedTiming};
-// use game_core::services::ground_detection::GroundDetectionService;
+use engine_bevy::services::{TimingService, ManagedTiming};
+use engine_core::timing::{EntityTimerType};
+use crate::services::GroundDetectionService;
 use rand::prelude::*;
 
 /// Spawn NPCs using the new architecture while maintaining compatibility
@@ -26,7 +27,7 @@ pub fn spawn_new_npc_system(
     }
     
     // Spawn new NPCs occasionally using unified spawning pipeline
-    if timing_service.current_time % 10.0 < 0.1 {  // REDUCED: From 5.0 to 10.0 seconds
+    if timing_service.current_time() % 10.0 < 0.1 {  // REDUCED: From 5.0 to 10.0 seconds
         let mut rng = thread_rng();
         
         // Try to find a valid spawn position using unified validation
