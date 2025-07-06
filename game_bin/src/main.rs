@@ -1,3 +1,5 @@
+#![deny(clippy::all, clippy::pedantic)]
+
 use bevy::prelude::*;
 use gta_game::GamePlugin;
 

@@ -9,6 +9,7 @@ use crate::systems::world::unified_world::{
 };
 use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType};
 use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh, generate_intersection_mesh};
+use crate::factories::{RenderingFactory, StandardRenderingPattern, RenderingBundleType};
 
 // UNIFIED Y-COORDINATE SYSTEM (prevents z-fighting):
 // - Terrain:      y = -0.15  (15cm below ground)
@@ -182,9 +183,6 @@ fn spawn_unified_road_entity(
 ) -> Entity {
     let center_pos = road.evaluate(0.5);
     
-    let road_material = create_road_material(&road.road_type, materials);
-    let marking_material = create_marking_material(materials);
-    
     let road_entity = commands.spawn((
         UnifiedChunkEntity {
             coord: chunk_coord,
@@ -201,27 +199,29 @@ fn spawn_unified_road_entity(
         },
     )).id();
     
-    // Road surface mesh - positioned at ground level (y = 0.0)
-    let road_mesh = generate_road_mesh(road);
-    commands.spawn((
-        Mesh3d(meshes.add(road_mesh)),
-        MeshMaterial3d(road_material),
-        Transform::from_translation(-center_pos + Vec3::new(0.0, 0.0, 0.0)), // Ground level
-        ChildOf(road_entity),
-        VisibleChildBundle::default(),
-    ));
+    // Road surface - use RenderingFactory pattern
+    let road_width = road.road_type.width();
+    let road_length = road.control_points.len() as f32 * 10.0; // Approximate length
+    RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::Road { width: road_width, length: road_length },
+        Vec3::new(0.0, 0.0, 0.0), // Ground level
+        RenderingBundleType::Child,
+        Some(road_entity),
+    );
     
-    // Road markings - positioned exactly 1cm above road surface (y = 0.01)
-    let marking_meshes = generate_road_markings_mesh(road);
-    for marking_mesh in marking_meshes {
-        commands.spawn((
-            Mesh3d(meshes.add(marking_mesh)),
-            MeshMaterial3d(marking_material.clone()),
-            Transform::from_translation(-center_pos + Vec3::new(0.0, 0.01, 0.0)), // 1cm above road surface
-            ChildOf(road_entity),
-            VisibleChildBundle::default(),
-        ));
-    }
+    // Road markings - use RenderingFactory pattern
+    RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::RoadMarking { width: road_width, length: road_length },
+        Vec3::new(0.0, 0.01, 0.0), // 1cm above road surface
+        RenderingBundleType::Child,
+        Some(road_entity),
+    );
     
     road_entity
 }
@@ -359,9 +359,6 @@ fn spawn_unified_intersection_entity(
 ) -> Entity {
     let position = intersection.position;
     
-    // Use dominant road type material to prevent color conflicts
-    let intersection_material = create_road_material(&dominant_road_type, materials);
-    
     let intersection_entity = commands.spawn((
         UnifiedChunkEntity {
             coord: chunk_coord,
@@ -378,15 +375,17 @@ fn spawn_unified_intersection_entity(
         },
     )).id();
     
-    // Generate intersection mesh - positioned at ground level (y = 0.0)
-    let intersection_mesh = generate_intersection_mesh(intersection, &[]);
-    commands.spawn((
-        Mesh3d(meshes.add(intersection_mesh)),
-        MeshMaterial3d(intersection_material),
-        Transform::from_translation(Vec3::new(0.0, 0.01, 0.0)), // Slightly above road surface to prevent z-fighting
-        ChildOf(intersection_entity),
-        VisibleChildBundle::default(),
-    ));
+    // Generate intersection using RenderingFactory pattern
+    let intersection_width = dominant_road_type.width();
+    RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::Road { width: intersection_width, length: intersection_width },
+        Vec3::new(0.0, 0.01, 0.0), // Slightly above road surface to prevent z-fighting
+        RenderingBundleType::Child,
+        Some(intersection_entity),
+    );
     
     intersection_entity
 }
@@ -771,33 +770,6 @@ fn is_point_on_road_spline_unified(position: Vec3, road: &RoadSpline, tolerance:
     false
 }
 
-fn create_road_material(road_type: &RoadType, materials: &mut ResMut<Assets<StandardMaterial>>) -> Handle<StandardMaterial> {
-    let (base_color, roughness) = match road_type {
-        RoadType::Highway => (Color::srgb(0.4, 0.4, 0.45), 0.8),
-        RoadType::MainStreet => (Color::srgb(0.35, 0.35, 0.4), 0.8),
-        RoadType::SideStreet => (Color::srgb(0.45, 0.45, 0.5), 0.7),
-        RoadType::Alley => (Color::srgb(0.5, 0.5, 0.45), 0.6),
-    };
-    
-    materials.add(StandardMaterial {
-        base_color,
-        perceptual_roughness: roughness,
-        metallic: 0.0,
-        reflectance: 0.2,
-        emissive: Color::BLACK.into(),
-        ..default()
-    })
-}
-
-fn create_marking_material(materials: &mut ResMut<Assets<StandardMaterial>>) -> Handle<StandardMaterial> {
-    materials.add(StandardMaterial {
-        base_color: Color::srgb(0.95, 0.95, 0.95),
-        emissive: LinearRgba::new(0.2, 0.2, 0.2, 1.0),
-        perceptual_roughness: 0.6,
-        metallic: 0.0,
-        reflectance: 0.5,
-        ..default()
-    })
-}
+// Material creation functions removed - now handled by RenderingFactory
 
 

@@ -1,3 +1,5 @@
+#![deny(clippy::all, clippy::pedantic)]
+
 pub mod components;
 pub mod config;
 pub mod systems;

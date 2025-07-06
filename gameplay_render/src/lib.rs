@@ -1,4 +1,5 @@
 //! Gameplay rendering - LOD, culling, effects
+#![deny(clippy::all, clippy::pedantic)]
 #![warn(missing_docs)]
 
 use bevy::prelude::*;

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
+use crate::factories::{RenderingFactory, StandardRenderingPattern, RenderingBundleType, MaterialType};
 
 /// Frame counter for LOD updates
 #[derive(Resource, Default)]
@@ -89,18 +90,16 @@ pub fn vegetation_billboard_mesh_generator(
     mut materials: ResMut<Assets<StandardMaterial>>,
     _asset_server: Res<AssetServer>,
 ) {
-    // Generate a simple quad mesh for billboards
-    let billboard_mesh = create_billboard_quad();
-    let billboard_mesh_handle = meshes.add(billboard_mesh);
-    
-    // Create a simple material for billboards using solid colors instead of textures
-    let billboard_material = StandardMaterial {
-        base_color: Color::srgb(0.2, 0.8, 0.3), // Green color for vegetation
-        alpha_mode: AlphaMode::Opaque,
-        unlit: true,
-        ..default()
-    };
-    let billboard_material_handle = materials.add(billboard_material);
+    // Use RenderingFactory to create billboard quad with standardized pattern
+    let (billboard_mesh_handle, billboard_material_handle) = RenderingFactory::create_mesh_and_material(
+        &mut meshes,
+        &mut materials,
+        &StandardRenderingPattern::CustomCuboid {
+            size: Vec3::new(2.0, 3.0, 0.1),
+            color: Color::srgb(0.2, 0.8, 0.3),
+            material_type: MaterialType::Unlit,
+        },
+    );
     
     // Store these as resources for reuse
     commands.insert_resource(VegetationBillboardResources {
@@ -115,9 +114,7 @@ pub struct VegetationBillboardResources {
     pub material: Handle<StandardMaterial>,
 }
 
-fn create_billboard_quad() -> Mesh {
-    Mesh::from(Plane3d::default().mesh().size(2.0, 3.0))
-}
+// Removed create_billboard_quad() - now using RenderingFactory patterns
 
 /// System to adaptively adjust LOD distances based on performance
 pub fn adaptive_vegetation_lod_system(

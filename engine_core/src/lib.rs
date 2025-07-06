@@ -1,4 +1,5 @@
 // Pure utilities and math - no Bevy dependencies
+#![deny(clippy::all, clippy::pedantic)]
 #![warn(missing_docs)]
 
 //! Core engine utilities and math functions

@@ -4,7 +4,7 @@ use crate::components::{
     NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart,
     NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE
 };
-use crate::factories::{RenderingFactory, StandardRenderingPattern};
+use crate::factories::{RenderingFactory, StandardRenderingPattern, RenderingBundleType};
 use crate::systems::timing_service::{TimingService, SystemType, EntityTimerType, ManagedTiming};
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
@@ -162,8 +162,17 @@ fn spawn_npc_full_lod(
     )).id();
     body_entities.push(head_entity);
     
-    // Torso
-    let torso_entity = commands.spawn((
+    // Torso - use RenderingFactory pattern  
+    let torso_entity = RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::NPCBody { build: appearance.build, height: appearance.height },
+        Vec3::new(0.0, appearance.height * 0.5, 0.0),
+        RenderingBundleType::Child,
+        Some(parent_entity),
+    );
+    commands.entity(torso_entity).insert((
         NPCTorso,
         NPCBodyPart {
             rest_position: Vec3::new(0.0, appearance.height * 0.5, 0.0),
@@ -171,17 +180,23 @@ fn spawn_npc_full_lod(
             animation_offset: Vec3::ZERO,
             animation_rotation: Quat::IDENTITY,
         },
-        Mesh3d(meshes.add(Cuboid::new(0.4 * appearance.build, 0.6 * appearance.height, 0.2 * appearance.build))),
-        MeshMaterial3d(materials.add(appearance.shirt_color)),
-        Transform::from_xyz(0.0, appearance.height * 0.5, 0.0),
-    )).id();
+    ));
     body_entities.push(torso_entity);
     
-    // Arms
+    // Arms - use RenderingFactory patterns
     let arm_length = 0.3 * appearance.height;
     let arm_radius = 0.06 * appearance.build;
     
-    let left_arm = commands.spawn((
+    let left_arm = RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::NPCLimb { radius: arm_radius, length: arm_length },
+        Vec3::new(-0.25 * appearance.build, appearance.height * 0.65, 0.0),
+        RenderingBundleType::Child,
+        Some(parent_entity),
+    );
+    commands.entity(left_arm).insert((
         NPCLeftArm,
         NPCBodyPart {
             rest_position: Vec3::new(-0.25 * appearance.build, appearance.height * 0.65, 0.0),
@@ -189,13 +204,19 @@ fn spawn_npc_full_lod(
             animation_offset: Vec3::ZERO,
             animation_rotation: Quat::IDENTITY,
         },
-        Mesh3d(meshes.add(Capsule3d::new(arm_radius, arm_length))),
-        MeshMaterial3d(materials.add(appearance.skin_tone)),
-        Transform::from_xyz(-0.25 * appearance.build, appearance.height * 0.65, 0.0),
-    )).id();
+    ));
     body_entities.push(left_arm);
     
-    let right_arm = commands.spawn((
+    let right_arm = RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::NPCLimb { radius: arm_radius, length: arm_length },
+        Vec3::new(0.25 * appearance.build, appearance.height * 0.65, 0.0),
+        RenderingBundleType::Child,
+        Some(parent_entity),
+    );
+    commands.entity(right_arm).insert((
         NPCRightArm,
         NPCBodyPart {
             rest_position: Vec3::new(0.25 * appearance.build, appearance.height * 0.65, 0.0),
@@ -203,17 +224,23 @@ fn spawn_npc_full_lod(
             animation_offset: Vec3::ZERO,
             animation_rotation: Quat::IDENTITY,
         },
-        Mesh3d(meshes.add(Capsule3d::new(arm_radius, arm_length))),
-        MeshMaterial3d(materials.add(appearance.skin_tone)),
-        Transform::from_xyz(0.25 * appearance.build, appearance.height * 0.65, 0.0),
-    )).id();
+    ));
     body_entities.push(right_arm);
     
-    // Legs
+    // Legs - use RenderingFactory patterns
     let leg_length = 0.4 * appearance.height;
     let leg_radius = 0.08 * appearance.build;
     
-    let left_leg = commands.spawn((
+    let left_leg = RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::NPCLimb { radius: leg_radius, length: leg_length },
+        Vec3::new(-0.1 * appearance.build, appearance.height * 0.2, 0.0),
+        RenderingBundleType::Child,
+        Some(parent_entity),
+    );
+    commands.entity(left_leg).insert((
         NPCLeftLeg,
         NPCBodyPart {
             rest_position: Vec3::new(-0.1 * appearance.build, appearance.height * 0.2, 0.0),
@@ -221,13 +248,19 @@ fn spawn_npc_full_lod(
             animation_offset: Vec3::ZERO,
             animation_rotation: Quat::IDENTITY,
         },
-        Mesh3d(meshes.add(Capsule3d::new(leg_radius, leg_length))),
-        MeshMaterial3d(materials.add(appearance.pants_color)),
-        Transform::from_xyz(-0.1 * appearance.build, appearance.height * 0.2, 0.0),
-    )).id();
+    ));
     body_entities.push(left_leg);
     
-    let right_leg = commands.spawn((
+    let right_leg = RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::NPCLimb { radius: leg_radius, length: leg_length },
+        Vec3::new(0.1 * appearance.build, appearance.height * 0.2, 0.0),
+        RenderingBundleType::Child,
+        Some(parent_entity),
+    );
+    commands.entity(right_leg).insert((
         NPCRightLeg,
         NPCBodyPart {
             rest_position: Vec3::new(0.1 * appearance.build, appearance.height * 0.2, 0.0),
@@ -235,10 +268,7 @@ fn spawn_npc_full_lod(
             animation_offset: Vec3::ZERO,
             animation_rotation: Quat::IDENTITY,
         },
-        Mesh3d(meshes.add(Capsule3d::new(leg_radius, leg_length))),
-        MeshMaterial3d(materials.add(appearance.pants_color)),
-        Transform::from_xyz(0.1 * appearance.build, appearance.height * 0.2, 0.0),
-    )).id();
+    ));
     body_entities.push(right_leg);
     
     // Make all body parts children of the main NPC entity
@@ -263,20 +293,28 @@ fn spawn_npc_medium_lod(
 ) {
     let mut body_entities = Vec::new();
     
-    // Single simplified body mesh
-    let body_entity = commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.3 * appearance.build, appearance.height * 0.8))),
-        MeshMaterial3d(materials.add(appearance.shirt_color)),
-        Transform::from_xyz(0.0, appearance.height * 0.4, 0.0),
-    )).id();
+    // Single simplified body mesh - use RenderingFactory pattern
+    let body_entity = RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::NPCBody { build: appearance.build, height: appearance.height },
+        Vec3::new(0.0, appearance.height * 0.4, 0.0),
+        RenderingBundleType::Child,
+        Some(parent_entity),
+    );
     body_entities.push(body_entity);
     
-    // Simple head
-    let head_entity = commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(0.1 * appearance.build))),
-        MeshMaterial3d(materials.add(appearance.skin_tone)),
-        Transform::from_xyz(0.0, appearance.height * 0.85, 0.0),
-    )).id();
+    // Simple head - use RenderingFactory pattern
+    let head_entity = RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::NPCHead { build_factor: appearance.build },
+        Vec3::new(0.0, appearance.height * 0.85, 0.0),
+        RenderingBundleType::Child,
+        Some(parent_entity),
+    );
     body_entities.push(head_entity);
     
     // Make body parts children of the main NPC entity
@@ -300,16 +338,21 @@ fn spawn_npc_low_lod(
 ) {
     let mut body_entities = Vec::new();
     
-    // Single silhouette mesh
-    let silhouette_entity = commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.25 * appearance.build, appearance.height))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.3, 0.3, 0.3),
-            unlit: true,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, appearance.height * 0.5, 0.0),
-    )).id();
+    // Single silhouette mesh - use RenderingFactory pattern with custom cylinder
+    let silhouette_entity = RenderingFactory::create_rendering_entity(
+        commands,
+        meshes,
+        materials,
+        StandardRenderingPattern::CustomCylinder { 
+            radius: 0.25 * appearance.build, 
+            height: appearance.height,
+            color: Color::srgb(0.3, 0.3, 0.3),
+            material_type: crate::factories::MaterialType::Unlit,
+        },
+        Vec3::new(0.0, appearance.height * 0.5, 0.0),
+        RenderingBundleType::Child,
+        Some(parent_entity),
+    );
     body_entities.push(silhouette_entity);
     
     commands.entity(parent_entity).add_child(silhouette_entity);

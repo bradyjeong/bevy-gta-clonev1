@@ -7,6 +7,7 @@ use crate::components::dirty_flags::{DirtyVegetationInstancing, DirtyPriority, F
 use crate::components::world::*;
 use crate::components::player::ActiveEntity;
 use crate::config::GameConfig;
+use crate::factories::{RenderingFactory, StandardRenderingPattern, RenderingBundleType, MaterialType};
 
 /// System to collect vegetation entities for instancing with performance optimization
 pub fn collect_vegetation_instances_system(
@@ -395,33 +396,46 @@ fn create_instanced_mesh(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     vegetation_type: &str,
 ) {
-    // Create a simple mesh based on vegetation type
-    let mesh = match vegetation_type {
-        "PalmFrond" => meshes.add(Plane3d::default().mesh().size(2.0, 0.5)),
-        "LeafCluster" => meshes.add(Sphere::new(0.5).mesh().uv(16, 16)),
-        "TreeTrunk" => meshes.add(Cylinder::new(0.3, 4.0).mesh()),
-        "Bush" => meshes.add(Sphere::new(0.8).mesh().uv(8, 8)),
-        _ => meshes.add(Sphere::new(0.5).mesh().uv(8, 8)),
+    // Use RenderingFactory to create standardized mesh and material
+    let pattern = match vegetation_type {
+        "PalmFrond" => StandardRenderingPattern::CustomCuboid {
+            size: Vec3::new(2.0, 0.5, 0.1),
+            color: Color::srgb(0.2, 0.8, 0.3),
+            material_type: MaterialType::Standard,
+        },
+        "LeafCluster" => StandardRenderingPattern::CustomSphere {
+            radius: 0.5,
+            color: Color::srgb(0.15, 0.7, 0.25),
+            material_type: MaterialType::Standard,
+        },
+        "TreeTrunk" => StandardRenderingPattern::CustomCylinder {
+            radius: 0.3,
+            height: 4.0,
+            color: Color::srgb(0.4, 0.25, 0.1),
+            material_type: MaterialType::Standard,
+        },
+        "Bush" => StandardRenderingPattern::CustomSphere {
+            radius: 0.8,
+            color: Color::srgb(0.1, 0.6, 0.2),
+            material_type: MaterialType::Standard,
+        },
+        _ => StandardRenderingPattern::CustomSphere {
+            radius: 0.5,
+            color: Color::srgb(0.2, 0.7, 0.2),
+            material_type: MaterialType::Standard,
+        },
     };
     
-    // Create material with appropriate color
-    let material = materials.add(StandardMaterial {
-        base_color: match vegetation_type {
-            "PalmFrond" => Color::srgb(0.2, 0.8, 0.3),
-            "LeafCluster" => Color::srgb(0.15, 0.7, 0.25),
-            "TreeTrunk" => Color::srgb(0.4, 0.25, 0.1),
-            "Bush" => Color::srgb(0.1, 0.6, 0.2),
-            _ => Color::srgb(0.2, 0.7, 0.2),
-        },
-        perceptual_roughness: 0.8,
-        metallic: 0.0,
-        ..default()
-    });
+    let (mesh_handle, material_handle) = RenderingFactory::create_mesh_and_material(
+        meshes,
+        materials,
+        &pattern,
+    );
     
     // Create instanced entity
     commands.entity(entity).insert((
-        MeshMaterial3d(material),
-        Mesh3d(mesh),
+        MeshMaterial3d(material_handle),
+        Mesh3d(mesh_handle),
         Transform::IDENTITY,
     ));
     

@@ -1,4 +1,5 @@
 //! Core game components, config, and shared types
+#![deny(clippy::all, clippy::pedantic)]
 #![warn(missing_docs)]
 
 use bevy::prelude::*;

@@ -1,4 +1,5 @@
 //! Bevy engine abstractions and utilities
+#![deny(clippy::all, clippy::pedantic)]
 #![warn(missing_docs)]
 
 use bevy::prelude::*;
