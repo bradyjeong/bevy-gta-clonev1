@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::hierarchy::Parent;
 
 /// System that automatically adds InheritedVisibility to child entities that are missing it
 /// This runs once during startup to fix any entities that need visibility inheritance

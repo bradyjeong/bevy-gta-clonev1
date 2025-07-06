@@ -82,7 +82,7 @@ pub fn road_network_system(
     // Determine which chunks need roads
     let (chunk_x, chunk_z) = current_chunk;
     
-    let chunk_radius = ((active_radius / chunk_size).ceil() as i32).max(3); // Ensure at least 3x3 chunk coverage
+    let chunk_radius = ((active_radius as f32 / chunk_size).ceil() as i32).max(3); // Ensure at least 3x3 chunk coverage
     
     // Generate roads for nearby chunks
     for dx in -chunk_radius..=chunk_radius {
