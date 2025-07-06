@@ -43,8 +43,8 @@ impl Plugin for BatchingPlugin {
         ).chain());
 
         // Optimized LOD systems - run in Update after batch processing
-        app.add_systems(Update, master_unified_lod_system)
-            .add_systems(Update, new_unified_distance_culling_system);
+        app.add_systems(Update, crate::systems::world::master_unified_lod_system)
+            .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
 
         // Cleanup and monitoring systems - run in PostUpdate
         app.add_systems(PostUpdate, (
@@ -142,7 +142,7 @@ impl Plugin for EnhancedBatchingPlugin {
             app.add_systems(PreUpdate, mark_visibility_dirty_system);
             
             app.add_systems(Update, batch_culling_system)
-                .add_systems(Update, new_unified_distance_culling_system);
+                .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
         }
 
         if self.enable_physics_batching {
@@ -155,7 +155,7 @@ impl Plugin for EnhancedBatchingPlugin {
             // app.add_systems(PreUpdate, movement_based_lod_marking_system); // Removed - functionality moved to unified systems
             
             app.add_systems(Update, batch_lod_processing_system)
-                .add_systems(Update, master_unified_lod_system);
+                .add_systems(Update, crate::systems::world::master_unified_lod_system);
                 // .add_systems(Update, periodic_lod_marking_system); // Removed - functionality moved to unified systems
         }
 

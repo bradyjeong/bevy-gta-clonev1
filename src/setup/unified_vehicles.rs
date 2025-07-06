@@ -9,7 +9,7 @@ use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 use crate::systems::distance_cache::MovementTracker;
 use crate::setup::vehicles::BugattiColorScheme;
-use crate::GameConfig;
+use crate::config::GameConfig;
 
 /// Unified vehicle setup system that replaces all previous vehicle setup functions
 /// - Replaces setup_starter_vehicles (src/setup/starter_vehicles.rs)

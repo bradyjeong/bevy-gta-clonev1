@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::time::Instant;
 use crate::components::*;
-// use crate::services::{SimpleServices, simple_services::ConfigService};
-use crate::GameConfig;
+
+use crate::config::GameConfig;
 
 /// Core batching systems module
 /// Implements efficient batch processing with dirty flags
@@ -14,10 +14,9 @@ pub fn mark_transform_dirty_system(
     changed_transforms: Query<Entity, (Changed<Transform>, Without<DirtyTransform>)>,
     mut existing_dirty: Query<&mut DirtyTransform>,
     frame_counter: Res<FrameCounter>,
-    // services: SimpleServices,
+
 ) {
     let current_frame = frame_counter.frame;
-    // let config_service = services.require::<ConfigService>();
     
     // Mark newly changed transforms as dirty
     for entity in changed_transforms.iter() {
@@ -29,8 +28,7 @@ pub fn mark_transform_dirty_system(
     
     // Update existing dirty flags if transform threshold exceeded
     for mut dirty in existing_dirty.iter_mut() {
-        // let config = config_service.read().unwrap();
-        if dirty.is_stale(current_frame, 60) { // config.get_batching_config().priority_boost_frames) {
+        if dirty.is_stale(current_frame, 60) { // Use hardcoded value instead of config service
             dirty.priority = DirtyPriority::High;
         }
     }

@@ -6,7 +6,7 @@ use crate::components::instanced_vegetation::*;
 use crate::components::dirty_flags::{DirtyVegetationInstancing, DirtyPriority, FrameCounter};
 use crate::components::world::*;
 use crate::components::player::ActiveEntity;
-use crate::GameConfig;
+use crate::config::GameConfig;
 
 /// System to collect vegetation entities for instancing with performance optimization
 pub fn collect_vegetation_instances_system(

@@ -14,7 +14,7 @@ use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
-use crate::GameConfig;
+use crate::config::GameConfig;
 
 /// Unified Entity Factory - Single point of all entity creation
 /// Consolidates EntityFactory, UnifiedEntityFactory, RealisticVehicleFactory functionality
@@ -48,12 +48,12 @@ pub struct EntityLimitManager {
 impl Default for EntityLimitManager {
     fn default() -> Self {
         Self {
-            // Configurable limits based on AGENT.md
-            max_buildings: (1000.0 * 0.08) as usize, // 8% of 1000 = 80 buildings
-            max_vehicles: (500.0 * 0.04) as usize,   // 4% of 500 = 20 vehicles  
-            max_npcs: (200.0 * 0.01) as usize,       // 1% of 200 = 2 NPCs
-            max_trees: (2000.0 * 0.05) as usize,     // 5% of 2000 = 100 trees
-            max_particles: 50,
+            // Entity limits loaded from game configuration
+            max_buildings: 80,  // Will be overridden by config
+            max_vehicles: 20,   // Will be overridden by config
+            max_npcs: 2,        // Will be overridden by config
+            max_trees: 100,     // Will be overridden by config
+            max_particles: 50,  // Will be overridden by config
             
             building_entities: Vec::new(),
             vehicle_entities: Vec::new(),
@@ -65,6 +65,15 @@ impl Default for EntityLimitManager {
 }
 
 impl EntityLimitManager {
+    /// Configure entity limits from game config
+    pub fn configure_from_config(&mut self, config: &crate::config::GameConfig) {
+        self.max_buildings = config.entity_limits.buildings;
+        self.max_vehicles = config.entity_limits.vehicles;
+        self.max_npcs = config.entity_limits.npcs;
+        self.max_trees = config.entity_limits.trees;
+        self.max_particles = config.entity_limits.particles;
+    }
+    
     /// Check if entity limit has been reached and despawn oldest if needed
     pub fn enforce_limit(&mut self, commands: &mut Commands, entity_type: ContentType, entity: Entity, timestamp: f32) {
         match entity_type {
@@ -1649,18 +1658,16 @@ pub fn convert_legacy_vehicles_system(
 
 /// Performance monitoring for unified entity factory
 pub fn unified_entity_factory_performance_system(
+    mut last_report: Local<f32>,
     time: Res<Time>,
     realistic_vehicles: Query<&RealisticVehicle>,
 ) {
     let current_time = time.elapsed_secs();
-    static mut LAST_REPORT: f32 = 0.0;
     
-    unsafe {
-        if current_time - LAST_REPORT > 20.0 {
-            LAST_REPORT = current_time;
-            let total_realistic = realistic_vehicles.iter().count();
-            let physics_enabled = realistic_vehicles.iter().filter(|v| v.physics_enabled).count();
-            info!("UNIFIED FACTORY: {}/{} realistic vehicles with physics enabled", physics_enabled, total_realistic);
-        }
+    if *last_report == 0.0 || current_time - *last_report > 20.0 {
+        *last_report = current_time;
+        let total_realistic = realistic_vehicles.iter().count();
+        let physics_enabled = realistic_vehicles.iter().filter(|v| v.physics_enabled).count();
+        info!("UNIFIED FACTORY: {}/{} realistic vehicles with physics enabled", physics_enabled, total_realistic);
     }
 }

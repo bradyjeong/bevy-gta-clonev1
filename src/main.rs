@@ -6,9 +6,11 @@ use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use gta_game::*;
 use gta_game::components::world::{MeshCache, EntityLimits};
 use gta_game::systems::{SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, TransformSyncPlugin, UnifiedDistanceCalculatorPlugin};
+use gta_game::systems::world::unified_distance_culling::UnifiedDistanceCullingPlugin;
+use gta_game::systems::config_loader::ConfigLoaderPlugin;
 
-use gta_game::setup_initial_aircraft_unified;
-use gta_game::setup_initial_npcs_unified;
+use gta_game::setup::{setup_initial_aircraft_unified, setup_initial_npcs_unified, setup_palm_trees, setup_initial_vehicles_unified};
+use gta_game::systems::world::unified_factory_setup::setup_unified_entity_factory;
 use gta_game::setup::world::setup_dubai_noon_lighting;
 use gta_game::services::{initialize_simple_services, update_timing_service_system, GroundDetectionPlugin};
 use gta_game::systems::{service_example_vehicle_creation, service_example_config_validation, service_example_timing_check, UnifiedPerformancePlugin, PerformanceIntegrationPlugin};
@@ -27,7 +29,6 @@ fn main() {
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .init_state::<GameState>()
-        .init_resource::<GameConfig>()
         .init_resource::<CullingSettings>()
         .init_resource::<PerformanceStats>()
         .init_resource::<DirtyFlagsMetrics>()
@@ -41,20 +42,17 @@ fn main() {
             affects_lightmapped_meshes: true,
         })
         
+        // Configuration loading - must be first
+        .add_plugins(ConfigLoaderPlugin)
+        
         // Standard game plugins
-        .add_plugins(InputPlugin)
-        .add_plugins(PlayerPlugin)
-        .add_plugins(VehiclePlugin)
+        .add_plugins(GamePlugin)
         .add_plugins(SpawnValidationPlugin)
         .add_plugins(DistanceCachePlugin)
         .add_plugins(UnifiedDistanceCalculatorPlugin)
+        .add_plugins(UnifiedDistanceCullingPlugin)
         .add_plugins(DistanceCacheDebugPlugin)
         .add_plugins(TransformSyncPlugin)
-        .add_plugins(VegetationLODPlugin)
-        .add_plugins(PersistencePlugin)
-        .add_plugins(UnifiedWorldPlugin)
-        .add_plugins(UIPlugin)
-        .add_plugins(WaterPlugin)
         .add_plugins(GroundDetectionPlugin)
         
         // Unified Performance Monitoring

@@ -97,6 +97,9 @@ pub struct SuperCar {
     pub turbo_whistle_intensity: f32,
     pub backfire_timer: f32,
     pub pops_and_bangs: bool,
+    
+    // Velocity cache for inter-system communication
+    pub last_velocity_cache: Option<Vec3>,
 }
 
 impl Default for SuperCar {
@@ -178,6 +181,7 @@ impl Default for SuperCar {
             turbo_whistle_intensity: 0.6,
             backfire_timer: 0.0,
             pops_and_bangs: true,        // aggressive exhaust tuning
+            last_velocity_cache: None,
         }
     }
 }

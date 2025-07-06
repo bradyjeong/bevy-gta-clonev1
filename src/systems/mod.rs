@@ -4,8 +4,10 @@ pub mod interaction;
 pub mod camera;
 pub mod effects;
 pub mod audio;
+pub mod config_loader;
 pub mod human_behavior;
 pub mod physics_utils;
+pub mod lod;
 
 pub mod vehicles;
 pub mod ui;
@@ -34,34 +36,27 @@ pub mod performance_monitor;
 pub mod performance_integration;
 pub mod batch_processing;
 
-pub use movement::*;
-pub use parallel_physics::*;
-pub use performance_dashboard::*;
-pub use performance_monitor::*;
-pub use performance_integration::*;
-pub use batch_processing::*;
-pub use world::*;
-pub use interaction::*;
-pub use camera::*;
-pub use effects::*;
-pub use audio::*;
-pub use human_behavior::*;
-pub use physics_utils::*;
+// Core system plugins (main API surface)
+pub use spawn_validation::SpawnValidationPlugin;
+pub use distance_cache::DistanceCachePlugin;
+pub use distance_cache_debug::DistanceCacheDebugPlugin;
+pub use transform_sync::TransformSyncPlugin;
+pub use unified_distance_calculator::UnifiedDistanceCalculatorPlugin;
+pub use performance_monitor::UnifiedPerformancePlugin;
+pub use performance_integration::PerformanceIntegrationPlugin;
 
+// System functions used by main.rs
+pub use simple_service_example::{
+    service_example_vehicle_creation,
+    service_example_config_validation,
+    service_example_timing_check,
+};
 
-pub use vehicles::*;
-pub use ui::*;
-pub use water::*;
-pub use debug::*;
-pub use timing_service::*;
-pub use spawn_validation::*;
-pub use input::*;
-pub use persistence::*;
-// pub use realistic_physics_safeguards::*; // DISABLED - conflicts with Rapier
-pub use distance_cache::*;
-pub use unified_distance_calculator::*;
-pub use distance_cache_debug::*;
-pub use transform_sync::*;
+// Physics utilities (used by examples)
+pub use physics_utils::{PhysicsUtilities, CollisionGroupHelper, PhysicsBodySetup, InputProcessor};
+
+// Essential components
+pub use distance_cache::MovementTracker;
 // Essential batching systems (non-conflicting with batch_processing.rs)
 pub use batching::{
     frame_counter_system,
@@ -76,10 +71,26 @@ pub use batching::{
     dirty_flags_metrics_system,
     // NOTE: batch_mark_vegetation_instancing_dirty_system renamed to avoid conflict
 };
-pub use batching_test::*;
-pub use entity_creation_system::*;
-pub use simple_service_example::*;
-pub use rendering::*;
-pub use vegetation_instancing_integration::*;
-pub use player_collision_resolution::*;
+// Keep only essential batching systems from these modules
+pub use batching_test::{
+    batching_test_system, 
+    batching_stress_test_system,
+    batching_performance_comparison_system,
+    cleanup_test_entities_system,
+};
+pub use entity_creation_system::{
+    bevy_resource_entity_creation_system,
+    bevy_resource_config_update_system,
+    bevy_asset_cleanup_system,
+    bevy_resource_factory_system,
+};
+pub use rendering::vegetation_instancing::{
+    collect_vegetation_instances_system,
+    update_vegetation_instancing_system,
+};
+// VegetationInstancingConfig is available through components::VegetationInstancingConfig
+pub use player_collision_resolution::{
+    player_collision_resolution_system,
+    player_movement_validation_system,
+};
 

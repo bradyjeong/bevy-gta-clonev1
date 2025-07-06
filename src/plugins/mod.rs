@@ -6,21 +6,20 @@ pub mod water_plugin;
 pub mod persistence_plugin;
 pub mod input_plugin;
 pub mod vegetation_lod_plugin;
+pub mod game_plugin;
 
 pub mod batching_plugin;
 
-pub mod service_plugin;
+// Plugin exports - these are the main API surface
+pub use player_plugin::PlayerPlugin;
+pub use vehicle_plugin::VehiclePlugin;
+pub use unified_world_plugin::UnifiedWorldPlugin;
+pub use ui_plugin::UIPlugin;
+pub use water_plugin::WaterPlugin;
+pub use persistence_plugin::PersistencePlugin;
+pub use input_plugin::InputPlugin;
+pub use vegetation_lod_plugin::VegetationLODPlugin;
+pub use game_plugin::GamePlugin;
 
-
-pub use player_plugin::*;
-pub use vehicle_plugin::*;
-pub use unified_world_plugin::*;
-pub use ui_plugin::*;
-pub use water_plugin::*;
-pub use persistence_plugin::*;
-pub use input_plugin::*;
-pub use vegetation_lod_plugin::*;
-
-pub use batching_plugin::*;
-pub use service_plugin::*;
+pub use batching_plugin::BatchingPlugin;
 

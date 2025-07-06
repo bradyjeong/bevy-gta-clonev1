@@ -9,24 +9,12 @@ pub mod bundles;
 pub mod factories;
 pub mod services;
 
-// Re-export specific items to avoid ambiguity
-pub use components::{Player, ActiveEntity, Car, SuperCar, Helicopter, F16, NPC, Cullable, MainCamera, MainRotor, TailRotor};
-pub use components::{DynamicTerrain, DynamicContent, ContentType, CullingSettings, PerformanceStats, Building, RoadEntity, IntersectionEntity};
-pub use components::{ExhaustFlame, VehicleBeacon, ControlsText, ControlsDisplay};
-pub use components::{Lake, Yacht, WaterBody, WaterWave, Boat};
+// Engine-level abstractions only
+pub use game_state::GameState;
+pub use plugins::GamePlugin;
+pub use setup::setup_basic_world;
 
-pub use systems::movement::*;
-pub use systems::camera::*;
-pub use systems::interaction::*;
-pub use systems::world::*;
-pub use systems::effects::*;
-pub use systems::performance_monitor::*;
-pub use systems::performance_integration::*;
-
-pub use plugins::*;
-pub use factories::*;
-pub use setup::{setup_basic_world, setup_initial_aircraft_unified, setup_palm_trees, setup_initial_npcs_unified, setup_initial_vehicles_unified};
-
-pub use constants::*;
-pub use config::*;
-pub use game_state::*;
+// Core components that form the public API
+pub use components::{Player, ActiveEntity, MainCamera, LodLevel};
+pub use components::{Car, SuperCar, Helicopter, F16, NPC, Boat};
+pub use components::{PerformanceStats, CullingSettings};

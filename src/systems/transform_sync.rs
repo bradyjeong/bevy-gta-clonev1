@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::RigidBody;
 
 /// Single source of truth for entity positions - prevents fighting between systems
 #[derive(Component, Default, Reflect)]
@@ -18,9 +19,10 @@ impl TransformSync {
     }
 }
 
-/// System that smoothly syncs all transforms - ONE UPDATE PER ENTITY PER FRAME
+/// System that smoothly syncs transforms for NON-PHYSICS entities only
+/// WARNING: This system should NOT be used on RigidBody entities!
 pub fn sync_transforms_system(
-    mut query: Query<(&mut Transform, &mut TransformSync)>,
+    mut query: Query<(&mut Transform, &mut TransformSync), Without<RigidBody>>,
     time: Res<Time>,
 ) {
     let dt = time.delta_secs().min(0.016); // Cap at 60fps for stability

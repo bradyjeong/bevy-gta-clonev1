@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::config::GameConfig;
+use crate::config::{GameConfig, game_config::PhysicsConfig};
 use crate::systems::timing_service::TimingService as BaseTimingService;
 
 /// Simplified service injection using direct Bevy resources
@@ -32,11 +32,11 @@ impl ConfigService {
 /// Physics service resource
 #[derive(Resource)]
 pub struct PhysicsService {
-    physics_config: crate::config::PhysicsConfig,
+    physics_config: PhysicsConfig,
 }
 
 impl PhysicsService {
-    pub fn new(physics_config: crate::config::PhysicsConfig) -> Self {
+    pub fn new(physics_config: PhysicsConfig) -> Self {
         Self { physics_config }
     }
     

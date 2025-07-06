@@ -6,7 +6,7 @@ use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 use crate::systems::MovementTracker;
-use crate::GameConfig;
+use crate::config::GameConfig;
 
 /// Aircraft types supported by the unified system
 #[derive(Debug, Clone, Copy, PartialEq)]

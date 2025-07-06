@@ -212,19 +212,17 @@ pub fn vehicle_audio_culling_system(
 
 /// Performance monitoring for vehicle audio system
 pub fn vehicle_audio_performance_system(
+    mut last_report: Local<f32>,
     time: Res<Time>,
     query: Query<&VehicleAudioState, With<RealisticVehicle>>,
 ) {
     let current_time = time.elapsed_secs();
-    static mut LAST_REPORT: f32 = 0.0;
     
-    unsafe {
-        if current_time - LAST_REPORT > 15.0 {
-            LAST_REPORT = current_time;
-            let active_audio = query.iter().filter(|a| a.audio_enabled).count();
-            let total_vehicles = query.iter().count();
-            info!("VEHICLE AUDIO: {}/{} vehicles with active audio", active_audio, total_vehicles);
-        }
+    if *last_report == 0.0 || current_time - *last_report > 15.0 {
+        *last_report = current_time;
+        let active_audio = query.iter().filter(|a| a.audio_enabled).count();
+        let total_vehicles = query.iter().count();
+        info!("VEHICLE AUDIO: {}/{} vehicles with active audio", active_audio, total_vehicles);
     }
 }
 

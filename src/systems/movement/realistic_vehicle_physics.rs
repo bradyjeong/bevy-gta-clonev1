@@ -410,7 +410,7 @@ fn apply_physics_safeguards(
     PhysicsUtilities::apply_ground_collision(velocity, transform, 0.1, 2.0);
     
     // Use unified world bounds system
-    PhysicsUtilities::apply_world_bounds(transform, velocity, config);
+    PhysicsUtilities::apply_world_bounds(velocity, transform, config);
 }
 
 /// System to update vehicle wheel positions and rotations
@@ -427,7 +427,8 @@ pub fn vehicle_wheel_update_system(
             let rotation_speed = dynamics.speed / wheel.radius;
             wheel_transform.rotate_local_x(rotation_speed * dt);
             
-            // Update wheel position relative to vehicle
+            // Update wheel position relative to vehicle (non-physics entities only)
+            // NOTE: This is safe because VehicleWheel should not have RigidBody
             wheel_transform.translation = wheel.position;
         }
     }
@@ -435,17 +436,15 @@ pub fn vehicle_wheel_update_system(
 
 /// Performance monitoring system for realistic vehicle physics
 pub fn realistic_vehicle_performance_system(
+    mut last_report: Local<f32>,
     time: Res<Time>,
     query: Query<&RealisticVehicle, With<ActiveEntity>>,
 ) {
     let current_time = time.elapsed_secs();
-    static mut LAST_REPORT: f32 = 0.0;
-    
-    unsafe {
-        if current_time - LAST_REPORT > 10.0 {
-            LAST_REPORT = current_time;
-            let active_vehicles = query.iter().filter(|v| v.physics_enabled).count();
-            info!("REALISTIC PHYSICS: {} active vehicles with full physics", active_vehicles);
-        }
+    // Use Local for safe per-system state
+    if *last_report == 0.0 || current_time - *last_report > 10.0 {
+        *last_report = current_time;
+        let active_vehicles = query.iter().filter(|v| v.physics_enabled).count();
+        info!("REALISTIC PHYSICS: {} active vehicles with full physics", active_vehicles);
     }
 }

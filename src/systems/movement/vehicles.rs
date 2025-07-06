@@ -64,7 +64,12 @@ pub fn car_movement(
     }
 }
 
-pub fn supercar_movement(
+// DEPRECATED: This system has been split into focused sub-systems:
+// - supercar_input_system (handles input processing)
+// - supercar_physics_system (handles physics calculations)
+// - supercar_effects_system (handles visual effects using pre-spawned entities)
+// The new systems provide better performance and maintainability.
+pub fn supercar_movement_deprecated(
     time: Res<Time>,
     control_manager: Res<ControlManager>,
     config: Res<GameConfig>,

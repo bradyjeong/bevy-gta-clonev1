@@ -3,7 +3,7 @@ use rand::prelude::*;
 
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::services::ground_detection::GroundDetectionService;
-use crate::GameConfig;
+use crate::config::GameConfig;
 
 /// UNIFIED NPC SETUP SYSTEM
 /// Consolidates setup_new_npcs (good patterns) and setup_npcs (bad patterns)

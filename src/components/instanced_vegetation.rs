@@ -208,6 +208,112 @@ pub enum VegetationType {
     Bush,
 }
 
+/// Vegetation LOD detail levels
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum VegetationDetailLevel {
+    Full,
+    Medium,
+    Billboard,
+    Culled,
+}
+
+impl Default for VegetationDetailLevel {
+    fn default() -> Self {
+        VegetationDetailLevel::Full
+    }
+}
+
+/// Vegetation LOD component
+#[derive(Component, Debug, Clone)]
+pub struct VegetationLOD {
+    pub detail_level: VegetationDetailLevel,
+    pub distance: f32,
+    pub distance_to_player: f32,
+    pub last_update: f32,
+}
+
+impl Default for VegetationLOD {
+    fn default() -> Self {
+        Self {
+            detail_level: VegetationDetailLevel::Full,
+            distance: 0.0,
+            distance_to_player: 0.0,
+            last_update: 0.0,
+        }
+    }
+}
+
+impl VegetationLOD {
+    pub fn update_from_distance(&mut self, distance: f32, frame: u64) {
+        self.distance_to_player = distance;
+        self.distance = distance;
+        self.last_update = frame as f32;
+        
+        // Update detail level based on distance
+        self.detail_level = match distance {
+            d if d < 50.0 => VegetationDetailLevel::Full,
+            d if d < 150.0 => VegetationDetailLevel::Medium,
+            d if d < 300.0 => VegetationDetailLevel::Billboard,
+            _ => VegetationDetailLevel::Culled,
+        };
+    }
+    
+    pub fn should_be_visible(&self) -> bool {
+        !matches!(self.detail_level, VegetationDetailLevel::Culled)
+    }
+}
+
+/// Mesh LOD component for vegetation
+#[derive(Component, Debug, Clone)]
+pub struct VegetationMeshLOD {
+    pub current_mesh: Handle<Mesh>,
+    pub full_mesh: Handle<Mesh>,
+    pub medium_mesh: Handle<Mesh>,
+    pub billboard_mesh: Handle<Mesh>,
+}
+
+impl Default for VegetationMeshLOD {
+    fn default() -> Self {
+        Self {
+            current_mesh: Handle::default(),
+            full_mesh: Handle::default(),
+            medium_mesh: Handle::default(),
+            billboard_mesh: Handle::default(),
+        }
+    }
+}
+
+impl VegetationMeshLOD {
+    pub fn get_mesh_for_level(&self, level: VegetationDetailLevel) -> Option<Handle<Mesh>> {
+        match level {
+            VegetationDetailLevel::Full => Some(self.full_mesh.clone()),
+            VegetationDetailLevel::Medium => Some(self.medium_mesh.clone()),
+            VegetationDetailLevel::Billboard => Some(self.billboard_mesh.clone()),
+            VegetationDetailLevel::Culled => None,
+        }
+    }
+}
+
+/// Billboard component for vegetation
+#[derive(Component, Debug, Clone)]
+pub struct VegetationBillboard {
+    pub texture: Handle<Image>,
+    pub size: Vec2,
+    pub always_face_camera: bool,
+    pub original_scale: Vec3,
+}
+
+impl Default for VegetationBillboard {
+    fn default() -> Self {
+        Self {
+            texture: Handle::default(),
+            size: Vec2::new(1.0, 1.0),
+            always_face_camera: true,
+            original_scale: Vec3::ONE,
+        }
+    }
+}
+
 /// Marker component for vegetation entities that need instancing
 #[derive(Component, Debug, Clone)]
 pub struct VegetationBatchable {

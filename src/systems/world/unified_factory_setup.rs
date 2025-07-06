@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-use crate::GameConfig;
+use crate::config::GameConfig;
 
 /// Setup system for the UnifiedEntityFactory resource
 pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConfig>) {

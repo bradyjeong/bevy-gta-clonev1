@@ -97,29 +97,25 @@ impl PhysicsUtilities {
         }
     }
     
-    /// Clamp entity position to world bounds
+    /// Apply world bounds using velocity-based physics (no direct Transform manipulation)
     pub fn apply_world_bounds(
-        transform: &mut Transform,
         velocity: &mut Velocity,
+        transform: &Transform,
         config: &GameConfig
     ) {
         let bounds = config.physics.max_world_coord;
         
-        // Check and clamp X bounds
+        // Check and apply velocity corrections for X bounds
         if transform.translation.x > bounds {
-            transform.translation.x = bounds;
             velocity.linvel.x = velocity.linvel.x.min(0.0);
         } else if transform.translation.x < -bounds {
-            transform.translation.x = -bounds;
             velocity.linvel.x = velocity.linvel.x.max(0.0);
         }
         
-        // Check and clamp Z bounds
+        // Check and apply velocity corrections for Z bounds
         if transform.translation.z > bounds {
-            transform.translation.z = bounds;
             velocity.linvel.z = velocity.linvel.z.min(0.0);
         } else if transform.translation.z < -bounds {
-            transform.translation.z = -bounds;
             velocity.linvel.z = velocity.linvel.z.max(0.0);
         }
     }
@@ -320,27 +316,25 @@ impl InputProcessor {
     }
 }
 
-/// Comprehensive physics safety system
+/// Comprehensive physics safety system using velocity-based approach
 pub fn apply_universal_physics_safeguards(
-    mut query: Query<(Entity, &mut Velocity, &mut Transform), With<RigidBody>>,
+    mut query: Query<(Entity, &mut Velocity, &Transform), With<RigidBody>>,
     config: Res<GameConfig>,
 ) {
-    for (_entity, mut velocity, mut transform) in query.iter_mut() {
+    for (_entity, mut velocity, transform) in query.iter_mut() {
         // Apply all safety measures
         PhysicsUtilities::validate_velocity(&mut velocity, &config);
-        PhysicsUtilities::apply_world_bounds(&mut transform, &mut velocity, &config);
+        PhysicsUtilities::apply_world_bounds(&mut velocity, &transform, &config);
         
-        // Additional safety checks
+        // Additional safety checks for invalid positions (use velocity reset for safety)
         if !transform.translation.is_finite() {
-            warn!("Entity had invalid position, resetting to origin");
-            transform.translation = Vec3::ZERO;
+            warn!("Entity had invalid position, stopping all movement");
             velocity.linvel = Vec3::ZERO;
             velocity.angvel = Vec3::ZERO;
         }
         
         if !transform.rotation.is_finite() {
-            warn!("Entity had invalid rotation, resetting to identity");
-            transform.rotation = Quat::IDENTITY;
+            warn!("Entity had invalid rotation, stopping angular movement");
             velocity.angvel = Vec3::ZERO;
         }
     }

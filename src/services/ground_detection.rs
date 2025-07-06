@@ -23,7 +23,8 @@ impl Default for GroundDetectionService {
 }
 
 impl GroundDetectionService {
-    /// Get ground height at a given XZ position using raycasting
+    /// Get ground height at a given XZ position using Rapier's built-in raycasting
+    /// This is the proper way to use Rapier's physics for ground detection
     pub fn get_ground_height(
         &self,
         position: Vec2,
@@ -33,7 +34,7 @@ impl GroundDetectionService {
             return self.fallback_height;
         }
 
-        // Cast ray downward from high altitude
+        // Cast ray downward from high altitude using Rapier's system
         let ray_origin = Vec3::new(position.x, GROUND_DETECTION_HEIGHT, position.y);
         let ray_direction = Vec3::NEG_Y;
         let max_distance = GROUND_DETECTION_HEIGHT + 20.0; // Extra margin
@@ -45,7 +46,7 @@ impl GroundDetectionService {
                 Group::GROUP_1, // STATIC_GROUP
             ));
 
-        // Perform raycast
+        // Use Rapier's built-in ray casting - this is the single source of truth
         if let Some((_entity, intersection)) = rapier_context.cast_ray(
             ray_origin,
             ray_direction,

@@ -7,6 +7,7 @@ use crate::components::world::EntityLimits;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
+use crate::config::GameConfig;
 
 
 thread_local! {
@@ -50,6 +51,7 @@ pub fn dynamic_content_system(
     road_network: Res<RoadNetwork>,
     time: Res<Time>,
     mut timer: Local<DynamicContentTimer>,
+    game_config: Res<GameConfig>,
 ) {
     if let Ok(active_transform) = active_query.single() {
         let active_pos = active_transform.translation;
@@ -75,8 +77,8 @@ pub fn dynamic_content_system(
         timer.timer = 0.0;
         timer.last_player_pos = Some(active_pos);
         
-        // EMERGENCY PERFORMANCE MODE - Drastically reduce entity spawning
-        let active_radius = 100.0;   // REDUCED: Minimal spawn radius from 150.0 to 100.0
+        // Data-driven performance settings
+        let active_radius = game_config.world.active_radius;
         let cleanup_radius = 2500.0;  // Match road cleanup radius to prevent premature despawning
         let spawn_density = 120.0;   // INCREASED: Much higher spacing between entities
         
@@ -133,7 +135,7 @@ pub fn dynamic_content_system(
                 
                 // Only spawn if no content exists nearby
                 if !has_content_at_position(spawn_pos, &existing_content, spawn_density * 0.8) {
-                    spawn_dynamic_content_safe_unified(&mut commands, spawn_pos, &existing_content, &mut meshes, &mut materials, &mut unified_factory, &road_network, time.elapsed_secs());
+                    spawn_dynamic_content_safe_unified(&mut commands, spawn_pos, &existing_content, &mut meshes, &mut materials, &mut unified_factory, &road_network, time.elapsed_secs(), &game_config);
                 }
             }
             if spawn_attempts > max_spawn_attempts { break; }
@@ -222,12 +224,13 @@ fn spawn_dynamic_content_safe_unified(
     unified_factory: &mut ResMut<UnifiedEntityFactory>,
     road_network: &RoadNetwork,
     current_time: f32,
+    game_config: &GameConfig,
 ) {
-    // Ultra-reduced spawn rates from AGENT.md (buildings 8%, vehicles 4%, trees 5%, NPCs 1%)
+    // Data-driven spawn rates from game config
     let on_road = is_on_road_spline(position, road_network, 25.0);
     
-    // Buildings - 8% spawn rate, not on roads
-    if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.08 {
+    // Buildings - configurable spawn rate, not on roads
+    if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < game_config.spawn_rates.buildings {
         if !on_road && !is_in_water_area(position) {
             if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
                 commands,
@@ -244,8 +247,8 @@ fn spawn_dynamic_content_safe_unified(
         }
     }
     
-    // Vehicles - 4% spawn rate, only on roads  
-    else if on_road && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.04 {
+    // Vehicles - configurable spawn rate, only on roads  
+    else if on_road && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < game_config.spawn_rates.vehicles {
         if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
             commands,
             meshes,
@@ -260,8 +263,8 @@ fn spawn_dynamic_content_safe_unified(
         }
     }
     
-    // Trees - 5% spawn rate, not on roads, not in water
-    else if !on_road && !is_in_water_area(position) && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.05 {
+    // Trees - configurable spawn rate, not on roads, not in water
+    else if !on_road && !is_in_water_area(position) && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < game_config.spawn_rates.trees {
         if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
             commands,
             meshes,
@@ -276,8 +279,8 @@ fn spawn_dynamic_content_safe_unified(
         }
     }
     
-    // NPCs - 1% spawn rate, anywhere
-    else if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.01 {
+    // NPCs - configurable spawn rate, anywhere
+    else if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < game_config.spawn_rates.npcs {
         if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
             commands,
             meshes,

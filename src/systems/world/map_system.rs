@@ -241,7 +241,7 @@ fn spawn_building(
     // REPLACED: Use UnifiedEntityFactory for building spawning
     // This eliminates duplicate building spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::GameConfig;
+    use crate::config::GameConfig;
     
     let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
     let current_time = 0.0; // Placeholder time
