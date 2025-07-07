@@ -2643,24 +2643,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gta_game_legacy"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_rapier3d",
- "chrono",
- "engine_bevy",
- "engine_core",
- "game_core",
- "gameplay_render",
- "gameplay_sim",
- "gameplay_ui",
- "rand 0.8.5",
- "ron",
- "serde",
-]
-
-[[package]]
 name = "guillotiere"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

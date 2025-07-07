@@ -115,6 +115,8 @@ impl InputConfig {
             .get(state)
             .and_then(|state_bindings| state_bindings.get(&action))
             .copied()
+    }
+
     pub fn set_key_for_action(&mut self, state: GameState, action: InputAction, key: KeyCode) -> Result<(), String> {
         // Validate no conflicts within the same state
         if let Some(state_bindings) = self.bindings.get(&state) {
@@ -124,38 +126,64 @@ impl InputConfig {
                 }
             }
         }
+        self.bindings
             .entry(state)
             .or_insert_with(HashMap::new)
             .insert(action, key);
         Ok(())
+    }
+
     pub fn reset_to_defaults(&mut self) {
         *self = InputConfig::default();
+    }
+
     pub fn enable_fallback(&mut self) {
         self.use_fallback = true;
+    }
+
     pub fn disable_fallback(&mut self) {
         self.use_fallback = false;
+    }
+
     pub fn is_fallback_enabled(&self) -> bool {
         self.use_fallback
+    }
     /// Get all bindings for a specific state
     pub fn get_state_bindings(&self, state: &GameState) -> Option<&HashMap<InputAction, KeyCode>> {
         self.bindings.get(state)
+    }
+
     /// Check if an action is available in a given state
     pub fn is_action_available(&self, state: &GameState, action: InputAction) -> bool {
+        self.bindings.get(state)
             .map(|bindings| bindings.contains_key(&action))
             .unwrap_or(false)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_default_config() {
         let config = InputConfig::default();
         assert_eq!(config.get_key_for_action(&GameState::Walking, InputAction::Forward), Some(KeyCode::ArrowUp));
         assert_eq!(config.get_key_for_action(&GameState::Driving, InputAction::Turbo), Some(KeyCode::Space));
+    }
+
+    #[test]
     fn test_conflict_detection() {
         let mut config = InputConfig::default();
         let result = config.set_key_for_action(GameState::Walking, InputAction::Backward, KeyCode::ArrowUp);
         assert!(result.is_err());
+    }
+
+    #[test]
     fn test_valid_binding_change() {
+        let mut config = InputConfig::default();
         let result = config.set_key_for_action(GameState::Walking, InputAction::Forward, KeyCode::KeyW);
         assert!(result.is_ok());
         assert_eq!(config.get_key_for_action(&GameState::Walking, InputAction::Forward), Some(KeyCode::KeyW));
+    }
+}

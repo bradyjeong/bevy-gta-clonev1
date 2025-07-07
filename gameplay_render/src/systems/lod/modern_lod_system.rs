@@ -44,31 +44,52 @@ pub fn modern_lod_system(
     }
     // Update NPC LOD levels
     for (entity, mut lod_level, transform) in npc_query.iter_mut() {
+        let distance = camera_transform.translation().distance(transform.translation());
         let new_level = calculate_npc_lod(distance, &config);
+        if lod_level.0 != new_level {
+            lod_level.0 = new_level;
             update_npc_components(&mut commands, entity, new_level);
+        }
+    }
+    
     // Update vegetation LOD levels
     for (entity, mut veg_lod, transform) in vegetation_query.iter_mut() {
+        let distance = camera_transform.translation().distance(transform.translation());
         let new_level = calculate_vegetation_lod(distance);
         if veg_lod.detail_level != new_level {
             veg_lod.detail_level = new_level;
             veg_lod.distance_to_player = distance;
             update_vegetation_components(&mut commands, entity, new_level);
+        }
+    }
 }
+
 fn calculate_vehicle_lod(distance: f32, config: &GameConfig) -> LodLevel {
     let lod_distances = config.world.lod_distances;
     match distance {
         d if d < lod_distances[0] => LodLevel::High,
         d if d < lod_distances[1] => LodLevel::Medium,
         _ => LodLevel::Sleep,
+    }
+}
+
 fn calculate_npc_lod(distance: f32, config: &GameConfig) -> LodLevel {
     let intervals = &config.npc.update_intervals;
+    match distance {
         d if d < intervals.close_distance => LodLevel::High,
         d if d < intervals.far_distance => LodLevel::Medium,
+        _ => LodLevel::Sleep,
+    }
+}
+
 fn calculate_vegetation_lod(distance: f32) -> VegetationDetailLevel {
+    match distance {
         d if d < 50.0 => VegetationDetailLevel::Full,
         d if d < 150.0 => VegetationDetailLevel::Medium,
         d if d < 300.0 => VegetationDetailLevel::Billboard,
         _ => VegetationDetailLevel::Culled,
+    }
+}
 fn update_vehicle_components(commands: &mut Commands, entity: Entity, lod_level: LodLevel) {
     let mut entity_commands = commands.entity(entity);
     match lod_level {
@@ -76,35 +97,61 @@ fn update_vehicle_components(commands: &mut Commands, entity: Entity, lod_level:
             // Full detail - all components active
             entity_commands.insert(HighDetailVehicle);
             entity_commands.remove::<SleepingEntity>();
+        }
         LodLevel::Medium => {
             // Medium detail - reduced physics
             entity_commands.remove::<HighDetailVehicle>();
+        }
         LodLevel::Sleep => {
             // Sleep mode - minimal components
             entity_commands.insert(SleepingEntity);
+        }
+    }
+}
+
 fn update_npc_components(commands: &mut Commands, entity: Entity, lod_level: LodLevel) {
+    let mut entity_commands = commands.entity(entity);
+    match lod_level {
+        LodLevel::High => {
             // Full detail - all AI systems active
             entity_commands.insert(HighDetailNPC);
+        }
+        LodLevel::Medium => {
             // Medium detail - reduced AI
             entity_commands.remove::<HighDetailNPC>();
+        }
+        LodLevel::Sleep => {
             // Sleep mode - minimal AI
+            entity_commands.insert(SleepingEntity);
+        }
+    }
+}
 fn update_vegetation_components(commands: &mut Commands, entity: Entity, detail_level: VegetationDetailLevel) {
+    let mut entity_commands = commands.entity(entity);
     match detail_level {
         VegetationDetailLevel::Full => {
             entity_commands.insert(FullDetailVegetation);
             entity_commands.remove::<BillboardVegetation>();
             entity_commands.remove::<CulledVegetation>();
+        }
         VegetationDetailLevel::Medium => {
             entity_commands.remove::<FullDetailVegetation>();
+        }
         VegetationDetailLevel::Billboard => {
             entity_commands.insert(BillboardVegetation);
+        }
         VegetationDetailLevel::Culled => {
             entity_commands.insert(CulledVegetation);
+        }
+    }
+}
 /// Resource-based performance monitoring system
 pub fn lod_performance_monitoring_system(
     time: Res<Time>,
     vehicles: Query<&LodLevel, With<ActiveEntity>>,
     vegetation: Query<&VegetationLOD>,
+    mut performance_counters: ResMut<game_core::config::performance_config::PerformanceCounters>,
+) {
     performance_counters.update_frame(time.delta_secs());
     // Count entities by LOD level
     let mut high_detail_count = 0;
@@ -115,21 +162,40 @@ pub fn lod_performance_monitoring_system(
             LodLevel::High => high_detail_count += 1,
             LodLevel::Medium => medium_detail_count += 1,
             LodLevel::Sleep => sleep_count += 1,
+        }
+    }
     // Update entity counts
     performance_counters.entity_count = high_detail_count + medium_detail_count + sleep_count;
     performance_counters.culled_entities = sleep_count;
     // Reset per-frame counters at the end of the frame
     performance_counters.reset_per_frame_counters();
+}
 /// Marker components for LOD levels
 #[derive(Component)]
 pub struct HighDetailVehicle;
+
+#[derive(Component)]
 pub struct HighDetailNPC;
+
+#[derive(Component)]
 pub struct SleepingEntity;
+
+#[derive(Component)]
 pub struct FullDetailVegetation;
+
+#[derive(Component)]
 pub struct BillboardVegetation;
+
+#[derive(Component)]
 pub struct CulledVegetation;
+
 /// Modern LOD plugin that replaces manual systems
 pub struct ModernLODPlugin;
+
+/// System set for organizing LOD systems
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub struct LodSystemSet;
+
 impl Plugin for ModernLODPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<game_core::config::performance_config::PerformanceCounters>()
@@ -140,3 +206,5 @@ impl Plugin for ModernLODPlugin {
                     lod_performance_monitoring_system,
                 ).in_set(LodSystemSet)
             );
+    }
+}

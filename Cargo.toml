@@ -21,30 +21,7 @@ default-members = [
     "gameplay_ui"
 ]
 
-# The legacy monolith as a library package
-[package]
-name = "gta_game_legacy"
-version = "0.1.0"
-edition = "2021"
 
-[dependencies]
-bevy = { workspace = true }
-bevy_rapier3d = { workspace = true }
-rand = { workspace = true }
-serde = { workspace = true }
-ron = { workspace = true }
-chrono = { workspace = true }
-
-# Internal dependencies
-game_core = { path = "game_core" }
-engine_core = { path = "engine_core" }
-engine_bevy = { path = "engine_bevy" }
-gameplay_sim = { path = "gameplay_sim" }
-gameplay_render = { path = "gameplay_render" }
-gameplay_ui = { path = "gameplay_ui" }
-
-[features]
-default = []
 
 [workspace.dependencies]
 bevy = { version = "0.16.1", features = ["serialize", "shader_format_glsl"] }
@@ -56,8 +33,7 @@ ron = "0.8"
 chrono = { version = "0.4", features = ["serde"] }
 image = "0.24"
 
-[dev-dependencies]
-# bevy_frame_capture = "0.2"  # Not available, using manual approach
+
 
 [workspace.metadata.docs.rs]
 all-features = true
