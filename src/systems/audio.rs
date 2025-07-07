@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Audio
+//! Purpose:  Handles audio playback and effects
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;

@@ -1,7 +1,7 @@
 [package]
 name = "gameplay_render"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 bevy = { workspace = true }
@@ -14,3 +14,7 @@ rand = { workspace = true }
 engine_core = { path = "../engine_core" }
 engine_bevy = { path = "../engine_bevy" }
 game_core = { path = "../game_core" }
+
+[dev-dependencies]
+proptest = "1.4"
+csv = "1.3"

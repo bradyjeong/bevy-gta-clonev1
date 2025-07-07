@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Npc Spawn
+//! Purpose:  Manages physics simulation and constraints
+//! Schedule: Update (throttled)
+//! Reads:    GroundDetectionService, Transform, NPCState, GameConfig, TimingService
+//! Writes:   System state
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Physics values are validated and finite
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{

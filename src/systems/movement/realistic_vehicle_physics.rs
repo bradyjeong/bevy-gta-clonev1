@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Realistic Vehicle Physics
+//! Purpose:  Processes user input and control mapping
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, RealisticVehicle, Transform, VehicleDynamics, GameConfig
+//! Writes:   Transform, TirePhysics
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;

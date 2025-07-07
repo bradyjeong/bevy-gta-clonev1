@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Input Manager
+//! Purpose:  Processes user input and control mapping
+//! Schedule: Update
+//! Reads:    InputCompatLayer, InputConfig, InputManager
+//! Writes:   InputCompatLayer, InputManager
+//! Invariants:
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashSet;
 use std::time::Instant;

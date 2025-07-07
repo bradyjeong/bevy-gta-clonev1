@@ -1,0 +1,33 @@
+# CODEOWNERS file for the GTA game project
+# This file defines ownership for different parts of the codebase
+
+# Global fallback
+* @simulation-team
+
+# Engine layer
+/engine_core/          @core-team
+/engine_bevy/          @bevy-integration
+
+# Gameplay layer  
+/gameplay_sim/         @simulation-team
+/gameplay_render/      @render-team
+/gameplay_ui/          @ui-team
+
+# Game layer
+/game_core/            @core-team
+/game_bin/             @simulation-team
+
+# Testing and utilities
+/tests/                @qa-team
+/test_utils/           @qa-team
+
+# Documentation
+/docs/                 @documentation-team
+*.md                   @documentation-team
+
+# Configuration
+Cargo.toml             @core-team
+.github/               @devops-team
+
+# Assets
+/assets/               @content-team

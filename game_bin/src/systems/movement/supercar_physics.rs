@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Supercar Physics
+//! Purpose:  Handles audio playback and effects
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, Car, GameConfig, SuperCar, Time
+//! Writes:   SuperCar
+//! Invariants:
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Car, SuperCar, ActiveEntity, DrivingMode};

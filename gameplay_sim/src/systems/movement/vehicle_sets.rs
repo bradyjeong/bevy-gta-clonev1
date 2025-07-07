@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Vehicle Sets
+//! Purpose:  Handles audio playback and effects
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * Physics values are validated and finite
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 
 /// System sets for vehicle processing order
@@ -14,7 +25,6 @@ pub enum VehicleSet {
     /// Performance monitoring and metrics
     Performance,
 }
-
 /// Configure vehicle system execution order
 pub fn configure_vehicle_system_sets(app: &mut App) {
     app.configure_sets(
@@ -27,4 +37,3 @@ pub fn configure_vehicle_system_sets(app: &mut App) {
             VehicleSet::Performance,
         ).chain()
     );
-}

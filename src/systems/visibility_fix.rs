@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Visibility Fix
+//! Purpose:  Manages entity visibility fixes
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 
 /// System that automatically adds InheritedVisibility to child entities that are missing it

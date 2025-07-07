@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Unified Distance Calculator
+//! Purpose:  Calculates and caches distance values
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::systems::distance_cache::DistanceCache;

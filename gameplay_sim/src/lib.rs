@@ -3,21 +3,16 @@
 #![warn(missing_docs)]
 
 pub(crate) mod services;
-
 use bevy::prelude::*;
 pub use engine_core;
 pub use engine_bevy;
 pub use game_core;
-
 pub mod prelude;
 pub(crate) mod systems;
 pub(crate) mod factories;
-
 // Only expose via prelude - no direct re-exports
-
 /// Main plugin for simulation systems
 pub struct SimulationPlugin;
-
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         // Initialize resources
@@ -37,16 +32,12 @@ impl Plugin for SimulationPlugin {
             systems::movement::aircraft::f16_movement,
             systems::movement::aircraft::rotate_helicopter_rotors,
             systems::movement::vehicles::car_movement,
-        ));
-        
-        // Physics systems
-        app.add_systems(Update, (
+        ))
+        .add_systems(Update, (
+            // Physics systems
             systems::player_collision_resolution::player_collision_resolution_system,
             systems::player_collision_resolution::player_movement_validation_system,
-        ));
-        
         // Core simulation systems  
-        app.add_systems(Update, (
             systems::human_behavior::human_emotional_state_system,
             systems::interaction::interaction_system,
             systems::spawn_validation::cleanup_despawned_entities,

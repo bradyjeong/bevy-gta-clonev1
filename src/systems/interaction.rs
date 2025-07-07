@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Interaction
+//! Purpose:  Manages entity interactions
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Player, Car, Helicopter, F16, ActiveEntity, InCar};

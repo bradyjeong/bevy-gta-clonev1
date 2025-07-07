@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Save System
+//! Purpose:  Processes user input and control mapping
+//! Schedule: Update (throttled)
+//! Reads:    VehicleState, ActiveEntity, AircraftFlight, InCar, Car
+//! Writes:   System state
+//! Invariants:
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use serde::{Serialize, Deserialize};

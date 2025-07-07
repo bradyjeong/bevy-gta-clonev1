@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Input Config
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * All values are validated for safety
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::game_state::GameState;

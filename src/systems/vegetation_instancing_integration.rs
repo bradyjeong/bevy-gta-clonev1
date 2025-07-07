@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Vegetation Instancing Integration
+//! Purpose:  Manages vegetation instancing and rendering
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::*;
 

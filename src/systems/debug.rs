@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Debug
+//! Purpose:  Provides debug information and diagnostics
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{Player, ActiveEntity, MainCamera};
 use crate::game_state::GameState;

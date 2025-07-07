@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Performance Integration
+//! Purpose:  Monitors and optimizes performance
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
 use crate::components::{PerformanceStats, DirtyFlagsMetrics};

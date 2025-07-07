@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Parallel Physics
+//! Purpose:  Handles physics simulation and constraints
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 // DISABLED: Parallel physics systems removed due to conflicts with Rapier physics
 // These systems were causing velocity explosions and physics instability
 

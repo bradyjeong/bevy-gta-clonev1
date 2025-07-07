@@ -1,6 +1,18 @@
+//! ───────────────────────────────────────────────
+//! System:   Camera Follow System
+//! Purpose:  Smoothly follows the active entity with proper third-person camera positioning
+//! Schedule: Update (continuous)
+//! Reads:    Transform (active entity), GameConfig, MainCamera, ActiveEntity
+//! Writes:   Transform (camera)
+//! Invariants:
+//!   * Camera maintains safe distance from active entity
+//!   * Camera transform values are always finite
+//!   * Camera smoothly interpolates to target position
+//! Owner:    @render-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
-use game_core::components::{MainCamera, ActiveEntity};
-use game_core::config::GameConfig;
+use game_core::prelude::*;
 
 pub fn camera_follow_system(
     mut camera_query: Query<&mut Transform, (With<MainCamera>, Without<ActiveEntity>)>,
@@ -14,23 +26,18 @@ pub fn camera_follow_system(
     if !active_transform.translation.is_finite() || !active_transform.rotation.is_finite() {
         return;
     }
-    
     // Camera follows behind all entities using standard positioning
     let entity_behind_direction = -active_transform.forward();
-    
     // Additional safety check for invalid direction vector
     if !entity_behind_direction.is_finite() {
         return;
     }
-    
     let entity_up = Vec3::Y;
-    
     // Position camera behind and above the entity
     let camera_distance = config.camera.distance;
     let camera_height = config.camera.height;
     let camera_offset = entity_behind_direction * camera_distance + entity_up * camera_height;
     let target_pos = active_transform.translation + camera_offset;
-    
     // Safety check for target position
     if !target_pos.is_finite() {
         return;
@@ -38,10 +45,8 @@ pub fn camera_follow_system(
     
     // Smooth camera movement using interpolation - much more responsive
     camera_transform.translation = camera_transform.translation.lerp(target_pos, config.camera.lerp_speed);
-    
     // Camera looks toward the entity at player height (classic GTA style)
     let look_target = active_transform.translation + Vec3::Y * 1.0;
-    
     // Safety check for look target
     if !look_target.is_finite() {
         return;

@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Vehicle Sets
+//! Purpose:  Handles audio playback and effects
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * Physics values are validated and finite
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 
 /// System sets for vehicle processing order

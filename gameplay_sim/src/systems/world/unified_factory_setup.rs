@@ -1,6 +1,17 @@
+//! ───────────────────────────────────────────────
+//! System:   Unified Factory Setup
+//! Purpose:  Handles user interface display and interaction
+//! Schedule: Update
+//! Reads:    UnifiedEntityFactory, GameConfig, Time
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-use game_core::config::GameConfig;
+use game_core::prelude::*;
 
 /// Setup system for the UnifiedEntityFactory resource
 pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConfig>) {
@@ -13,10 +24,8 @@ pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConf
         factory.entity_limits.max_npcs,
         factory.entity_limits.max_trees
     );
-    
     commands.insert_resource(factory);
 }
-
 /// Debug system to show entity factory statistics
 pub fn unified_factory_debug_system(
     factory: Res<UnifiedEntityFactory>,
@@ -45,4 +54,3 @@ pub fn unified_factory_debug_system(
             factory.position_cache.len()
         );
     }
-}

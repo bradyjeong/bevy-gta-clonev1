@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Npc
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update
+//! Reads:    ActiveEntity, Transform, Cullable, NPC, Time
+//! Writes:   NPC
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;

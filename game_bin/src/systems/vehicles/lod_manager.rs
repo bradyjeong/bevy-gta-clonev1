@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Lod Manager
+//! Purpose:  Manages timing and throttling intervals
+//! Schedule: Update
+//! Reads:    VehicleRendering, DistanceCache, Transform, ActiveEntity
+//! Writes:   VehicleState, DistanceCache
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{
     VehicleState, VehicleRendering, VehicleLOD, VehicleType, ActiveEntity,

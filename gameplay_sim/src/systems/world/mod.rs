@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Mod
+//! Purpose:  Manages entity visibility based on distance
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 pub mod npc;
 pub mod culling;
 pub mod dynamic_content;
@@ -18,7 +29,6 @@ pub mod npc_spawn;
 pub mod vegetation_lod;
 pub mod unified_distance_culling;
 pub mod unified_factory_setup;
-
 pub use npc::*;
 pub use culling::*;
 pub use dynamic_content::*;
@@ -28,7 +38,6 @@ pub use road_mesh::*;
 pub use road_generation::*;
 pub use debug::*;
 pub use map_system::*;
-
 // Export unified system components
 pub use unified_world::*;
 pub use layered_generation::*;

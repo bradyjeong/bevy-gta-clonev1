@@ -1,0 +1,97 @@
+{
+  "title": "GTA Game Documentation",
+  "description": "Complete documentation for the GTA game project",
+  "version": "1.0.0",
+  "sections": [
+    {
+      "title": "Architecture",
+      "files": [
+        {
+          "path": "ARCHITECTURE_OVERVIEW.md",
+          "title": "Architecture Overview",
+          "description": "High-level system architecture and design principles"
+        },
+        {
+          "path": "RFC_INDEX.md", 
+          "title": "RFC Index",
+          "description": "Complete index of all design documents and RFCs"
+        }
+      ]
+    },
+    {
+      "title": "Dependencies",
+      "files": [
+        {
+          "path": "graphs/README.md",
+          "title": "Dependency Graphs",
+          "description": "Visual representations of system and crate dependencies"
+        },
+        {
+          "path": "graphs/crate_dependencies.dot",
+          "title": "Crate Dependencies",
+          "description": "GraphViz diagram of crate-level dependencies"
+        }
+      ]
+    },
+    {
+      "title": "Ownership",
+      "files": [
+        {
+          "path": "../CODEOWNERS",
+          "title": "Code Owners",
+          "description": "Team ownership assignments for different parts of the codebase"
+        },
+        {
+          "path": "../engine_core/OWNERS",
+          "title": "Engine Core Owners",
+          "description": "Ownership details for engine_core crate"
+        },
+        {
+          "path": "../engine_bevy/OWNERS",
+          "title": "Engine Bevy Owners", 
+          "description": "Ownership details for engine_bevy crate"
+        },
+        {
+          "path": "../gameplay_sim/OWNERS",
+          "title": "Gameplay Sim Owners",
+          "description": "Ownership details for gameplay_sim crate"
+        },
+        {
+          "path": "../gameplay_render/OWNERS",
+          "title": "Gameplay Render Owners",
+          "description": "Ownership details for gameplay_render crate"
+        },
+        {
+          "path": "../gameplay_ui/OWNERS",
+          "title": "Gameplay UI Owners",
+          "description": "Ownership details for gameplay_ui crate"
+        },
+        {
+          "path": "../game_core/OWNERS",
+          "title": "Game Core Owners",
+          "description": "Ownership details for game_core crate"
+        },
+        {
+          "path": "../game_bin/OWNERS",
+          "title": "Game Binary Owners",
+          "description": "Ownership details for game_bin crate"
+        }
+      ]
+    },
+    {
+      "title": "Configuration",
+      "files": [
+        {
+          "path": "../AGENT.md",
+          "title": "Agent Configuration",
+          "description": "Development environment setup and guidelines"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "generated": "2024-01-01T00:00:00Z",
+    "generator": "Phase 4 Documentation System",
+    "format_version": "1.0"
+  }
+}

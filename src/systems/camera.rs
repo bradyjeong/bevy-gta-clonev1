@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Camera
+//! Purpose:  Manages camera positioning and following
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{MainCamera, ActiveEntity};
 use crate::config::GameConfig;

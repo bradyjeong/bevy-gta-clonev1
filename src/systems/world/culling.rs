@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Culling
+//! Purpose:  Manages entity visibility based on distance
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, Transform, Cullable, Time, CullingSettings
+//! Writes:   Visibility, DistanceCache
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{Cullable, ActiveEntity, CullingSettings};
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance_squared};

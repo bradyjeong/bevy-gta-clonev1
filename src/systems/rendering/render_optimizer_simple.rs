@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Render Optimizer Simple
+//! Purpose:  Manages camera positioning and following
+//! Schedule: Update
+//! Reads:    ActiveEntity, Transform, Visibility, GameConfig, Cullable
+//! Writes:   Visibility
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::time::Instant;
 

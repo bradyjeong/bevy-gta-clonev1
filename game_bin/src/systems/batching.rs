@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Batch Processing System
+//! Purpose:  Efficient batch processing with dirty flags and change detection
+//! Schedule: Update (continuous, throttled)
+//! Reads:    Transform, Visibility, Cullable, FrameCounter, GameConfig
+//! Writes:   DirtyTransform, DirtyVisibility, batch processing stats
+//! Invariants:
+//!   * Dirty flags are cleared after processing
+//!   * Batch processing respects frame limits
+//!   * Transform and visibility changes are tracked accurately
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::time::Instant;

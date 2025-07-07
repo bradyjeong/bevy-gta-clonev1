@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Npc Lod
+//! Purpose:  Handles user interface display and interaction
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, Transform, DistanceCache, NPCRendering, TimingService
+//! Writes:   NPCState, DistanceCache, TimingService
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{
     NPCState, NPCRendering, NPCLOD, NPCAppearance, ActiveEntity,

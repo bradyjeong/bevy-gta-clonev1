@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Controls Ui
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update
+//! Reads:    InputConfig, ControlsText, mut
+//! Writes:   Text
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::ControlsText;
 use crate::game_state::GameState;

@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Unified World
+//! Purpose:  Handles user interface display and interaction
+//! Schedule: Update
+//! Reads:    ActiveEntity, Time, Transform, UnifiedWorldManager
+//! Writes:   UnifiedWorldManager
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::*;

@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Unified Distance Culling
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update (throttled)
+//! Reads:    VehicleState, ActiveEntity, DirtyLOD, MapChunk, Transform
+//! Writes:   Visibility, DistanceCache, PerformanceStats, UnifiedCullingTimer
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::*;
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance_squared};

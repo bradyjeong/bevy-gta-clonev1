@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Layered Generation
+//! Purpose:  Handles user interface display and interaction
+//! Schedule: Update
+//! Reads:    UnifiedChunkEntity, Time, UnifiedWorldManager
+//! Writes:   UnifiedWorldManager
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;

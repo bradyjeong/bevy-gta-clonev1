@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use game_core::config::{GameConfig, game_config::PhysicsConfig};
+use game_core::prelude::*;
 use crate::systems::timing_service::TimingService as BaseTimingService;
 
 /// Simplified service injection using direct Bevy resources

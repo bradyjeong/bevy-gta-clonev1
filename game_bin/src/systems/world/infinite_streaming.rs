@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Infinite Streaming
+//! Purpose:  Manages physics simulation and constraints
+//! Schedule: Update
+//! Reads:    ActiveEntity, WorldLODManager, Transform, GameConfig, Time
+//! Writes:   WorldLODManager
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::{HashMap, VecDeque, BTreeMap};
 use crate::components::*;

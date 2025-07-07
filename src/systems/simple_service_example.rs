@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Simple Service Example
+//! Purpose:  System functionality
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;

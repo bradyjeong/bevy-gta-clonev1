@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Timing Service
+//! Purpose:  Manages timing and throttling intervals
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashMap;
 

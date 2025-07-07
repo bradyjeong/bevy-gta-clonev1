@@ -1,5 +1,17 @@
+//! ───────────────────────────────────────────────
+//! System:   Supercar Effects
+//! Purpose:  Handles entity spawning and creation
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, Car, SuperCar, ExhaustFlame, Time
+//! Writes:   SuperCar, MeshMaterial3d, Transform, ExhaustFlamePool
+//! Invariants:
+//!   * Only active entities can be controlled
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
-use game_core::components::{Car, SuperCar, ActiveEntity, ExhaustFlame};
+use game_core::prelude::*;
 
 /// Pre-spawned exhaust flame pool for performance
 #[derive(Resource)]
@@ -8,7 +20,6 @@ pub struct ExhaustFlamePool {
     pub available_flames: Vec<Entity>,
     pub max_flames: usize,
 }
-
 impl Default for ExhaustFlamePool {
     fn default() -> Self {
         Self {
@@ -17,8 +28,6 @@ impl Default for ExhaustFlamePool {
             max_flames: 20, // Pre-spawn 20 flames
         }
     }
-}
-
 /// Initialize the exhaust flame pool at startup
 pub fn initialize_exhaust_pool_system(
     mut commands: Commands,
@@ -43,36 +52,25 @@ pub fn initialize_exhaust_pool_system(
         
         pool.flames.push(flame_entity);
         pool.available_flames.push(flame_entity);
-    }
-}
-
 /// Focused system for managing supercar visual effects using pre-spawned entities
 pub fn supercar_effects_system(
     mut supercar_query: Query<(&Transform, &mut SuperCar), (With<Car>, With<ActiveEntity>, With<SuperCar>)>,
     mut flame_query: Query<(&mut Transform, &mut Visibility, &mut MeshMaterial3d<StandardMaterial>), (With<ExhaustFlame>, Without<SuperCar>)>,
-    mut pool: ResMut<ExhaustFlamePool>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
     let Ok((transform, mut supercar)) = supercar_query.single_mut() else {
         return;
     };
-
     // Reset exhaust timer
     if supercar.exhaust_timer > 0.04 {
         supercar.exhaust_timer = 0.0;
-        
         // Return all flames to available pool first
         for flame_entity in &pool.flames {
             if let Ok((mut flame_transform, mut visibility, _)) = flame_query.get_mut(*flame_entity) {
                 *visibility = Visibility::Hidden;
                 flame_transform.translation = Vec3::new(0.0, -1000.0, 0.0);
             }
-        }
         pool.available_flames = pool.flames.clone();
-        
         // Use available flames for current exhaust
         let exhaust_pos = transform.translation + transform.back() * 2.8 + Vec3::new(0.0, 0.15, 0.0);
-        
         // Determine flame characteristics based on engine state
         let (flame_color, emission_intensity) = if supercar.turbo_boost && supercar.turbo_stage >= 3 {
             (Color::srgb(0.1, 0.4, 1.0), 4.5) // Quad-turbo plasma flames
@@ -87,15 +85,12 @@ pub fn supercar_effects_system(
         } else {
             (Color::srgb(1.0, 0.6, 0.2), 1.0) // Normal exhaust flames
         };
-        
         // Activate flames for quad exhaust (4 tailpipes)
         let flames_needed = if supercar.turbo_boost { 8 } else { 4 };
         let mut flames_used = 0;
-        
         for i in 0..4 {
             if flames_used >= flames_needed || pool.available_flames.is_empty() {
                 break;
-            }
             
             let side_offset = match i {
                 0 => Vec3::new(-0.6, 0.0, 0.0),  // Left outer
@@ -105,7 +100,6 @@ pub fn supercar_effects_system(
                 _ => Vec3::ZERO,
             };
             let final_pos = exhaust_pos + transform.right() * side_offset.x;
-            
             // Primary flame
             if let Some(flame_entity) = pool.available_flames.pop() {
                 if let Ok((mut flame_transform, mut visibility, material_handle)) = flame_query.get_mut(flame_entity) {
@@ -123,8 +117,6 @@ pub fn supercar_effects_system(
                     }
                     flames_used += 1;
                 }
-            }
-            
             // Secondary flame trail (for turbo mode)
             if supercar.turbo_boost && flames_used < flames_needed {
                 if let Some(flame_entity) = pool.available_flames.pop() {
@@ -139,32 +131,18 @@ pub fn supercar_effects_system(
                             material.emissive = LinearRgba::rgb(0.3, 0.6, 0.9);
                         }
                         flames_used += 1;
-                    }
-                }
-            }
-        }
-    }
-}
-
 /// System to automatically hide exhaust flames after a short duration
 pub fn exhaust_flame_cleanup_system(
     mut flame_query: Query<(&mut Visibility, &mut Transform), With<ExhaustFlame>>,
     _pool: ResMut<ExhaustFlamePool>,
     _time: Res<Time>,
-) {
     
     // Simple auto-hide after 0.1 seconds
     for (mut visibility, mut transform) in flame_query.iter_mut() {
         if matches!(*visibility, Visibility::Visible) {
             // Gradually reduce scale for natural fade effect
             transform.scale *= 0.95;
-            
             // Hide when scale gets too small
             if transform.scale.x < 0.1 {
-                *visibility = Visibility::Hidden;
                 transform.translation = Vec3::new(0.0, -1000.0, 0.0);
                 transform.scale = Vec3::ONE;
-            }
-        }
-    }
-}

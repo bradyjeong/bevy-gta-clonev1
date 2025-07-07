@@ -18,7 +18,6 @@ pub struct UnifiedPerformanceTracker {
     pub report_interval: Duration,
     pub enabled: bool,
 }
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PerformanceCategory {
     Physics,
@@ -33,8 +32,6 @@ pub enum PerformanceCategory {
     UI,
     Network,
     System,
-}
-
 #[derive(Default)]
 pub struct CategoryMetrics {
     pub execution_time_ms: f32,
@@ -45,8 +42,6 @@ pub struct CategoryMetrics {
     pub avg_execution_time: f32,
     pub frame_count: u64,
     pub total_execution_time: f64,
-}
-
 pub struct FrameTimeAnalyzer {
     pub frame_times: VecDeque<f32>,
     pub fps_history: VecDeque<f32>,
@@ -60,8 +55,6 @@ pub struct FrameTimeAnalyzer {
     pub last_spike_time: Instant,
     pub frame_spike_threshold: f32,
     pub consecutive_slow_frames: usize,
-}
-
 impl Default for FrameTimeAnalyzer {
     fn default() -> Self {
         Self {
@@ -79,9 +72,6 @@ impl Default for FrameTimeAnalyzer {
             consecutive_slow_frames: 0,
         }
     }
-}
-
-#[derive(Default)]
 pub struct MemoryTracker {
     pub entity_memory: usize,
     pub component_memory: usize,
@@ -91,36 +81,21 @@ pub struct MemoryTracker {
     pub peak_memory: usize,
     pub memory_pressure: f32,
     pub gc_collections: usize,
-}
-
-#[derive(Default)]
 pub struct SystemTiming {
     pub last_execution_time: f32,
-    pub avg_execution_time: f32,
-    pub peak_execution_time: f32,
     pub execution_count: u64,
     pub total_time: f64,
     pub is_bottleneck: bool,
-}
-
-#[derive(Default)]
 pub struct BottleneckDetector {
     pub critical_systems: Vec<String>,
     pub bottleneck_threshold_ms: f32,
-    pub frame_spike_threshold: f32,
-    pub consecutive_slow_frames: usize,
     pub bottleneck_history: VecDeque<BottleneckEvent>,
-}
-
 #[derive(Clone)]
 pub struct BottleneckEvent {
     pub system_name: String,
     pub execution_time: f32,
     pub timestamp: Instant,
     pub severity: AlertSeverity,
-}
-
-#[derive(Default)]
 pub struct CacheStats {
     pub distance_cache_hits: usize,
     pub distance_cache_misses: usize,
@@ -130,9 +105,6 @@ pub struct CacheStats {
     pub lod_cache_hits: usize,
     pub lod_cache_misses: usize,
     pub total_cache_memory: usize,
-}
-
-#[derive(Default)]
 pub struct EntityCounters {
     pub total_entities: usize,
     pub active_entities: usize,
@@ -141,28 +113,18 @@ pub struct EntityCounters {
     pub despawned_this_frame: usize,
     pub entities_by_type: HashMap<String, usize>,
     pub lod_distribution: HashMap<String, usize>,
-}
-
-#[derive(Clone)]
 pub struct PerformanceAlert {
     pub category: PerformanceCategory,
-    pub severity: AlertSeverity,
     pub message: String,
-    pub timestamp: Instant,
     pub value: f32,
     pub threshold: f32,
-}
-
 #[derive(Clone, Debug)]
 pub enum AlertSeverity {
     Info,
     Warning,
     Critical,
     Emergency,
-}
-
 impl Default for UnifiedPerformanceTracker {
-    fn default() -> Self {
         let mut categories = HashMap::new();
         for category in [
             PerformanceCategory::Physics,
@@ -179,9 +141,6 @@ impl Default for UnifiedPerformanceTracker {
             PerformanceCategory::System,
         ] {
             categories.insert(category, CategoryMetrics::default());
-        }
-
-        Self {
             categories,
             frame_analyzer: FrameTimeAnalyzer::default(),
             memory_tracker: MemoryTracker::default(),
@@ -198,10 +157,6 @@ impl Default for UnifiedPerformanceTracker {
             last_report: Instant::now(),
             report_interval: Duration::from_secs(10),
             enabled: true,
-        }
-    }
-}
-
 impl UnifiedPerformanceTracker {
     /// Record execution time for a specific category
     pub fn record_category_time(&mut self, category: PerformanceCategory, time_ms: f32) {
@@ -216,7 +171,6 @@ impl UnifiedPerformanceTracker {
             if time_ms > metrics.peak_execution_time {
                 metrics.peak_execution_time = time_ms;
             }
-            
             // Check for performance alerts
             if time_ms > 10.0 {
                 self.add_alert(PerformanceAlert {
@@ -227,24 +181,15 @@ impl UnifiedPerformanceTracker {
                     value: time_ms,
                     threshold: 10.0,
                 });
-            }
-        }
-    }
-
     /// Record system execution time
     pub fn record_system_time(&mut self, system_name: &str, time_ms: f32) {
-        if !self.enabled { return; }
-        
         let timing = self.system_timings.entry(system_name.to_string()).or_insert(SystemTiming::default());
         timing.last_execution_time = time_ms;
         timing.execution_count += 1;
         timing.total_time += time_ms as f64;
         timing.avg_execution_time = (timing.total_time / timing.execution_count as f64) as f32;
-        
         if time_ms > timing.peak_execution_time {
             timing.peak_execution_time = time_ms;
-        }
-        
         // Check if system is a bottleneck
         if time_ms > self.bottleneck_detector.bottleneck_threshold_ms {
             timing.is_bottleneck = true;
@@ -254,66 +199,45 @@ impl UnifiedPerformanceTracker {
                 timestamp: Instant::now(),
                 severity: if time_ms > 15.0 { AlertSeverity::Critical } else { AlertSeverity::Warning },
             });
-            
             if self.bottleneck_detector.bottleneck_history.len() > 100 {
                 self.bottleneck_detector.bottleneck_history.pop_front();
-            }
         } else {
             timing.is_bottleneck = false;
-        }
-    }
-
     /// Update frame timing analysis
     pub fn update_frame_timing(&mut self, frame_time_ms: f32, fps: f32) {
-        if !self.enabled { return; }
-        
         let analyzer = &mut self.frame_analyzer;
-        
         // Add to history
         analyzer.frame_times.push_back(frame_time_ms);
         analyzer.fps_history.push_back(fps);
-        
         // Maintain history size
         if analyzer.frame_times.len() > 120 {
             analyzer.frame_times.pop_front();
-        }
         if analyzer.fps_history.len() > 120 {
             analyzer.fps_history.pop_front();
-        }
-        
         // Calculate statistics
         if !analyzer.frame_times.is_empty() {
             analyzer.avg_frame_time = analyzer.frame_times.iter().sum::<f32>() / analyzer.frame_times.len() as f32;
             analyzer.min_frame_time = analyzer.frame_times.iter().cloned().fold(f32::INFINITY, f32::min);
             analyzer.max_frame_time = analyzer.frame_times.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
-            
             // Calculate variance for consistency score
             let variance = analyzer.frame_times.iter()
                 .map(|&x| (x - analyzer.avg_frame_time).powi(2))
                 .sum::<f32>() / analyzer.frame_times.len() as f32;
             analyzer.frame_time_variance = variance.sqrt();
             analyzer.consistency_score = 1.0 / (1.0 + analyzer.frame_time_variance * 0.1);
-        }
-        
         // Collect alerts to add after analyzer updates
         let mut alerts_to_add = Vec::new();
-        
         // Detect frame spikes
         let frame_spike_threshold = analyzer.frame_spike_threshold;
         if frame_time_ms > frame_spike_threshold {
             analyzer.spike_count += 1;
             analyzer.last_spike_time = Instant::now();
-            
             alerts_to_add.push(PerformanceAlert {
                 category: PerformanceCategory::System,
                 severity: AlertSeverity::Warning,
                 message: format!("Frame spike detected: {:.2}ms", frame_time_ms),
-                timestamp: Instant::now(),
                 value: frame_time_ms,
                 threshold: frame_spike_threshold,
-            });
-        }
-        
         // Check for sustained low FPS
         let target_fps = analyzer.target_fps;
         if fps < target_fps * 0.8 {
@@ -323,90 +247,53 @@ impl UnifiedPerformanceTracker {
                     category: PerformanceCategory::System,
                     severity: AlertSeverity::Critical,
                     message: format!("Sustained low FPS: {:.1} (target: {:.1})", fps, target_fps),
-                    timestamp: Instant::now(),
                     value: fps,
                     threshold: target_fps * 0.8,
-                });
                 analyzer.consecutive_slow_frames = 0; // Reset to avoid spam
-            }
-        } else {
             analyzer.consecutive_slow_frames = 0;
-        }
-        
         // Add collected alerts
         for alert in alerts_to_add {
             self.add_alert(alert);
-        }
-    }
-
     /// Update memory tracking
     pub fn update_memory_usage(&mut self, entity_memory: usize, system_memory: usize, total_memory: usize) {
-        if !self.enabled { return; }
-        
         self.memory_tracker.entity_memory = entity_memory;
         self.memory_tracker.system_memory = system_memory;
         self.memory_tracker.total_allocated = total_memory;
-        
         if total_memory > self.memory_tracker.peak_memory {
             self.memory_tracker.peak_memory = total_memory;
-        }
-        
         // Calculate memory pressure (simplified)
         let memory_pressure = total_memory as f32 / (1024.0 * 1024.0 * 1024.0); // GB
         self.memory_tracker.memory_pressure = memory_pressure;
-        
         // Alert on high memory usage
         if memory_pressure > 2.0 {
             self.add_alert(PerformanceAlert {
-                category: PerformanceCategory::System,
-                severity: AlertSeverity::Warning,
                 message: format!("High memory usage: {:.1} GB", memory_pressure),
-                timestamp: Instant::now(),
                 value: memory_pressure,
                 threshold: 2.0,
-            });
-        }
-    }
-
     /// Update cache statistics
     pub fn update_cache_stats(&mut self, hits: usize, misses: usize, cache_type: &str) {
-        if !self.enabled { return; }
-        
         match cache_type {
             "distance" => {
                 self.cache_stats.distance_cache_hits += hits;
                 self.cache_stats.distance_cache_misses += misses;
-            },
             "asset" => {
                 self.cache_stats.asset_cache_hits += hits;
                 self.cache_stats.asset_cache_misses += misses;
-            },
             "lod" => {
                 self.cache_stats.lod_cache_hits += hits;
                 self.cache_stats.lod_cache_misses += misses;
-            },
             _ => {}
-        }
-    }
-
     /// Update entity counters
     pub fn update_entity_counts(&mut self, total: usize, active: usize, culled: usize) {
-        if !self.enabled { return; }
-        
         let counters = &mut self.entity_counters;
         counters.total_entities = total;
         counters.active_entities = active;
         counters.culled_entities = culled;
-    }
-
     /// Add performance alert
     pub fn add_alert(&mut self, alert: PerformanceAlert) {
         self.alerts.push(alert);
-        
         // Keep only recent alerts (last 5 minutes)
         self.alerts.retain(|a| a.timestamp.elapsed() < Duration::from_secs(300));
-    }
-
     /// Get cache hit ratio
     pub fn get_cache_hit_ratio(&self, cache_type: &str) -> f32 {
         let (hits, misses) = match cache_type {
@@ -415,14 +302,9 @@ impl UnifiedPerformanceTracker {
             "lod" => (self.cache_stats.lod_cache_hits, self.cache_stats.lod_cache_misses),
             _ => return 0.0,
         };
-        
         if hits + misses == 0 {
             0.0
-        } else {
             hits as f32 / (hits + misses) as f32
-        }
-    }
-
     /// Get performance summary
     pub fn get_performance_summary(&self) -> PerformanceSummary {
         PerformanceSummary {
@@ -439,16 +321,11 @@ impl UnifiedPerformanceTracker {
                 .filter(|(_, timing)| timing.is_bottleneck)
                 .map(|(name, _)| name.clone())
                 .collect(),
-        }
-    }
-
     /// Generate detailed performance report
     pub fn generate_report(&self) -> String {
         let mut report = String::new();
-        
         report.push_str("\n🎯 UNIFIED PERFORMANCE MONITOR REPORT 🎯\n");
         report.push_str("===============================================\n");
-        
         // Frame timing
         if !self.frame_analyzer.fps_history.is_empty() {
             let avg_fps = self.frame_analyzer.fps_history.iter().sum::<f32>() / self.frame_analyzer.fps_history.len() as f32;
@@ -458,21 +335,15 @@ impl UnifiedPerformanceTracker {
             report.push_str(&format!("   Average FPS: {:.1} | Frame Time: {:.2}ms\n", avg_fps, self.frame_analyzer.avg_frame_time));
             report.push_str(&format!("   Consistency: {:.1}% | Spikes: {}\n", 
                 self.frame_analyzer.consistency_score * 100.0, self.frame_analyzer.spike_count));
-        }
-        
         // System performance
         if !self.system_timings.is_empty() {
             report.push_str("\n⚡ System Performance:\n");
             let mut systems: Vec<_> = self.system_timings.iter().collect();
             systems.sort_by(|a, b| b.1.avg_execution_time.partial_cmp(&a.1.avg_execution_time).unwrap());
-            
             for (name, timing) in systems.iter().take(5) {
                 let status = if timing.is_bottleneck { "🚨" } else { "✅" };
                 report.push_str(&format!("   {} {}: {:.2}ms avg (peak: {:.2}ms)\n", 
                     status, name, timing.avg_execution_time, timing.peak_execution_time));
-            }
-        }
-        
         // Category performance
         report.push_str("\n📈 Category Performance:\n");
         for (category, metrics) in &self.categories {
@@ -480,9 +351,6 @@ impl UnifiedPerformanceTracker {
                 report.push_str(&format!("   {:?}: {:.2}ms avg | {} entities | {:.1} MB\n",
                     category, metrics.avg_execution_time, metrics.entity_count, 
                     metrics.memory_usage_bytes as f32 / 1024.0 / 1024.0));
-            }
-        }
-        
         // Memory usage
         report.push_str(&format!("\n💾 Memory Usage:\n"));
         report.push_str(&format!("   Total: {:.1} GB | Peak: {:.1} GB\n", 
@@ -490,18 +358,15 @@ impl UnifiedPerformanceTracker {
         report.push_str(&format!("   Entities: {:.1} MB | Systems: {:.1} MB\n",
             self.memory_tracker.entity_memory as f32 / 1024.0 / 1024.0,
             self.memory_tracker.system_memory as f32 / 1024.0 / 1024.0));
-        
         // Cache performance
         report.push_str("\n🗄️ Cache Performance:\n");
         report.push_str(&format!("   Distance Cache: {:.1}% hit rate\n", self.get_cache_hit_ratio("distance") * 100.0));
         report.push_str(&format!("   Asset Cache: {:.1}% hit rate\n", self.get_cache_hit_ratio("asset") * 100.0));
         report.push_str(&format!("   LOD Cache: {:.1}% hit rate\n", self.get_cache_hit_ratio("lod") * 100.0));
-        
         // Entity statistics
         report.push_str(&format!("\n🎮 Entity Statistics:\n"));
         report.push_str(&format!("   Total: {} | Active: {} | Culled: {}\n",
             self.entity_counters.total_entities, self.entity_counters.active_entities, self.entity_counters.culled_entities));
-        
         // Active alerts
         if !self.alerts.is_empty() {
             report.push_str("\n⚠️ Active Alerts:\n");
@@ -513,26 +378,14 @@ impl UnifiedPerformanceTracker {
                     AlertSeverity::Emergency => "🆘",
                 };
                 report.push_str(&format!("   {} {}: {}\n", severity_icon, format!("{:?}", alert.category), alert.message));
-            }
-        }
-        
         report.push_str("\n===============================================\n");
         report
-    }
-}
-
 #[derive(Debug)]
 pub struct PerformanceSummary {
     pub avg_fps: f32,
-    pub avg_frame_time: f32,
-    pub consistency_score: f32,
-    pub total_entities: usize,
-    pub culled_entities: usize,
     pub memory_usage_gb: f32,
     pub active_alerts: usize,
     pub bottleneck_systems: Vec<String>,
-}
-
 /// System to update the unified performance tracker
 pub fn unified_performance_monitoring_system(
     mut tracker: ResMut<UnifiedPerformanceTracker>,
@@ -541,35 +394,26 @@ pub fn unified_performance_monitoring_system(
 ) {
     if !tracker.enabled {
         return;
-    }
     
     // Update frame timing from diagnostics
     if let Some(fps_diagnostic) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
         if let Some(fps) = fps_diagnostic.smoothed() {
             let frame_time_ms = 1000.0 / fps as f32;
             tracker.update_frame_timing(frame_time_ms, fps as f32);
-        }
-    }
-    
     // Generate periodic reports
     if tracker.last_report.elapsed() > tracker.report_interval {
         let report = tracker.generate_report();
         println!("{}", report);
         tracker.last_report = Instant::now();
-    }
-}
-
 /// Debug UI component for F3 overlay
 #[derive(Component)]
 pub struct PerformanceOverlay;
-
 /// System to handle F3 debug key toggle
 pub fn performance_debug_input_system(
     keys: Res<ButtonInput<KeyCode>>,
     mut overlay_query: Query<&mut Visibility, With<PerformanceOverlay>>,
     mut commands: Commands,
     tracker: Res<UnifiedPerformanceTracker>,
-) {
     if keys.just_pressed(KeyCode::F3) {
         // Toggle overlay visibility
         if let Ok(mut visibility) = overlay_query.single_mut() {
@@ -578,17 +422,11 @@ pub fn performance_debug_input_system(
             } else {
                 Visibility::Visible
             };
-        } else {
             // Create overlay if it doesn't exist
             spawn_performance_overlay(&mut commands, &tracker);
-        }
-    }
-}
-
 /// Spawn the performance overlay UI
 fn spawn_performance_overlay(commands: &mut Commands, tracker: &UnifiedPerformanceTracker) {
     let summary = tracker.get_performance_summary();
-    
     commands.spawn((
         Text::new(format!(
             "Performance Monitor (F3)\n\
@@ -614,43 +452,23 @@ fn spawn_performance_overlay(commands: &mut Commands, tracker: &UnifiedPerforman
             top: Val::Px(10.0),
             right: Val::Px(10.0),
             padding: UiRect::all(Val::Px(10.0)),
-            ..default()
-        },
         PerformanceOverlay,
     ));
-}
-
 /// System to update the performance overlay
 pub fn update_performance_overlay_system(
-    tracker: Res<UnifiedPerformanceTracker>,
     mut overlay_query: Query<&mut Text, With<PerformanceOverlay>>,
-) {
     if let Ok(mut text) = overlay_query.single_mut() {
         let summary = tracker.get_performance_summary();
-        
         text.0 = format!(
-            "Performance Monitor (F3)\n\
             FPS: {:.1} | Frame: {:.2}ms | Consistency: {:.1}%\n\
             Entities: {} (Active: {}, Culled: {})\n\
-            Memory: {:.1} GB\n\
             Cache Hit Rates: D:{:.1}% A:{:.1}% L:{:.1}%\n\
-            Alerts: {} | Bottlenecks: {}",
-            summary.avg_fps,
-            summary.avg_frame_time,
             summary.consistency_score * 100.0,
-            summary.total_entities,
             tracker.entity_counters.active_entities,
-            summary.culled_entities,
-            summary.memory_usage_gb,
             tracker.get_cache_hit_ratio("distance") * 100.0,
             tracker.get_cache_hit_ratio("asset") * 100.0,
             tracker.get_cache_hit_ratio("lod") * 100.0,
-            summary.active_alerts,
-            summary.bottleneck_systems.len()
         );
-    }
-}
-
 /// Macro for easy performance timing
 #[macro_export]
 macro_rules! time_system {
@@ -662,13 +480,9 @@ macro_rules! time_system {
             $tracker.record_category_time($category, elapsed);
             $tracker.record_system_time($system_name, elapsed);
             result
-        }
     };
-}
-
 /// Plugin for unified performance monitoring
 pub struct UnifiedPerformancePlugin;
-
 impl Plugin for UnifiedPerformancePlugin {
     fn build(&self, app: &mut App) {
         app
@@ -678,5 +492,3 @@ impl Plugin for UnifiedPerformancePlugin {
                 performance_debug_input_system,
                 update_performance_overlay_system,
             ));
-    }
-}

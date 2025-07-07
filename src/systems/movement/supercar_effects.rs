@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Supercar Effects
+//! Purpose:  Handles entity spawning and creation
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, Car, SuperCar, ExhaustFlame, Time
+//! Writes:   SuperCar, MeshMaterial3d, Transform, ExhaustFlamePool
+//! Invariants:
+//!   * Only active entities can be controlled
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{Car, SuperCar, ActiveEntity, ExhaustFlame};
 

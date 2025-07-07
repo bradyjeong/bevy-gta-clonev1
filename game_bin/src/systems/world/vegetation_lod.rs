@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Vegetation Lod
+//! Purpose:  Manages camera positioning and following
+//! Schedule: Update
+//! Reads:    LODFrameCounter, ActiveEntity, PerformanceStats, Transform, VegetationMeshLOD
+//! Writes:   LODFrameCounter, PerformanceStats, Transform, VegetationLOD, DistanceCache
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::*;
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};

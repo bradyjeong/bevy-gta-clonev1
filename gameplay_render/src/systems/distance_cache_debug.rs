@@ -11,13 +11,11 @@ pub fn distance_cache_debug_system(
     
     // Only output stats every 5 seconds OR when F3 is pressed
     let should_output = *timer >= 5.0 || keyboard_input.just_pressed(KeyCode::F3);
-    
     if should_output {
         *timer = 0.0;
         info!("Distance cache debug system not yet implemented");
     }
 }
-
 /// Plugin to add distance cache debugging
 pub struct DistanceCacheDebugPlugin;
 

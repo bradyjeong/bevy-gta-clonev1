@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Fps Display
+//! Purpose:  Handles entity spawning and creation
+//! Schedule: Update
+//! Reads:    DiagnosticsStore, mut, FpsText
+//! Writes:   Text
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 

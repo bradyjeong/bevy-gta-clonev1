@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Physics Utils
+//! Purpose:  Handles physics simulation and constraints
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;

@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Realistic Vehicle Input
+//! Purpose:  Processes user input and control mapping
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, RealisticVehicle, Time, ControlManager
+//! Writes:   EnginePhysics
+//! Invariants:
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::*;
 use crate::systems::input::{ControlManager, is_accelerating, is_braking};

@@ -65,33 +65,34 @@ impl DistanceCache {
         entity2: Entity,
         pos1: Vec3,
         pos2: Vec3,
-    ) -> f32 {
-        // Ensure consistent ordering for cache key
+    ) -> (f32, f32) {
+        // Normalize entity order to ensure consistent keys
         let key = if entity1.index() < entity2.index() {
             (entity1, entity2)
         } else {
             (entity2, entity1)
         };
 
-        // Check cache first
-        if let Some((distance, _, last_frame)) = self.cache.get(&key) {
-            // Cache hit - return cached value if recent
-            if self.current_frame - last_frame < 5 { // Valid for 5 frames
+        // Check if we have a recent cache entry (within 5 frames)
+        if let Some((distance, distance_squared, cached_frame)) = self.cache.get(&key) {
+            if self.current_frame - cached_frame <= 5 {
                 self.stats.hits += 1;
-                return *distance;
+                return (*distance, *distance_squared);
             }
         }
 
-        // Cache miss - calculate and store
-        self.stats.misses += 1;
+        // Calculate fresh distance
         let distance = pos1.distance(pos2);
         let distance_squared = pos1.distance_squared(pos2);
         
+        // Cache the result
         self.cache.insert(key, (distance, distance_squared, self.current_frame));
-        distance
+        self.stats.misses += 1;
+        
+        (distance, distance_squared)
     }
 
-    /// Get cached distance squared (more efficient for comparisons)
+    /// Get cached distance squared (optimized for performance-critical operations)
     pub fn get_distance_squared(
         &mut self,
         entity1: Entity,
@@ -99,64 +100,26 @@ impl DistanceCache {
         pos1: Vec3,
         pos2: Vec3,
     ) -> f32 {
-        // Ensure consistent ordering for cache key
-        let key = if entity1.index() < entity2.index() {
-            (entity1, entity2)
-        } else {
-            (entity2, entity1)
-        };
-
-        // Check cache first
-        if let Some((_, distance_squared, last_frame)) = self.cache.get(&key) {
-            // Cache hit - return cached value if recent
-            if self.current_frame - last_frame < 5 { // Valid for 5 frames
-                self.stats.hits += 1;
-                return *distance_squared;
-            }
-        }
-
-        // Cache miss - calculate and store
-        self.stats.misses += 1;
-        let distance_squared = pos1.distance_squared(pos2);
-        let distance = distance_squared.sqrt();
-        
-        self.cache.insert(key, (distance, distance_squared, self.current_frame));
+        let (_, distance_squared) = self.get_distance(entity1, entity2, pos1, pos2);
         distance_squared
     }
 
-    /// Invalidate all cached distances for a specific entity (when it moves significantly)
-    pub fn invalidate_entity_cache(&mut self, entity: Entity) {
-        let keys_to_remove: Vec<_> = self.cache
-            .keys()
-            .filter(|(e1, e2)| *e1 == entity || *e2 == entity)
-            .cloned()
-            .collect();
-
-        for key in keys_to_remove {
-            self.cache.remove(&key);
-            self.stats.invalidations += 1;
-        }
-    }
-
-    /// Clean up entries older than 10 frames gradually
+    /// Clean up old entries gradually to prevent frame spikes
     fn cleanup_old_entries_gradually(&mut self) {
-        let cutoff_frame = self.current_frame.saturating_sub(10);
-        let _initial_size = self.cache.len();
-        
-        // Only clean up a limited number of entries per frame (max 50)
+        let cleanup_count = 50; // Clean up at most 50 entries per frame
         let mut removed = 0;
-        const MAX_CLEANUP_PER_FRAME: usize = 50;
         
-        self.cache.retain(|_, (_, _, last_frame)| {
-            if *last_frame < cutoff_frame && removed < MAX_CLEANUP_PER_FRAME {
+        self.cache.retain(|_key, (_, _, cached_frame)| {
+            if removed >= cleanup_count {
+                true // Keep remaining entries for next cleanup
+            } else if self.current_frame - cached_frame > 300 { // 5 seconds at 60 FPS
                 removed += 1;
-                false
+                self.stats.cleanups += 1;
+                false // Remove old entry
             } else {
-                true
+                true // Keep recent entry
             }
         });
-        
-        self.stats.cleanups += removed as u64;
     }
 
     /// Limit cache size by removing oldest entries
@@ -165,82 +128,49 @@ impl DistanceCache {
             return;
         }
 
-        // Sort by last access time and remove oldest entries
-        let mut entries: Vec<_> = self.cache.iter().map(|(k, v)| (*k, *v)).collect();
-        entries.sort_by_key(|(_, (_, _, frame))| *frame);
-
-        let to_remove = self.cache.len() - (self.max_cache_size * 3 / 4); // Remove 25% when at limit
+        // Convert to vector, sort by frame, and keep only the most recent entries
+        let mut entries: Vec<_> = self.cache.iter().collect();
+        entries.sort_by(|a, b| b.1.2.cmp(&a.1.2)); // Sort by frame descending
         
-        for (key, _) in entries.iter().take(to_remove) {
-            self.cache.remove(key);
+        // Keep only the most recent entries
+        let keep_count = self.max_cache_size * 3 / 4; // Keep 75% of max size
+        let mut new_cache = HashMap::with_capacity(keep_count);
+        
+        for (key, value) in entries.into_iter().take(keep_count) {
+            new_cache.insert(*key, *value);
         }
         
-        self.stats.cleanups += to_remove as u64;
-    }
-
-    /// Get cache size for debugging
-    pub fn cache_size(&self) -> usize {
-        self.cache.len()
-    }
-
-    /// Clear all cache entries
-    pub fn clear(&mut self) {
-        self.cache.clear();
+        self.cache = new_cache;
         self.stats.cleanups += 1;
     }
-}
 
-// Re-export the canonical MovementTracker from game_core
-pub use game_core::components::spatial::MovementTracker;
-
-impl DistanceCache {
-    /// Get the current cache size
-    pub fn len(&self) -> usize {
-        self.cache.len()
+    /// Get cache statistics
+    pub fn get_stats(&self) -> &DistanceCacheStats {
+        &self.stats
     }
 
-    /// Check if cache is empty
-    pub fn is_empty(&self) -> bool {
-        self.cache.is_empty()
+    /// Reset statistics
+    pub fn reset_stats(&mut self) {
+        self.stats = DistanceCacheStats::default();
     }
 }
 
-/// System to manage the distance cache and track entity movement
+// Import MovementTracker from game_core
+use game_core::components::spatial::MovementTracker;
+
+/// System to advance the distance cache frame counter
 pub fn distance_cache_management_system(
-    mut cache: ResMut<DistanceCache>,
-    mut movement_query: Query<(Entity, &mut MovementTracker, &Transform)>,
+    mut distance_cache: ResMut<DistanceCache>,
+    mut movement_trackers: Query<(&mut MovementTracker, &Transform)>,
 ) {
-    // Advance frame counter
-    cache.advance_frame();
-
-    // Check for significantly moved entities and invalidate their cache
-    for (entity, mut tracker, transform) in movement_query.iter_mut() {
+    distance_cache.advance_frame();
+    
+    // Update movement trackers
+    for (mut tracker, transform) in movement_trackers.iter_mut() {
         if tracker.has_moved_significantly(transform.translation) {
-            cache.invalidate_entity_cache(entity);
             tracker.update_position(transform.translation);
         }
     }
-}
-
-/// Helper functions for easy distance caching
-pub fn get_cached_distance(
-    entity1: Entity,
-    entity2: Entity,
-    pos1: Vec3,
-    pos2: Vec3,
-    cache: &mut ResMut<DistanceCache>,
-) -> f32 {
-    cache.get_distance(entity1, entity2, pos1, pos2)
-}
-
-pub fn get_cached_distance_squared(
-    entity1: Entity,
-    entity2: Entity,
-    pos1: Vec3,
-    pos2: Vec3,
-    cache: &mut ResMut<DistanceCache>,
-) -> f32 {
-    cache.get_distance_squared(entity1, entity2, pos1, pos2)
 }
 
 /// Plugin to add distance caching system

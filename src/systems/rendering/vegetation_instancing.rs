@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Vegetation Instancing
+//! Purpose:  Manages entity visibility based on distance
+//! Schedule: Update
+//! Reads:    ActiveEntity, Transform, InstancedTreeTrunk, VegetationBatchable, InstancedLeafCluster
+//! Writes:   InstancedLeafCluster, InstancedBush, InstancedPalmFrond, InstancedTreeTrunk
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashMap;
 use std::time::Instant;

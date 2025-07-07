@@ -1,0 +1,17 @@
+# OWNERS file for gameplay_ui crate
+# HUD, menus, and debug interfaces
+
+## Primary Owners
+@ui-team
+
+## Secondary Reviewers
+@simulation-team
+@render-team
+
+## Areas of Responsibility
+- User interface systems
+- HUD and in-game overlays
+- Menu systems
+- Debug panels and performance displays
+- Input handling for UI
+- Accessibility features

@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Performance Dashboard
+//! Purpose:  Monitors and optimizes performance
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use std::collections::HashMap;

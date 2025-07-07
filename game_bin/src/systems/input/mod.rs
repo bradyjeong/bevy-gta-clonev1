@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Mod
+//! Purpose:  Processes user input and control mapping
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 pub mod input_config;
 pub mod input_manager;
 pub mod vehicle_control_config;

@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Realistic Vehicle Audio
+//! Purpose:  Manages entity visibility based on distance
+//! Schedule: Update (throttled)
+//! Reads:    RealisticVehicle, Transform, GameConfig, Player, Time
+//! Writes:   AudioSink, VehicleAudioState
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::*;
 use crate::config::GameConfig;

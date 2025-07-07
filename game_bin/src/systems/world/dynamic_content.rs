@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Dynamic Content
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, EntityLimits, Transform, Car, GameConfig
+//! Writes:   UnifiedEntityFactory, EntityLimits, Transform, Velocity
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//!   * Timing intervals are respected
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;

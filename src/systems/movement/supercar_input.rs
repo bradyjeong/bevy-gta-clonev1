@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Supercar Input
+//! Purpose:  Processes user input and control mapping
+//! Schedule: Update
+//! Reads:    ActiveEntity, Car, SuperCar, mut, ControlManager
+//! Writes:   SuperCar
+//! Invariants:
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{Car, SuperCar, ActiveEntity, DrivingMode};
 use crate::systems::input::{ControlManager, ControlAction};

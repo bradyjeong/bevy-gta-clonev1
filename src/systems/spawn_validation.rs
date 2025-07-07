@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Spawn Validation
+//! Purpose:  Validates entity spawning
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::{HashMap, HashSet};
 use crate::components::ContentType;

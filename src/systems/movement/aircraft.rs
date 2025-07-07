@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Aircraft
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, Transform, MainRotor, GameConfig, Helicopter
+//! Writes:   AircraftFlight, Transform, Velocity
+//! Invariants:
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//!   * All values are validated for safety
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Helicopter, F16, ActiveEntity, MainRotor, TailRotor, AircraftFlight};

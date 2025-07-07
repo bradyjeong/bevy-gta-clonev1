@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Bugatti Telemetry
+//! Purpose:  Processes user input and control mapping
+//! Schedule: Update
+//! Reads:    ActiveEntity, BugattiRpmGauge, Car, BugattiTelemetryState, BugattiSpeedometer
+//! Writes:   Visibility, BugattiTelemetryState, Text
+//! Invariants:
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{SuperCar, ActiveEntity, Car};
 use crate::game_state::GameState;

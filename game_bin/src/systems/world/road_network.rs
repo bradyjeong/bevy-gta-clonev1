@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Road Network
+//! Purpose:  Handles user interface display and interaction
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashMap;
 

@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Load System
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update
+//! Reads:    ActiveEntity, Car, Helicopter, F16, Player
+//! Writes:   LoadState
+//! Invariants:
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::fs;

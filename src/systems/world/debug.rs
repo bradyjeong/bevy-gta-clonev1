@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Debug
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update
+//! Reads:    ActiveEntity, Transform, Car, Helicopter, F16
+//! Writes:   System state
+//! Invariants:
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{Player, Car, Helicopter, F16, ActiveEntity};
 use crate::game_state::GameState;

@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Map System
+//! Purpose:  Handles user interface display and interaction
+//! Schedule: Update
+//! Reads:    ActiveEntity, Transform, Player, mut, MapSystem
+//! Writes:   Visibility, MapChunk, MapSystem
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;

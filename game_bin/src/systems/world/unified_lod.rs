@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Unified Lod
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update
+//! Reads:    VehicleRendering, VehicleState, ActiveEntity, PerformanceStats, Transform
+//! Writes:   VehicleState, PerformanceStats, NPCState, Visibility, MasterLODCoordinator
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::*;

@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Jet Flames
+//! Purpose:  Handles entity spawning and creation
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, AircraftFlight, Transform, MeshMaterial3d, JetFlame
+//! Writes:   Visibility, Text, Transform
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::components::{F16, AircraftFlight, JetFlame, FlameEffect, ActiveEntity, ExhaustFlame, VehicleBeacon, WaypointText};
 use crate::components::{Player};

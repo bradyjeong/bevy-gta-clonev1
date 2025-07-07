@@ -92,16 +92,12 @@ mod tests {
     fn create_test_app() -> App {
         let mut app = App::new();
         
+        // Use MinimalPlugins for true headless operation
         app.add_plugins((
-            DefaultPlugins.set(WindowPlugin {
-                primary_window: Some(Window {
-                    resolution: (800.0, 600.0).into(),
-                    title: "Golden Frame Test".to_string(),
-                    visible: false, // Run headless
-                    ..default()
-                }),
-                ..default()
-            }),
+            MinimalPlugins,
+            AssetPlugin::default(),
+            TransformPlugin,
+            HierarchyPlugin,
             RapierPhysicsPlugin::<NoUserData>::default(),
         ));
         

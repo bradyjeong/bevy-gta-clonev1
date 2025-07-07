@@ -1,9 +1,19 @@
+//! ───────────────────────────────────────────────
+//! System:   Fps Display
+//! Purpose:  Handles entity spawning and creation
+//! Schedule: Update
+//! Reads:    DiagnosticsStore, mut, FpsText
+//! Writes:   Text
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @ui-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 
 #[derive(Component)]
 pub struct FpsText;
-
 pub fn setup_fps_display(mut commands: Commands) {
     commands.spawn((
         Text::new("FPS: --"),
@@ -16,12 +26,9 @@ pub fn setup_fps_display(mut commands: Commands) {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             right: Val::Px(10.0),
-            ..default()
-        },
         FpsText,
     ));
 }
-
 pub fn update_fps_display(
     diagnostics: Res<DiagnosticsStore>,
     mut fps_text_query: Query<&mut Text, With<FpsText>>,
@@ -33,4 +40,3 @@ pub fn update_fps_display(
             }
         }
     }
-}

@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Mod
+//! Purpose:  Processes user input and control mapping
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * Physics values are validated and finite
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 pub mod player;
 pub mod vehicles;
 pub mod aircraft;

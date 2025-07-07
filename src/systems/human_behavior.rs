@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Human Behavior
+//! Purpose:  Handles human character behavior
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;

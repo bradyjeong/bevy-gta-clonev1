@@ -1,0 +1,84 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Cache cargo
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-docs-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Generate documentation
+      run: |
+        cargo doc --all --no-deps --document-private-items
+        
+    - name: Install graphviz
+      run: sudo apt-get update && sudo apt-get install -y graphviz
+      
+    - name: Install cargo-deps
+      run: cargo install cargo-deps
+      
+    - name: Generate dependency graphs
+      run: |
+        mkdir -p target/doc/graphs
+        dot -Tsvg docs/graphs/crate_dependencies.dot > target/doc/graphs/crate_dependencies.svg
+        
+    - name: Copy documentation assets
+      run: |
+        cp -r docs/* target/doc/
+        
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./target/doc
+        
+  lint-docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check for system headers
+      run: |
+        echo "Checking for system headers in all system files..."
+        find . -path "./src/systems/*.rs" -o -path "./*/src/systems/*.rs" | while read file; do
+          if ! grep -q "System:" "$file"; then
+            echo "ERROR: Missing system header in $file"
+            exit 1
+          fi
+        done
+        echo "✅ All system files have headers"
+        
+    - name: Validate markdown links
+      run: |
+        echo "Checking for broken internal links..."
+        find . -name "*.md" -exec grep -l "\.md)" {} \; | while read file; do
+          echo "Checking links in $file"
+          grep -o "\[.*\](.*\.md)" "$file" | while read link; do
+            target=$(echo "$link" | sed 's/.*](//' | sed 's/)//')
+            if [ ! -f "$target" ] && [ ! -f "$(dirname "$file")/$target" ]; then
+              echo "WARNING: Broken link in $file: $target"
+            fi
+          done
+        done
+        echo "✅ Link validation complete"

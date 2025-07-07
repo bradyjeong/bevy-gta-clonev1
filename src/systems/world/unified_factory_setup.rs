@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Unified Factory Setup
+//! Purpose:  Handles user interface display and interaction
+//! Schedule: Update
+//! Reads:    UnifiedEntityFactory, GameConfig, Time
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::config::GameConfig;

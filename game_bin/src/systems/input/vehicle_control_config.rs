@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Vehicle Control Config
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update (throttled)
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::game_state::GameState;

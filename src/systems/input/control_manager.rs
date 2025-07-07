@@ -1,3 +1,16 @@
+//! ───────────────────────────────────────────────
+//! System:   Control Manager
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update (throttled)
+//! Reads:    ActiveEntity, Transform, Car, NPC, Helicopter
+//! Writes:   NPC, ControlManager
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::collections::HashMap;

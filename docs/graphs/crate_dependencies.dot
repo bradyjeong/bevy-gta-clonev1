@@ -1,0 +1,59 @@
+digraph dependencies {
+    rankdir=TB;
+    node [shape=box, style=filled];
+    
+    // Workspace crates
+    subgraph cluster_engine {
+        label="Engine Layer";
+        style=filled;
+        color=lightblue;
+        
+        engine_core [fillcolor=lightcyan];
+        engine_bevy [fillcolor=lightcyan];
+    }
+    
+    subgraph cluster_gameplay {
+        label="Gameplay Layer";
+        style=filled;
+        color=lightgreen;
+        
+        gameplay_sim [fillcolor=lightgreen];
+        gameplay_render [fillcolor=lightgreen];
+        gameplay_ui [fillcolor=lightgreen];
+    }
+    
+    subgraph cluster_game {
+        label="Game Layer";
+        style=filled;
+        color=lightyellow;
+        
+        game_core [fillcolor=lightyellow];
+        game_bin [fillcolor=lightyellow];
+    }
+    
+    // Dependencies
+    engine_bevy -> engine_core;
+    gameplay_sim -> engine_core;
+    gameplay_sim -> engine_bevy;
+    gameplay_render -> engine_core;
+    gameplay_render -> engine_bevy;
+    gameplay_ui -> engine_core;
+    gameplay_ui -> engine_bevy;
+    game_core -> engine_core;
+    game_core -> engine_bevy;
+    game_core -> gameplay_sim;
+    game_core -> gameplay_render;
+    game_core -> gameplay_ui;
+    game_bin -> game_core;
+    
+    // Legend
+    subgraph cluster_legend {
+        label="Legend";
+        style=filled;
+        color=white;
+        
+        legend_engine [label="Engine Layer\n(Core utilities)", fillcolor=lightcyan];
+        legend_gameplay [label="Gameplay Layer\n(Domain logic)", fillcolor=lightgreen];
+        legend_game [label="Game Layer\n(Integration)", fillcolor=lightyellow];
+    }
+}

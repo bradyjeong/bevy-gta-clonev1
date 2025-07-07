@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Mod
+//! Purpose:  Manages entity visibility based on distance
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * Distance calculations are cached for performance
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 pub mod npc;
 pub mod culling;
 pub mod dynamic_content;

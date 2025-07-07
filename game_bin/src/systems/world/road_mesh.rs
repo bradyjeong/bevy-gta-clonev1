@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Road Mesh
+//! Purpose:  Manages world state and generation
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use crate::systems::world::road_network::{RoadSpline, RoadType, IntersectionType, RoadIntersection};

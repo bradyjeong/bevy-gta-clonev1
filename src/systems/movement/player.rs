@@ -1,3 +1,15 @@
+//! ───────────────────────────────────────────────
+//! System:   Player
+//! Purpose:  Handles entity movement and physics
+//! Schedule: Update
+//! Reads:    ActiveEntity, Player, Time, mut, HumanMovement
+//! Writes:   HumanBehavior, Transform
+//! Invariants:
+//!   * Physics values are validated and finite
+//!   * Only active entities can be controlled
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 

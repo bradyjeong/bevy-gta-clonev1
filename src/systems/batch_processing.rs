@@ -1,3 +1,14 @@
+//! ───────────────────────────────────────────────
+//! System:   Batch Processing
+//! Purpose:  Handles batch processing and optimization
+//! Schedule: Update
+//! Reads:    System components
+//! Writes:   System state
+//! Invariants:
+//!   * System maintains consistent state
+//! Owner:    @simulation-team
+//! ───────────────────────────────────────────────
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::time::Instant;

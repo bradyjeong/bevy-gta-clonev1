@@ -8,14 +8,24 @@ members = [
     "gameplay_sim",
     "gameplay_render",
     "gameplay_ui",
-    "test_utils"
-, "tests"]
+    "test_utils",
+    "tests"
+]
+default-members = [
+    "game_bin",
+    "engine_core", 
+    "engine_bevy",
+    "game_core",
+    "gameplay_sim",
+    "gameplay_render",
+    "gameplay_ui"
+]
 
 # The legacy monolith as a library package
 [package]
 name = "gta_game_legacy"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 bevy = { workspace = true }
