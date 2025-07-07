@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 /// Unified timing service that manages throttling intervals across all systems
-/// This replaces individual Local<Timer> patterns with a centralized approach
+/// This replaces individual `Local<Timer>` patterns with a centralized approach
 #[derive(Debug, Clone)]
 pub struct TimingService {
     /// Global time tracking
     pub current_time: f32,
+    /// Frame delta time
     pub delta_time: f32,
     
     /// Performance throttling intervals

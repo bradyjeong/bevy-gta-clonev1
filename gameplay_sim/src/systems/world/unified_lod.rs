@@ -1,422 +1,227 @@
 //! ───────────────────────────────────────────────
-//! System:   Unified Lod
-//! Purpose:  Handles entity movement and physics
+//! System:   Unified LOD
+//! Purpose:  Manages level-of-detail for all entities
 //! Schedule: Update
-//! Reads:    VehicleRendering, VehicleState, ActiveEntity, PerformanceStats, Transform
-//! Writes:   VehicleState, PerformanceStats, NPCState, Visibility, MasterLODCoordinator
-//! Invariants:
-//!   * Distance calculations are cached for performance
-//!   * Only active entities can be controlled
+//! Reads:    ActiveEntity, Transform, Cullable
+//! Writes:   Visibility, LOD state
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
 use std::collections::HashMap;
 use game_core::prelude::*;
-use crate::systems::world::unified_world::{
-    UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkState, UNIFIED_STREAMING_RADIUS, UNIFIED_CHUNK_SIZE,
-};
-use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
-// MASTER UNIFIED LOD AND CULLING SYSTEM
-// Consolidates all LOD systems into a single, efficient pipeline
-// Manages visibility and detail levels for all world content with entity-type plugins
-/// Master LOD coordination resource
+const MAX_FRAME_TIME: f32 = 3.0; // 3ms frame budget
+
 #[derive(Resource, Default)]
-pub struct MasterLODCoordinator {
-    pub dirty_entities: HashMap<Entity, LODDirtyReason>,
-    pub lod_plugin_configs: HashMap<EntityType, LODPluginConfig>,
-    pub performance_stats: LODPerformanceStats,
-    pub frame_counter: u64,
+pub struct LODCoordinator {
+    pub stats: LODPerformanceStats,
+    pub config: LODPluginConfig,
+    pub frame_counter: FrameCounter,
+    pub distance_cache: DistanceCache,
 }
-/// Why an entity was marked dirty for LOD update
-#[derive(Debug, Clone, Copy)]
-pub enum LODDirtyReason {
-    Movement(f32), // Distance moved
-    TimeInterval,  // Periodic update
-    PlayerMoved,   // Player position changed significantly
-    StateChange,   // Entity state changed
-/// Entity type for LOD plugin system
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+
+#[derive(Default)]
+pub struct LODPerformanceStats {
+    pub entities_processed: usize,
+    pub entities_culled: usize,
+    pub frame_time_ms: f32,
+}
+
+#[derive(Default)]
+pub struct LODPluginConfig {
+    pub building_distance: f32,
+    pub vehicle_distance: f32,
+    pub npc_distance: f32,
+    pub vegetation_distance: f32,
+}
+
+impl LODPluginConfig {
+    pub fn new() -> Self {
+        Self {
+            building_distance: 500.0,
+            vehicle_distance: 300.0,
+            npc_distance: 150.0,
+            vegetation_distance: 200.0,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct FrameCounter {
+    pub frame: u64,
+}
+
+#[derive(Default)]
+pub struct DistanceCache {
+    pub cache: HashMap<Entity, (f32, u64)>, // distance, frame_calculated
+    pub max_entries: usize,
+}
+
+impl DistanceCache {
+    pub fn new() -> Self {
+        Self {
+            cache: HashMap::new(),
+            max_entries: 2048,
+        }
+    }
+    
+    pub fn get_distance(&mut self, entity: Entity, current_frame: u64, entity_pos: Vec3, active_pos: Vec3) -> f32 {
+        if let Some(&(cached_distance, frame)) = self.cache.get(&entity) {
+            if current_frame.saturating_sub(frame) < 5 { // Cache for 5 frames
+                return cached_distance;
+            }
+        }
+        
+        let distance = entity_pos.distance(active_pos);
+        
+        // Limit cache size
+        if self.cache.len() >= self.max_entries {
+            self.cache.clear();
+        }
+        
+        self.cache.insert(entity, (distance, current_frame));
+        distance
+    }
+}
+
+pub fn unified_lod_system(
+    mut commands: Commands,
+    active_query: Query<(Entity, &Transform), With<ActiveEntity>>,
+    mut cullable_query: Query<(Entity, &Transform, &mut Cullable)>,
+    mut lod_coordinator: ResMut<LODCoordinator>,
+    time: Res<Time>,
+) {
+    if let Ok((active_entity, active_transform)) = active_query.single() {
+        let active_pos = active_transform.translation;
+        let start_time = std::time::Instant::now();
+        
+        lod_coordinator.frame_counter.frame += 1;
+        lod_coordinator.stats.entities_processed = 0;
+        lod_coordinator.stats.entities_culled = 0;
+        
+        // Process cullable entities
+        for (entity, transform, mut cullable) in cullable_query.iter_mut() {
+            if entity == active_entity {
+                continue; // Don't cull the active entity
+            }
+            
+            let distance = lod_coordinator.distance_cache.get_distance(
+                entity,
+                lod_coordinator.frame_counter.frame,
+                transform.translation,
+                active_pos,
+            );
+            
+            let should_cull = distance > cullable.max_distance;
+            
+            if cullable.is_culled != should_cull {
+                cullable.is_culled = should_cull;
+                
+                if should_cull {
+                    lod_coordinator.stats.entities_culled += 1;
+                }
+            }
+            
+            lod_coordinator.stats.entities_processed += 1;
+            
+            // Frame time budget check
+            if start_time.elapsed().as_millis() as f32 > MAX_FRAME_TIME {
+                break;
+            }
+        }
+        
+        lod_coordinator.stats.frame_time_ms = start_time.elapsed().as_millis() as f32;
+    }
+}
+
+pub fn visibility_update_system(
+    mut visibility_query: Query<(&mut Visibility, &Cullable)>,
+) {
+    for (mut visibility, cullable) in visibility_query.iter_mut() {
+        if cullable.is_culled {
+            *visibility = Visibility::Hidden;
+        } else {
+            *visibility = Visibility::Visible;
+        }
+    }
+}
+
+pub fn lod_stats_system(
+    lod_coordinator: Res<LODCoordinator>,
+    time: Res<Time>,
+) {
+    // Log performance stats every 5 seconds
+    if time.elapsed_secs() % 5.0 < 0.1 {
+        info!(
+            "LOD Stats - Processed: {} | Culled: {} | Frame Time: {:.1}ms",
+            lod_coordinator.stats.entities_processed,
+            lod_coordinator.stats.entities_culled,
+            lod_coordinator.stats.frame_time_ms
+        );
+    }
+}
+
+// Component for LOD-aware entities
+#[derive(Component)]
+pub struct LODEntity {
+    pub entity_type: EntityType,
+    pub base_distance: f32,
+    pub current_lod: usize,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum EntityType {
+    Building,
     Vehicle,
     NPC,
     Vegetation,
-    Building,
-    Chunk,
-/// Configuration for entity-type specific LOD plugins
-#[derive(Debug, Clone)]
-pub struct LODPluginConfig {
-    pub distances: Vec<f32>,         // LOD level distances
-    pub cull_distance: f32,          // Distance at which to cull completely
-    pub hysteresis: f32,             // Hysteresis to prevent flickering
-    pub update_interval: f32,        // How often to check (seconds)
-    pub priority_distance: f32,      // Distance threshold for high priority updates
-/// Performance statistics for LOD system
-#[derive(Debug, Default)]
-pub struct LODPerformanceStats {
-    pub entities_processed: HashMap<EntityType, usize>,
-    pub processing_times: HashMap<EntityType, f32>,
-    pub lod_level_counts: HashMap<(EntityType, usize), usize>,
-    pub total_entities: usize,
-    pub culled_entities: usize,
-impl LODPluginConfig {
-    pub fn vehicle() -> Self {
+}
+
+impl LODEntity {
+    pub fn new(entity_type: EntityType) -> Self {
+        let base_distance = match entity_type {
+            EntityType::Building => 500.0,
+            EntityType::Vehicle => 300.0,
+            EntityType::NPC => 150.0,
+            EntityType::Vegetation => 200.0,
+        };
+        
         Self {
-            distances: vec![50.0, 150.0, 300.0],
-            cull_distance: 500.0,
-            hysteresis: 5.0,
-            update_interval: 0.5,
-            priority_distance: 100.0,
+            entity_type,
+            base_distance,
+            current_lod: 0,
         }
     }
-    pub fn npc() -> Self {
-            distances: vec![25.0, 75.0, 100.0],
-            cull_distance: 150.0,
-            hysteresis: 3.0,
-            update_interval: 0.3,
-            priority_distance: 50.0,
-    pub fn vegetation() -> Self {
-            cull_distance: 400.0,
-            hysteresis: 10.0,
-            update_interval: 1.0,
-    pub fn building() -> Self {
-            distances: vec![100.0, 300.0, 500.0],
-            cull_distance: 800.0,
-            hysteresis: 15.0,
-            update_interval: 0.8,
-            priority_distance: 200.0,
-    pub fn chunk() -> Self {
-            distances: vec![150.0, 300.0, 500.0],
-            hysteresis: 20.0,
-            priority_distance: 300.0,
-    pub fn get_lod_level(&self, distance: f32) -> usize {
-        for (level, &threshold) in self.distances.iter().enumerate() {
-            if distance <= threshold + self.hysteresis {
-                return level;
-            }
-        self.distances.len() // Beyond all LOD levels
-    pub fn should_cull(&self, distance: f32) -> bool {
-        distance > self.cull_distance + self.hysteresis
-/// Main unified LOD system - coordinates all entity-type LOD plugins
-pub fn master_unified_lod_system(
-    mut commands: Commands,
-    mut lod_coordinator: ResMut<MasterLODCoordinator>,
-    mut world_manager: ResMut<UnifiedWorldManager>,
-    active_query: Query<(Entity, &Transform), With<ActiveEntity>>,
-    // Entity-specific queries - these replace individual LOD systems
-    mut vehicle_query: Query<(Entity, &mut VehicleState, &Transform, Option<&VehicleRendering>), Without<ActiveEntity>>,
-    mut npc_query: Query<(Entity, &mut NPCState, &Transform, Option<&NPCRendering>), (Without<ActiveEntity>, Without<VehicleState>)>,
-    mut visibility_param_set: ParamSet<(
-        Query<(Entity, &UnifiedChunkEntity, &mut Visibility)>,
-        Query<(Entity, &mut VegetationLOD, &Transform, &mut Visibility, &mut Mesh3d), (With<VegetationMeshLOD>, Without<ActiveEntity>, Without<VehicleState>, Without<NPCState>)>,
-        Query<(&mut Cullable, &Transform, &mut Visibility)>,
-    )>,
-    
-    mut distance_cache: ResMut<DistanceCache>,
-    frame_counter: Res<FrameCounter>,
-    time: Res<Time>,
+}
+
+pub fn lod_level_system(
+    active_query: Query<&Transform, With<ActiveEntity>>,
+    mut lod_query: Query<(&Transform, &mut LODEntity)>,
 ) {
-    let Ok((active_entity, active_transform)) = active_query.single() else { return };
-    let active_pos = active_transform.translation;
-    lod_coordinator.frame_counter = frame_counter.frame;
-    // Time budgeting - max 3ms per frame for entire LOD system
-    let start_time = std::time::Instant::now();
-    const MAX_FRAME_TIME: std::time::Duration = std::time::Duration::from_millis(3);
-    // Update chunk LOD levels based on distance
-    update_chunk_lod_levels(&mut world_manager, active_pos);
-    // Early exit if time budget exceeded
-    if start_time.elapsed() > MAX_FRAME_TIME {
-        return;
-    // Update chunk entity visibility
-    {
-        let mut chunk_query = visibility_param_set.p0();
-        for (_entity, chunk_entity, mut visibility) in chunk_query.iter_mut() {
-        if let Some(chunk) = world_manager.get_chunk(chunk_entity.coord) {
-            let should_be_visible = match chunk.state {
-                ChunkState::Loaded { lod_level } => {
-                    should_layer_be_visible(ContentLayer::from_layer_id(chunk_entity.layer), lod_level, chunk.distance_to_player)
-                }
-                _ => false,
-            };
-            
-            *visibility = if should_be_visible {
-                Visibility::Visible
-            } else {
-                Visibility::Hidden
-    // Process entity-type specific LOD updates with time budgeting
-    if start_time.elapsed() < MAX_FRAME_TIME {
-        process_vehicle_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut vehicle_query, &mut distance_cache, time.elapsed_secs(), start_time, MAX_FRAME_TIME);
-        process_npc_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut npc_query, &mut distance_cache, time.elapsed_secs(), start_time, MAX_FRAME_TIME);
-        let mut vegetation_query = visibility_param_set.p1();
-        process_vegetation_lod(&mut commands, &mut lod_coordinator, active_entity, active_pos, &mut vegetation_query, &mut distance_cache, frame_counter.frame, start_time, MAX_FRAME_TIME);
-fn update_chunk_lod_levels(world_manager: &mut UnifiedWorldManager, active_pos: Vec3) {
-    let chunks_to_update: Vec<_> = world_manager.chunks.iter()
-        .filter_map(|(coord, chunk)| {
-            if let ChunkState::Loaded { lod_level } = chunk.state {
-                let distance = active_pos.distance(chunk.coord.to_world_pos(UNIFIED_CHUNK_SIZE));
-                Some((*coord, distance, lod_level))
-                None
-        })
-        .collect();
-    for (coord, distance, old_lod) in chunks_to_update {
-        let new_lod = world_manager.calculate_lod_level(distance);
-        if new_lod != old_lod {
-            if let Some(chunk) = world_manager.chunks.get_mut(&coord) {
-                chunk.distance_to_player = distance;
-                chunk.state = ChunkState::Loaded { lod_level: new_lod };
-fn should_layer_be_visible(layer: ContentLayer, lod_level: usize, distance: f32) -> bool {
-    match layer {
-        ContentLayer::Roads => {
-            // Roads always visible at all LOD levels
-            true
-        ContentLayer::Buildings => {
-            // Buildings visible up to LOD 2
-            lod_level <= 2
-        ContentLayer::Vehicles => {
-            // Vehicles only visible at close range (LOD 0-1)
-            lod_level <= 1 && distance <= 400.0
-        ContentLayer::Vegetation => {
-            // Vegetation with extended range using billboard LOD
-            match lod_level {
-                0 => distance <= 50.0,   // Full detail
-                1 => distance <= 150.0,  // Medium detail
-                2 => distance <= 300.0,  // Billboard
-        ContentLayer::NPCs => {
-            // NPCs only at very close range
-            lod_level == 0 && distance <= 150.0
-/// Vehicle LOD processing plugin - replaces vehicles/lod_manager.rs
-fn process_vehicle_lod(
-    commands: &mut Commands,
-    lod_coordinator: &mut MasterLODCoordinator,
-    active_entity: Entity,
-    active_pos: Vec3,
-    vehicle_query: &mut Query<(Entity, &mut VehicleState, &Transform, Option<&VehicleRendering>), Without<ActiveEntity>>,
-    distance_cache: &mut ResMut<DistanceCache>,
-    _current_time: f32,
-    start_time: std::time::Instant,
-    max_frame_time: std::time::Duration,
-    let config = lod_coordinator.lod_plugin_configs.entry(EntityType::Vehicle)
-        .or_insert_with(LODPluginConfig::vehicle);
-    let mut processed = 0;
-    const MAX_ENTITIES_PER_FRAME: usize = 10;
-    for (entity, mut vehicle_state, transform, rendering) in vehicle_query.iter_mut() {
-        // Early exit if time budget exceeded
-        if start_time.elapsed() > max_frame_time {
-            break;
+    if let Ok(active_transform) = active_query.single() {
+        let active_pos = active_transform.translation;
         
-        // Limit entities processed per frame
-        if processed >= MAX_ENTITIES_PER_FRAME {
-        let distance = get_cached_distance(
-            active_entity,
-            entity,
-            active_pos,
-            transform.translation,
-            distance_cache,
-        );
-        let new_lod_level = config.get_lod_level(distance);
-        let should_cull = config.should_cull(distance);
-        // Convert unified LOD level to VehicleLOD
-        let new_vehicle_lod = match new_lod_level {
-            0 => VehicleLOD::Full,
-            1 => VehicleLOD::Medium,
-            2 => VehicleLOD::Low,
-            _ => VehicleLOD::StateOnly,
-        };
-        if should_cull {
-            // Remove rendering when culled
-            if rendering.is_some() {
-                commands.entity(entity).remove::<VehicleRendering>();
-                commands.entity(entity).insert(Visibility::Hidden);
-            vehicle_state.current_lod = VehicleLOD::StateOnly;
-        } else if new_vehicle_lod != vehicle_state.current_lod {
-            // LOD changed - mark for rendering system to handle
-            vehicle_state.current_lod = new_vehicle_lod;
-            commands.entity(entity).insert(VehicleLODUpdate { new_lod: new_vehicle_lod });
-            commands.entity(entity).insert(Visibility::Visible);
-        processed += 1;
-    lod_coordinator.performance_stats.entities_processed.insert(EntityType::Vehicle, processed);
-    // Track processing time for performance monitoring
-    let processing_time = start_time.elapsed().as_secs_f32() * 1000.0; // Convert to ms
-    lod_coordinator.performance_stats.processing_times.insert(EntityType::Vehicle, processing_time);
-/// NPC LOD processing plugin - replaces world/npc_lod.rs
-fn process_npc_lod(
-    npc_query: &mut Query<(Entity, &mut NPCState, &Transform, Option<&NPCRendering>), (Without<ActiveEntity>, Without<VehicleState>)>,
-    current_time: f32,
-    let config = lod_coordinator.lod_plugin_configs.entry(EntityType::NPC)
-        .or_insert_with(LODPluginConfig::npc);
-    for (entity, mut npc_state, transform, rendering) in npc_query.iter_mut() {
-        // Convert unified LOD level to NPCLOD
-        let new_npc_lod = match new_lod_level {
-            0 => NPCLOD::Full,
-            1 => NPCLOD::Medium,
-            2 => NPCLOD::Low,
-            _ => NPCLOD::StateOnly,
-                commands.entity(entity).remove::<NPCRendering>();
-            npc_state.current_lod = NPCLOD::StateOnly;
-        } else if new_npc_lod != npc_state.current_lod {
-            // LOD changed - update and mark for rendering
-            npc_state.current_lod = new_npc_lod;
-            npc_state.last_lod_check = current_time;
-            commands.entity(entity).insert(NPCLODUpdate { new_lod: new_npc_lod });
-    lod_coordinator.performance_stats.entities_processed.insert(EntityType::NPC, processed);
-    lod_coordinator.performance_stats.processing_times.insert(EntityType::NPC, processing_time);
-/// Vegetation LOD processing plugin - replaces world/vegetation_lod.rs
-fn process_vegetation_lod(
-    vegetation_query: &mut Query<(Entity, &mut VegetationLOD, &Transform, &mut Visibility, &mut Mesh3d), (With<VegetationMeshLOD>, Without<ActiveEntity>, Without<VehicleState>, Without<NPCState>)>,
-    current_frame: u64,
-    let config = lod_coordinator.lod_plugin_configs.entry(EntityType::Vegetation)
-        .or_insert_with(LODPluginConfig::vegetation);
-    for (entity, mut veg_lod, transform, mut visibility, _mesh_handle) in vegetation_query.iter_mut() {
-        // Convert unified LOD level to VegetationDetailLevel
-        let new_detail_level = if should_cull {
-            VegetationDetailLevel::Culled
-        } else {
-            match new_lod_level {
-                0 => VegetationDetailLevel::Full,
-                1 => VegetationDetailLevel::Medium,
-                2 => VegetationDetailLevel::Billboard,
-                _ => VegetationDetailLevel::Culled,
-        let old_level = veg_lod.detail_level;
-        veg_lod.detail_level = new_detail_level;
-        veg_lod.distance_to_player = distance;
-        veg_lod.update_from_distance(distance, current_frame);
-        // Update visibility
-        *visibility = if veg_lod.should_be_visible() {
-            Visibility::Visible
-            Visibility::Hidden
-        // Update mesh if LOD level changed
-        if old_level != new_detail_level {
-            commands.entity(entity).insert(VegetationLODUpdate { 
-                new_detail_level,
-                distance,
-            });
-    lod_coordinator.performance_stats.entities_processed.insert(EntityType::Vegetation, processed);
-    lod_coordinator.performance_stats.processing_times.insert(EntityType::Vegetation, processing_time);
-/// Component to signal vehicle LOD updates (replaces vehicles/lod_manager.rs functionality)
-#[derive(Component)]
-pub struct VehicleLODUpdate {
-    pub new_lod: VehicleLOD,
-/// Component to signal NPC LOD updates (replaces world/npc_lod.rs functionality)
-pub struct NPCLODUpdate {
-    pub new_lod: NPCLOD,
-/// Component to signal vegetation LOD updates (replaces world/vegetation_lod.rs functionality)
-pub struct VegetationLODUpdate {
-    pub new_detail_level: VegetationDetailLevel,
-    pub distance: f32,
-/// Master LOD system initialization
-pub fn initialize_master_lod_system(mut commands: Commands) {
-    let mut coordinator = MasterLODCoordinator::default();
-    // Initialize entity-type configurations
-    coordinator.lod_plugin_configs.insert(EntityType::Vehicle, LODPluginConfig::vehicle());
-    coordinator.lod_plugin_configs.insert(EntityType::NPC, LODPluginConfig::npc());
-    coordinator.lod_plugin_configs.insert(EntityType::Vegetation, LODPluginConfig::vegetation());
-    coordinator.lod_plugin_configs.insert(EntityType::Building, LODPluginConfig::building());
-    coordinator.lod_plugin_configs.insert(EntityType::Chunk, LODPluginConfig::chunk());
-    commands.insert_resource(coordinator);
-    info!("Master LOD Coordinator initialized with unified pipeline");
-/// Enhanced performance monitoring system for the master LOD system
-pub fn master_lod_performance_monitor(
-    lod_coordinator: Res<MasterLODCoordinator>,
-    world_manager: Res<UnifiedWorldManager>,
-    _chunk_query: Query<&UnifiedChunkEntity>,
-    vehicle_query: Query<&VehicleState>,
-    npc_query: Query<&NPCState>,
-    vegetation_query: Query<&VegetationLOD>,
-    mut performance_stats: ResMut<PerformanceStats>,
-    mut last_report: Local<f32>,
-    *last_report += time.delta_secs();
-    // Report every 5 seconds to reduce log spam
-    if *last_report < 5.0 {
-    *last_report = 0.0;
-    // Count entities by type and LOD level
-    let mut vehicle_lod_counts = [0; 4]; // Full, Medium, Low, StateOnly
-    let mut npc_lod_counts = [0; 4];
-    let mut vegetation_lod_counts = [0; 4]; // Full, Medium, Billboard, Culled
-    for vehicle in vehicle_query.iter() {
-        match vehicle.current_lod {
-            VehicleLOD::Full => vehicle_lod_counts[0] += 1,
-            VehicleLOD::Medium => vehicle_lod_counts[1] += 1,
-            VehicleLOD::Low => vehicle_lod_counts[2] += 1,
-            VehicleLOD::StateOnly => vehicle_lod_counts[3] += 1,
-    for npc in npc_query.iter() {
-        match npc.current_lod {
-            NPCLOD::Full => npc_lod_counts[0] += 1,
-            NPCLOD::Medium => npc_lod_counts[1] += 1,
-            NPCLOD::Low => npc_lod_counts[2] += 1,
-            NPCLOD::StateOnly => npc_lod_counts[3] += 1,
-    for veg in vegetation_query.iter() {
-        match veg.detail_level {
-            VegetationDetailLevel::Full => vegetation_lod_counts[0] += 1,
-            VegetationDetailLevel::Medium => vegetation_lod_counts[1] += 1,
-            VegetationDetailLevel::Billboard => vegetation_lod_counts[2] += 1,
-            VegetationDetailLevel::Culled => vegetation_lod_counts[3] += 1,
-    let total_chunks = world_manager.chunks.len();
-    let loaded_chunks = world_manager.chunks.values()
-        .filter(|chunk| matches!(chunk.state, ChunkState::Loaded { .. }))
-        .count();
-    let total_entities = lod_coordinator.performance_stats.total_entities;
-    let culled_entities = lod_coordinator.performance_stats.culled_entities;
-    // Update performance stats
-    performance_stats.entity_count = total_entities;
-    performance_stats.culled_entities = culled_entities;
-    info!(
-        "Master LOD Performance | Chunks: {}/{} | Vehicles: F:{} M:{} L:{} S:{} | NPCs: F:{} M:{} L:{} S:{} | Vegetation: F:{} M:{} B:{} C:{}",
-        loaded_chunks, total_chunks,
-        vehicle_lod_counts[0], vehicle_lod_counts[1], vehicle_lod_counts[2], vehicle_lod_counts[3],
-        npc_lod_counts[0], npc_lod_counts[1], npc_lod_counts[2], npc_lod_counts[3],
-        vegetation_lod_counts[0], vegetation_lod_counts[1], vegetation_lod_counts[2], vegetation_lod_counts[3]
-    );
-    // Report processing efficiency
-    for (entity_type, processed) in &lod_coordinator.performance_stats.entities_processed {
-        let processing_time = lod_coordinator.performance_stats.processing_times.get(entity_type).copied().unwrap_or(0.0);
-        if *processed > 0 {
-            info!("  {:?}: {} entities processed in {:.2}ms", entity_type, processed, processing_time);
-/// System to handle dynamic LOD adjustments based on performance
-pub fn adaptive_lod_system(
-    _performance_stats: Res<PerformanceStats>,
-    // Simple adaptive LOD based on frame time
-    let frame_time = time.delta_secs();
-    let target_frame_time = 1.0 / 60.0; // 60 FPS target
-    if frame_time > target_frame_time * 1.5 {
-        // Performance is suffering, reduce max chunks per frame
-        world_manager.max_chunks_per_frame = (world_manager.max_chunks_per_frame.saturating_sub(1)).max(1);
-    } else if frame_time < target_frame_time * 0.8 {
-        // Performance is good, can increase load
-        world_manager.max_chunks_per_frame = (world_manager.max_chunks_per_frame + 1).min(8);
-// NOTE: This function is disabled to avoid conflicts with the main unified_distance_culling_system
-// The main culling is handled by src/systems/world/unified_distance_culling.rs
-/*
-/// Unified culling system that replaces the old distance_culling_system
-pub fn unified_distance_culling_system(
-    mut cullable_query: Query<(&mut Cullable, &Transform, &mut Visibility), Without<DirtyVisibility>>,
-    active_query: Query<&Transform, (With<ActiveEntity>, Without<Cullable>)>,
-    let Ok(active_transform) = active_query.single() else { return };
-    for (mut cullable, transform, mut visibility) in cullable_query.iter_mut() {
-        let distance = active_pos.distance(transform.translation);
-        let should_be_culled = distance > cullable.max_distance;
-        if should_be_culled != cullable.is_culled {
-            cullable.is_culled = should_be_culled;
-            *visibility = if should_be_culled {
-*/
-/// System to clean up entities that have been culled for too long
-pub fn unified_cleanup_system(
-    world_manager: ResMut<UnifiedWorldManager>,
-    cullable_query: Query<(Entity, &Cullable, &Transform)>,
-    let _current_time = time.elapsed_secs();
-    let _cleanup_delay = 30.0; // Clean up entities culled for 30+ seconds
-    for (entity, cullable, transform) in cullable_query.iter() {
-        if cullable.is_culled {
-            // In a full implementation, you'd track when entities were first culled
-            // For now, we'll just clean up very distant entities immediately
-            let distance_to_any_chunk = world_manager
-                .chunks
-                .values()
-                .map(|chunk| transform.translation.distance(chunk.coord.to_world_pos(UNIFIED_CHUNK_SIZE)))
-                .fold(f32::INFINITY, f32::min);
-            if distance_to_any_chunk > UNIFIED_STREAMING_RADIUS * 2.0 {
-                commands.entity(entity).despawn();
-                
-                // Remove from placement grid
-                // Note: In a full implementation, you'd need to track which entities
-                // are in the placement grid to remove them efficiently
+        for (transform, mut lod_entity) in lod_query.iter_mut() {
+            let distance = active_pos.distance(transform.translation);
+            let new_lod = calculate_lod_level(distance, lod_entity.base_distance);
+            
+            if new_lod != lod_entity.current_lod {
+                lod_entity.current_lod = new_lod;
+                // Could trigger mesh swapping, texture changes, etc.
+            }
+        }
+    }
+}
+
+fn calculate_lod_level(distance: f32, base_distance: f32) -> usize {
+    if distance < base_distance * 0.5 {
+        0 // High detail
+    } else if distance < base_distance {
+        1 // Medium detail
+    } else if distance < base_distance * 2.0 {
+        2 // Low detail
+    } else {
+        3 // Very low detail or culled
+    }
+}

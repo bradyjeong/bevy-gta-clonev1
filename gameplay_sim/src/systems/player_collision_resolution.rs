@@ -25,11 +25,15 @@ pub fn player_collision_resolution_system(
         // Apply force toward center of world
         let correction_direction = -player_position.normalize_or_zero();
         velocity.linvel = correction_direction * 10.0;
+    }
 }
 /// Physics-safe ground collision using velocity modification
 pub fn player_movement_validation_system(
     mut player_query: Query<(&mut Velocity, &Transform), (With<Player>, With<ActiveEntity>)>,
+) {
     let Ok((mut velocity, transform)) = player_query.single_mut() else {
+        return;
+    };
     // Use velocity-based ground collision instead of direct position modification
     if transform.translation.y < -1.0 {
         // Stop downward movement and add upward force
@@ -37,3 +41,5 @@ pub fn player_movement_validation_system(
             velocity.linvel.y = 0.0;
         }
         velocity.linvel.y += 5.0; // Upward force to lift player above ground
+    }
+}

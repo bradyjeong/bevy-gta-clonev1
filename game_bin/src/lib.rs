@@ -1,13 +1,17 @@
-pub mod components;
-pub mod config;
-pub mod systems;
-pub mod plugins;
-pub mod setup;
-pub mod constants;
-pub mod game_state;
-pub mod bundles;
-pub mod factories;
-pub mod services;
+//! Game binary - main entry point and top-level orchestration
+#![deny(clippy::all, clippy::pedantic)]
+#![deny(missing_docs)]
+
+pub(crate) mod components;
+pub(crate) mod config;
+pub(crate) mod systems;
+pub(crate) mod plugins;
+pub(crate) mod setup;
+pub(crate) mod constants;
+pub(crate) mod game_state;
+pub(crate) mod bundles;
+pub(crate) mod factories;
+pub(crate) mod services;
 
 // Engine-level abstractions only
 pub use game_state::GameState;

@@ -5,9 +5,13 @@ use std::path::Path;
 /// Configuration for screenshot comparison
 #[derive(Clone)]
 pub struct ScreenshotConfig {
+    /// Width of the screenshot in pixels
     pub width: u32,
+    /// Height of the screenshot in pixels
     pub height: u32,
+    /// Acceptable difference tolerance (0.0 to 1.0)
     pub tolerance: f32,
+    /// Whether to save difference images when comparison fails
     pub save_diff: bool,
 }
 
@@ -24,8 +28,11 @@ impl Default for ScreenshotConfig {
 
 /// Result of screenshot comparison
 pub struct ComparisonResult {
+    /// Whether the images match within tolerance
     pub matches: bool,
+    /// Overall difference percentage (0.0 to 1.0)
     pub difference_percentage: f32,
+    /// Maximum pixel difference found
     pub max_pixel_difference: f32,
 }
 
@@ -151,12 +158,16 @@ pub fn ensure_golden_frame_dir<P: AsRef<Path>>(test_name: &str, base_path: P) ->
 
 /// Golden frame test helper
 pub struct GoldenFrameTest {
+    /// Test name identifier
     pub name: String,
+    /// Screenshot configuration
     pub config: ScreenshotConfig,
+    /// Base path for test files
     pub base_path: std::path::PathBuf,
 }
 
 impl GoldenFrameTest {
+    /// Creates a new screenshot test with the given name
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
@@ -165,16 +176,19 @@ impl GoldenFrameTest {
         }
     }
     
+    /// Sets the configuration for the screenshot test
     pub fn with_config(mut self, config: ScreenshotConfig) -> Self {
         self.config = config;
         self
     }
     
+    /// Sets the base path for test files
     pub fn with_base_path(mut self, path: impl Into<std::path::PathBuf>) -> Self {
         self.base_path = path.into();
         self
     }
     
+    /// Runs the screenshot test against the given image
     pub fn run_test(&self, test_image: &RgbaImage) -> Result<ComparisonResult, String> {
         let golden_dir = ensure_golden_frame_dir(&self.name, &self.base_path)?;
         let reference_path = golden_dir.join("reference.png");
@@ -199,6 +213,7 @@ impl GoldenFrameTest {
 }
 
 #[cfg(test)]
+#[allow(missing_docs)]
 mod tests {
     use super::*;
     use std::fs;

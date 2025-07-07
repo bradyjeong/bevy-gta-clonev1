@@ -44,6 +44,8 @@ pub fn unified_npc_movement(
         
         // Only update NPCs at their specific intervals (staggered updates)
         if current_time - npc.last_update < npc.update_interval {
+            continue;
+        }
         npc.last_update = current_time;
         let current_pos = transform.translation;
         let target_pos = npc.target_position;
@@ -57,11 +59,14 @@ pub fn unified_npc_movement(
             npc.update_interval = 0.2; // Slower updates for far NPCs
         } else {
             npc.update_interval = 0.05; // Normal updates for close NPCs
+        }
+        
         // If close to target, pick a new random target
         if distance < 5.0 {
             npc.target_position = Vec3::new(
                 NPC_RNG.with(|rng| rng.borrow_mut().gen_range(-900.0..900.0)),
                 1.0,
+                NPC_RNG.with(|rng| rng.borrow_mut().gen_range(-900.0..900.0)),
             );
             // Use unified control system for NPC movement
             if let Some(ai_decision) = control_manager.get_ai_decision(entity) {
@@ -90,22 +95,39 @@ pub fn unified_npc_movement(
                 );
                 
                 // Face movement direction
+                if direction.length() > 0.1 {
                     let rotation = Quat::from_rotation_y((-direction.x).atan2(-direction.z));
                     transform.rotation = rotation;
+                }
             }
+        }
     }
+}
 /// Legacy NPC movement system - kept for backwards compatibility
 pub fn optimized_npc_movement(
     mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC, &Cullable)>,
+) {
     for (mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
-            // Move towards target (legacy implementation)
-            let direction = (target_pos - current_pos).normalize();
-            velocity.linvel = Vec3::new(
-                direction.x * npc.speed,
-                velocity.linvel.y, // Preserve gravity
-                direction.z * npc.speed,
-            
-            // Face movement direction
-            if direction.length() > 0.1 {
-                let rotation = Quat::from_rotation_y((-direction.x).atan2(-direction.z));
-                transform.rotation = rotation;
+        // Skip culled NPCs
+        if cullable.is_culled {
+            continue;
+        }
+        
+        let current_pos = transform.translation;
+        let target_pos = npc.target_position;
+        
+        // Move towards target (legacy implementation)
+        let direction = (target_pos - current_pos).normalize();
+        velocity.linvel = Vec3::new(
+            direction.x * npc.speed,
+            velocity.linvel.y, // Preserve gravity
+            direction.z * npc.speed,
+        );
+        
+        // Face movement direction
+        if direction.length() > 0.1 {
+            let rotation = Quat::from_rotation_y((-direction.x).atan2(-direction.z));
+            transform.rotation = rotation;
+        }
+    }
+}

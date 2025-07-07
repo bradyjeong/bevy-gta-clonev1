@@ -1,6 +1,6 @@
 //! Bevy engine abstractions and utilities
 #![deny(clippy::all, clippy::pedantic)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 use bevy::prelude::*;
 pub use engine_core;

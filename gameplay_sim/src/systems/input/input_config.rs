@@ -47,6 +47,8 @@ pub struct InputConfig {
     bindings: HashMap<GameState, HashMap<InputAction, KeyCode>>,
     // Fallback to default bindings if custom fails
     use_fallback: bool,
+}
+
 impl Default for InputConfig {
     fn default() -> Self {
         let mut config = InputConfig {
@@ -109,6 +111,8 @@ impl Default for InputConfig {
         config.bindings.insert(GameState::Jetting, jetting_bindings);
         config
     }
+}
+
 impl InputConfig {
     pub fn get_key_for_action(&self, state: &GameState, action: InputAction) -> Option<KeyCode> {
         self.bindings

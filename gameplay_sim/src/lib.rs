@@ -1,8 +1,22 @@
 //! Gameplay simulation - physics, AI, rules
 #![deny(clippy::all, clippy::pedantic)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 pub(crate) mod services;
+pub(crate) mod physics;
+pub(crate) mod movement;
+pub(crate) mod world;
+pub(crate) mod behavior;
+pub(crate) mod input;
+pub(crate) mod distance;
+pub(crate) mod lod;
+pub(crate) mod vehicles;
+pub(crate) mod setup;
+pub(crate) mod plugins;
+pub(crate) mod entity_creation;
+pub(crate) mod spawn_validation;
+pub(crate) mod transform_sync;
+pub(crate) mod water;
 use bevy::prelude::*;
 pub use engine_core;
 pub use engine_bevy;

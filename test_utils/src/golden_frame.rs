@@ -167,6 +167,7 @@ impl GoldenFrameUtils {
 
 /// Configuration for deterministic test scenes
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub struct DeterministicSceneConfig {
     pub camera_position: Vec3,
     pub camera_target: Vec3,
@@ -219,6 +220,7 @@ impl Default for DeterministicSceneConfig {
 
 /// Configuration for individual test entities
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub struct TestEntityConfig {
     pub name: String,
     pub shape: TestShape,
@@ -230,6 +232,7 @@ pub struct TestEntityConfig {
 
 /// Supported test shapes
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub enum TestShape {
     Cube(Vec3),
     Sphere(f32),
@@ -238,6 +241,7 @@ pub enum TestShape {
 
 /// Result of image comparison
 #[derive(Debug)]
+#[allow(missing_docs)]
 pub struct ImageComparisonResult {
     pub diff_pixels: u32,
     pub total_pixels: u32,
@@ -246,6 +250,7 @@ pub struct ImageComparisonResult {
     pub passed: bool,
 }
 
+#[allow(missing_docs)]
 impl ImageComparisonResult {
     pub fn print_summary(&self) {
         println!("Golden Frame Comparison Results:");

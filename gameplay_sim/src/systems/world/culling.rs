@@ -57,4 +57,7 @@ pub fn distance_culling_system(
             if cullable.is_culled {
                 cullable.is_culled = false;
                 *visibility = Visibility::Visible;
+            }
         }
+    }
+}

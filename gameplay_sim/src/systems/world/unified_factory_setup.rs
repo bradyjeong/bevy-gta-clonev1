@@ -54,3 +54,4 @@ pub fn unified_factory_debug_system(
             factory.position_cache.len()
         );
     }
+}

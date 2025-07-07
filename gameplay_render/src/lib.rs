@@ -1,13 +1,20 @@
 //! Gameplay rendering - LOD, culling, effects
 #![deny(clippy::all, clippy::pedantic)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 use bevy::prelude::*;
 pub use engine_core;
 pub use engine_bevy;
 pub use game_core;
+pub use gameplay_sim;
 pub mod prelude;
 pub(crate) mod systems;
+pub(crate) mod factories;
+pub(crate) mod batching;
+pub(crate) mod batching_test;
+pub(crate) mod batch_processing;
+pub(crate) mod world;
+pub(crate) mod plugins;
 // Only expose via prelude - no direct re-exports
 /// Main plugin for rendering systems
 pub struct RenderPlugin;
@@ -19,6 +26,10 @@ impl Plugin for RenderPlugin {
         app.init_resource::<game_core::config::performance_config::PerformanceCounters>()
             .init_resource::<game_core::components::dirty_flags::FrameCounter>()
             .init_resource::<game_core::components::instanced_vegetation::VegetationInstancingConfig>();
+        
+        // Add the batching plugin
+        app.add_plugins(plugins::BatchingPlugin);
+        
         // Add core rendering systems
         app.add_systems(
             Update,
@@ -51,6 +62,8 @@ impl Plugin for RenderPlugin {
                 vegetation_instancing_integration::spawn_test_vegetation_system,
                 // Debug systems
                 distance_cache_debug::distance_cache_debug_system,
+                // World rendering
+                world::unified_factory_setup_system,
             )
         )
         .add_systems(

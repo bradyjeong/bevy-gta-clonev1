@@ -55,7 +55,7 @@ impl GroundDetectionService {
             filter,
         ) {
             let ground_height = ray_origin.y - intersection;
-
+            
             // Validate ground height is reasonable
             if ground_height >= MIN_GROUND_HEIGHT && ground_height <= MAX_GROUND_HEIGHT {
                 return ground_height;
@@ -112,10 +112,11 @@ impl GroundDetectionService {
     pub fn get_ground_height_simple(&self, position: Vec2) -> f32 {
         // Match the actual terrain height from setup_basic_world
         // Terrain is at y=-0.15, so ground surface is at -0.1
-
+        
         // Keep spawn area (within 10 units of origin) perfectly flat to prevent sliding
         let spawn_area_radius = 10.0;
         let distance_from_spawn = (position.x.powi(2) + position.y.powi(2)).sqrt();
+        
         if distance_from_spawn < spawn_area_radius {
             -0.1 // Perfectly flat ground around spawn
         } else {
@@ -131,7 +132,7 @@ impl GroundDetectionService {
         // - Not inside buildings
         // - Not too steep terrain
         // - Not in water
-
+        
         // For now, just avoid positions too close to origin (where roads typically are)
         let distance_from_origin = position.length();
         distance_from_origin > 10.0 // Stay away from central road network
@@ -160,10 +161,11 @@ mod tests {
 
     #[test]
     fn test_spawn_height_calculation() {
+        let service = GroundDetectionService::default();
         // Mock a scenario where we can't test actual raycasting
         let entity_height = 1.8;
         let expected_spawn_height = DEFAULT_GROUND_HEIGHT + entity_height * 0.5;
-
+        
         // This would need actual RapierContext in integration tests
         // For now, just verify the calculation logic
         assert_eq!(expected_spawn_height, 0.9);

@@ -11,6 +11,19 @@ members = [
     "test_utils",
     "tests"
 ]
+
+[workspace.features]
+default = []
+# Development and debugging features
+debug-movement = []
+debug-audio = []
+debug-ui = []
+# Experimental features for AI development
+experimental = []
+# Testing and golden frame features
+golden-frames = []
+# GPU compute features
+gpu-culling = []
 default-members = [
     "game_bin",
     "engine_core", 

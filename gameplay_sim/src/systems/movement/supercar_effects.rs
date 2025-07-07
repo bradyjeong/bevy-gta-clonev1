@@ -28,6 +28,7 @@ impl Default for ExhaustFlamePool {
             max_flames: 20, // Pre-spawn 20 flames
         }
     }
+}
 /// Initialize the exhaust flame pool at startup
 pub fn initialize_exhaust_pool_system(
     mut commands: Commands,
@@ -52,10 +53,16 @@ pub fn initialize_exhaust_pool_system(
         
         pool.flames.push(flame_entity);
         pool.available_flames.push(flame_entity);
+    }
+}
+
 /// Focused system for managing supercar visual effects using pre-spawned entities
 pub fn supercar_effects_system(
     mut supercar_query: Query<(&Transform, &mut SuperCar), (With<Car>, With<ActiveEntity>, With<SuperCar>)>,
     mut flame_query: Query<(&mut Transform, &mut Visibility, &mut MeshMaterial3d<StandardMaterial>), (With<ExhaustFlame>, Without<SuperCar>)>,
+    mut pool: ResMut<ExhaustFlamePool>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     let Ok((transform, mut supercar)) = supercar_query.single_mut() else {
         return;
     };
@@ -68,6 +75,7 @@ pub fn supercar_effects_system(
                 *visibility = Visibility::Hidden;
                 flame_transform.translation = Vec3::new(0.0, -1000.0, 0.0);
             }
+        }
         pool.available_flames = pool.flames.clone();
         // Use available flames for current exhaust
         let exhaust_pos = transform.translation + transform.back() * 2.8 + Vec3::new(0.0, 0.15, 0.0);
@@ -91,6 +99,7 @@ pub fn supercar_effects_system(
         for i in 0..4 {
             if flames_used >= flames_needed || pool.available_flames.is_empty() {
                 break;
+            }
             
             let side_offset = match i {
                 0 => Vec3::new(-0.6, 0.0, 0.0),  // Left outer
@@ -117,6 +126,7 @@ pub fn supercar_effects_system(
                     }
                     flames_used += 1;
                 }
+            }
             // Secondary flame trail (for turbo mode)
             if supercar.turbo_boost && flames_used < flames_needed {
                 if let Some(flame_entity) = pool.available_flames.pop() {
@@ -131,12 +141,19 @@ pub fn supercar_effects_system(
                             material.emissive = LinearRgba::rgb(0.3, 0.6, 0.9);
                         }
                         flames_used += 1;
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// System to automatically hide exhaust flames after a short duration
 pub fn exhaust_flame_cleanup_system(
     mut flame_query: Query<(&mut Visibility, &mut Transform), With<ExhaustFlame>>,
     _pool: ResMut<ExhaustFlamePool>,
     _time: Res<Time>,
-    
+) {
     // Simple auto-hide after 0.1 seconds
     for (mut visibility, mut transform) in flame_query.iter_mut() {
         if matches!(*visibility, Visibility::Visible) {
@@ -146,3 +163,8 @@ pub fn exhaust_flame_cleanup_system(
             if transform.scale.x < 0.1 {
                 transform.translation = Vec3::new(0.0, -1000.0, 0.0);
                 transform.scale = Vec3::ONE;
+                *visibility = Visibility::Hidden;
+            }
+        }
+    }
+}

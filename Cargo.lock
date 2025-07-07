@@ -2365,6 +2365,7 @@ dependencies = [
  "engine_bevy",
  "engine_core",
  "game_core",
+ "gameplay_sim",
  "proptest",
  "rand 0.8.5",
  "serde",
@@ -2397,6 +2398,7 @@ dependencies = [
  "engine_bevy",
  "engine_core",
  "game_core",
+ "gameplay_render",
  "gameplay_sim",
  "serde",
 ]

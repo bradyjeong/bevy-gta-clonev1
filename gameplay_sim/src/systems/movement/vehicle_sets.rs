@@ -37,3 +37,4 @@ pub fn configure_vehicle_system_sets(app: &mut App) {
             VehicleSet::Performance,
         ).chain()
     );
+}

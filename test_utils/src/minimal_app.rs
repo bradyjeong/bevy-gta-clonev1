@@ -5,6 +5,7 @@ use std::time::Duration;
 
 /// Lightweight Bevy app for testing with minimal plugins
 pub struct MinimalBevyApp {
+    /// The Bevy app instance
     pub app: App,
 }
 

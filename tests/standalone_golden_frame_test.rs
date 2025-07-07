@@ -6,6 +6,7 @@ use std::fs;
 /// Standalone golden frame test that doesn't depend on the main codebase modules
 #[cfg(test)]
 mod tests {
+    #![deny(clippy::all, clippy::pedantic)]
     use super::*;
 
     fn create_minimal_test_app() -> App {

@@ -1,42 +1,64 @@
 //! Gameplay UI - HUD, menus, debug overlays
 #![deny(clippy::all, clippy::pedantic)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 use bevy::prelude::*;
+
+// Re-export dependencies
 pub use engine_core;
 pub use engine_bevy;
 pub use game_core;
 pub use gameplay_sim;
+pub use gameplay_render;
+
+// Public modules
 pub mod prelude;
-pub(crate) mod systems;
-// Only expose via prelude - no direct re-exports
+pub(crate) mod ui;
+pub(crate) mod debug;
+pub(crate) mod performance;
+pub(crate) mod plugins;
+pub(crate) mod examples;
+pub(crate) mod timing_service;
+pub(crate) mod config_loader;
+pub(crate) mod simple_service_example;
+
 /// Main plugin for UI systems
 pub struct UiPlugin;
+
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         // Initialize resources
-        app.init_resource::<systems::ui::bugatti_telemetry::BugattiTelemetryState>()
-            .init_resource::<systems::performance_monitor::UnifiedPerformanceTracker>()
-            .init_resource::<systems::performance_dashboard::PerformanceDashboard>();
+        app.init_resource::<ui::bugatti_telemetry::BugattiTelemetryState>()
+            .init_resource::<performance::monitor::UnifiedPerformanceTracker>()
+            .init_resource::<performance::dashboard::PerformanceDashboard>();
+        
         // UI Display Systems
         app.add_systems(Update, (
-            systems::ui::fps_display::update_fps_display,
-            systems::ui::controls_ui::controls_ui_system,
-            systems::ui::bugatti_telemetry::bugatti_telemetry_input_system,
-            systems::ui::bugatti_telemetry::update_bugatti_telemetry_system,
+            ui::fps_display::update_fps_display,
+            ui::controls_ui::controls_ui_system,
+            ui::bugatti_telemetry::bugatti_telemetry_input_system,
+            ui::bugatti_telemetry::update_bugatti_telemetry_system,
         ));
+        
         // Debug Systems
-            systems::debug::debug_game_state,
+        app.add_systems(Update, (
+            debug::debug::debug_game_state,
+        ));
+        
         // Performance Monitoring Systems
-            systems::performance_monitor::unified_performance_monitoring_system,
-            systems::performance_dashboard::performance_dashboard_system,
-            systems::performance_integration::integrate_existing_performance_metrics,
-            systems::performance_integration::integrate_distance_cache_performance,
-            systems::performance_integration::monitor_vehicle_physics_performance,
-            systems::performance_integration::monitor_culling_performance,
-            systems::performance_integration::monitor_audio_performance,
+        app.add_systems(Update, (
+            performance::monitor::unified_performance_monitoring_system,
+            performance::dashboard::performance_dashboard_system,
+            performance::integration::integrate_existing_performance_metrics,
+            performance::integration::integrate_distance_cache_performance,
+            performance::integration::monitor_vehicle_physics_performance,
+            performance::integration::monitor_culling_performance,
+            performance::integration::monitor_audio_performance,
+        ));
+        
         // Setup Systems (run once)
         app.add_systems(Startup, (
-            systems::ui::fps_display::setup_fps_display,
+            ui::fps_display::setup_fps_display,
+        ));
     }
 }

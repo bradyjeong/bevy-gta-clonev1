@@ -1,134 +1,128 @@
 //! ───────────────────────────────────────────────
-//! System:   Npc Spawn
-//! Purpose:  Manages physics simulation and constraints
+//! System:   NPC Spawn
+//! Purpose:  Spawns and manages NPCs in the world
 //! Schedule: Update (throttled)
-//! Reads:    GroundDetectionService, Transform, NPCState, GameConfig, TimingService
-//! Writes:   System state
-//! Invariants:
-//!   * Distance calculations are cached for performance
-//!   * Physics values are validated and finite
-//!   * Timing intervals are respected
+//! Reads:    ActiveEntity, Transform, EntityLimits
+//! Writes:   Commands, NPC entities
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
+use rand::Rng;
 use game_core::prelude::*;
-use engine_bevy::prelude::*;
-use engine_core::timing::{EntityTimerType};
-use crate::services::GroundDetectionService;
-use rand::prelude::*;
-/// Spawn NPCs using the new architecture while maintaining compatibility
-/// This system replaces the old spawn_dynamic_npc function
-/// CONSOLIDATED: Now uses spawn validation from UnifiedEntityFactory
-pub fn spawn_new_npc_system(
+use crate::systems::world::npc_lod::spawn_npc_with_lod;
+
+pub fn npc_spawn_system(
     mut commands: Commands,
-    timing_service: Res<TimingService>,
-    npc_query: Query<Entity, With<NPCState>>,
-    ground_service: Res<GroundDetectionService>,
-    _config: Res<GameConfig>,
+    active_query: Query<&Transform, With<ActiveEntity>>,
+    npc_query: Query<&Transform, With<NPC>>,
+    time: Res<Time>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    game_config: Res<GameConfig>,
 ) {
-    // Limit NPC spawning to avoid performance issues (unified entity limits)
-    if npc_query.iter().count() >= 20 {  // REDUCED: From 100 to 20 NPCs max
-        return;
-    }
-    
-    // Spawn new NPCs occasionally using unified spawning pipeline
-    if timing_service.current_time() % 10.0 < 0.1 {  // REDUCED: From 5.0 to 10.0 seconds
-        let mut rng = thread_rng();
+    if let Ok(active_transform) = active_query.single() {
+        let active_pos = active_transform.translation;
+        let current_time = time.elapsed_secs();
         
-        // Try to find a valid spawn position using unified validation
-        for _ in 0..5 { // REDUCED: From 10 to 5 attempts
-            let x = rng.gen_range(-50.0..50.0);
-            let z = rng.gen_range(-50.0..50.0);
-            let position = Vec2::new(x, z);
+        // Throttle NPC spawning to every 10 seconds
+        if current_time % 10.0 < 0.1 {
+            let existing_npcs = npc_query.iter().count();
+            let max_npcs = 50; // Conservative limit
             
-            if ground_service.is_spawn_position_valid(position) {
-                spawn_simple_npc_with_ground_detection_simple(&mut commands, position, &ground_service);
-                break; // Found valid position, spawn and exit
+            if existing_npcs < max_npcs {
+                // Spawn a few NPCs around the player
+                for _ in 0..3 {
+                    let spawn_pos = generate_npc_spawn_position(active_pos);
+                    spawn_npc_unified(&mut commands, spawn_pos, &mut meshes, &mut materials);
+                }
             }
         }
+    }
 }
-/// Spawn a single NPC with ground detection (simplified version without RapierContext)
-pub fn spawn_simple_npc_with_ground_detection_simple(
+
+fn generate_npc_spawn_position(active_pos: Vec3) -> Vec3 {
+    let mut rng = rand::thread_rng();
+    let distance = rng.gen_range(50.0..150.0);
+    let angle = rng.gen_range(0.0..std::f32::consts::TAU);
+    
+    Vec3::new(
+        active_pos.x + distance * angle.cos(),
+        active_pos.y,
+        active_pos.z + distance * angle.sin(),
+    )
+}
+
+pub fn spawn_npc_unified(
     commands: &mut Commands,
-    position: Vec2,
-    ground_service: &GroundDetectionService,
-) -> Entity {
-    let mut rng = thread_rng();
-    // Use simplified ground detection
-    let ground_height = ground_service.get_ground_height_simple(position);
-    let ground_clearance = 0.02; // Very small clearance to avoid clipping
-    let spawn_height = ground_height + ground_clearance; // Place NPC feet on ground
-    let spawn_position = Vec3::new(position.x, spawn_height, position.y);
-    // Create NPC with new state-based architecture
-    let entity = commands.spawn((
-        NPCState {
-            npc_type: NPCType::Civilian,
-            appearance: NPCAppearance {
-                height: 1.8, // Standard NPC height
-                build: rng.gen_range(0.8..1.2),
-                skin_tone: Color::linear_rgb(0.8, 0.7, 0.6),
-                hair_color: Color::linear_rgb(0.4, 0.3, 0.2),
-                shirt_color: Color::linear_rgb(rng.gen_range(0.2..0.8), rng.gen_range(0.2..0.8), rng.gen_range(0.2..0.8)),
-                pants_color: Color::linear_rgb(rng.gen_range(0.1..0.6), rng.gen_range(0.1..0.6), rng.gen_range(0.1..0.6)),
-                gender: if rng.gen_bool(0.5) { NPCGender::Male } else { NPCGender::Female },
-            },
-            behavior: NPCBehaviorType::Wandering,
-            target_position: spawn_position,
-            speed: rng.gen_range(2.0..4.0),
-            current_lod: NPCLOD::Full,
-            last_lod_check: 0.0,
-        },
-        Transform::from_translation(spawn_position),
-        GlobalTransform::default(),
-    )).id();
-    println!("DEBUG: Spawned NPC at {:?} (ground: {:.2})", spawn_position, ground_height);
-    entity
-/// Spawn a single NPC with ground detection (full physics version)
-pub fn spawn_simple_npc_with_ground_detection(
-    rapier_context: &RapierContext,
-    let npc_type = match rng.gen_range(0..4) {
-        0 => NPCType::Civilian,
-        1 => NPCType::Worker,
-        2 => NPCType::Police,
-        _ => NPCType::Emergency,
-    };
-    let npc_state = NPCState::new(npc_type);
-    let height = npc_state.appearance.height;
-    // Get ground height at spawn position
-    let ground_y = ground_service.get_spawn_height(position, height, rapier_context);
-    let spawn_position = Vec3::new(position.x, ground_y, position.y);
-    // Use simplified entity creation
-    commands.spawn((
-        npc_state,
-        RigidBody::Dynamic,
-        Collider::capsule(Vec3::new(0.0, -height / 2.0, 0.0), Vec3::new(0.0, height / 2.0, 0.0), 0.3),
-        Velocity::zero(),
-        Visibility::Visible,
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Cullable { max_distance: NPC_LOD_CULL_DISTANCE, is_culled: false },
-    )).id()
-/// Legacy spawn a single NPC using the simplified system
-pub fn spawn_simple_npc(
     position: Vec3,
-        Transform::from_translation(position),
-/// NPC spawn using unified factory (replaces legacy functions)
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) -> Entity {
+    spawn_npc_with_lod(commands, position, meshes, materials)
+}
+
+pub fn cleanup_distant_npcs_system(
+    mut commands: Commands,
+    active_query: Query<&Transform, With<ActiveEntity>>,
+    npc_query: Query<(Entity, &Transform), With<NPC>>,
+) {
+    if let Ok(active_transform) = active_query.single() {
+        let active_pos = active_transform.translation;
+        let cleanup_distance = 500.0; // Much larger than spawn distance
+        
+        for (entity, npc_transform) in npc_query.iter() {
+            if active_pos.distance(npc_transform.translation) > cleanup_distance {
+                commands.entity(entity).despawn_recursive();
+            }
+        }
+    }
+}
+
+// Legacy function signatures for compatibility
+pub fn spawn_simple_npc_with_ground_detection(
+    commands: &mut Commands,
+    position: Vec3,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) -> Entity {
+    spawn_npc_unified(commands, position, meshes, materials)
+}
+
+pub fn spawn_simple_npc(
+    commands: &mut Commands,
+    position: Vec3,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) -> Entity {
+    spawn_npc_unified(commands, position, meshes, materials)
+}
+
 pub fn spawn_npc_with_new_architecture(
-    #[allow(deprecated)]
-        // Use new simplified system
-/// Migration system - converts old NPC entities to unified architecture
+    commands: &mut Commands,
+    position: Vec3,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) -> Entity {
+    spawn_npc_unified(commands, position, meshes, materials)
+}
+
 pub fn migrate_legacy_npcs(
-    legacy_npc_query: Query<(Entity, &NPC, &Transform), Without<NPCState>>,
-    for (entity, legacy_npc, _transform) in legacy_npc_query.iter() {
-        // Create new state component based on legacy data
-        let mut npc_state = NPCState::new(NPCType::Civilian);
-        npc_state.target_position = legacy_npc.target_position;
-        npc_state.speed = legacy_npc.speed;
-        npc_state.current_lod = NPCLOD::StateOnly; // Start with no rendering
-        // Add new components while keeping the old one for compatibility
+    mut commands: Commands,
+    legacy_npc_query: Query<Entity, (With<NPC>, Without<DynamicContent>)>,
+) {
+    for entity in legacy_npc_query.iter() {
+        // Add missing components to legacy NPCs
         commands.entity(entity).insert((
-            npc_state,
-            ManagedTiming::new(EntityTimerType::NPCLOD),
+            DynamicContent {
+                content_type: ContentType::NPC,
+            },
+            Cullable {
+                max_distance: 200.0,
+                is_culled: false,
+            },
         ));
+        
         println!("DEBUG: Migrated NPC entity {:?} to unified architecture", entity);
+    }
+}

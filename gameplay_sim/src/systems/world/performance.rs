@@ -41,4 +41,5 @@ pub fn performance_monitoring_system(
             stats.frame_time,
             if stats.frame_time > 0.0 { 1000.0 / stats.frame_time } else { 0.0 }
         );
+    }
 }

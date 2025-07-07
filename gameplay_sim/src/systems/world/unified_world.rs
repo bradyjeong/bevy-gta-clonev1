@@ -1,98 +1,126 @@
 //! ───────────────────────────────────────────────
-//! System:   Unified World
-//! Purpose:  Handles user interface display and interaction
+//! System:   Unified World Manager
+//! Purpose:  Manages world chunks and spatial organization
 //! Schedule: Update
-//! Reads:    ActiveEntity, Time, Transform, UnifiedWorldManager
-//! Writes:   UnifiedWorldManager
-//! Invariants:
-//!   * Distance calculations are cached for performance
-//!   * Only active entities can be controlled
+//! Reads:    ActiveEntity, Transform, ChunkData
+//! Writes:   Commands, WorldManager
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
 use std::collections::HashMap;
 use game_core::prelude::*;
-use crate::systems::world::road_network::RoadNetwork;
 
-// UNIFIED WORLD GENERATION SYSTEM
-// This replaces map_system.rs, dynamic_content.rs coordination
-// Provides single source of truth for world streaming and generation
-/// Standard chunk size used across all world systems
-pub const UNIFIED_CHUNK_SIZE: f32 = 200.0;
-/// Maximum streaming radius around active entity
-pub const UNIFIED_STREAMING_RADIUS: f32 = 800.0;
-/// LOD transition distances - optimized for 60+ FPS target
-pub const LOD_DISTANCES: [f32; 3] = [150.0, 300.0, 500.0];
-// Re-export the canonical ChunkCoord from game_core
-pub use game_core::prelude::*;
-// Note: Use ChunkCoord methods from game_core with UNIFIED_CHUNK_SIZE parameter
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ChunkState {
-    Unloaded,
-    Loading,
-    Loaded { lod_level: usize },
-    Unloading,
+const CHUNK_SIZE: f32 = 200.0;
+const CHUNK_CLEANUP_RADIUS: f32 = 1000.0;
+
+#[derive(Resource, Default)]
+pub struct WorldManager {
+    pub chunks: HashMap<ChunkCoord, ChunkData>,
+    pub active_chunks: Vec<ChunkCoord>,
+    pub placement_grid: PlacementGrid,
 }
-#[derive(Debug, Clone)]
-pub struct ChunkData {
-    pub coord: ChunkCoord,
-    pub state: ChunkState,
-    pub distance_to_player: f32,
-    pub entities: Vec<Entity>,
-    pub last_update: f32,
+
+#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
+pub struct ChunkCoord {
+    pub x: i32,
+    pub z: i32,
+}
+
+impl ChunkCoord {
+    pub fn new(x: i32, z: i32) -> Self {
+        Self { x, z }
+    }
     
-    // Layer generation flags
-    pub roads_generated: bool,
-    pub buildings_generated: bool,
-    pub vehicles_generated: bool,
-    pub vegetation_generated: bool,
-impl ChunkData {
-    pub fn new(coord: ChunkCoord) -> Self {
+    pub fn from_world_pos(world_pos: Vec3) -> Self {
         Self {
-            coord,
-            state: ChunkState::Unloaded,
-            distance_to_player: f32::INFINITY,
-            entities: Vec::new(),
-            last_update: 0.0,
-            roads_generated: false,
-            buildings_generated: false,
-            vehicles_generated: false,
-            vegetation_generated: false,
+            x: (world_pos.x / CHUNK_SIZE).floor() as i32,
+            z: (world_pos.z / CHUNK_SIZE).floor() as i32,
         }
     }
-/// Shared collision/placement grid for preventing entity overlap
-#[derive(Debug, Default)]
+    
+    pub fn to_world_pos(&self) -> Vec3 {
+        Vec3::new(
+            self.x as f32 * CHUNK_SIZE,
+            0.0,
+            self.z as f32 * CHUNK_SIZE,
+        )
+    }
+}
+
+#[derive(Default)]
+pub struct ChunkData {
+    pub entities: Vec<Entity>,
+    pub last_updated: f32,
+    pub is_loaded: bool,
+}
+
+impl ChunkData {
+    pub fn new() -> Self {
+        Self {
+            entities: Vec::new(),
+            last_updated: 0.0,
+            is_loaded: false,
+        }
+    }
+    
+    pub fn add_entity(&mut self, entity: Entity) {
+        if !self.entities.contains(&entity) {
+            self.entities.push(entity);
+        }
+    }
+    
+    pub fn remove_entity(&mut self, entity: Entity) {
+        self.entities.retain(|&e| e != entity);
+    }
+}
+
+#[derive(Default)]
 pub struct PlacementGrid {
-    /// Grid cells containing entity positions and types
-    /// Key: (grid_x, grid_z), Value: Vec of (position, content_type, radius)
+    /// Grid of entities per cell for collision detection
     grid: HashMap<(i32, i32), Vec<(Vec3, ContentType, f32)>>,
     /// Grid cell size (should be smaller than chunk size for efficiency)
     cell_size: f32,
+}
+
 impl PlacementGrid {
     pub fn new() -> Self {
+        Self {
             grid: HashMap::new(),
             cell_size: 50.0, // 4 cells per chunk
+        }
+    }
+    
     pub fn clear(&mut self) {
         self.grid.clear();
+    }
+    
     pub fn add_entity(&mut self, position: Vec3, content_type: ContentType, radius: f32) {
         let cell = self.world_to_grid(position);
         self.grid.entry(cell).or_default().push((position, content_type, radius));
+    }
+    
     pub fn remove_entity(&mut self, position: Vec3, content_type: ContentType) {
+        let cell = self.world_to_grid(position);
         if let Some(entities) = self.grid.get_mut(&cell) {
             entities.retain(|(pos, content, _)| {
                 !(pos.distance(position) < 1.0 && *content == content_type)
             });
+        }
+    }
+    
     pub fn can_place(&self, position: Vec3, _content_type: ContentType, radius: f32, min_distance: f32) -> bool {
+        let base_cell = self.world_to_grid(position);
         
         // Check current cell and adjacent cells
         for dx in -1..=1 {
             for dz in -1..=1 {
-                let check_cell = (cell.0 + dx, cell.1 + dz);
+                let check_cell = (base_cell.0 + dx, base_cell.1 + dz);
+                
                 if let Some(entities) = self.grid.get(&check_cell) {
-                    for (existing_pos, _existing_type, existing_radius) in entities {
+                    for (existing_pos, _, existing_radius) in entities {
                         let distance = position.distance(*existing_pos);
-                        let required_distance = min_distance.max(*existing_radius + radius);
+                        let required_distance = min_distance + radius + existing_radius;
                         
                         if distance < required_distance {
                             return false;
@@ -100,175 +128,209 @@ impl PlacementGrid {
                     }
                 }
             }
+        }
+        
         true
+    }
+    
     pub fn get_nearby_entities(&self, position: Vec3, radius: f32) -> Vec<(Vec3, ContentType, f32)> {
         let mut result = Vec::new();
+        let base_cell = self.world_to_grid(position);
+        
+        // Calculate how many cells to check based on radius
         let cell_radius = (radius / self.cell_size).ceil() as i32;
+        
         for dx in -cell_radius..=cell_radius {
             for dz in -cell_radius..=cell_radius {
-                    for (entity_pos, content_type, entity_radius) in entities {
-                        if position.distance(*entity_pos) <= radius {
-                            result.push((*entity_pos, *content_type, *entity_radius));
-        result
-    fn world_to_grid(&self, position: Vec3) -> (i32, i32) {
-        (
-            (position.x / self.cell_size).floor() as i32,
-            (position.z / self.cell_size).floor() as i32,
-        )
-/// Central resource managing all world generation
-#[derive(Resource)]
-pub struct UnifiedWorldManager {
-    pub chunks: HashMap<ChunkCoord, ChunkData>,
-    pub placement_grid: PlacementGrid,
-    pub road_network: RoadNetwork,
-    // Streaming state
-    pub active_chunk: Option<ChunkCoord>,
-    pub streaming_radius_chunks: i32,
-    // Performance tracking
-    pub chunks_loaded_this_frame: usize,
-    pub chunks_unloaded_this_frame: usize,
-    pub max_chunks_per_frame: usize,
-impl Default for UnifiedWorldManager {
-    fn default() -> Self {
-            chunks: HashMap::new(),
-            placement_grid: PlacementGrid::new(),
-            road_network: RoadNetwork::default(),
-            active_chunk: None,
-            streaming_radius_chunks: (UNIFIED_STREAMING_RADIUS / UNIFIED_CHUNK_SIZE).ceil() as i32,
-            chunks_loaded_this_frame: 0,
-            chunks_unloaded_this_frame: 0,
-            max_chunks_per_frame: 4, // Prevent frame drops
-impl UnifiedWorldManager {
-    pub fn get_chunk(&self, coord: ChunkCoord) -> Option<&ChunkData> {
-        self.chunks.get(&coord)
-    pub fn get_chunk_mut(&mut self, coord: ChunkCoord) -> &mut ChunkData {
-        self.chunks.entry(coord).or_insert_with(|| ChunkData::new(coord))
-    pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
-        matches!(
-            self.chunks.get(&coord).map(|c| c.state),
-            Some(ChunkState::Loaded { .. })
-    pub fn calculate_lod_level(&self, distance: f32) -> usize {
-        for (i, &max_distance) in LOD_DISTANCES.iter().enumerate() {
-            if distance <= max_distance {
-                return i;
-        LOD_DISTANCES.len() - 1
-    pub fn cleanup_distant_chunks(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
-        let mut to_unload = Vec::new();
-        for (coord, chunk) in &mut self.chunks {
-            chunk.distance_to_player = active_pos.distance(coord.to_world_pos(UNIFIED_CHUNK_SIZE));
-            
-            if chunk.distance_to_player > UNIFIED_STREAMING_RADIUS + UNIFIED_CHUNK_SIZE {
-                if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
-                    chunk.state = ChunkState::Unloading;
-                    to_unload.push(*coord);
-        to_unload
-    pub fn get_chunks_to_load(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
-        let active_chunk = ChunkCoord::from_world_pos(active_pos, UNIFIED_CHUNK_SIZE);
-        let mut to_load = Vec::new();
-        for dx in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
-            for dz in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
-                let coord = ChunkCoord::new(active_chunk.x + dx, active_chunk.z + dz);
-                let distance = active_pos.distance(coord.to_world_pos(UNIFIED_CHUNK_SIZE));
+                let check_cell = (base_cell.0 + dx, base_cell.1 + dz);
                 
-                if distance <= UNIFIED_STREAMING_RADIUS {
-                    let chunk = self.get_chunk_mut(coord);
-                    if matches!(chunk.state, ChunkState::Unloaded) {
-                        chunk.state = ChunkState::Loading;
-                        chunk.distance_to_player = distance;
-                        to_load.push(coord);
-        to_load
-    pub fn clear_placement_grid_for_chunk(&mut self, coord: ChunkCoord) {
-        // Remove all entities from placement grid within this chunk's bounds
-        let _chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
-        let _half_size = UNIFIED_CHUNK_SIZE * 0.5;
-        // This is inefficient - in a full implementation, we'd track which
-        // grid cells belong to which chunks
-        // For now, we'll implement a more targeted removal in the actual generation
-// Re-export the canonical UnifiedChunkEntity from game_core  
-pub enum ContentLayer {
-    Roads,
-    Buildings,
-    Vehicles,
-    Vegetation,
-    NPCs,
-impl ContentLayer {
-    pub fn to_layer_id(&self) -> u32 {
-        match self {
-            ContentLayer::Roads => 0,
-            ContentLayer::Buildings => 1,
-            ContentLayer::Vehicles => 2,
-            ContentLayer::Vegetation => 3,
-            ContentLayer::NPCs => 4,
-    pub fn from_layer_id(id: u32) -> Self {
-        match id {
-            0 => ContentLayer::Roads,
-            1 => ContentLayer::Buildings,
-            2 => ContentLayer::Vehicles,
-            3 => ContentLayer::Vegetation,
-            4 => ContentLayer::NPCs,
-            _ => ContentLayer::Roads, // Default fallback
-/// Local chunk entity with gameplay-specific layer type
-#[derive(Component)]
-pub struct GameplayChunkEntity {
-    pub layer: ContentLayer,
-impl GameplayChunkEntity {
-    pub fn new(coord: ChunkCoord, layer: ContentLayer) -> Self {
-        Self { coord, layer }
-/// Main unified world streaming system
-pub fn unified_world_streaming_system(
+                if let Some(entities) = self.grid.get(&check_cell) {
+                    for &(entity_pos, content_type, entity_radius) in entities {
+                        if position.distance(entity_pos) <= radius + entity_radius {
+                            result.push((entity_pos, content_type, entity_radius));
+                        }
+                    }
+                }
+            }
+        }
+        
+        result
+    }
+    
+    fn world_to_grid(&self, world_pos: Vec3) -> (i32, i32) {
+        (
+            (world_pos.x / self.cell_size).floor() as i32,
+            (world_pos.z / self.cell_size).floor() as i32,
+        )
+    }
+}
+
+impl WorldManager {
+    pub fn new() -> Self {
+        Self {
+            chunks: HashMap::new(),
+            active_chunks: Vec::new(),
+            placement_grid: PlacementGrid::new(),
+        }
+    }
+    
+    pub fn get_or_create_chunk(&mut self, coord: ChunkCoord) -> &mut ChunkData {
+        self.chunks.entry(coord).or_insert_with(ChunkData::new)
+    }
+    
+    pub fn unload_chunk(&mut self, coord: ChunkCoord, commands: &mut Commands) {
+        if let Some(chunk_data) = self.chunks.get(&coord) {
+            // Despawn all entities in the chunk
+            for &entity in &chunk_data.entities {
+                commands.entity(entity).despawn_recursive();
+            }
+        }
+        
+        self.chunks.remove(&coord);
+        self.active_chunks.retain(|&c| c != coord);
+    }
+    
+    pub fn update_active_chunks(&mut self, player_pos: Vec3, load_radius: f32) {
+        let player_chunk = ChunkCoord::from_world_pos(player_pos);
+        let chunk_load_radius = (load_radius / CHUNK_SIZE).ceil() as i32;
+        
+        // Calculate chunks that should be loaded
+        let mut target_chunks = Vec::new();
+        for dx in -chunk_load_radius..=chunk_load_radius {
+            for dz in -chunk_load_radius..=chunk_load_radius {
+                let chunk_coord = ChunkCoord::new(
+                    player_chunk.x + dx,
+                    player_chunk.z + dz,
+                );
+                
+                let chunk_center = chunk_coord.to_world_pos();
+                let distance = player_pos.distance(chunk_center);
+                
+                if distance <= load_radius {
+                    target_chunks.push(chunk_coord);
+                }
+            }
+        }
+        
+        self.active_chunks = target_chunks;
+    }
+    
+    pub fn cleanup_distant_chunks(&mut self, player_pos: Vec3, commands: &mut Commands) {
+        let chunks_to_unload: Vec<ChunkCoord> = self.chunks
+            .keys()
+            .filter(|&&coord| {
+                let chunk_center = coord.to_world_pos();
+                player_pos.distance(chunk_center) > CHUNK_CLEANUP_RADIUS
+            })
+            .copied()
+            .collect();
+        
+        for coord in chunks_to_unload {
+            self.unload_chunk(coord, commands);
+        }
+    }
+    
+    pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
+        self.chunks.get(&coord).map_or(false, |chunk| chunk.is_loaded)
+    }
+    
+    pub fn mark_chunk_loaded(&mut self, coord: ChunkCoord) {
+        if let Some(chunk) = self.chunks.get_mut(&coord) {
+            chunk.is_loaded = true;
+        }
+    }
+    
+    pub fn add_entity_to_chunk(&mut self, entity: Entity, world_pos: Vec3) {
+        let coord = ChunkCoord::from_world_pos(world_pos);
+        let chunk = self.get_or_create_chunk(coord);
+        chunk.add_entity(entity);
+    }
+    
+    pub fn remove_entity_from_chunk(&mut self, entity: Entity, world_pos: Vec3) {
+        let coord = ChunkCoord::from_world_pos(world_pos);
+        if let Some(chunk) = self.chunks.get_mut(&coord) {
+            chunk.remove_entity(entity);
+        }
+    }
+}
+
+pub fn world_management_system(
+    mut world_manager: ResMut<WorldManager>,
     mut commands: Commands,
-    mut world_manager: ResMut<UnifiedWorldManager>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     time: Res<Time>,
 ) {
-    let Ok(active_transform) = active_query.single() else { return };
-    let active_pos = active_transform.translation;
-    // Update timing
-    world_manager.last_update = time.elapsed_secs();
-    world_manager.chunks_loaded_this_frame = 0;
-    world_manager.chunks_unloaded_this_frame = 0;
-    // Update active chunk
-    let current_chunk = ChunkCoord::from_world_pos(active_pos, UNIFIED_CHUNK_SIZE);
-    let _chunk_changed = world_manager.active_chunk != Some(current_chunk);
-    world_manager.active_chunk = Some(current_chunk);
-    // Cleanup distant chunks
-    let chunks_to_unload = world_manager.cleanup_distant_chunks(active_pos);
-    for coord in chunks_to_unload {
-        if world_manager.chunks_unloaded_this_frame >= world_manager.max_chunks_per_frame {
-            break;
-        unload_chunk(&mut commands, &mut world_manager, coord);
-        world_manager.chunks_unloaded_this_frame += 1;
-    // Load new chunks
-    let chunks_to_load = world_manager.get_chunks_to_load(active_pos);
-    for coord in chunks_to_load {
-        if world_manager.chunks_loaded_this_frame >= world_manager.max_chunks_per_frame {
-        initiate_chunk_loading(&mut commands, &mut world_manager, coord);
-        world_manager.chunks_loaded_this_frame += 1;
-fn initiate_chunk_loading(
-    commands: &mut Commands,
-    world_manager: &mut UnifiedWorldManager,
-    coord: ChunkCoord,
-    // This function starts the chunk loading process
-    // The actual content generation will be handled by layer-specific systems
-    let chunk = world_manager.get_chunk_mut(coord);
-    chunk.state = ChunkState::Loading;
-    // Create a marker entity for this chunk
-    let chunk_entity = commands.spawn((
-        GameplayChunkEntity {
-            layer: ContentLayer::Roads, // Start with roads
-        },
-        Transform::from_translation(coord.to_world_pos(UNIFIED_CHUNK_SIZE)),
-        Visibility::Visible,
-        InheritedVisibility::VISIBLE,
-        ViewVisibility::default(),
-    )).id();
-    chunk.entities.push(chunk_entity);
-fn unload_chunk(
-    if let Some(chunk) = world_manager.chunks.get(&coord) {
-        // Despawn all entities in this chunk
-        for &entity in &chunk.entities {
-            commands.entity(entity).despawn();
-        // Clear from placement grid
-        world_manager.clear_placement_grid_for_chunk(coord);
-    // Remove chunk data
-    world_manager.chunks.remove(&coord);
+    if let Ok(active_transform) = active_query.single() {
+        let player_pos = active_transform.translation;
+        let current_time = time.elapsed_secs();
+        
+        // Update which chunks should be active
+        world_manager.update_active_chunks(player_pos, 800.0);
+        
+        // Ensure active chunks are loaded
+        for &chunk_coord in world_manager.active_chunks.clone().iter() {
+            if !world_manager.is_chunk_loaded(chunk_coord) {
+                world_manager.mark_chunk_loaded(chunk_coord);
+                
+                // Update chunk timestamp
+                if let Some(chunk) = world_manager.chunks.get_mut(&chunk_coord) {
+                    chunk.last_updated = current_time;
+                }
+            }
+        }
+        
+        // Cleanup distant chunks periodically
+        if current_time % 10.0 < 0.1 { // Every 10 seconds
+            world_manager.cleanup_distant_chunks(player_pos, &mut commands);
+        }
+    }
+}
+
+pub fn spatial_query_system(
+    world_manager: Res<WorldManager>,
+    entity_query: Query<(&Transform, &ContentType), With<DynamicContent>>,
+) {
+    // This system can be used for spatial queries
+    // For example, finding all entities of a certain type within a radius
+    
+    for (transform, content_type) in entity_query.iter() {
+        let nearby = world_manager.placement_grid.get_nearby_entities(
+            transform.translation,
+            100.0, // Search radius
+        );
+        
+        // Process nearby entities as needed
+        for (_pos, nearby_type, _radius) in nearby {
+            if nearby_type == *content_type {
+                // Handle same-type entity proximity
+            }
+        }
+    }
+}
+
+// Utility functions
+
+pub fn world_pos_to_chunk_coord(world_pos: Vec3) -> ChunkCoord {
+    ChunkCoord::from_world_pos(world_pos)
+}
+
+pub fn chunk_coord_to_world_pos(coord: ChunkCoord) -> Vec3 {
+    coord.to_world_pos()
+}
+
+pub fn get_chunk_bounds(coord: ChunkCoord) -> (Vec3, Vec3) {
+    let center = coord.to_world_pos();
+    let half_size = CHUNK_SIZE * 0.5;
+    
+    let min = center - Vec3::new(half_size, 0.0, half_size);
+    let max = center + Vec3::new(half_size, 0.0, half_size);
+    
+    (min, max)
+}
+
+pub fn is_position_in_chunk(world_pos: Vec3, coord: ChunkCoord) -> bool {
+    let (min, max) = get_chunk_bounds(coord);
+    
+    world_pos.x >= min.x && world_pos.x <= max.x &&
+    world_pos.z >= min.z && world_pos.z <= max.z
+}

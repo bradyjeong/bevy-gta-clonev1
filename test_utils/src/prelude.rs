@@ -18,9 +18,13 @@ pub use rand::prelude::*;
 pub use bevy::time::Real;
 
 // Common test constants
+/// Default test seed for reproducible tests
 pub const DEFAULT_TEST_SEED: u64 = 42;
+/// Default screenshot width
 pub const DEFAULT_SCREENSHOT_WIDTH: u32 = 800;
+/// Default screenshot height
 pub const DEFAULT_SCREENSHOT_HEIGHT: u32 = 600;
+/// Default tolerance for comparisons
 pub const DEFAULT_TOLERANCE: f32 = 0.01;
 
 /// Macro for creating simple test scenarios

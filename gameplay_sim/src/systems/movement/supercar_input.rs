@@ -43,6 +43,7 @@ fn handle_driving_mode_changes(supercar: &mut SuperCar, _control_manager: &Contr
             DrivingMode::Custom => DrivingMode::Sport,
         };
     }
+}
 fn handle_launch_control(supercar: &mut SuperCar, control_manager: &ControlManager) {
     // Launch control activation (both brake and accelerate pressed)
     let current_speed_ms = supercar.last_velocity_cache.map(|v| v.length()).unwrap_or(0.0);
@@ -58,3 +59,5 @@ fn handle_launch_control(supercar: &mut SuperCar, control_manager: &ControlManag
     } else if supercar.launch_control_engaged && !control_manager.is_control_active(ControlAction::Brake) {
         // Launch control release
         supercar.launch_control_engaged = false;
+    }
+}

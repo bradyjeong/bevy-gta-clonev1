@@ -23,6 +23,7 @@ pub fn spawn_test_world(seed: u64) -> World {
 #[derive(Resource)]
 pub struct TestRng(pub StdRng);
 
+#[allow(missing_docs)]
 impl TestRng {
     pub fn next_f32(&mut self) -> f32 {
         self.0.r#gen()
@@ -46,6 +47,7 @@ pub struct EntityBuilder {
     components: Vec<Box<dyn Fn(&mut EntityWorldMut)>>,
 }
 
+#[allow(missing_docs)]
 impl EntityBuilder {
     pub fn new() -> Self {
         Self { components: Vec::new() }
@@ -102,6 +104,7 @@ pub struct ScenarioBuilder {
     entities: Vec<(String, EntityBuilder)>,
 }
 
+#[allow(missing_docs)]
 impl ScenarioBuilder {
     pub fn new() -> Self {
         Self { entities: Vec::new() }

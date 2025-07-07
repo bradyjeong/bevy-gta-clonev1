@@ -13,6 +13,7 @@ engine_core = { path = "../engine_core" }
 engine_bevy = { path = "../engine_bevy" }
 game_core = { path = "../game_core" }
 gameplay_sim = { path = "../gameplay_sim" }
+gameplay_render = { path = "../gameplay_render" }
 
 [dev-dependencies]
 # Test dependencies for comprehensive testing
