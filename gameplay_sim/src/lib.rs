@@ -2,8 +2,7 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![warn(missing_docs)]
 
-pub mod services;
-
+pub(crate) mod services;
 
 use bevy::prelude::*;
 pub use engine_core;
@@ -11,10 +10,10 @@ pub use engine_bevy;
 pub use game_core;
 
 pub mod prelude;
-pub mod systems;
-pub mod factories;
+pub(crate) mod systems;
+pub(crate) mod factories;
 
-pub use prelude::*;
+// Only expose via prelude - no direct re-exports
 
 /// Main plugin for simulation systems
 pub struct SimulationPlugin;

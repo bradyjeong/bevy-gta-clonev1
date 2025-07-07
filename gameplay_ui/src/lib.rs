@@ -9,9 +9,9 @@ pub use game_core;
 pub use gameplay_sim;
 
 pub mod prelude;
-pub mod systems;
+pub(crate) mod systems;
 
-pub use prelude::*;
+// Only expose via prelude - no direct re-exports
 
 /// Main plugin for UI systems
 pub struct UiPlugin;

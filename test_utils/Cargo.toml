@@ -1,0 +1,24 @@
+[package]
+name = "test_utils"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { workspace = true }
+bevy_rapier3d = { workspace = true }
+image = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+ron = { workspace = true }
+chrono = { workspace = true }
+
+# Internal dependencies - optional for testing isolation
+game_core = { path = "../game_core", optional = true }
+engine_core = { path = "../engine_core", optional = true }
+engine_bevy = { path = "../engine_bevy", optional = true }
+gameplay_sim = { path = "../gameplay_sim", optional = true }
+gameplay_render = { path = "../gameplay_render", optional = true }
+gameplay_ui = { path = "../gameplay_ui", optional = true }
+
+[features]
+default = []

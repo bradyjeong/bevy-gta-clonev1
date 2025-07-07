@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
-use engine_core::performance::{PerformanceTracker as CorePerformanceTracker, PerformanceCategory, AlertSeverity};
+use engine_core::prelude::*;
 use std::time::Instant;
 
 /// Bevy resource wrapper around core performance tracker
 #[derive(Resource)]
 pub struct UnifiedPerformanceTracker {
-    core_tracker: CorePerformanceTracker,
+    core_tracker: PerformanceTracker,
     last_frame_time: Instant,
     frame_time_buffer: Vec<f32>,
     last_fps: f32,
@@ -15,7 +15,7 @@ pub struct UnifiedPerformanceTracker {
 impl Default for UnifiedPerformanceTracker {
     fn default() -> Self {
         Self {
-            core_tracker: CorePerformanceTracker::new(),
+            core_tracker: PerformanceTracker::new(),
             last_frame_time: Instant::now(),
             frame_time_buffer: Vec::with_capacity(60),
             last_fps: 0.0,
@@ -105,11 +105,11 @@ impl UnifiedPerformanceTracker {
     }
     
     // Delegate to core tracker
-    pub fn get_category_metrics(&self, category: PerformanceCategory) -> Option<&engine_core::performance::CategoryMetrics> {
+    pub fn get_category_metrics(&self, category: PerformanceCategory) -> Option<&CategoryMetrics> {
         self.core_tracker.get_category_metrics(category)
     }
     
-    pub fn get_system_timing(&self, system_name: &str) -> Option<&engine_core::performance::SystemTiming> {
+    pub fn get_system_timing(&self, system_name: &str) -> Option<&SystemTiming> {
         self.core_tracker.get_system_timing(system_name)
     }
 }

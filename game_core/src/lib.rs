@@ -6,15 +6,11 @@ use bevy::prelude::*;
 pub use engine_core;
 pub use engine_bevy;
 
-pub mod components;
-pub mod config;
-pub mod constants;
-pub mod bundles;
-pub mod game_state;
+pub(crate) mod components;
+pub(crate) mod config;
+pub(crate) mod constants;
+pub(crate) mod bundles;
+pub(crate) mod game_state;
 pub mod prelude;
 
-// Core components that form the public API
-pub use components::{Player, ActiveEntity, MainCamera, LodLevel};
-pub use components::{Car, SuperCar, Helicopter, F16, NPC, Boat};
-pub use components::{PerformanceStats, CullingSettings};
-pub use game_state::GameState;
+// Only expose via prelude - no direct re-exports

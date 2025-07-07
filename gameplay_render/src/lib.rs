@@ -8,9 +8,9 @@ pub use engine_bevy;
 pub use game_core;
 
 pub mod prelude;
-pub mod systems;
+pub(crate) mod systems;
 
-pub use prelude::*;
+// Only expose via prelude - no direct re-exports
 
 /// Main plugin for rendering systems
 pub struct RenderPlugin;

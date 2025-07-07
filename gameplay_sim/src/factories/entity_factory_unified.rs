@@ -67,7 +67,7 @@ impl Default for EntityLimitManager {
 
 impl EntityLimitManager {
     /// Configure entity limits from game config
-    pub fn configure_from_config(&mut self, config: &game_core::config::GameConfig) {
+    pub fn configure_from_config(&mut self, config: &GameConfig) {
         self.max_buildings = config.entity_limits.buildings;
         self.max_vehicles = config.entity_limits.vehicles;
         self.max_npcs = config.entity_limits.npcs;

@@ -238,8 +238,8 @@ fn is_point_on_road_spline(position: Vec3, road: &crate::systems::world::road_ne
 // System to update the old road detection calls
 pub fn update_road_dependent_systems(
     road_network: Res<RoadNetwork>,
-    mut vehicle_query: Query<&mut Transform, (With<game_core::components::Car>, Without<ActiveEntity>)>,
-    mut npc_query: Query<&mut Transform, (With<NPC>, Without<game_core::components::Car>, Without<ActiveEntity>)>,
+    mut vehicle_query: Query<&mut Transform, (With<Car>, Without<ActiveEntity>)>,
+    mut npc_query: Query<&mut Transform, (With<NPC>, Without<Car>, Without<ActiveEntity>)>,
 ) {
     // Update vehicle positions to stay on roads
     for mut transform in vehicle_query.iter_mut() {

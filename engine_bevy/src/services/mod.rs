@@ -5,5 +5,5 @@ pub mod timing_service;
 pub mod performance_service;
 
 pub use simple_services_v2::*;
-pub use timing_service::*;
+pub use timing_service::BevyTimingService;
 pub use performance_service::*;

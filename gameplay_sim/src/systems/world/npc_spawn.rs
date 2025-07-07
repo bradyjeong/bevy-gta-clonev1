@@ -189,7 +189,7 @@ pub fn spawn_npc_with_new_architecture(
 /// Migration system - converts old NPC entities to unified architecture
 pub fn migrate_legacy_npcs(
     mut commands: Commands,
-    legacy_npc_query: Query<(Entity, &game_core::components::NPC, &Transform), Without<NPCState>>,
+    legacy_npc_query: Query<(Entity, &NPC, &Transform), Without<NPCState>>,
 ) {
     for (entity, legacy_npc, _transform) in legacy_npc_query.iter() {
         // Create new state component based on legacy data

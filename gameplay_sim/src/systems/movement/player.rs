@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use std::cell::RefCell;
-use game_core::components::{Player, ActiveEntity, HumanMovement, HumanAnimation, HumanBehavior};
+use game_core::prelude::*;
 use crate::systems::input::{ControlManager, ControlAction};
 
 thread_local! {
@@ -114,12 +114,12 @@ pub fn human_player_animation(
         (&Transform, &HumanAnimation, &HumanMovement),
         (With<Player>, With<ActiveEntity>),
     >,
-    mut torso_query: Query<&mut Transform, (With<game_core::components::PlayerTorso>, Without<Player>)>,
-    mut head_query: Query<&mut Transform, (With<game_core::components::PlayerHead>, Without<Player>, Without<game_core::components::PlayerTorso>)>,
-    mut left_arm_query: Query<&mut Transform, (With<game_core::components::PlayerLeftArm>, Without<Player>, Without<game_core::components::PlayerTorso>, Without<game_core::components::PlayerHead>)>,
-    mut right_arm_query: Query<&mut Transform, (With<game_core::components::PlayerRightArm>, Without<Player>, Without<game_core::components::PlayerTorso>, Without<game_core::components::PlayerHead>, Without<game_core::components::PlayerLeftArm>)>,
-    mut left_leg_query: Query<&mut Transform, (With<game_core::components::PlayerLeftLeg>, Without<Player>, Without<game_core::components::PlayerTorso>, Without<game_core::components::PlayerHead>, Without<game_core::components::PlayerLeftArm>, Without<game_core::components::PlayerRightArm>)>,
-    mut right_leg_query: Query<&mut Transform, (With<game_core::components::PlayerRightLeg>, Without<Player>, Without<game_core::components::PlayerTorso>, Without<game_core::components::PlayerHead>, Without<game_core::components::PlayerLeftArm>, Without<game_core::components::PlayerRightArm>, Without<game_core::components::PlayerLeftLeg>)>,
+    mut torso_query: Query<&mut Transform, (With<PlayerTorso>, Without<Player>)>,
+    mut head_query: Query<&mut Transform, (With<PlayerHead>, Without<Player>, Without<PlayerTorso>)>,
+    mut left_arm_query: Query<&mut Transform, (With<PlayerLeftArm>, Without<Player>, Without<PlayerTorso>, Without<PlayerHead>)>,
+    mut right_arm_query: Query<&mut Transform, (With<PlayerRightArm>, Without<Player>, Without<PlayerTorso>, Without<PlayerHead>, Without<PlayerLeftArm>)>,
+    mut left_leg_query: Query<&mut Transform, (With<PlayerLeftLeg>, Without<Player>, Without<PlayerTorso>, Without<PlayerHead>, Without<PlayerLeftArm>, Without<PlayerRightArm>)>,
+    mut right_leg_query: Query<&mut Transform, (With<PlayerRightLeg>, Without<Player>, Without<PlayerTorso>, Without<PlayerHead>, Without<PlayerLeftArm>, Without<PlayerRightArm>, Without<PlayerLeftLeg>)>,
 ) {
     let Ok((_player_transform, animation, _movement)) = player_query.single() else {
         return;

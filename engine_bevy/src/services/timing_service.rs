@@ -1,11 +1,11 @@
 use bevy::prelude::*;
-use engine_core::timing::{TimingService as CoreTimingService, SystemType, EntityTimerType};
+use engine_core::prelude::*;
 use std::collections::HashMap;
 
 /// Bevy resource wrapper around the core timing service
 #[derive(Resource, Debug)]
-pub struct TimingService {
-    core_service: CoreTimingService,
+pub struct BevyTimingService {
+    core_service: TimingService,
     /// Map Bevy entities to core entity IDs
     entity_mapping: HashMap<Entity, u64>,
     next_entity_id: u64,
@@ -18,17 +18,17 @@ pub struct ManagedTiming {
     pub timer_type: EntityTimerType,
 }
 
-impl Default for TimingService {
+impl Default for BevyTimingService {
     fn default() -> Self {
         Self {
-            core_service: CoreTimingService::new(),
+            core_service: TimingService::new(),
             entity_mapping: HashMap::new(),
             next_entity_id: 1,
         }
     }
 }
 
-impl TimingService {
+impl BevyTimingService {
     pub fn new() -> Self {
         Self::default()
     }
@@ -95,7 +95,7 @@ impl ManagedTiming {
 
 /// System to update timing service each frame
 pub fn update_timing_service(
-    mut timing_service: ResMut<TimingService>,
+    mut timing_service: ResMut<BevyTimingService>,
     time: Res<Time>,
 ) {
     timing_service.update_time(time.delta_secs());
@@ -103,7 +103,7 @@ pub fn update_timing_service(
 
 /// System to cleanup despawned entities from timing service
 pub fn cleanup_timing_entities(
-    mut timing_service: ResMut<TimingService>,
+    mut timing_service: ResMut<BevyTimingService>,
     mut removed_entities: RemovedComponents<ManagedTiming>,
 ) {
     for entity in removed_entities.read() {
@@ -116,7 +116,7 @@ pub struct TimingServicePlugin;
 
 impl Plugin for TimingServicePlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<TimingService>()
+        app.init_resource::<BevyTimingService>()
             .add_systems(Update, (
                 update_timing_service,
                 cleanup_timing_entities,

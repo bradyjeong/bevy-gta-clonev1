@@ -5,9 +5,8 @@
 use bevy::prelude::*;
 pub use engine_core;
 
-pub mod adapters;
+pub(crate) mod adapters;
 pub mod prelude;
-pub mod services;
+pub(crate) mod services;
 
-pub use adapters::*;
-pub use prelude::*;
+// Only expose via prelude - no direct re-exports

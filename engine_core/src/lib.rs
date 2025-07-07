@@ -11,7 +11,4 @@ pub mod timing;
 pub mod performance;
 pub mod prelude;
 
-pub use math::*;
-pub use utils::*;
-pub use timing::*;
-pub use performance::*;
+// Only expose via prelude - no direct re-exports
