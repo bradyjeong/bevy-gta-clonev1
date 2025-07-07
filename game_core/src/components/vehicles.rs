@@ -258,6 +258,7 @@ pub struct TailRotor;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum VehicleType {
+    Car,       // Generic car for compatibility
     BasicCar,
     SuperCar,
     Helicopter,
@@ -270,6 +271,17 @@ pub enum VehicleLOD {
     Medium,    // 100-200m: Simplified mesh (single body)
     Low,       // 200-300m: Basic box with texture
     StateOnly, // 300m+: No rendering, just state
+}
+
+// Legacy Vehicle component for compatibility
+#[derive(Component, Clone)]
+pub struct Vehicle {
+    pub max_speed: f32,
+    pub current_speed: f32,
+    pub fuel: f32,
+    pub engine_power: f32,
+    pub vehicle_type: VehicleType,
+    pub spawn_time: f32,
 }
 
 // Lightweight state component - always in memory
@@ -288,6 +300,7 @@ pub struct VehicleState {
 impl VehicleState {
     pub fn new(vehicle_type: VehicleType) -> Self {
         let (max_speed, acceleration) = match vehicle_type {
+            VehicleType::Car => (60.0, 20.0),
             VehicleType::BasicCar => (60.0, 20.0),
             VehicleType::SuperCar => (261.0, 150.0),
             VehicleType::Helicopter => (80.0, 25.0),

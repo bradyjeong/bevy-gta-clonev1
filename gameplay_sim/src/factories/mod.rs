@@ -1,4 +1,5 @@
 // Unified factory system - replaces all duplicate factories
+pub mod entity_factory;
 pub mod entity_factory_unified;
 pub mod entity_builder_unified;
 
@@ -9,6 +10,7 @@ pub mod transform_factory;
 pub mod generic_bundle;
 pub mod rendering_factory;
 // Public API - unified factory system
+pub use entity_factory::*;
 pub use entity_factory_unified::*;
 pub use entity_builder_unified::*;
 // Specialized factory exports

@@ -100,11 +100,11 @@ fn generate_road_mesh_internal(road: &RoadSpline) -> Mesh {
         indices.push((base + 2) as u32);
     }
     
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, bevy::render::render_asset::RenderAssetUsages::default());
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-    mesh.set_indices(Some(Indices::U32(indices)));
+    mesh.insert_indices(Indices::U32(indices));
     
     mesh
 }
@@ -179,11 +179,11 @@ fn generate_center_line_mesh(road: &RoadSpline) -> Mesh {
         indices.push((base + 2) as u32);
     }
     
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, bevy::render::render_asset::RenderAssetUsages::default());
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-    mesh.set_indices(Some(Indices::U32(indices)));
+    mesh.insert_indices(Indices::U32(indices));
     
     mesh
 }
@@ -254,11 +254,11 @@ fn generate_lane_divider_mesh(road: &RoadSpline) -> Mesh {
         indices.push((base + 6) as u32);
     }
     
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, bevy::render::render_asset::RenderAssetUsages::default());
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-    mesh.set_indices(Some(Indices::U32(indices)));
+    mesh.insert_indices(Indices::U32(indices));
     
     mesh
 }
@@ -329,12 +329,12 @@ fn generate_dashed_center_line_mesh(road: &RoadSpline) -> Mesh {
         }
     }
     
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, bevy::render::render_asset::RenderAssetUsages::default());
     if !vertices.is_empty() {
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-        mesh.set_indices(Some(Indices::U32(indices)));
+        mesh.insert_indices(Indices::U32(indices));
     }
     
     mesh

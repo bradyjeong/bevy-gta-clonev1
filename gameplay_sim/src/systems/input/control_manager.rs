@@ -294,6 +294,21 @@ impl ControlManager {
         &self.active_controls
     }
 
+    /// Check if a control action is currently active
+    pub fn is_control_active(&self, action: ControlAction) -> bool {
+        self.active_controls.contains_key(&action) && self.active_controls[&action] > 0.0
+    }
+
+    /// Get the value of a control action (0.0 if not active)
+    pub fn get_control_value(&self, action: ControlAction) -> f32 {
+        *self.active_controls.get(&action).unwrap_or(&0.0)
+    }
+
+    /// Check if emergency controls are active
+    pub fn is_emergency_active(&self) -> bool {
+        self.is_control_active(ControlAction::Emergency)
+    }
+
     /// Set AI control decision for an entity
     pub fn update_ai_decision(&mut self, entity: Entity, decision: AIControlDecision) {
         self.ai_decisions.insert(entity, decision);

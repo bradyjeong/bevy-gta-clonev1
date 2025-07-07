@@ -12,7 +12,7 @@ use std::collections::HashSet;
 use game_core::prelude::*;
 use crate::systems::world::unified_world::{WorldManager, ChunkCoord};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum ContentLayer {
     Roads,
     Buildings,
