@@ -11,7 +11,10 @@ fn test_render_plugin_exists() {
     // Test that the plugin added successfully
     assert!(app.world().entities().len() >= 0);
 }
+
+#[test]
 fn test_basic_rendering_components() {
+    let mut app = App::new();
     app.add_plugins((
         MinimalPlugins,
         TransformPlugin,
@@ -26,12 +29,18 @@ fn test_basic_rendering_components() {
     let world = app.world();
     assert!(world.get::<Transform>(entity).is_some());
     assert!(world.get::<Visibility>(entity).is_some());
+}
+
+#[test]
 fn test_distance_calculation() {
     let pos1 = Vec3::new(0.0, 0.0, 0.0);
     let pos2 = Vec3::new(3.0, 4.0, 0.0);
     let distance = pos1.distance(pos2);
     // 3-4-5 triangle
     assert!((distance - 5.0).abs() < 1e-6);
+}
+
+#[test]
 fn test_lod_level_enum() {
     // Test that we can create LOD levels
     let high_lod = LodLevel::High;
@@ -39,7 +48,11 @@ fn test_lod_level_enum() {
     let sleep_lod = LodLevel::Sleep;
     assert_ne!(high_lod, medium_lod);
     assert_ne!(medium_lod, sleep_lod);
+}
+
+#[test]
 fn test_visibility_enum() {
     let visible = Visibility::Visible;
     let hidden = Visibility::Hidden;
     assert_ne!(visible, hidden);
+}

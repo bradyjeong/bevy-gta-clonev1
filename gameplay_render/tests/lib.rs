@@ -24,6 +24,8 @@ mod tests {
         let app = create_render_test_app();
         assert!(app.world().entities().len() > 0, "Test app should have entities");
     }
+    
+    #[test]
     fn test_lod_distances_config() {
         let config = create_test_game_config();
         
@@ -31,6 +33,9 @@ mod tests {
         assert_eq!(config.world.lod_distances[0], 150.0, "Vehicle LOD distance should be 150m");
         assert_eq!(config.npc.update_intervals.close_distance, 100.0, "NPC close distance should be 100m");
         assert_eq!(config.world.streaming_radius, 300.0, "Streaming radius should be 300m for buildings");
+    }
+    
+    #[test]
     fn test_rendering_components() {
         use bevy::prelude::*;
         use gameplay_render::prelude::*;
@@ -45,4 +50,5 @@ mod tests {
         let world = app.world();
         assert!(world.get::<LodLevel>(entity).is_some(), "LOD component should be present");
         assert!(world.get::<HighDetailVehicle>(entity).is_some(), "High detail marker should be present");
+    }
 }

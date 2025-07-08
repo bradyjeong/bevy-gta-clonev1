@@ -14,12 +14,12 @@ pub(crate) use game_core::prelude::*;
 // Re-export component tree from game_core for internal use
 pub use game_core::components;
 
-pub(crate) mod services;
+pub mod services;
 pub(crate) mod physics;
 pub(crate) mod movement;
 pub mod world;
 pub(crate) mod behavior;
-pub(crate) mod input;
+pub mod input;
 pub mod distance;
 pub(crate) mod lod;
 pub(crate) mod vehicles;

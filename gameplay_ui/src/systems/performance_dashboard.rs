@@ -278,7 +278,11 @@ fn generate_performance_report(dashboard: &PerformanceDashboard) {
                 OptimizationPriority::Medium => "🟡",
                 OptimizationPriority::High => "🟠",
                 OptimizationPriority::Critical => "🔴",
+            };
             println!("   {} {}: +{:.1} FPS", priority_icon, suggestion.description, suggestion.expected_gain);
+        }
+    }
+    
     // Revolutionary systems status
     println!("\n🎯 Revolutionary Systems Status:");
     println!("   ✅ GPU Culling System: ACTIVE (5x performance improvement)");
@@ -287,9 +291,13 @@ fn generate_performance_report(dashboard: &PerformanceDashboard) {
     println!("\n🎊 REVOLUTIONARY TRANSFORMATION COMPLETE! 🎊");
     println!("Ready for 100,000+ entities at 60+ FPS with infinite world scaling!");
     println!("==========================================\n");
+}
+
 pub struct PerformanceDashboardPlugin;
 impl Plugin for PerformanceDashboardPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_resource::<PerformanceDashboard>()
             .add_systems(Update, performance_dashboard_system);
+    }
+}

@@ -11,6 +11,29 @@ pub use game_core;
 pub use gameplay_sim;
 pub use gameplay_render;
 
+// ─── Temporary compatibility re-exports (Phase-3) ────────────────
+pub mod components { 
+    /// Temporary re-export for compatibility
+    pub use game_core::components::*; 
+}
+
+pub mod config { 
+    /// Temporary re-export for compatibility
+    pub use game_core::config::*; 
+}
+
+pub mod game_state { 
+    /// Temporary re-export for compatibility
+    pub use game_core::game_state::*; 
+}
+
+pub mod systems;
+
+pub mod services {
+    /// Temporary re-export for compatibility
+    pub use gameplay_sim::services::*;
+}
+
 // Public modules
 pub mod prelude;
 pub(crate) mod ui;

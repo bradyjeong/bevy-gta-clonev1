@@ -47,11 +47,13 @@ pub fn debug_game_state(
         let active_actions = input_manager.get_active_actions();
         if !active_actions.is_empty() {
             info!("Active input actions: {:?}", active_actions);
+        }
         if let Some(any_input) = [
             KeyCode::ArrowUp, KeyCode::ArrowDown, 
             KeyCode::ArrowLeft, KeyCode::ArrowRight
         ].iter().find(|key| input.pressed(**key)) {
             info!("Arrow key pressed: {:?}", any_input);
+        }
     }
     
     // Emergency fix: F2 ONLY to force restore player ActiveEntity and set to Walking + reset input system
@@ -67,10 +69,12 @@ pub fn debug_game_state(
             info!("Restored player ActiveEntity and set to Walking state");
         } else {
             warn!("No player entity found to fix!");
+        }
         // Reset input system
         input_manager.clear_all_input();
         input_config.reset_to_defaults();
         input_config.enable_fallback(); // Enable fallback mode for safety
         input_manager.reset_performance_stats();
         info!("Reset input system to defaults with fallback enabled");
+    }
 }
