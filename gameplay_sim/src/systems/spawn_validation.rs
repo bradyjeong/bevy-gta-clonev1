@@ -14,8 +14,8 @@ pub enum SpawnableType {
     Player,
 }
 impl SpawnableType {
-    /// Convert from unified ContentType to SpawnableType
-    pub fn from_content_type(content_type: ContentType) -> Self {
+    /// Convert from unified `ContentType` to `SpawnableType`
+    #[must_use] pub fn from_content_type(content_type: ContentType) -> Self {
         match content_type {
             ContentType::Vehicle => SpawnableType::Vehicle,
             ContentType::NPC => SpawnableType::NPC,
@@ -26,7 +26,7 @@ impl SpawnableType {
     }
     
     /// Get the minimum clearance radius for this entity type
-    pub fn clearance_radius(&self) -> f32 {
+    #[must_use] pub fn clearance_radius(&self) -> f32 {
         match self {
             SpawnableType::Vehicle => 8.0,      // Car size (increased from 4.0)
             SpawnableType::Aircraft => 16.0,    // Fighter jet/helicopter size (increased from 8.0)
@@ -38,7 +38,7 @@ impl SpawnableType {
         }
     }
     /// Get the minimum distance this entity should be from other entities
-    pub fn minimum_spacing(&self, other: &SpawnableType) -> f32 {
+    #[must_use] pub fn minimum_spacing(&self, other: &SpawnableType) -> f32 {
         // Calculate safe distance as sum of clearance radii plus buffer
         let buffer = match (self, other) {
             // Special cases for important spacing
@@ -126,7 +126,7 @@ impl SpatialGrid {
 }
 
 impl SpawnRegistry {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             entities: HashMap::new(),
             spatial_grid: SpatialGrid::new(20.0), // 20 unit grid cells
@@ -185,7 +185,7 @@ impl SpawnRegistry {
         true
     }
     /// Find the nearest safe spawn position within a search area
-    pub fn find_safe_spawn_position(
+    #[must_use] pub fn find_safe_spawn_position(
         &self,
         preferred_position: Vec3,
         entity_type: SpawnableType,
@@ -217,7 +217,7 @@ impl SpawnRegistry {
         None
     }
     /// Get all entities within a radius of a position
-    pub fn get_entities_in_radius(&self, position: Vec3, radius: f32) -> Vec<&SpawnedEntity> {
+    #[must_use] pub fn get_entities_in_radius(&self, position: Vec3, radius: f32) -> Vec<&SpawnedEntity> {
         let nearby_entities = self.spatial_grid.get_nearby_entities(position, radius);
         nearby_entities
             .iter()
@@ -260,10 +260,10 @@ pub fn cleanup_despawned_entities(
         .skip(start_index)
         .take(BATCH_SIZE)
         .filter_map(|(&entity, spawned_entity)| {
-            if !valid_entities.contains(&entity) {
-                Some((entity, spawned_entity.position))
-            } else {
+            if valid_entities.contains(&entity) {
                 None
+            } else {
+                Some((entity, spawned_entity.position))
             }
         })
         .collect();
@@ -302,7 +302,7 @@ impl SpawnValidator {
     }
 
     /// Quick check if a position is clear
-    pub fn is_clear(
+    #[must_use] pub fn is_clear(
         registry: &SpawnRegistry,
         position: Vec3,
         entity_type: SpawnableType,

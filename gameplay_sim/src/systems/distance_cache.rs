@@ -4,7 +4,7 @@ use std::collections::HashMap;
 /// Distance cache resource to avoid repeated distance calculations per frame
 #[derive(Resource, Default)]
 pub struct DistanceCache {
-    /// Cache of distance calculations: (entity1, entity2) -> (distance, distance_squared, last_frame)
+    /// Cache of distance calculations: (entity1, entity2) -> (distance, `distance_squared`, `last_frame`)
     cache: HashMap<(Entity, Entity), (f32, f32, u64)>,
     /// Frame counter for cache invalidation
     current_frame: u64,
@@ -23,7 +23,7 @@ pub struct DistanceCacheStats {
 }
 
 impl DistanceCacheStats {
-    pub fn hit_rate(&self) -> f64 {
+    #[must_use] pub fn hit_rate(&self) -> f64 {
         if self.hits + self.misses == 0 {
             0.0
         } else {
@@ -33,7 +33,7 @@ impl DistanceCacheStats {
 }
 
 impl DistanceCache {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             cache: HashMap::with_capacity(1024),
             current_frame: 0,
@@ -145,7 +145,7 @@ impl DistanceCache {
     }
 
     /// Get cache statistics
-    pub fn get_stats(&self) -> &DistanceCacheStats {
+    #[must_use] pub fn get_stats(&self) -> &DistanceCacheStats {
         &self.stats
     }
 
@@ -166,7 +166,7 @@ pub fn distance_cache_management_system(
     distance_cache.advance_frame();
     
     // Update movement trackers
-    for (mut tracker, transform) in movement_trackers.iter_mut() {
+    for (mut tracker, transform) in &mut movement_trackers {
         if tracker.has_moved_significantly(transform.translation) {
             tracker.update_position(transform.translation);
         }

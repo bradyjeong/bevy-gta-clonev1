@@ -64,7 +64,7 @@ impl EntityLimitManager {
         vec.push((entity, now));
     }
 
-    pub fn counts(&self) -> (usize, usize, usize, usize) {
+    #[must_use] pub fn counts(&self) -> (usize, usize, usize, usize) {
         (
             self.building_entities.len(),
             self.vehicle_entities.len(),

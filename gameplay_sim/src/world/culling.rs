@@ -2,8 +2,8 @@
 //! System:   Culling
 //! Purpose:  Manages entity visibility based on distance
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Transform, Cullable, Time, CullingSettings
-//! Writes:   Visibility, DistanceCache
+//! Reads:    `ActiveEntity`, Transform, Cullable, Time, `CullingSettings`
+//! Writes:   Visibility, `DistanceCache`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -40,7 +40,7 @@ pub fn distance_culling_system(
     }
     timer.timer = 0.0;
     
-    for (entity, mut cullable, mut visibility, transform) in cullable_query.iter_mut() {
+    for (entity, mut cullable, mut visibility, transform) in &mut cullable_query {
         // Use distance_squared for more efficient comparison
         let distance_squared = get_cached_distance_squared(
             &mut distance_cache,
@@ -56,11 +56,9 @@ pub fn distance_culling_system(
                 cullable.is_culled = true;
                 *visibility = Visibility::Hidden;
             }
-        } else {
-            if cullable.is_culled {
-                cullable.is_culled = false;
-                *visibility = Visibility::Visible;
-            }
+        } else if cullable.is_culled {
+            cullable.is_culled = false;
+            *visibility = Visibility::Visible;
         }
     }
 }

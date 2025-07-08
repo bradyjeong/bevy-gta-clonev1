@@ -2,8 +2,8 @@
 //! System:   Performance
 //! Purpose:  Monitors and optimizes performance
 //! Schedule: Update
-//! Reads:    DiagnosticsStore, Cullable, PerformanceStats, Time
-//! Writes:   PerformanceStats
+//! Reads:    `DiagnosticsStore`, Cullable, `PerformanceStats`, Time
+//! Writes:   `PerformanceStats`
 //! Invariants:
 //!   * System maintains consistent state
 //! Owner:    @simulation-team

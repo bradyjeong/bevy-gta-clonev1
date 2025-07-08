@@ -2,8 +2,8 @@
 //! System:   Layered Generation
 //! Purpose:  Handles user interface display and interaction
 //! Schedule: Update
-//! Reads:    UnifiedChunkEntity, Time, UnifiedWorldManager
-//! Writes:   UnifiedWorldManager
+//! Reads:    `UnifiedChunkEntity`, Time, `UnifiedWorldManager`
+//! Writes:   `UnifiedWorldManager`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //! Owner:    @simulation-team
@@ -301,15 +301,14 @@ fn detect_and_spawn_intersections(
     
     // Create intersection entities
     for (position, connected_roads, intersection_type, road_type) in detected_intersections {
-        println!("🚧 DEBUG: Creating intersection entity at {:?} with type {:?} and road type {:?}", 
-            position, intersection_type, road_type);
+        println!("🚧 DEBUG: Creating intersection entity at {position:?} with type {intersection_type:?} and road type {road_type:?}");
         let intersection_id = world_manager.road_network.add_intersection(
             position,
             intersection_type,
         );
         
         if let Some(intersection) = world_manager.road_network.intersections.get(&intersection_id) {
-            println!("🚧 DEBUG: Successfully spawned intersection entity {}", intersection_id);
+            println!("🚧 DEBUG: Successfully spawned intersection entity {intersection_id}");
             let intersection_entity = spawn_unified_intersection_entity(
                 commands,
                 coord,
@@ -360,9 +359,9 @@ fn find_road_intersection(road1: &RoadSpline, road2: &RoadSpline) -> Option<Vec3
 /// Determine which road type should dominate at intersection (higher priority wins)
 fn determine_dominant_road_type(road_type1: &RoadType, road_type2: &RoadType) -> RoadType {
     if road_type1.priority() >= road_type2.priority() {
-        road_type1.clone()
+        *road_type1
     } else {
-        road_type2.clone()
+        *road_type2
     }
 }
 
@@ -510,7 +509,7 @@ fn spawn_unified_building(
     // REPLACED: Use UnifiedEntityFactory for building spawning
     // This eliminates duplicate building spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::config::GameConfig;
+    
     
     let mut factory = UnifiedEntityFactory::with_config(game_core::config::GameConfig::default());
     let current_time = 0.0; // Placeholder time
@@ -581,33 +580,31 @@ fn generate_vehicles_for_chunk(
         let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
         
         // Only spawn on roads with sufficient spacing
-        if is_on_road_unified(position, &world_manager.road_network) {
-            if world_manager.placement_grid.can_place(
+        if is_on_road_unified(position, &world_manager.road_network) && world_manager.placement_grid.can_place(
                 position,
                 ContentType::Vehicle,
                 4.0, // Vehicle radius
                 25.0, // Minimum distance between vehicles
             ) {
-                let vehicle_entity = spawn_unified_vehicle(
-                    commands,
-                    coord,
-                    position,
-                    meshes,
-                    materials,
-                );
-                
-                // Add to placement grid
-                world_manager.placement_grid.add_entity(
-                    position,
-                    ContentType::Vehicle,
-                    4.0,
-                );
-                
-                // Add entity to chunk
-                let chunk = world_manager.get_chunk_mut(coord);
-                if let Some(chunk) = chunk {
-                    chunk.entities.push(vehicle_entity);
-                }
+            let vehicle_entity = spawn_unified_vehicle(
+                commands,
+                coord,
+                position,
+                meshes,
+                materials,
+            );
+            
+            // Add to placement grid
+            world_manager.placement_grid.add_entity(
+                position,
+                ContentType::Vehicle,
+                4.0,
+            );
+            
+            // Add entity to chunk
+            let chunk = world_manager.get_chunk_mut(coord);
+            if let Some(chunk) = chunk {
+                chunk.entities.push(vehicle_entity);
             }
         }
     }
@@ -625,7 +622,7 @@ fn spawn_unified_vehicle(
     // REPLACED: Use UnifiedEntityFactory for vehicle spawning
     // This eliminates duplicate vehicle spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::config::GameConfig;
+    
     
     let mut factory = UnifiedEntityFactory::with_config(game_core::config::GameConfig::default());
     let current_time = 0.0; // Placeholder time
@@ -696,33 +693,31 @@ fn generate_vegetation_for_chunk(
         let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
         
         // Only spawn vegetation away from roads and buildings
-        if !is_on_road_unified(position, &world_manager.road_network) {
-            if world_manager.placement_grid.can_place(
+        if !is_on_road_unified(position, &world_manager.road_network) && world_manager.placement_grid.can_place(
                 position,
                 ContentType::Tree,
                 2.0, // Tree radius
                 8.0, // Minimum distance between trees
             ) {
-                let tree_entity = spawn_unified_tree(
-                    commands,
-                    coord,
-                    position,
-                    meshes,
-                    materials,
-                );
-                
-                // Add to placement grid
-                world_manager.placement_grid.add_entity(
-                    position,
-                    ContentType::Tree,
-                    2.0,
-                );
-                
-                // Add entity to chunk
-                let chunk = world_manager.get_chunk_mut(coord);
-                if let Some(chunk) = chunk {
-                    chunk.entities.push(tree_entity);
-                }
+            let tree_entity = spawn_unified_tree(
+                commands,
+                coord,
+                position,
+                meshes,
+                materials,
+            );
+            
+            // Add to placement grid
+            world_manager.placement_grid.add_entity(
+                position,
+                ContentType::Tree,
+                2.0,
+            );
+            
+            // Add entity to chunk
+            let chunk = world_manager.get_chunk_mut(coord);
+            if let Some(chunk) = chunk {
+                chunk.entities.push(tree_entity);
             }
         }
     }
@@ -740,7 +735,7 @@ fn spawn_unified_tree(
     // REPLACED: Use UnifiedEntityFactory for tree spawning
     // This eliminates duplicate tree spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::config::GameConfig;
+    
     
     let mut factory = UnifiedEntityFactory::with_config(game_core::config::GameConfig::default());
     let current_time = 0.0; // Placeholder time

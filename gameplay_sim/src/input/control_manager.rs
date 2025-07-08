@@ -2,8 +2,8 @@
 //! System:   Control Manager
 //! Purpose:  Handles entity movement and physics
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Transform, Car, NPC, Helicopter
-//! Writes:   NPC, ControlManager
+//! Reads:    `ActiveEntity`, Transform, Car, NPC, Helicopter
+//! Writes:   NPC, `ControlManager`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Physics values are validated and finite
@@ -286,7 +286,7 @@ impl ControlManager {
         
         // Get physics configuration (clone to avoid borrowing issues)
         let physics_config = self.physics_configs.get(&vehicle_type)
-            .ok_or_else(|| format!("No physics configuration for vehicle type {:?}", vehicle_type))?
+            .ok_or_else(|| format!("No physics configuration for vehicle type {vehicle_type:?}"))?
             .clone();
         
         // Map input actions to control actions based on game state
@@ -451,10 +451,10 @@ impl ControlManager {
         }
         
         // Validate physics values
-        for (_action, value) in &self.active_controls {
+        for value in self.active_controls.values() {
             if !value.is_finite() || value.abs() > 10.0 {
                 self.validation_failures += 1;
-                return Err(format!("Invalid control value: {}", value));
+                return Err(format!("Invalid control value: {value}"));
             }
         }
         
@@ -506,22 +506,22 @@ impl ControlManager {
     }
     
     /// Get the current control value for a specific action
-    pub fn get_control_value(&self, action: ControlAction) -> f32 {
+    #[must_use] pub fn get_control_value(&self, action: ControlAction) -> f32 {
         self.active_controls.get(&action).copied().unwrap_or(0.0)
     }
     
     /// Check if a control action is active
-    pub fn is_control_active(&self, action: ControlAction) -> bool {
+    #[must_use] pub fn is_control_active(&self, action: ControlAction) -> bool {
         self.active_controls.contains_key(&action)
     }
     
     /// Get all active control actions
-    pub fn get_active_controls(&self) -> &HashMap<ControlAction, f32> {
+    #[must_use] pub fn get_active_controls(&self) -> &HashMap<ControlAction, f32> {
         &self.active_controls
     }
     
     /// Get physics configuration for a vehicle type
-    pub fn get_physics_config(&self, vehicle_type: ConfigVehicleType) -> Option<&VehiclePhysicsConfig> {
+    #[must_use] pub fn get_physics_config(&self, vehicle_type: ConfigVehicleType) -> Option<&VehiclePhysicsConfig> {
         self.physics_configs.get(&vehicle_type)
     }
     
@@ -531,7 +531,7 @@ impl ControlManager {
     }
     
     /// Get performance statistics
-    pub fn get_performance_stats(&self) -> (u128, u32) {
+    #[must_use] pub fn get_performance_stats(&self) -> (u128, u32) {
         (self.max_update_time_us, self.validation_failures)
     }
     
@@ -542,12 +542,12 @@ impl ControlManager {
     }
     
     /// Check if emergency systems are active
-    pub fn is_emergency_active(&self) -> bool {
+    #[must_use] pub fn is_emergency_active(&self) -> bool {
         self.emergency_brake_active
     }
     
     /// Check if stability system is intervening
-    pub fn is_stability_active(&self) -> bool {
+    #[must_use] pub fn is_stability_active(&self) -> bool {
         self.stability_intervention
     }
     
@@ -580,12 +580,12 @@ impl ControlManager {
     }
     
     /// Get AI control decision for an entity
-    pub fn get_ai_decision(&self, entity: Entity) -> Option<&AIControlDecision> {
+    #[must_use] pub fn get_ai_decision(&self, entity: Entity) -> Option<&AIControlDecision> {
         self.ai_decisions.get(&entity)
     }
     
     /// Convert AI decision to control actions
-    pub fn ai_decision_to_controls(&self, decision: &AIControlDecision) -> HashMap<ControlAction, f32> {
+    #[must_use] pub fn ai_decision_to_controls(&self, decision: &AIControlDecision) -> HashMap<ControlAction, f32> {
         let mut controls = HashMap::new();
         
         if decision.movement_direction.length() > 0.1 {
@@ -713,7 +713,7 @@ pub fn control_action_system(
     // Update control state using legacy method
     if let Err(e) = control_manager.update_controls(
         &input_manager,
-        &**current_state,
+        &current_state,
         velocity,
         transform,
     ) {
@@ -742,7 +742,7 @@ pub fn control_validation_system(
     };
     
     // Convert GameState to VehicleType and get physics config
-    let vehicle_type = ExistingVehicleControlConfig::game_state_to_vehicle_type(&**current_state);
+    let vehicle_type = ExistingVehicleControlConfig::game_state_to_vehicle_type(&current_state);
     let physics_config = if let Some(cfg) = control_manager.get_physics_config(vehicle_type) {
         cfg.clone()
     } else {
@@ -757,43 +757,43 @@ pub fn control_validation_system(
 }
 
 /// Helper functions for easy access to control values
-pub fn get_control_value(control_manager: &ControlManager, action: ControlAction) -> f32 {
+#[must_use] pub fn get_control_value(control_manager: &ControlManager, action: ControlAction) -> f32 {
     control_manager.get_control_value(action)
 }
 
-pub fn is_accelerating(control_manager: &ControlManager) -> bool {
+#[must_use] pub fn is_accelerating(control_manager: &ControlManager) -> bool {
     control_manager.is_control_active(ControlAction::Accelerate)
 }
 
-pub fn is_braking(control_manager: &ControlManager) -> bool {
+#[must_use] pub fn is_braking(control_manager: &ControlManager) -> bool {
     control_manager.is_control_active(ControlAction::Brake)
 }
 
-pub fn get_steering_input(control_manager: &ControlManager) -> f32 {
+#[must_use] pub fn get_steering_input(control_manager: &ControlManager) -> f32 {
     control_manager.get_control_value(ControlAction::Steer)
 }
 
-pub fn is_turbo_active(control_manager: &ControlManager) -> bool {
+#[must_use] pub fn is_turbo_active(control_manager: &ControlManager) -> bool {
     control_manager.is_control_active(ControlAction::Turbo)
 }
 
-pub fn is_afterburner_active(control_manager: &ControlManager) -> bool {
+#[must_use] pub fn is_afterburner_active(control_manager: &ControlManager) -> bool {
     control_manager.is_control_active(ControlAction::Afterburner)
 }
 
-pub fn get_pitch_input(control_manager: &ControlManager) -> f32 {
+#[must_use] pub fn get_pitch_input(control_manager: &ControlManager) -> f32 {
     control_manager.get_control_value(ControlAction::Pitch)
 }
 
-pub fn get_roll_input(control_manager: &ControlManager) -> f32 {
+#[must_use] pub fn get_roll_input(control_manager: &ControlManager) -> f32 {
     control_manager.get_control_value(ControlAction::Roll)
 }
 
-pub fn get_yaw_input(control_manager: &ControlManager) -> f32 {
+#[must_use] pub fn get_yaw_input(control_manager: &ControlManager) -> f32 {
     control_manager.get_control_value(ControlAction::Yaw)
 }
 
-pub fn get_throttle_input(control_manager: &ControlManager) -> f32 {
+#[must_use] pub fn get_throttle_input(control_manager: &ControlManager) -> f32 {
     control_manager.get_control_value(ControlAction::Throttle)
 }
 
@@ -813,7 +813,7 @@ pub fn npc_ai_control_system(
         Vec3::ZERO
     };
     
-    for (entity, transform, mut npc) in npc_query.iter_mut() {
+    for (entity, transform, mut npc) in &mut npc_query {
         // Register NPC entity
         control_manager.register_entity(entity, ControlEntityType::NPC);
         

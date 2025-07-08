@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::systems::water::*;
+use crate::systems::water::{setup_lake, setup_yacht, water_wave_system, yacht_buoyancy_system, yacht_movement_system, yacht_water_constraint_system};
 
 pub struct WaterPlugin;
 

@@ -2,7 +2,7 @@
 //! System:   Unified Factory Setup
 //! Purpose:  Handles user interface display and interaction
 //! Schedule: Update
-//! Reads:    UnifiedEntityFactory, GameConfig, Time
+//! Reads:    `UnifiedEntityFactory`, `GameConfig`, Time
 //! Writes:   System state
 //! Invariants:
 //!   * System maintains consistent state
@@ -13,7 +13,7 @@ use bevy::prelude::*;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use game_core::prelude::*;
 
-/// Setup system for the UnifiedEntityFactory resource
+/// Setup system for the `UnifiedEntityFactory` resource
 pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConfig>) {
     let mut factory = UnifiedEntityFactory::new();
     factory.configure_from_config(&config);

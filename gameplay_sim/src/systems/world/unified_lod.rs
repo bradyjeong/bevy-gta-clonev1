@@ -2,7 +2,7 @@
 //! System:   Unified LOD
 //! Purpose:  Manages level-of-detail for all entities
 //! Schedule: Update
-//! Reads:    ActiveEntity, Transform, Cullable
+//! Reads:    `ActiveEntity`, Transform, Cullable
 //! Writes:   Visibility, LOD state
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
@@ -37,7 +37,7 @@ pub struct LODPluginConfig {
 }
 
 impl LODPluginConfig {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             building_distance: 500.0,
             vehicle_distance: 300.0,
@@ -59,7 +59,7 @@ pub struct DistanceCache {
 }
 
 impl DistanceCache {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             cache: HashMap::new(),
             max_entries: 2048,
@@ -86,7 +86,7 @@ impl DistanceCache {
 }
 
 pub fn unified_lod_system(
-    mut commands: Commands,
+    commands: Commands,
     active_query: Query<(Entity, &Transform), With<ActiveEntity>>,
     mut cullable_query: Query<(Entity, &Transform, &mut Cullable)>,
     mut lod_coordinator: ResMut<LODCoordinator>,
@@ -101,7 +101,7 @@ pub fn unified_lod_system(
         lod_coordinator.stats.entities_culled = 0;
         
         // Process cullable entities
-        for (entity, transform, mut cullable) in cullable_query.iter_mut() {
+        for (entity, transform, mut cullable) in &mut cullable_query {
             if entity == active_entity {
                 continue; // Don't cull the active entity
             }
@@ -139,7 +139,7 @@ pub fn unified_lod_system(
 pub fn visibility_update_system(
     mut visibility_query: Query<(&mut Visibility, &Cullable)>,
 ) {
-    for (mut visibility, cullable) in visibility_query.iter_mut() {
+    for (mut visibility, cullable) in &mut visibility_query {
         if cullable.is_culled {
             *visibility = Visibility::Hidden;
         } else {
@@ -180,7 +180,7 @@ pub enum EntityType {
 }
 
 impl LODEntity {
-    pub fn new(entity_type: EntityType) -> Self {
+    #[must_use] pub fn new(entity_type: EntityType) -> Self {
         let base_distance = match entity_type {
             EntityType::Building => 500.0,
             EntityType::Vehicle => 300.0,
@@ -203,7 +203,7 @@ pub fn lod_level_system(
     if let Ok(active_transform) = active_query.single() {
         let active_pos = active_transform.translation;
         
-        for (transform, mut lod_entity) in lod_query.iter_mut() {
+        for (transform, mut lod_entity) in &mut lod_query {
             let distance = active_pos.distance(transform.translation);
             let new_lod = calculate_lod_level(distance, lod_entity.base_distance);
             

@@ -405,7 +405,7 @@ impl VehicleControlConfig {
     }
     
     /// Get the key for a specific action on a vehicle type
-    pub fn get_key_for_vehicle_action(&self, vehicle_type: VehicleType, action: InputAction) -> Option<KeyCode> {
+    #[must_use] pub fn get_key_for_vehicle_action(&self, vehicle_type: VehicleType, action: InputAction) -> Option<KeyCode> {
         self.lookup_cache
             .get(&vehicle_type)
             .and_then(|vehicle_bindings| vehicle_bindings.get(&action))
@@ -413,12 +413,12 @@ impl VehicleControlConfig {
     }
     
     /// Get all controls for a specific vehicle type
-    pub fn get_vehicle_controls(&self, vehicle_type: VehicleType) -> Option<&Vec<ControlBinding>> {
+    #[must_use] pub fn get_vehicle_controls(&self, vehicle_type: VehicleType) -> Option<&Vec<ControlBinding>> {
         self.vehicle_controls.get(&vehicle_type)
     }
     
     /// Get controls filtered by category
-    pub fn get_vehicle_controls_by_category(&self, vehicle_type: VehicleType, category: ControlCategory) -> Vec<&ControlBinding> {
+    #[must_use] pub fn get_vehicle_controls_by_category(&self, vehicle_type: VehicleType, category: ControlCategory) -> Vec<&ControlBinding> {
         self.vehicle_controls
             .get(&vehicle_type)
             .map(|controls| {
@@ -430,7 +430,7 @@ impl VehicleControlConfig {
     }
     
     /// Get all available actions for a vehicle type
-    pub fn get_available_actions(&self, vehicle_type: VehicleType) -> Vec<InputAction> {
+    #[must_use] pub fn get_available_actions(&self, vehicle_type: VehicleType) -> Vec<InputAction> {
         self.vehicle_controls
             .get(&vehicle_type)
             .map(|controls| controls.iter().map(|c| c.action).collect())
@@ -438,15 +438,14 @@ impl VehicleControlConfig {
     }
     
     /// Check if an action is available for a vehicle type
-    pub fn is_action_available_for_vehicle(&self, vehicle_type: VehicleType, action: InputAction) -> bool {
+    #[must_use] pub fn is_action_available_for_vehicle(&self, vehicle_type: VehicleType, action: InputAction) -> bool {
         self.lookup_cache
             .get(&vehicle_type)
-            .map(|bindings| bindings.contains_key(&action))
-            .unwrap_or(false)
+            .is_some_and(|bindings| bindings.contains_key(&action))
     }
     
-    /// Convert GameState to VehicleType for compatibility
-    pub fn game_state_to_vehicle_type(state: &GameState) -> VehicleType {
+    /// Convert `GameState` to `VehicleType` for compatibility
+    #[must_use] pub fn game_state_to_vehicle_type(state: &GameState) -> VehicleType {
         match state {
             GameState::Walking => VehicleType::Walking,
             GameState::Driving => VehicleType::Car, // Default to Car, could be enhanced to detect SuperCar
@@ -456,7 +455,7 @@ impl VehicleControlConfig {
     }
     
     /// Get controls for current game state
-    pub fn get_controls_for_state(&self, state: &GameState) -> Option<&Vec<ControlBinding>> {
+    #[must_use] pub fn get_controls_for_state(&self, state: &GameState) -> Option<&Vec<ControlBinding>> {
         let vehicle_type = Self::game_state_to_vehicle_type(state);
         self.get_vehicle_controls(vehicle_type)
     }
@@ -481,7 +480,7 @@ impl VehicleControlConfig {
             }
         }
         
-        Err(format!("Action {:?} not found for vehicle type {:?}", action, vehicle_type))
+        Err(format!("Action {action:?} not found for vehicle type {vehicle_type:?}"))
     }
     
     /// Add a new control binding to a vehicle type
@@ -501,7 +500,7 @@ impl VehicleControlConfig {
         // Add the control
         self.vehicle_controls
             .entry(vehicle_type)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(binding);
         
         self.rebuild_lookup_cache();

@@ -2,8 +2,8 @@
 //! System:   Supercar Effects
 //! Purpose:  Handles entity spawning and creation
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Car, SuperCar, ExhaustFlame, Time
-//! Writes:   SuperCar, MeshMaterial3d, Transform, ExhaustFlamePool
+//! Reads:    `ActiveEntity`, Car, `SuperCar`, `ExhaustFlame`, Time
+//! Writes:   `SuperCar`, `MeshMaterial3d`, Transform, `ExhaustFlamePool`
 //! Invariants:
 //!   * Only active entities can be controlled
 //!   * Timing intervals are respected
@@ -155,7 +155,7 @@ pub fn exhaust_flame_cleanup_system(
     _time: Res<Time>,
 ) {
     // Simple auto-hide after 0.1 seconds
-    for (mut visibility, mut transform) in flame_query.iter_mut() {
+    for (mut visibility, mut transform) in &mut flame_query {
         if matches!(*visibility, Visibility::Visible) {
             // Gradually reduce scale for natural fade effect
             transform.scale *= 0.95;

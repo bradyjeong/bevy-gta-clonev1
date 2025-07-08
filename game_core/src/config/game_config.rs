@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 /// Main game configuration structure containing all data-driven values
 #[derive(Debug, Clone, Serialize, Deserialize, Resource)]
+#[derive(Default)]
 pub struct GameConfig {
     pub spawn_rates: SpawnRatesConfig,
     pub entity_limits: EntityLimitsConfig,
@@ -201,28 +202,6 @@ pub struct BatchingConfig {
     pub max_stale_frames: u32,
 }
 
-impl Default for GameConfig {
-    fn default() -> Self {
-        Self {
-            spawn_rates: SpawnRatesConfig::default(),
-            entity_limits: EntityLimitsConfig::default(),
-            lod_distances: LodDistancesConfig::default(),
-            culling_distances: CullingDistancesConfig::default(),
-            update_intervals: UpdateIntervalsConfig::default(),
-            physics: PhysicsConfig::default(),
-            vehicle_physics: VehiclePhysicsConfig::default(),
-            world: WorldConfig::default(),
-            audio: AudioConfig::default(),
-            visual: VisualConfig::default(),
-            npc_behavior: NpcBehaviorConfig::default(),
-            performance: PerformanceConfig::default(),
-            vehicles: VehicleConfig::default(),
-            npc: NpcConfig::default(),
-            camera: CameraConfig::default(),
-            batching: BatchingConfig::default(),
-        }
-    }
-}
 
 impl Default for SpawnRatesConfig {
     fn default() -> Self {
@@ -429,15 +408,15 @@ impl GameConfig {
 
 impl PhysicsConfig {
     /// Convert u32 group to Rapier Group
-    pub fn static_group(&self) -> Group {
+    #[must_use] pub fn static_group(&self) -> Group {
         Group::from_bits_truncate(self.static_group)
     }
     
-    pub fn vehicle_group(&self) -> Group {
+    #[must_use] pub fn vehicle_group(&self) -> Group {
         Group::from_bits_truncate(self.vehicle_group)
     }
     
-    pub fn character_group(&self) -> Group {
+    #[must_use] pub fn character_group(&self) -> Group {
         Group::from_bits_truncate(self.character_group)
     }
 

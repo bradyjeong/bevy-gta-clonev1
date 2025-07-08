@@ -2,7 +2,7 @@
 //! System:   Npc Spawn
 //! Purpose:  Manages physics simulation and constraints
 //! Schedule: Update (throttled)
-//! Reads:    GroundDetectionService, Transform, NPCState, GameConfig, TimingService
+//! Reads:    `GroundDetectionService`, Transform, `NPCState`, `GameConfig`, `TimingService`
 //! Writes:   System state
 //! Invariants:
 //!   * Distance calculations are cached for performance
@@ -24,8 +24,8 @@ use crate::services::ground_detection::GroundDetectionService;
 use rand::prelude::*;
 
 /// Spawn NPCs using the new architecture while maintaining compatibility
-/// This system replaces the old spawn_dynamic_npc function
-/// CONSOLIDATED: Now uses spawn validation from UnifiedEntityFactory
+/// This system replaces the old `spawn_dynamic_npc` function
+/// CONSOLIDATED: Now uses spawn validation from `UnifiedEntityFactory`
 pub fn spawn_new_npc_system(
     mut commands: Commands,
     timing_service: Res<TimingService>,
@@ -56,7 +56,7 @@ pub fn spawn_new_npc_system(
     }
 }
 
-/// Spawn a single NPC with ground detection (simplified version without RapierContext)
+/// Spawn a single NPC with ground detection (simplified version without `RapierContext`)
 pub fn spawn_simple_npc_with_ground_detection_simple(
     commands: &mut Commands,
     position: Vec2,
@@ -94,7 +94,7 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
         GlobalTransform::default(),
     )).id();
     
-    println!("DEBUG: Spawned NPC at {:?} (ground: {:.2})", spawn_position, ground_height);
+    println!("DEBUG: Spawned NPC at {spawn_position:?} (ground: {ground_height:.2})");
     entity
 }
 
@@ -216,7 +216,7 @@ pub fn migrate_legacy_npcs(
             ManagedTiming::new(EntityTimerType::NPCLOD),
         ));
         
-        println!("DEBUG: Migrated NPC entity {:?} to unified architecture", entity);
+        println!("DEBUG: Migrated NPC entity {entity:?} to unified architecture");
     }
 }
 

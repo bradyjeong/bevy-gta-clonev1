@@ -2,8 +2,8 @@
 //! System:   Realistic Vehicle Physics
 //! Purpose:  Processes user input and control mapping
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, RealisticVehicle, Transform, VehicleDynamics, GameConfig
-//! Writes:   Transform, TirePhysics
+//! Reads:    `ActiveEntity`, `RealisticVehicle`, Transform, `VehicleDynamics`, `GameConfig`
+//! Writes:   Transform, `TirePhysics`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Physics values are validated and finite
@@ -365,7 +365,7 @@ pub fn vehicle_wheel_update_system(
     vehicle_query: Query<(&Transform, &VehicleDynamics), (With<RealisticVehicle>, Without<VehicleWheel>)>,
 ) {
     let dt = time.delta_secs();
-    for (mut wheel_transform, wheel, child_of) in wheel_query.iter_mut() {
+    for (mut wheel_transform, wheel, child_of) in &mut wheel_query {
         if let Ok((_vehicle_transform, dynamics)) = vehicle_query.get(child_of.0) {
             // Update wheel rotation based on vehicle speed
             let rotation_speed = dynamics.speed / wheel.radius;

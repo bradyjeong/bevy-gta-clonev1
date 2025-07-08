@@ -1,0 +1,2023 @@
+warning: /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/Cargo.toml: unused manifest key: workspace.features
+    Checking gta_game v0.1.0 (/Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_bin)
+    Checking gameplay_sim v0.1.0 (/Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/gameplay_sim)
+error: unexpected `cfg` condition value: `heavy_tests`
+ --> gameplay_sim/tests/simple_test.rs:1:8
+  |
+1 | #![cfg(feature = "heavy_tests")]
+  |        ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `feature` are: `ci_fast` and `default`
+  = help: consider adding `heavy_tests` as a feature in `Cargo.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: `-D unexpected-cfgs` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(unexpected_cfgs)]`
+
+error: unexpected `cfg` condition value: `heavy_tests`
+ --> gameplay_sim/tests/mod.rs:1:8
+  |
+1 | #![cfg(feature = "heavy_tests")]
+  |        ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `feature` are: `ci_fast` and `default`
+  = help: consider adding `heavy_tests` as a feature in `Cargo.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: `-D unexpected-cfgs` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(unexpected_cfgs)]`
+
+error: unexpected `cfg` condition value: `heavy_tests`
+ --> gameplay_sim/tests/lib.rs:1:8
+  |
+1 | #![cfg(feature = "heavy_tests")]
+  |        ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `feature` are: `ci_fast` and `default`
+  = help: consider adding `heavy_tests` as a feature in `Cargo.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: `-D unexpected-cfgs` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(unexpected_cfgs)]`
+
+error: could not compile `gameplay_sim` (test "simple_test") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `gameplay_sim` (test "lib") due to 1 previous error
+error: could not compile `gameplay_sim` (test "mod") due to 1 previous error
+error[E0432]: unresolved import `distance_cache_debug`
+  --> game_bin/src/systems/mod.rs:19:9
+   |
+19 | pub use distance_cache_debug::DistanceCacheDebugPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^ use of unresolved module or unlinked crate `distance_cache_debug`
+   |
+   = help: if you wanted to use a crate named `distance_cache_debug`, use `cargo add distance_cache_debug` to add it to your `Cargo.toml`
+
+error[E0432]: unresolved import `transform_sync`
+  --> game_bin/src/systems/mod.rs:20:9
+   |
+20 | pub use transform_sync::TransformSyncPlugin;
+   |         ^^^^^^^^^^^^^^ use of unresolved module or unlinked crate `transform_sync`
+   |
+   = help: if you wanted to use a crate named `transform_sync`, use `cargo add transform_sync` to add it to your `Cargo.toml`
+
+error[E0432]: unresolved import `simple_service_example`
+  --> game_bin/src/systems/mod.rs:26:9
+   |
+26 | pub use simple_service_example::{
+   |         ^^^^^^^^^^^^^^^^^^^^^^ use of unresolved module or unlinked crate `simple_service_example`
+   |
+   = help: if you wanted to use a crate named `simple_service_example`, use `cargo add simple_service_example` to add it to your `Cargo.toml`
+
+error[E0432]: unresolved imports `batching::mark_transform_dirty_system`, `batching::mark_visibility_dirty_system`, `batching::mark_physics_dirty_system`, `batching::batch_transform_processing_system`, `batching::batch_physics_processing_system`, `batching::batch_lod_processing_system`, `batching::batch_culling_system`, `batching::dirty_flag_cleanup_system`, `batching::dirty_flags_metrics_system`
+  --> game_bin/src/systems/mod.rs:40:5
+   |
+40 |     mark_transform_dirty_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `mark_transform_dirty_system` in `systems::batching`
+41 |     mark_visibility_dirty_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `mark_visibility_dirty_system` in `systems::batching`
+42 |     mark_physics_dirty_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^ no `mark_physics_dirty_system` in `systems::batching`
+43 |     batch_transform_processing_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `batch_transform_processing_system` in `systems::batching`
+44 |     batch_physics_processing_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `batch_physics_processing_system` in `systems::batching`
+45 |     batch_lod_processing_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `batch_lod_processing_system` in `systems::batching`
+46 |     batch_culling_system,
+   |     ^^^^^^^^^^^^^^^^^^^^ no `batch_culling_system` in `systems::batching`
+47 |     dirty_flag_cleanup_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^ no `dirty_flag_cleanup_system` in `systems::batching`
+48 |     dirty_flags_metrics_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ no `dirty_flags_metrics_system` in `systems::batching`
+
+error[E0432]: unresolved import `batching_test`
+  --> game_bin/src/systems/mod.rs:52:9
+   |
+52 | pub use batching_test::{
+   |         ^^^^^^^^^^^^^ use of unresolved module or unlinked crate `batching_test`
+   |
+   = help: if you wanted to use a crate named `batching_test`, use `cargo add batching_test` to add it to your `Cargo.toml`
+
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `rendering`
+  --> game_bin/src/systems/mod.rs:64:9
+   |
+64 | pub use rendering::vegetation_instancing::{
+   |         ^^^^^^^^^ use of unresolved module or unlinked crate `rendering`
+   |
+   = help: if you wanted to use a crate named `rendering`, use `cargo add rendering` to add it to your `Cargo.toml`
+
+error[E0432]: unresolved import `entity_creation_system`
+  --> game_bin/src/systems/mod.rs:58:9
+   |
+58 | pub use entity_creation_system::{
+   |         ^^^^^^^^^^^^^^^^^^^^^^ use of unresolved module or unlinked crate `entity_creation_system`
+   |
+   = help: if you wanted to use a crate named `entity_creation_system`, use `cargo add entity_creation_system` to add it to your `Cargo.toml`
+
+error[E0432]: unresolved import `gameplay_ui`
+ --> game_bin/src/plugins/game_plugin.rs:4:5
+  |
+4 | use gameplay_ui::UiPlugin;
+  |     ^^^^^^^^^^^ use of unresolved module or unlinked crate `gameplay_ui`
+  |
+help: there is a crate or module with a similar name
+  |
+4 - use gameplay_ui::UiPlugin;
+4 + use gameplay_sim::UiPlugin;
+  |
+
+error[E0432]: unresolved import `ui_plugin`
+  --> game_bin/src/plugins/mod.rs:12:9
+   |
+12 | pub use ui_plugin::UIPlugin;
+   |         ^^^^^^^^^ use of unresolved module or unlinked crate `ui_plugin`
+   |
+   = help: if you wanted to use a crate named `ui_plugin`, use `cargo add ui_plugin` to add it to your `Cargo.toml`
+
+error[E0433]: failed to resolve: could not find `audio` in `bevy`
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:189:31
+    |
+189 |         sink.set_volume(bevy::audio::Volume::Linear(audio_state.engine_volume * config.audio.master_volume));
+    |                               ^^^^^ could not find `audio` in `bevy`
+
+error[E0433]: failed to resolve: could not find `audio` in `bevy`
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:195:31
+    |
+195 |         sink.set_volume(bevy::audio::Volume::Linear(audio_state.tire_screech_volume * config.audio.master_volume));
+    |                               ^^^^^ could not find `audio` in `bevy`
+
+error[E0433]: failed to resolve: could not find `audio` in `bevy`
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:200:31
+    |
+200 |         sink.set_volume(bevy::audio::Volume::Linear(audio_state.wind_noise_volume * config.audio.master_volume));
+    |                               ^^^^^ could not find `audio` in `bevy`
+
+error[E0433]: failed to resolve: could not find `audio` in `bevy`
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:205:31
+    |
+205 |         sink.set_volume(bevy::audio::Volume::Linear(audio_state.brake_noise_volume * config.audio.master_volume));
+    |                               ^^^^^ could not find `audio` in `bevy`
+
+error[E0412]: cannot find type `AudioSink` in this scope
+  --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:60:33
+   |
+60 |     mut audio_sinks: Query<&mut AudioSink>,
+   |                                 ^^^^^^^^^ not found in this scope
+   |
+help: you might be missing a type parameter
+   |
+48 | pub fn realistic_vehicle_audio_system<AudioSink>(
+   |                                      +++++++++++
+
+error[E0412]: cannot find type `AudioSink` in this scope
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:184:34
+    |
+184 |     audio_sinks: &mut Query<&mut AudioSink>,
+    |                                  ^^^^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+181 | fn apply_audio_to_sources<AudioSink>(
+    |                          +++++++++++
+
+error[E0425]: cannot find value `new_unified_distance_culling_system` in module `crate::systems::world`
+   --> game_bin/src/plugins/batching_plugin.rs:47:57
+    |
+47  |               .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
+    |                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/gameplay_sim/src/systems/world/unified_distance_culling.rs:108:1
+    |
+108 | / pub fn unified_distance_culling_system(
+109 | |     mut commands: Commands,
+110 | |     active_query: Query<&Transform, With<ActiveEntity>>,
+111 | |     mut cullable_query: Query<(Entity, &mut UnifiedCullable, &Transform, &mut Visibility)>,
+112 | |     mut stats: ResMut<DistanceCullingStats>,
+113 | |     time: Res<Time>,
+114 | | ) {
+    | |_- similarly named function `unified_distance_culling_system` defined here
+    |
+help: a function with a similar name exists
+    |
+47  -             .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
+47  +             .add_systems(Update, crate::systems::world::unified_distance_culling_system);
+    |
+help: consider importing this function
+    |
+1   + use gameplay_sim::world::unified_distance_culling::new_unified_distance_culling_system;
+    |
+help: if you import `new_unified_distance_culling_system`, refer to it directly
+    |
+47  -             .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
+47  +             .add_systems(Update, new_unified_distance_culling_system);
+    |
+
+error[E0425]: cannot find value `new_unified_distance_culling_system` in module `crate::systems::world`
+   --> game_bin/src/plugins/batching_plugin.rs:145:61
+    |
+145 |                   .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
+    |                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/gameplay_sim/src/systems/world/unified_distance_culling.rs:108:1
+    |
+108 | / pub fn unified_distance_culling_system(
+109 | |     mut commands: Commands,
+110 | |     active_query: Query<&Transform, With<ActiveEntity>>,
+111 | |     mut cullable_query: Query<(Entity, &mut UnifiedCullable, &Transform, &mut Visibility)>,
+112 | |     mut stats: ResMut<DistanceCullingStats>,
+113 | |     time: Res<Time>,
+114 | | ) {
+    | |_- similarly named function `unified_distance_culling_system` defined here
+    |
+help: a function with a similar name exists
+    |
+145 -                 .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
+145 +                 .add_systems(Update, crate::systems::world::unified_distance_culling_system);
+    |
+help: consider importing this function
+    |
+1   + use gameplay_sim::world::unified_distance_culling::new_unified_distance_culling_system;
+    |
+help: if you import `new_unified_distance_culling_system`, refer to it directly
+    |
+145 -                 .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
+145 +                 .add_systems(Update, new_unified_distance_culling_system);
+    |
+
+error[E0603]: struct `MovementTracker` is private
+   --> game_bin/src/systems/mod.rs:36:25
+    |
+36  | pub use distance_cache::MovementTracker;
+    |                         ^^^^^^^^^^^^^^^ private struct
+    |
+note: the struct `MovementTracker` is defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/gameplay_sim/src/systems/distance_cache.rs:159:5
+    |
+159 | use game_core::prelude::MovementTracker;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: import `MovementTracker` directly
+    |
+36  - pub use distance_cache::MovementTracker;
+36  + pub use game_core::components::spatial::MovementTracker;
+    |
+
+error: unused import: `jet_flames::*`
+  --> game_bin/src/systems/effects/mod.rs:14:9
+   |
+14 | pub use jet_flames::*;
+   |         ^^^^^^^^^^^^^
+   |
+note: the lint level is defined here
+  --> game_bin/src/lib.rs:2:9
+   |
+2  | #![deny(warnings)]
+   |         ^^^^^^^^
+   = note: `#[deny(unused_imports)]` implied by `#[deny(warnings)]`
+
+error: unused import: `realistic_vehicle_audio::*`
+  --> game_bin/src/systems/audio.rs:11:9
+   |
+11 | pub use realistic_vehicle_audio::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `spawn_validation::SpawnValidationPlugin`
+  --> game_bin/src/systems/mod.rs:17:9
+   |
+17 | pub use spawn_validation::SpawnValidationPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `distance_cache::DistanceCachePlugin`
+  --> game_bin/src/systems/mod.rs:18:9
+   |
+18 | pub use distance_cache::DistanceCachePlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `unified_distance_calculator::UnifiedDistanceCalculatorPlugin`
+  --> game_bin/src/systems/mod.rs:21:9
+   |
+21 | pub use unified_distance_calculator::UnifiedDistanceCalculatorPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `performance_monitor::UnifiedPerformancePlugin`
+  --> game_bin/src/systems/mod.rs:22:9
+   |
+22 | pub use performance_monitor::UnifiedPerformancePlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `performance_integration::PerformanceIntegrationPlugin`
+  --> game_bin/src/systems/mod.rs:23:9
+   |
+23 | pub use performance_integration::PerformanceIntegrationPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `CollisionGroupHelper`, `InputProcessor`, `PhysicsBodySetup`, and `PhysicsUtilities`
+  --> game_bin/src/systems/mod.rs:33:25
+   |
+33 | pub use physics_utils::{PhysicsUtilities, CollisionGroupHelper, PhysicsBodySetup, InputProcessor};
+   |                         ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
+
+error: unused imports: `player_collision_resolution_system` and `player_movement_validation_system`
+  --> game_bin/src/systems/mod.rs:70:5
+   |
+70 |     player_collision_resolution_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+71 |     player_movement_validation_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `player_plugin::PlayerPlugin`
+ --> game_bin/src/plugins/mod.rs:9:9
+  |
+9 | pub use player_plugin::PlayerPlugin;
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `vehicle_plugin::VehiclePlugin`
+  --> game_bin/src/plugins/mod.rs:10:9
+   |
+10 | pub use vehicle_plugin::VehiclePlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `unified_world_plugin::UnifiedWorldPlugin`
+  --> game_bin/src/plugins/mod.rs:11:9
+   |
+11 | pub use unified_world_plugin::UnifiedWorldPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `water_plugin::WaterPlugin`
+  --> game_bin/src/plugins/mod.rs:13:9
+   |
+13 | pub use water_plugin::WaterPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `persistence_plugin::PersistencePlugin`
+  --> game_bin/src/plugins/mod.rs:14:9
+   |
+14 | pub use persistence_plugin::PersistencePlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `input_plugin::InputPlugin`
+  --> game_bin/src/plugins/mod.rs:15:9
+   |
+15 | pub use input_plugin::InputPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `vegetation_lod_plugin::VegetationLODPlugin`
+  --> game_bin/src/plugins/mod.rs:16:9
+   |
+16 | pub use vegetation_lod_plugin::VegetationLODPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `batching_plugin::BatchingPlugin`
+  --> game_bin/src/plugins/mod.rs:19:9
+   |
+19 | pub use batching_plugin::BatchingPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `bevy::prelude::*`
+ --> game_bin/src/setup.rs:4:5
+  |
+4 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+
+error: unexpected `cfg` condition value: `strict_docs`
+ --> gameplay_sim/src/lib.rs:4:13
+  |
+4 | #![cfg_attr(feature = "strict_docs", deny(missing_docs))]
+  |             ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `feature` are: `ci_fast` and `default`
+  = help: consider adding `strict_docs` as a feature in `Cargo.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+note: the lint level is defined here
+ --> gameplay_sim/src/lib.rs:2:9
+  |
+2 | #![deny(warnings)]
+  |         ^^^^^^^^
+  = note: `#[deny(unexpected_cfgs)]` implied by `#[deny(warnings)]`
+
+error: unexpected `cfg` condition value: `strict_docs`
+ --> gameplay_sim/src/lib.rs:5:17
+  |
+5 | #![cfg_attr(not(feature = "strict_docs"), allow(missing_docs))]
+  |                 ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: expected values for `feature` are: `ci_fast` and `default`
+  = help: consider adding `strict_docs` as a feature in `Cargo.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition value: `debug-movement`
+  --> gameplay_sim/src/world/debug.rs:23:11
+   |
+23 |     #[cfg(feature = "debug-movement")]
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: expected values for `feature` are: `ci_fast` and `default`
+   = help: consider adding `debug-movement` as a feature in `Cargo.toml`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition value: `debug-ui`
+   --> gameplay_sim/src/world/vegetation_lod.rs:189:13
+    |
+189 |     if cfg!(feature = "debug-ui") {
+    |             ^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: expected values for `feature` are: `ci_fast` and `default`
+    = help: consider adding `debug-ui` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+error: ambiguous glob re-exports
+  --> gameplay_sim/src/world/mod.rs:37:9
+   |
+37 | pub use road_network::*;
+   |         ^^^^^^^^^^^^^^^ the name `generate_road_mesh` in the value namespace is first re-exported here
+38 | pub use road_mesh::*;
+   |         ------------ but the name `generate_road_mesh` in the value namespace is also re-exported here
+   |
+   = note: `#[deny(ambiguous_glob_reexports)]` implied by `#[deny(warnings)]`
+
+error: ambiguous glob re-exports
+  --> gameplay_sim/src/input/mod.rs:21:9
+   |
+21 | pub use control_manager::*;
+   |         ^^^^^^^^^^^^^^^^^^ the name `is_accelerating` in the value namespace is first re-exported here
+22 | pub use control_manager_ext::*;
+   |         ---------------------- but the name `is_accelerating` in the value namespace is also re-exported here
+
+error: ambiguous glob re-exports
+  --> gameplay_sim/src/input/mod.rs:21:9
+   |
+21 | pub use control_manager::*;
+   |         ^^^^^^^^^^^^^^^^^^ the name `is_braking` in the value namespace is first re-exported here
+22 | pub use control_manager_ext::*;
+   |         ---------------------- but the name `is_braking` in the value namespace is also re-exported here
+
+error[E0308]: mismatched types
+  --> game_bin/src/systems/performance_integration.rs:57:13
+   |
+57 |         let (max_time_us, _) = control_manager.get_performance_stats();
+   |             ^^^^^^^^^^^^^^^^   --------------------------------------- this expression has type `(u64, u64, u64)`
+   |             |
+   |             expected a tuple with 3 elements, found one with 2 elements
+   |
+   = note: expected tuple `(u64, u64, u64)`
+              found tuple `(_, _)`
+
+error[E0599]: no method named `len` found for struct `gameplay_sim::prelude::Res<'_, gameplay_sim::systems::distance_cache::DistanceCache>` in the current scope
+  --> game_bin/src/systems/performance_integration.rs:76:57
+   |
+76 |         tracker.cache_stats.distance_cache_size = cache.len();
+   |                                                         ^^^ method not found in `Res<'_, DistanceCache>`
+
+error[E0609]: no field `config` on type `&&gameplay_sim::systems::world::UnifiedCullable`
+   --> game_bin/src/systems/batch_processing.rs:129:81
+    |
+129 |                     let should_be_visible = !cull.is_culled && distance <= cull.config.cull_distance;
+    |                                                                                 ^^^^^^ unknown field
+    |
+    = note: available fields are: `max_distance`, `current_lod`, `is_culled`, `last_distance`, `dirty`
+
+error[E0609]: no field `config` on type `&gameplay_sim::systems::world::UnifiedCullable`
+   --> game_bin/src/systems/batch_processing.rs:384:50
+    |
+384 |         let should_be_visible = distance <= cull.config.cull_distance && !cull.is_culled;
+    |                                                  ^^^^^^ unknown field
+    |
+    = note: available fields are: `max_distance`, `current_lod`, `is_culled`, `last_distance`, `dirty`
+
+error[E0609]: no field `config` on type `&&gameplay_sim::systems::world::UnifiedCullable`
+   --> game_bin/src/systems/batch_processing.rs:405:56
+    |
+405 |             let _should_be_visible = *distance <= cull.config.cull_distance && !cull.is_culled;
+    |                                                        ^^^^^^ unknown field
+    |
+    = note: available fields are: `max_distance`, `current_lod`, `is_culled`, `last_distance`, `dirty`
+
+Some errors have detailed explanations: E0308, E0412, E0425, E0432, E0433, E0599, E0603, E0609.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `gta_game` (lib test) due to 41 previous errors
+error: could not compile `gta_game` (lib) due to 23 previous errors
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+  --> gameplay_sim/src/systems/human_behavior.rs:47:82
+   |
+47 |     let Ok((mut emotions, mut behavior, mut movement, animation)) = player_query.get_single_mut() else {
+   |                                                                                  ^^^^^^^^^^^^^^
+   |
+   = note: `#[deny(deprecated)]` implied by `#[deny(warnings)]`
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:23:73
+   |
+23 |             if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                                                         ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:65:81
+   |
+65 |                     if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                                                                 ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:80:81
+   |
+80 |                     if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                                                                 ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:95:81
+   |
+95 |                     if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                                                                 ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+   --> gameplay_sim/src/systems/world/map_system.rs:188:48
+    |
+188 |                 commands.entity(*chunk_entity).despawn_recursive();
+    |                                                ^^^^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+   --> gameplay_sim/src/systems/world/unified_world.rs:227:41
+    |
+227 |                 commands.entity(entity).despawn_recursive();
+    |                                         ^^^^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+  --> gameplay_sim/src/systems/world/npc_spawn.rs:77:41
+   |
+77 |                 commands.entity(entity).despawn_recursive();
+   |                                         ^^^^^^^^^^^^^^^^^
+
+error: unused import: `crate::systems::world::road_generation::RoadNetworkExtensions`
+  --> gameplay_sim/src/world/layered_generation.rs:20:5
+   |
+20 | use crate::systems::world::road_generation::RoadNetworkExtensions;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[deny(unused_imports)]` implied by `#[deny(warnings)]`
+
+error: unused import: `RelationshipTarget`
+   --> gameplay_sim/src/systems/unified_distance_calculator.rs:168:47
+    |
+168 |     use super::{CurveExt, Entity, IntoSystem, RelationshipTarget, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
+    |                                               ^^^^^^^^^^^^^^^^^^
+
+error: unused import: `CurveExt`
+   --> gameplay_sim/src/distance/unified_distance_calculator.rs:177:17
+    |
+177 |     use super::{CurveExt, Entity, IntoSystem, RelationshipTarget, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
+    |                 ^^^^^^^^
+
+error: unused import: `IntoSystem`
+   --> gameplay_sim/src/distance/unified_distance_calculator.rs:177:35
+    |
+177 |     use super::{CurveExt, Entity, IntoSystem, RelationshipTarget, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
+    |                                   ^^^^^^^^^^
+
+error: unused import: `RelationshipTarget`
+   --> gameplay_sim/src/distance/unified_distance_calculator.rs:177:47
+    |
+177 |     use super::{CurveExt, Entity, IntoSystem, RelationshipTarget, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
+    |                                               ^^^^^^^^^^^^^^^^^^
+
+error: unused import: `crate::bevy16_compat::EntityCommandsExt`
+  --> gameplay_sim/src/systems/world/npc_spawn.rs:11:5
+   |
+11 | use crate::bevy16_compat::EntityCommandsExt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `IntoSystem`
+   --> gameplay_sim/src/systems/unified_distance_calculator.rs:168:35
+    |
+168 |     use super::{CurveExt, Entity, IntoSystem, RelationshipTarget, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
+    |                                   ^^^^^^^^^^
+
+error: unused import: `crate::bevy16_compat::EntityCommandsExt`
+  --> gameplay_sim/src/systems/world/unified_world.rs:11:5
+   |
+11 | use crate::bevy16_compat::EntityCommandsExt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `crate::bevy16_compat::QueryExt`
+ --> gameplay_sim/src/systems/human_behavior.rs:4:5
+  |
+4 | use crate::bevy16_compat::QueryExt;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `crate::bevy16_compat::QueryExt`
+ --> gameplay_sim/src/systems/interaction.rs:3:5
+  |
+3 | use crate::bevy16_compat::QueryExt;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `crate::bevy16_compat::EntityCommandsExt`
+  --> gameplay_sim/src/systems/world/map_system.rs:11:5
+   |
+11 | use crate::bevy16_compat::EntityCommandsExt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `CurveExt`
+   --> gameplay_sim/src/systems/unified_distance_calculator.rs:168:17
+    |
+168 |     use super::{CurveExt, Entity, IntoSystem, RelationshipTarget, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
+    |                 ^^^^^^^^
+
+error: unused variable: `service`
+   --> gameplay_sim/src/services/ground_detection.rs:171:13
+    |
+171 |         let service = GroundDetectionService::default();
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_service`
+    |
+    = note: `#[deny(unused_variables)]` implied by `#[deny(warnings)]`
+
+error: value assigned to `target_linear_velocity` is never read
+  --> gameplay_sim/src/movement/player.rs:51:13
+   |
+51 |     let mut target_linear_velocity = Vec3::ZERO;
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+   = note: `#[deny(unused_assignments)]` implied by `#[deny(warnings)]`
+
+error: function cannot return without recursing
+  --> gameplay_sim/src/world/road_generation.rs:28:5
+   |
+28 |     fn clear_cache(&mut self) {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^ cannot return without recursing
+29 |         self.clear_cache();
+   |         ------------------ recursive call site
+   |
+   = help: a `loop` may express intention better if this is on purpose
+   = note: `#[deny(unconditional_recursion)]` implied by `#[deny(warnings)]`
+
+error: function cannot return without recursing
+  --> gameplay_sim/src/world/road_generation.rs:32:5
+   |
+32 |     fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32> {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot return without recursing
+33 |         self.generate_chunk_roads(chunk_x, chunk_z)
+   |         ------------------------------------------- recursive call site
+   |
+   = help: a `loop` may express intention better if this is on purpose
+
+error: unused variable: `lod_level`
+  --> gameplay_sim/src/world/layered_generation.rs:89:17
+   |
+89 |             let lod_level = world_manager.calculate_lod_level(distance);
+   |                 ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_lod_level`
+
+error: unused variable: `connected_roads`
+   --> gameplay_sim/src/world/layered_generation.rs:303:20
+    |
+303 |     for (position, connected_roads, intersection_type, road_type) in detected_intersections {
+    |                    ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_connected_roads`
+
+error: unused variable: `entity_count`
+   --> gameplay_sim/src/world/unified_lod.rs:181:38
+    |
+181 |                 ChunkState::Loaded { entity_count } => {
+    |                                      ^^^^^^^^^^^^ help: try ignoring the field: `entity_count: _`
+
+error: unused variable: `entity_count`
+   --> gameplay_sim/src/world/unified_lod.rs:214:41
+    |
+214 |             if let ChunkState::Loaded { entity_count } = chunk.state {
+    |                                         ^^^^^^^^^^^^ help: try ignoring the field: `entity_count: _`
+
+error: unused variable: `config`
+  --> gameplay_sim/src/world/unified_factory_setup.rs:17:61
+   |
+17 | pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConfig>) {
+   |                                                             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+error: unused variable: `vegetation`
+   --> gameplay_sim/src/lod/modern_lod_system.rs:182:5
+    |
+182 |     vegetation: Query<&VegetationLOD>,
+    |     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vegetation`
+
+error: unused variable: `entity_factory`
+  --> gameplay_sim/src/setup/unified_vehicles.rs:92:5
+   |
+92 |     entity_factory: &mut UnifiedEntityFactory,
+   |     ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity_factory`
+
+error: unused variable: `entity_factory`
+   --> gameplay_sim/src/setup/unified_vehicles.rs:202:5
+    |
+202 |     entity_factory: &mut UnifiedEntityFactory,
+    |     ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity_factory`
+
+error: unused variable: `entity_factory`
+   --> gameplay_sim/src/setup/unified_vehicles.rs:310:5
+    |
+310 |     entity_factory: &mut UnifiedEntityFactory,
+    |     ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity_factory`
+
+error: unreachable pattern
+   --> gameplay_sim/src/systems/input/input_manager.rs:117:13
+    |
+117 |             _ => {}
+    |             ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> gameplay_sim/src/systems/input/input_manager.rs:117:13
+    |
+90  |             GameState::Walking => {
+    |             ------------------ matches some of the same values
+...
+101 |             GameState::Driving => {
+    |             ------------------ matches some of the same values
+...
+104 |             GameState::Flying => {
+    |             ----------------- matches some of the same values
+...
+108 |             GameState::Jetting => {
+    |             ------------------ matches some of the same values
+...
+117 |             _ => {}
+    |             ^ collectively making this unreachable
+    = note: `#[deny(unreachable_patterns)]` implied by `#[deny(warnings)]`
+
+error: unreachable pattern
+   --> gameplay_sim/src/systems/input/input_manager.rs:240:9
+    |
+240 |         _ => {}
+    |         ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> gameplay_sim/src/systems/input/input_manager.rs:240:9
+    |
+213 |         GameState::Walking => {
+    |         ------------------ matches some of the same values
+...
+220 |         GameState::Driving => {
+    |         ------------------ matches some of the same values
+...
+223 |         GameState::Flying => {
+    |         ----------------- matches some of the same values
+...
+227 |         GameState::Jetting => {
+    |         ------------------ matches some of the same values
+...
+240 |         _ => {}
+    |         ^ collectively making this unreachable
+
+error: unused variable: `transform`
+   --> gameplay_sim/src/systems/input/control_manager.rs:393:18
+    |
+393 |     for (entity, transform) in npc_query.iter() {
+    |                  ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_transform`
+
+error: unused variable: `player_entity`
+  --> gameplay_sim/src/systems/interaction.rs:23:24
+   |
+23 |             if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                        ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_player_entity`
+
+error: unused variable: `player_transform`
+  --> gameplay_sim/src/systems/interaction.rs:65:47
+   |
+65 |                     if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                               ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_player_transform`
+
+error: unused variable: `player_transform`
+  --> gameplay_sim/src/systems/interaction.rs:80:47
+   |
+80 |                     if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                               ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_player_transform`
+
+error: unused variable: `player_transform`
+  --> gameplay_sim/src/systems/interaction.rs:95:47
+   |
+95 |                     if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                               ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_player_transform`
+
+error: value assigned to `target_linear_velocity` is never read
+  --> gameplay_sim/src/systems/movement/player.rs:48:13
+   |
+48 |     let mut target_linear_velocity = Vec3::ZERO;
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+
+error: unused variable: `road_length`
+   --> gameplay_sim/src/systems/world/road_mesh.rs:277:9
+    |
+277 |     let road_length = road.length();
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_road_length`
+
+error: unused variable: `commands`
+  --> gameplay_sim/src/systems/world/layered_generation.rs:48:5
+   |
+48 |     commands: Commands,
+   |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+error: unused variable: `coord`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:105:24
+    |
+105 | fn has_roads_generated(coord: ChunkCoord) -> bool {
+    |                        ^^^^^ help: if this is intentional, prefix it with an underscore: `_coord`
+
+error: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:115:5
+    |
+115 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+error: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:116:5
+    |
+116 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+error: unused variable: `coord`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:156:28
+    |
+156 | fn has_buildings_generated(coord: ChunkCoord) -> bool {
+    |                            ^^^^^ help: if this is intentional, prefix it with an underscore: `_coord`
+
+error: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:165:5
+    |
+165 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+error: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:166:5
+    |
+166 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+error: unused variable: `coord`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:209:29
+    |
+209 | fn has_vegetation_generated(coord: ChunkCoord) -> bool {
+    |                             ^^^^^ help: if this is intentional, prefix it with an underscore: `_coord`
+
+error: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:218:5
+    |
+218 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+error: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:219:5
+    |
+219 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+error: unused variable: `commands`
+  --> gameplay_sim/src/systems/world/unified_lod.rs:89:5
+   |
+89 |     commands: Commands,
+   |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+error: unused variable: `time`
+  --> gameplay_sim/src/systems/world/unified_lod.rs:93:5
+   |
+93 |     time: Res<Time>,
+   |     ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+
+error: unused variable: `entity`
+  --> gameplay_sim/src/systems/world/npc_lod.rs:46:14
+   |
+46 |         for (entity, mut npc_state, transform, mut visibility) in &mut npc_query {
+   |              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+error: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/npc_lod.rs:135:5
+    |
+135 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+error: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/npc_lod.rs:136:5
+    |
+136 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+error: unused variable: `game_config`
+  --> gameplay_sim/src/systems/world/npc_spawn.rs:23:5
+   |
+23 |     game_config: Res<GameConfig>,
+   |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_game_config`
+
+error: unused variable: `entity`
+  --> gameplay_sim/src/systems/world/vegetation_lod.rs:61:14
+   |
+61 |         for (entity, mut veg_lod, transform, mut visibility) in &mut vegetation_query {
+   |              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+error: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:114:5
+    |
+114 |     meshes: ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+error: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:115:5
+    |
+115 |     materials: ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+error: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:166:5
+    |
+166 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+error: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:167:5
+    |
+167 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+error: unused variable: `time`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:113:5
+    |
+113 |     time: Res<Time>,
+    |     ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+
+error: unused variable: `entity`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:164:10
+    |
+164 |     for (entity, cullable, vehicle_state) in vehicle_query.iter() {
+    |          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+error: unused variable: `vehicle_state`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:164:28
+    |
+164 |     for (entity, cullable, vehicle_state) in vehicle_query.iter() {
+    |                            ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vehicle_state`
+
+error: unused variable: `target_lod`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:166:13
+    |
+166 |         let target_lod = if cullable.last_distance < 100.0 {
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_target_lod`
+
+error: unused variable: `entity`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:182:10
+    |
+182 |     for (entity, cullable) in building_query.iter() {
+    |          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+error: unused variable: `target_lod`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:184:13
+    |
+184 |         let target_lod = calculate_building_lod(cullable.last_distance);
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_target_lod`
+
+error: unused variable: `entity`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:193:10
+    |
+193 |     for (entity, cullable) in npc_query.iter() {
+    |          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+error: unused variable: `target_lod`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:195:13
+    |
+195 |         let target_lod = if cullable.last_distance < 50.0 {
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_target_lod`
+
+error: unused variable: `active_pos`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:269:13
+    |
+269 |         let active_pos = active_transform.translation;
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_active_pos`
+
+error: unused variable: `cleanup_distance`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:270:13
+    |
+270 |         let cleanup_distance = 2000.0; // Very conservative cleanup distance
+    |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cleanup_distance`
+
+error: unused variable: `entity`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:272:13
+    |
+272 |         for entity in cullable_query.iter() {
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+error: unused variable: `commands`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:264:5
+    |
+264 |     commands: Commands,
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+error: unused variable: `safe_position`
+   --> gameplay_sim/src/factories/generic_bundle.rs:106:13
+    |
+106 |         let safe_position = self.validate_position(position)?;
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_safe_position`
+
+error: unused variable: `safe_position`
+   --> gameplay_sim/src/factories/generic_bundle.rs:138:13
+    |
+138 |         let safe_position = self.validate_position(position)?;
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_safe_position`
+
+error: unused variable: `safe_position`
+   --> gameplay_sim/src/factories/generic_bundle.rs:170:13
+    |
+170 |         let safe_position = self.validate_position(position)?;
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_safe_position`
+
+error: multiple associated functions are never used
+   --> gameplay_sim/src/physics/utilities.rs:14:12
+    |
+12  | impl PhysicsUtilities {
+    | --------------------- associated functions in this implementation
+13  |     /// Validate and clamp velocity to safe ranges for physics stability
+14  |     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+    |            ^^^^^^^^^^^^^^^^^
+...
+29  |     pub fn validate_external_force(force: &mut ExternalForce, max_force: f32) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+...
+44  |     pub fn apply_force_safe(
+    |            ^^^^^^^^^^^^^^^^
+...
+65  |     pub fn apply_external_force_safe(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+85  |     pub fn apply_ground_collision(
+    |            ^^^^^^^^^^^^^^^^^^^^^^
+...
+102 |     pub fn apply_world_bounds(
+    |            ^^^^^^^^^^^^^^^^^^
+...
+125 |     pub fn calculate_drag_force(
+    |            ^^^^^^^^^^^^^^^^^^^^
+...
+137 |     pub fn apply_natural_deceleration(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+152 |     pub fn smooth_velocity_transition(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[deny(dead_code)]` implied by `#[deny(warnings)]`
+
+error: struct `CollisionGroupHelper` is never constructed
+   --> gameplay_sim/src/physics/utilities.rs:164:12
+    |
+164 | pub struct CollisionGroupHelper;
+    |            ^^^^^^^^^^^^^^^^^^^^
+
+error: associated functions `static_groups`, `vehicle_groups`, `character_groups`, and `from_config` are never used
+   --> gameplay_sim/src/physics/utilities.rs:168:12
+    |
+166 | impl CollisionGroupHelper {
+    | ------------------------- associated functions in this implementation
+167 |     /// Get collision groups for static objects (buildings, terrain)
+168 |     pub fn static_groups() -> CollisionGroups {
+    |            ^^^^^^^^^^^^^
+...
+173 |     pub fn vehicle_groups() -> CollisionGroups {
+    |            ^^^^^^^^^^^^^^
+...
+178 |     pub fn character_groups() -> CollisionGroups {
+    |            ^^^^^^^^^^^^^^^^
+...
+183 |     pub fn from_config(
+    |            ^^^^^^^^^^^
+
+error: struct `PhysicsBodySetup` is never constructed
+   --> gameplay_sim/src/physics/utilities.rs:192:12
+    |
+192 | pub struct PhysicsBodySetup;
+    |            ^^^^^^^^^^^^^^^^
+
+error: associated functions `create_dynamic_body`, `create_static_body`, `create_collider_safe`, and `create_mass_properties` are never used
+   --> gameplay_sim/src/physics/utilities.rs:196:12
+    |
+194 | impl PhysicsBodySetup {
+    | --------------------- associated functions in this implementation
+195 |     /// Create a dynamic physics body for moving entities
+196 |     pub fn create_dynamic_body(
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+212 |     pub fn create_static_body(collision_groups: CollisionGroups) -> (RigidBody, CollisionGroups) {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+217 |     pub fn create_collider_safe(
+    |            ^^^^^^^^^^^^^^^^^^^^
+...
+235 |     pub fn create_mass_properties(mass: f32, config: &GameConfig) -> Option<AdditionalMassProperties> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^
+
+error: multiple fields are never read
+   --> gameplay_sim/src/physics/utilities.rs:249:9
+    |
+248 | pub struct MovementInputs {
+    |            -------------- fields in this struct
+249 |     pub throttle: f32,
+    |         ^^^^^^^^
+250 |     pub brake: f32,
+    |         ^^^^^
+251 |     pub steering: f32,
+    |         ^^^^^^^^
+252 |     pub pitch: f32,
+    |         ^^^^^
+253 |     pub roll: f32,
+    |         ^^^^
+254 |     pub yaw: f32,
+    |         ^^^
+255 |     pub thrust: f32,
+    |         ^^^^^^
+256 |     pub forward: f32,
+    |         ^^^^^^^
+257 |     pub backward: f32,
+    |         ^^^^^^^^
+258 |     pub left: f32,
+    |         ^^^^
+259 |     pub right: f32,
+    |         ^^^^^
+260 |     pub jump: f32,
+    |         ^^^^
+    |
+    = note: `MovementInputs` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+error: struct `InputProcessor` is never constructed
+   --> gameplay_sim/src/physics/utilities.rs:264:12
+    |
+264 | pub struct InputProcessor;
+    |            ^^^^^^^^^^^^^^
+
+error: associated functions `process_unified_inputs`, `process_acceleration_input`, `apply_speed_dependent_steering`, and `calculate_force_from_input` are never used
+   --> gameplay_sim/src/physics/utilities.rs:268:12
+    |
+266 | impl InputProcessor {
+    | ------------------- associated functions in this implementation
+267 |     /// Unified input processing for all movement systems
+268 |     pub fn process_unified_inputs(control_manager: &ControlManager) -> MovementInputs {
+    |            ^^^^^^^^^^^^^^^^^^^^^^
+...
+286 |     pub fn process_acceleration_input(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+299 |     pub fn apply_speed_dependent_steering(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+311 |     pub fn calculate_force_from_input(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `apply_universal_physics_safeguards` is never used
+   --> gameplay_sim/src/physics/utilities.rs:321:8
+    |
+321 | pub fn apply_universal_physics_safeguards(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `player_collision_resolution_system` is never used
+ --> gameplay_sim/src/physics/collision_resolution.rs:6:8
+  |
+6 | pub fn player_collision_resolution_system(
+  |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `player_movement_validation_system` is never used
+  --> gameplay_sim/src/physics/collision_resolution.rs:35:8
+   |
+35 | pub fn player_movement_validation_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `human_player_movement` is never used
+  --> gameplay_sim/src/movement/player.rs:24:8
+   |
+24 | pub fn human_player_movement(
+   |        ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `human_player_animation` is never used
+   --> gameplay_sim/src/movement/player.rs:123:8
+    |
+123 | pub fn human_player_animation(
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `car_movement` is never used
+  --> gameplay_sim/src/movement/vehicles.rs:21:8
+   |
+21 | pub fn car_movement(
+   |        ^^^^^^^^^^^^
+
+error: function `supercar_movement_deprecated` is never used
+  --> gameplay_sim/src/movement/vehicles.rs:85:8
+   |
+85 | pub fn supercar_movement_deprecated(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `spawn_hypercar_exhaust_effects` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:206:4
+    |
+206 | fn spawn_hypercar_exhaust_effects(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `handle_driving_mode_changes` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:319:4
+    |
+319 | fn handle_driving_mode_changes(supercar: &mut SuperCar, _control_manager: &ControlManager) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `update_gear_and_rpm` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:338:4
+    |
+338 | fn update_gear_and_rpm(supercar: &mut SuperCar, current_speed_mph: f32, dt: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^
+
+error: function `update_advanced_turbo_system` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:359:4
+    |
+359 | fn update_advanced_turbo_system(supercar: &mut SuperCar, dt: f32, turbo_requested: bool, current_speed_mph: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `handle_launch_control` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:405:4
+    |
+405 | fn handle_launch_control(supercar: &mut SuperCar, control_manager: &ControlManager, current_speed_mph: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `update_enhanced_traction_control` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:427:4
+    |
+427 | fn update_enhanced_traction_control(supercar: &mut SuperCar, current_speed_mph: f32, dt: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `update_active_aerodynamics` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:458:4
+    |
+458 | fn update_active_aerodynamics(supercar: &mut SuperCar, current_speed_mph: f32, dt: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_performance_metrics` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:482:4
+    |
+482 | fn calculate_performance_metrics(supercar: &mut SuperCar, velocity: &Velocity, dt: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_enhanced_power_curve` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:498:4
+    |
+498 | fn calculate_enhanced_power_curve(supercar: &SuperCar) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_turbo_multiplier` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:514:4
+    |
+514 | fn calculate_turbo_multiplier(supercar: &SuperCar) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `get_driving_mode_multiplier` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:523:4
+    |
+523 | fn get_driving_mode_multiplier(supercar: &SuperCar) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_acceleration_force` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:532:4
+    |
+532 | fn calculate_acceleration_force(supercar: &SuperCar, effective_power: f32, current_speed_ms: f32) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_aerodynamic_drag` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:544:4
+    |
+544 | fn calculate_aerodynamic_drag(supercar: &SuperCar, current_speed_ms: f32) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_braking_force` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:555:4
+    |
+555 | fn calculate_braking_force(supercar: &SuperCar, brake_value: f32, current_speed_mph: f32) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_natural_deceleration` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:569:4
+    |
+569 | fn calculate_natural_deceleration(supercar: &SuperCar, _current_speed_ms: f32) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_hypercar_steering` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:579:4
+    |
+579 | fn calculate_hypercar_steering(supercar: &SuperCar, steering_input: f32, current_speed_mph: f32) -> Vec3 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `apply_suspension_damping` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:618:4
+    |
+618 | fn apply_suspension_damping(supercar: &SuperCar, velocity_change: Vec3, dt: f32) -> Vec3 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `update_engine_protection` is never used
+   --> gameplay_sim/src/movement/vehicles.rs:630:4
+    |
+630 | fn update_engine_protection(supercar: &mut SuperCar, dt: f32, _current_speed_mph: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `helicopter_movement` is never used
+  --> gameplay_sim/src/movement/aircraft.rs:21:8
+   |
+21 | pub fn helicopter_movement(
+   |        ^^^^^^^^^^^^^^^^^^^
+
+error: function `rotate_helicopter_rotors` is never used
+  --> gameplay_sim/src/movement/aircraft.rs:73:8
+   |
+73 | pub fn rotate_helicopter_rotors(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `f16_movement` is never used
+  --> gameplay_sim/src/movement/aircraft.rs:94:8
+   |
+94 | pub fn f16_movement(
+   |        ^^^^^^^^^^^^
+
+error: function `realistic_vehicle_physics_system` is never used
+  --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:23:8
+   |
+23 | pub fn realistic_vehicle_physics_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `process_simplified_vehicle_physics` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:153:4
+    |
+153 | fn process_simplified_vehicle_physics(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `process_vehicle_input` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:179:4
+    |
+179 | fn process_vehicle_input(
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_engine_force` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:217:4
+    |
+217 | fn calculate_engine_force(
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_tire_forces` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:262:4
+    |
+262 | fn calculate_tire_forces(
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_aerodynamic_forces` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:333:4
+    |
+333 | fn calculate_aerodynamic_forces(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_weight_transfer` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:353:4
+    |
+353 | fn calculate_weight_transfer(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `apply_forces_to_vehicle` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:371:4
+    |
+371 | fn apply_forces_to_vehicle(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `apply_physics_safeguards` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:415:4
+    |
+415 | fn apply_physics_safeguards(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `vehicle_wheel_update_system` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:431:8
+    |
+431 | pub fn vehicle_wheel_update_system(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `realistic_vehicle_performance_system` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:452:8
+    |
+452 | pub fn realistic_vehicle_performance_system(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `realistic_vehicle_input_system` is never used
+  --> gameplay_sim/src/movement/realistic_vehicle_input.rs:18:8
+   |
+18 | pub fn realistic_vehicle_input_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `process_vehicle_input` is never used
+  --> gameplay_sim/src/movement/realistic_vehicle_input.rs:32:4
+   |
+32 | fn process_vehicle_input(
+   |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `realistic_vehicle_physics_core_system` is never used
+  --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:21:8
+   |
+21 | pub fn realistic_vehicle_physics_core_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `process_simplified_vehicle_physics` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:146:4
+    |
+146 | fn process_simplified_vehicle_physics(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_engine_force` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:172:4
+    |
+172 | fn calculate_engine_force(
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_tire_forces` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:215:4
+    |
+215 | fn calculate_tire_forces(
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_aerodynamic_forces` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:286:4
+    |
+286 | fn calculate_aerodynamic_forces(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_weight_transfer` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:306:4
+    |
+306 | fn calculate_weight_transfer(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `apply_forces_to_vehicle` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:324:4
+    |
+324 | fn apply_forces_to_vehicle(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `apply_physics_safeguards` is never used
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:368:4
+    |
+368 | fn apply_physics_safeguards(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `supercar_input_system` is never used
+  --> gameplay_sim/src/movement/supercar_input.rs:17:8
+   |
+17 | pub fn supercar_input_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `handle_driving_mode_changes` is never used
+  --> gameplay_sim/src/movement/supercar_input.rs:36:4
+   |
+36 | fn handle_driving_mode_changes(supercar: &mut SuperCar, _control_manager: &ControlManager) {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `handle_launch_control` is never used
+  --> gameplay_sim/src/movement/supercar_input.rs:51:4
+   |
+51 | fn handle_launch_control(supercar: &mut SuperCar, control_manager: &ControlManager) {
+   |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `supercar_physics_system` is never used
+  --> gameplay_sim/src/movement/supercar_physics.rs:22:8
+   |
+22 | pub fn supercar_physics_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `update_gear_and_rpm` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:142:4
+    |
+142 | fn update_gear_and_rpm(supercar: &mut SuperCar, current_speed_mph: f32, dt: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^
+
+error: function `update_advanced_turbo_system` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:163:4
+    |
+163 | fn update_advanced_turbo_system(supercar: &mut SuperCar, dt: f32, turbo_requested: bool, current_speed_mph: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `update_enhanced_traction_control` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:209:4
+    |
+209 | fn update_enhanced_traction_control(supercar: &mut SuperCar, current_speed_mph: f32, dt: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `update_active_aerodynamics` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:240:4
+    |
+240 | fn update_active_aerodynamics(supercar: &mut SuperCar, current_speed_mph: f32, dt: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_performance_metrics` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:264:4
+    |
+264 | fn calculate_performance_metrics(supercar: &mut SuperCar, velocity: &Velocity, dt: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_enhanced_power_curve` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:280:4
+    |
+280 | fn calculate_enhanced_power_curve(supercar: &SuperCar) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_turbo_multiplier` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:296:4
+    |
+296 | fn calculate_turbo_multiplier(supercar: &SuperCar) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `get_driving_mode_multiplier` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:305:4
+    |
+305 | fn get_driving_mode_multiplier(supercar: &SuperCar) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_acceleration_force` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:314:4
+    |
+314 | fn calculate_acceleration_force(supercar: &SuperCar, effective_power: f32, current_speed_ms: f32) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_aerodynamic_drag` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:326:4
+    |
+326 | fn calculate_aerodynamic_drag(supercar: &SuperCar, current_speed_ms: f32) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_braking_force` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:337:4
+    |
+337 | fn calculate_braking_force(supercar: &SuperCar, brake_value: f32, current_speed_mph: f32) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_natural_deceleration` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:351:4
+    |
+351 | fn calculate_natural_deceleration(supercar: &SuperCar, _current_speed_ms: f32) -> f32 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `calculate_hypercar_steering` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:361:4
+    |
+361 | fn calculate_hypercar_steering(supercar: &SuperCar, steering_input: f32, current_speed_mph: f32) -> Vec3 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `apply_suspension_damping` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:400:4
+    |
+400 | fn apply_suspension_damping(supercar: &SuperCar, velocity_change: Vec3, dt: f32) -> Vec3 {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `update_engine_protection` is never used
+   --> gameplay_sim/src/movement/supercar_physics.rs:412:4
+    |
+412 | fn update_engine_protection(supercar: &mut SuperCar, dt: f32, _current_speed_mph: f32) {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: fields `flames`, `available_flames`, and `max_flames` are never read
+  --> gameplay_sim/src/movement/supercar_effects.rs:19:9
+   |
+18 | pub struct ExhaustFlamePool {
+   |            ---------------- fields in this struct
+19 |     pub flames: Vec<Entity>,
+   |         ^^^^^^
+20 |     pub available_flames: Vec<Entity>,
+   |         ^^^^^^^^^^^^^^^^
+21 |     pub max_flames: usize,
+   |         ^^^^^^^^^^
+
+error: function `initialize_exhaust_pool_system` is never used
+  --> gameplay_sim/src/movement/supercar_effects.rs:35:8
+   |
+35 | pub fn initialize_exhaust_pool_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `supercar_effects_system` is never used
+  --> gameplay_sim/src/movement/supercar_effects.rs:62:8
+   |
+62 | pub fn supercar_effects_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `exhaust_flame_cleanup_system` is never used
+   --> gameplay_sim/src/movement/supercar_effects.rs:162:8
+    |
+162 | pub fn exhaust_flame_cleanup_system(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: variants `Input`, `Physics`, `Audio`, `Effects`, and `Performance` are never constructed
+  --> gameplay_sim/src/movement/vehicle_sets.rs:18:5
+   |
+16 | pub enum VehicleSet {
+   |          ---------- variants in this enum
+17 |     /// Input handling systems (read controls, convert to component data)
+18 |     Input,
+   |     ^^^^^
+19 |     /// Physics systems (apply forces, handle suspension, aerodynamics)
+20 |     Physics,
+   |     ^^^^^^^
+21 |     /// Audio systems (engine sounds, effects)
+22 |     Audio,
+   |     ^^^^^
+23 |     /// Visual effects systems (particles, lighting)
+24 |     Effects,
+   |     ^^^^^^^
+25 |     /// Performance monitoring and metrics
+26 |     Performance,
+   |     ^^^^^^^^^^^
+   |
+   = note: `VehicleSet` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+error: function `configure_vehicle_system_sets` is never used
+  --> gameplay_sim/src/movement/vehicle_sets.rs:30:8
+   |
+30 | pub fn configure_vehicle_system_sets(app: &mut App) {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: fields `stress_level`, `energy_level`, `mood`, and `last_mood_change` are never read
+  --> gameplay_sim/src/behavior/human_behavior.rs:12:9
+   |
+11 | pub struct HumanEmotions {
+   |            ------------- fields in this struct
+12 |     pub stress_level: f32,
+   |         ^^^^^^^^^^^^
+13 |     pub energy_level: f32,
+   |         ^^^^^^^^^^^^
+14 |     pub mood: Mood,
+   |         ^^^^
+15 |     pub last_mood_change: f32,
+   |         ^^^^^^^^^^^^^^^^
+
+error: variants `Excited`, `Tired`, `Anxious`, and `Confident` are never constructed
+  --> gameplay_sim/src/behavior/human_behavior.rs:21:5
+   |
+19 | pub enum Mood {
+   |          ---- variants in this enum
+20 |     Calm,
+21 |     Excited,
+   |     ^^^^^^^
+22 |     Tired,
+   |     ^^^^^
+23 |     Anxious,
+   |     ^^^^^^^
+24 |     Confident,
+   |     ^^^^^^^^^
+   |
+   = note: `Mood` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `human_emotional_state_system` is never used
+  --> gameplay_sim/src/behavior/human_behavior.rs:39:8
+   |
+39 | pub fn human_emotional_state_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `human_fidget_system` is never used
+   --> gameplay_sim/src/behavior/human_behavior.rs:122:8
+    |
+122 | pub fn human_fidget_system(
+    |        ^^^^^^^^^^^^^^^^^^^
+
+error: function `interaction_system` is never used
+ --> gameplay_sim/src/behavior/interaction.rs:6:8
+  |
+6 | pub fn interaction_system(
+  |        ^^^^^^^^^^^^^^^^^^
+
+error: function `setup_basic_world` is never used
+  --> gameplay_sim/src/setup/world.rs:14:8
+   |
+14 | pub fn setup_basic_world(
+   |        ^^^^^^^^^^^^^^^^^
+
+error: function `setup_dubai_noon_lighting` is never used
+   --> gameplay_sim/src/setup/world.rs:271:8
+    |
+271 | pub fn setup_dubai_noon_lighting(mut commands: Commands) {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: enum `BugattiColorScheme` is never used
+ --> gameplay_sim/src/setup/vehicles.rs:9:10
+  |
+9 | pub enum BugattiColorScheme {
+  |          ^^^^^^^^^^^^^^^^^^
+  |
+  = note: `BugattiColorScheme` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: method `get_material` is never used
+  --> gameplay_sim/src/setup/vehicles.rs:18:12
+   |
+17 | impl BugattiColorScheme {
+   | ----------------------- method in this implementation
+18 |     pub fn get_material(&self) -> StandardMaterial {
+   |            ^^^^^^^^^^^^
+
+error: function `setup_luxury_bugatti_chiron` is never used
+  --> gameplay_sim/src/setup/vehicles.rs:81:8
+   |
+81 | pub fn setup_luxury_bugatti_chiron(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `setup_palm_trees` is never used
+  --> gameplay_sim/src/setup/environment.rs:10:8
+   |
+10 | pub fn setup_palm_trees(
+   |        ^^^^^^^^^^^^^^^^
+
+error: function `setup_initial_vehicles_unified` is never used
+  --> gameplay_sim/src/setup/unified_vehicles.rs:25:8
+   |
+25 | pub fn setup_initial_vehicles_unified(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `setup_starter_vehicles_unified` is never used
+  --> gameplay_sim/src/setup/unified_vehicles.rs:86:4
+   |
+86 | fn setup_starter_vehicles_unified(
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `setup_supercar_unified` is never used
+   --> gameplay_sim/src/setup/unified_vehicles.rs:196:4
+    |
+196 | fn setup_supercar_unified(
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `setup_luxury_cars_unified` is never used
+   --> gameplay_sim/src/setup/unified_vehicles.rs:304:4
+    |
+304 | fn setup_luxury_cars_unified(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `setup_initial_npcs_unified` is never used
+  --> gameplay_sim/src/setup/unified_npcs.rs:16:8
+   |
+16 | pub fn setup_initial_npcs_unified(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: variants `Helicopter` and `F16` are never constructed
+  --> gameplay_sim/src/setup/unified_aircraft.rs:15:5
+   |
+14 | pub enum AircraftType {
+   |          ------------ variants in this enum
+15 |     Helicopter,  // Complex multi-component aircraft
+   |     ^^^^^^^^^^
+16 |     F16,         // Simple fighter jet
+   |     ^^^
+   |
+   = note: `AircraftType` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+error: function `setup_initial_aircraft_unified` is never used
+  --> gameplay_sim/src/setup/unified_aircraft.rs:29:8
+   |
+29 | pub fn setup_initial_aircraft_unified(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `spawn_aircraft_unified` is never used
+  --> gameplay_sim/src/setup/unified_aircraft.rs:63:4
+   |
+63 | fn spawn_aircraft_unified(
+   |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `spawn_helicopter_unified` is never used
+   --> gameplay_sim/src/setup/unified_aircraft.rs:124:4
+    |
+124 | fn spawn_helicopter_unified(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `spawn_f16_unified` is never used
+   --> gameplay_sim/src/setup/unified_aircraft.rs:228:4
+    |
+228 | fn spawn_f16_unified(
+    |    ^^^^^^^^^^^^^^^^^
+
+error: function `bevy_resource_entity_creation_system` is never used
+ --> gameplay_sim/src/entity_creation.rs:8:8
+  |
+8 | pub fn bevy_resource_entity_creation_system(
+  |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `bevy_resource_config_update_system` is never used
+  --> gameplay_sim/src/entity_creation.rs:79:8
+   |
+79 | pub fn bevy_resource_config_update_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `bevy_asset_cleanup_system` is never used
+  --> gameplay_sim/src/entity_creation.rs:93:8
+   |
+93 | pub fn bevy_asset_cleanup_system(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `bevy_resource_factory_system` is never used
+   --> gameplay_sim/src/entity_creation.rs:105:8
+    |
+105 | pub fn bevy_resource_factory_system(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: multiple variants are never constructed
+  --> gameplay_sim/src/spawn_validation.rs:10:5
+   |
+9  | pub enum SpawnableType {
+   |          ------------- variants in this enum
+10 |     Vehicle,
+   |     ^^^^^^^
+11 |     Aircraft,
+   |     ^^^^^^^^
+12 |     NPC,
+   |     ^^^
+13 |     Building,
+   |     ^^^^^^^^
+14 |     Tree,
+   |     ^^^^
+15 |     EnvironmentObject,
+   |     ^^^^^^^^^^^^^^^^^
+16 |     Player,
+   |     ^^^^^^
+   |
+   = note: `SpawnableType` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+error: associated items `from_content_type`, `clearance_radius`, and `minimum_spacing` are never used
+  --> gameplay_sim/src/spawn_validation.rs:21:12
+   |
+19 | impl SpawnableType {
+   | ------------------ associated items in this implementation
+20 |     /// Convert from unified `ContentType` to `SpawnableType`
+21 |     pub fn from_content_type(content_type: ContentType) -> Self {
+   |            ^^^^^^^^^^^^^^^^^
+...
+32 |     pub fn clearance_radius(&self) -> f32 {
+   |            ^^^^^^^^^^^^^^^^
+...
+45 |     pub fn minimum_spacing(&self, other: &SpawnableType) -> f32 {
+   |            ^^^^^^^^^^^^^^^
+
+error: fields `entity_type`, `entity_id`, and `radius` are never read
+  --> gameplay_sim/src/spawn_validation.rs:65:9
+   |
+63 | pub struct SpawnedEntity {
+   |            ------------- fields in this struct
+64 |     pub position: Vec3,
+65 |     pub entity_type: SpawnableType,
+   |         ^^^^^^^^^^^
+66 |     pub entity_id: Entity,
+   |         ^^^^^^^^^
+67 |     pub radius: f32,
+   |         ^^^^^^
+   |
+   = note: `SpawnedEntity` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+error: methods `add_entity` and `get_nearby_entities` are never used
+   --> gameplay_sim/src/spawn_validation.rs:99:8
+    |
+84  | impl SpatialGrid {
+    | ---------------- methods in this implementation
+...
+99  |     fn add_entity(&mut self, entity: Entity, position: Vec3) {
+    |        ^^^^^^^^^^
+...
+111 |     fn get_nearby_entities(&self, position: Vec3, radius: f32) -> Vec<Entity> {
+    |        ^^^^^^^^^^^^^^^^^^^
+
+error: methods `register_entity`, `unregister_entity`, `update_entity_position`, `is_position_safe`, `find_safe_spawn_position`, and `get_entities_in_radius` are never used
+   --> gameplay_sim/src/spawn_validation.rs:147:12
+    |
+138 | impl SpawnRegistry {
+    | ------------------ methods in this implementation
+...
+147 |     pub fn register_entity(&mut self, entity: Entity, position: Vec3, entity_type: SpawnableType) {
+    |            ^^^^^^^^^^^^^^^
+...
+163 |     pub fn unregister_entity(&mut self, entity: Entity) {
+    |            ^^^^^^^^^^^^^^^^^
+...
+170 |     pub fn update_entity_position(&mut self, entity: Entity, new_position: Vec3) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^
+...
+179 |     pub fn is_position_safe(&self, position: Vec3, entity_type: SpawnableType) -> bool {
+    |            ^^^^^^^^^^^^^^^^
+...
+207 |     pub fn find_safe_spawn_position(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+244 |     pub fn get_entities_in_radius(&self, position: Vec3, radius: f32) -> Vec<&SpawnedEntity> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^
+
+error: struct `SpawnValidator` is never constructed
+   --> gameplay_sim/src/spawn_validation.rs:308:12
+    |
+308 | pub struct SpawnValidator;
+    |            ^^^^^^^^^^^^^^
+
+error: associated functions `spawn_entity_safely` and `is_clear` are never used
+   --> gameplay_sim/src/spawn_validation.rs:312:12
+    |
+310 | impl SpawnValidator {
+    | ------------------- associated functions in this implementation
+311 |     /// Validate and register a spawn location
+312 |     pub fn spawn_entity_safely(
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+336 |     pub fn is_clear(
+    |            ^^^^^^^^
+
+error: associated function `new` is never used
+  --> gameplay_sim/src/transform_sync.rs:13:12
+   |
+12 | impl TransformSync {
+   | ------------------ associated function in this implementation
+13 |     pub fn new(smoothing_speed: f32) -> Self {
+   |            ^^^
+
+error: function `setup_lake` is never used
+ --> gameplay_sim/src/water.rs:6:8
+  |
+6 | pub fn setup_lake(
+  |        ^^^^^^^^^^
+
+error: function `setup_yacht` is never used
+  --> gameplay_sim/src/water.rs:75:8
+   |
+75 | pub fn setup_yacht(
+   |        ^^^^^^^^^^^
+
+error: function `yacht_movement_system` is never used
+   --> gameplay_sim/src/water.rs:137:8
+    |
+137 | pub fn yacht_movement_system(
+    |        ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `water_wave_system` is never used
+   --> gameplay_sim/src/water.rs:176:8
+    |
+176 | pub fn water_wave_system(
+    |        ^^^^^^^^^^^^^^^^^
+
+error: function `yacht_buoyancy_system` is never used
+   --> gameplay_sim/src/water.rs:186:8
+    |
+186 | pub fn yacht_buoyancy_system(
+    |        ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `yacht_water_constraint_system` is never used
+   --> gameplay_sim/src/water.rs:226:8
+    |
+226 | pub fn yacht_water_constraint_system(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: methods `get_single` and `get_single_mut` are never used
+  --> gameplay_sim/src/bevy16_compat.rs:36:8
+   |
+35 | pub trait QueryExt<'w, 's, D: QueryData, F: QueryFilter> {
+   |           -------- methods in this trait
+36 |     fn get_single(&self) -> Result<D::Item<'_>, bevy::ecs::query::QuerySingleError>;
+   |        ^^^^^^^^^^
+37 |     fn get_single_mut(&mut self) -> Result<D::Item<'_>, bevy::ecs::query::QuerySingleError>;
+   |        ^^^^^^^^^^^^^^
+
+error: method `despawn_recursive` is never used
+  --> gameplay_sim/src/bevy16_compat.rs:56:8
+   |
+55 | pub trait EntityCommandsExt {
+   |           ----------------- method in this trait
+56 |     fn despawn_recursive(&mut self) -> &mut Self;
+   |        ^^^^^^^^^^^^^^^^^
+
+error: method `set_indices` is never used
+  --> gameplay_sim/src/bevy16_compat.rs:68:8
+   |
+67 | pub trait MeshExt {
+   |           ------- method in this trait
+68 |     fn set_indices(&mut self, indices: Option<bevy::render::mesh::Indices>);
+   |        ^^^^^^^^^^^
+
+error: function `empty_mesh` is never used
+  --> gameplay_sim/src/bevy16_compat.rs:12:12
+   |
+12 |     pub fn empty_mesh() -> Mesh {
+   |            ^^^^^^^^^^
+
+error: constant `CHARACTER_GROUP` is never used
+ --> gameplay_sim/src/constants.rs:8:11
+  |
+8 | pub const CHARACTER_GROUP: Group = Group::GROUP_3;
+  |           ^^^^^^^^^^^^^^^
+
+error: constant `CHUNK_SIZE` is never used
+  --> gameplay_sim/src/constants.rs:11:11
+   |
+11 | pub const CHUNK_SIZE: f32 = 64.0;
+   |           ^^^^^^^^^^
+
+error: constant `UNIFIED_CHUNK_SIZE` is never used
+  --> gameplay_sim/src/constants.rs:12:11
+   |
+12 | pub const UNIFIED_CHUNK_SIZE: f32 = 128.0;
+   |           ^^^^^^^^^^^^^^^^^^
+
+error: constant `UNIFIED_STREAMING_RADIUS` is never used
+  --> gameplay_sim/src/constants.rs:13:11
+   |
+13 | pub const UNIFIED_STREAMING_RADIUS: f32 = 300.0;
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_ENTITIES_PER_CHUNK` is never used
+  --> gameplay_sim/src/constants.rs:16:11
+   |
+16 | pub const MAX_ENTITIES_PER_CHUNK: usize = 100;
+   |           ^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `DISTANCE_CACHE_SIZE` is never used
+  --> gameplay_sim/src/constants.rs:17:11
+   |
+17 | pub const DISTANCE_CACHE_SIZE: usize = 2048;
+   |           ^^^^^^^^^^^^^^^^^^^
+
+error: could not compile `gameplay_sim` (lib test) due to 216 previous errors

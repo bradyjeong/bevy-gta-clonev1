@@ -1,11 +1,11 @@
 //! ───────────────────────────────────────────────
-//! System:   physics_utils
+//! System:   `physics_utils`
 //! Purpose:  Unified physics utilities for consistent physics behavior
 //! Schedule: Update (runs in physics stage)
-//! Reads:    Query<&Transform, &Velocity, &ExternalForce>, Res<GameConfig>
+//! Reads:    Query<&Transform, &Velocity, &`ExternalForce`>, Res<GameConfig>
 //! Writes:   Mut<Velocity>, Mut<ExternalForce>
 //! Invariants:
-//!   * All velocities clamped to max_velocity config
+//!   * All velocities clamped to `max_velocity` config
 //!   * All forces validated for finite values
 //!   * Entity positions kept within world bounds
 //! Owner:    @simulation-team
@@ -120,7 +120,7 @@ impl PhysicsUtilities {
         }
     }
     /// Calculate drag force for aerodynamic resistance
-    pub fn calculate_drag_force(
+    #[must_use] pub fn calculate_drag_force(
         velocity: &Velocity,
         drag_coefficient: f32,
         air_density: f32,
@@ -158,19 +158,19 @@ impl PhysicsUtilities {
 pub struct CollisionGroupHelper;
 impl CollisionGroupHelper {
     /// Get collision groups for static objects (buildings, terrain)
-    pub fn static_groups() -> CollisionGroups {
+    #[must_use] pub fn static_groups() -> CollisionGroups {
         CollisionGroups::new(STATIC_GROUP, Group::ALL)
     }
     /// Get collision groups for vehicles (cars, aircraft)
-    pub fn vehicle_groups() -> CollisionGroups {
+    #[must_use] pub fn vehicle_groups() -> CollisionGroups {
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP)
     }
     /// Get collision groups for characters (player, NPCs)
-    pub fn character_groups() -> CollisionGroups {
+    #[must_use] pub fn character_groups() -> CollisionGroups {
         CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP)
     }
     /// Get collision groups from config for flexible assignment
-    pub fn from_config(
+    #[must_use] pub fn from_config(
         entity_group: Group,
         collision_mask: Group
     ) -> CollisionGroups {
@@ -181,7 +181,7 @@ impl CollisionGroupHelper {
 pub struct PhysicsBodySetup;
 impl PhysicsBodySetup {
     /// Create a dynamic physics body for moving entities
-    pub fn create_dynamic_body(
+    #[must_use] pub fn create_dynamic_body(
         collision_groups: CollisionGroups,
         linear_damping: f32,
         angular_damping: f32
@@ -196,7 +196,7 @@ impl PhysicsBodySetup {
         )
     }
     /// Create a static physics body for immovable objects
-    pub fn create_static_body(collision_groups: CollisionGroups) -> (RigidBody, CollisionGroups) {
+    #[must_use] pub fn create_static_body(collision_groups: CollisionGroups) -> (RigidBody, CollisionGroups) {
         (RigidBody::Fixed, collision_groups)
     }
     /// Create collider with validation
@@ -215,7 +215,7 @@ impl PhysicsBodySetup {
         Some(shape)
     }
     /// Validate and create mass properties
-    pub fn create_mass_properties(mass: f32, config: &GameConfig) -> Option<AdditionalMassProperties> {
+    #[must_use] pub fn create_mass_properties(mass: f32, config: &GameConfig) -> Option<AdditionalMassProperties> {
         let clamped_mass = mass.clamp(config.physics.min_mass, config.physics.max_mass);
         if !clamped_mass.is_finite() || clamped_mass <= 0.0 {
             return None;
@@ -244,7 +244,7 @@ pub struct MovementInputs {
 pub struct InputProcessor;
 impl InputProcessor {
     /// Unified input processing for all movement systems
-    pub fn process_unified_inputs(control_manager: &ControlManager) -> MovementInputs {
+    #[must_use] pub fn process_unified_inputs(control_manager: &ControlManager) -> MovementInputs {
         MovementInputs {
             throttle: control_manager.get_control_value(ControlAction::Throttle),
             brake: control_manager.get_control_value(ControlAction::Brake),
@@ -261,7 +261,7 @@ impl InputProcessor {
         }
     }
     /// Process acceleration input with smooth ramping
-    pub fn process_acceleration_input(
+    #[must_use] pub fn process_acceleration_input(
         current_input: f32,
         target_input: f32,
         ramp_up_rate: f32,
@@ -273,7 +273,7 @@ impl InputProcessor {
         (current_input + change).clamp(0.0, 1.0)
     }
     /// Apply speed-dependent steering sensitivity
-    pub fn apply_speed_dependent_steering(
+    #[must_use] pub fn apply_speed_dependent_steering(
         steering_input: f32,
         current_speed: f32,
         base_sensitivity: f32,
@@ -284,7 +284,7 @@ impl InputProcessor {
         steering_input * sensitivity
     }
     /// Calculate force from control input with power curve
-    pub fn calculate_force_from_input(
+    #[must_use] pub fn calculate_force_from_input(
         input_value: f32,
         base_force: f32,
         power_curve: f32
@@ -298,10 +298,10 @@ pub fn apply_universal_physics_safeguards(
     mut query: Query<(Entity, &mut Velocity, &Transform), With<RigidBody>>,
     config: Res<GameConfig>,
 ) {
-    for (_entity, mut velocity, transform) in query.iter_mut() {
+    for (_entity, mut velocity, transform) in &mut query {
         // Apply all safety measures
         PhysicsUtilities::validate_velocity(&mut velocity, &config);
-        PhysicsUtilities::apply_world_bounds(&mut velocity, &transform, &config);
+        PhysicsUtilities::apply_world_bounds(&mut velocity, transform, &config);
         // Additional safety checks for invalid positions (use velocity reset for safety)
         if !transform.translation.is_finite() {
             warn!("Entity had invalid position, stopping all movement");

@@ -2,8 +2,8 @@
 //! System:   Unified World
 //! Purpose:  Handles user interface display and interaction
 //! Schedule: Update
-//! Reads:    ActiveEntity, Time, Transform, UnifiedWorldManager
-//! Writes:   UnifiedWorldManager
+//! Reads:    `ActiveEntity`, Time, Transform, `UnifiedWorldManager`
+//! Writes:   `UnifiedWorldManager`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -52,7 +52,7 @@ pub struct ChunkData {
 }
 
 impl ChunkData {
-    pub fn new(coord: ChunkCoord) -> Self {
+    #[must_use] pub fn new(coord: ChunkCoord) -> Self {
         Self {
             coord,
             state: ChunkState::Unloaded,
@@ -71,14 +71,14 @@ impl ChunkData {
 #[derive(Debug, Default)]
 pub struct PlacementGrid {
     /// Grid cells containing entity positions and types
-    /// Key: (grid_x, grid_z), Value: Vec of (position, content_type, radius)
+    /// Key: (`grid_x`, `grid_z`), Value: Vec of (position, `content_type`, radius)
     grid: HashMap<(i32, i32), Vec<(Vec3, ContentType, f32)>>,
     /// Grid cell size (should be smaller than chunk size for efficiency)
     cell_size: f32,
 }
 
 impl PlacementGrid {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             grid: HashMap::new(),
             cell_size: 50.0, // 4 cells per chunk
@@ -103,7 +103,7 @@ impl PlacementGrid {
         }
     }
     
-    pub fn can_place(&self, position: Vec3, _content_type: ContentType, radius: f32, min_distance: f32) -> bool {
+    #[must_use] pub fn can_place(&self, position: Vec3, _content_type: ContentType, radius: f32, min_distance: f32) -> bool {
         let cell = self.world_to_grid(position);
         
         // Check current cell and adjacent cells
@@ -126,7 +126,7 @@ impl PlacementGrid {
         true
     }
     
-    pub fn get_nearby_entities(&self, position: Vec3, radius: f32) -> Vec<(Vec3, ContentType, f32)> {
+    #[must_use] pub fn get_nearby_entities(&self, position: Vec3, radius: f32) -> Vec<(Vec3, ContentType, f32)> {
         let mut result = Vec::new();
         let cell = self.world_to_grid(position);
         let cell_radius = (radius / self.cell_size).ceil() as i32;
@@ -190,7 +190,7 @@ impl Default for UnifiedWorldManager {
 }
 
 impl UnifiedWorldManager {
-    pub fn get_chunk(&self, coord: ChunkCoord) -> Option<&ChunkData> {
+    #[must_use] pub fn get_chunk(&self, coord: ChunkCoord) -> Option<&ChunkData> {
         self.chunks.get(&coord)
     }
     
@@ -198,14 +198,14 @@ impl UnifiedWorldManager {
         self.chunks.entry(coord).or_insert_with(|| ChunkData::new(coord))
     }
     
-    pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
+    #[must_use] pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
         matches!(
             self.chunks.get(&coord).map(|c| c.state.clone()),
             Some(ChunkState::Loaded { .. })
         )
     }
     
-    pub fn calculate_lod_level(&self, distance: f32) -> usize {
+    #[must_use] pub fn calculate_lod_level(&self, distance: f32) -> usize {
         for (i, &max_distance) in LOD_DISTANCES.iter().enumerate() {
             if distance <= max_distance {
                 return i;
@@ -220,11 +220,9 @@ impl UnifiedWorldManager {
         for (coord, chunk) in &mut self.chunks {
             chunk.distance_to_player = active_pos.distance(coord.to_world_pos_local());
             
-            if chunk.distance_to_player > UNIFIED_STREAMING_RADIUS + UNIFIED_CHUNK_SIZE {
-                if !matches!(chunk.state, ChunkState::Unloaded) {
-                    chunk.state = ChunkState::Unloaded;
-                    to_unload.push(*coord);
-                }
+            if chunk.distance_to_player > UNIFIED_STREAMING_RADIUS + UNIFIED_CHUNK_SIZE && !matches!(chunk.state, ChunkState::Unloaded) {
+                chunk.state = ChunkState::Unloaded;
+                to_unload.push(*coord);
             }
         }
         

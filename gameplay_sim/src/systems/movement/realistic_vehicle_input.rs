@@ -2,8 +2,8 @@
 //! System:   Realistic Vehicle Input
 //! Purpose:  Processes user input and control mapping
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, RealisticVehicle, Time, ControlManager
-//! Writes:   EnginePhysics
+//! Reads:    `ActiveEntity`, `RealisticVehicle`, Time, `ControlManager`
+//! Writes:   `EnginePhysics`
 //! Invariants:
 //!   * Physics values are validated and finite
 //!   * Only active entities can be controlled
@@ -22,9 +22,9 @@ pub fn realistic_vehicle_input_system(
 ) {
     let dt = time.delta_secs();
     
-    for (entity, mut engine, vehicle) in query.iter_mut() {
+    for (entity, mut engine, vehicle) in &mut query {
         // Process realistic vehicle input with proper control systems
-        process_vehicle_input(&control_manager, &mut engine, &vehicle, entity, dt);
+        process_vehicle_input(&control_manager, &mut engine, vehicle, entity, dt);
     }
 }
 /// Process realistic vehicle input with proper control systems

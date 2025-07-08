@@ -2,8 +2,8 @@
 //! System:   Input Manager
 //! Purpose:  Processes user input and control mapping
 //! Schedule: Update
-//! Reads:    InputCompatLayer, InputConfig, InputManager
-//! Writes:   InputCompatLayer, InputManager
+//! Reads:    `InputCompatLayer`, `InputConfig`, `InputManager`
+//! Writes:   `InputCompatLayer`, `InputManager`
 //! Invariants:
 //!   * Only active entities can be controlled
 //! Owner:    @simulation-team
@@ -45,7 +45,7 @@ impl InputManager {
         // Get bindings for current state
         if let Some(state_bindings) = config.get_state_bindings(current_state) {
             // Fast path: iterate through configured bindings only
-            for (action, key) in state_bindings.iter() {
+            for (action, key) in state_bindings {
                 let was_active = self.active_actions.contains(action);
                 let is_active = input.pressed(*key);
                 
@@ -128,27 +128,27 @@ impl InputManager {
         }
     }
     /// Check if an action is currently pressed
-    pub fn is_action_pressed(&self, action: InputAction) -> bool {
+    #[must_use] pub fn is_action_pressed(&self, action: InputAction) -> bool {
         self.active_actions.contains(&action)
     }
     
     /// Check if an action was just pressed this frame
-    pub fn is_action_just_pressed(&self, action: InputAction) -> bool {
+    #[must_use] pub fn is_action_just_pressed(&self, action: InputAction) -> bool {
         self.just_pressed_actions.contains(&action)
     }
     
     /// Check if an action was just released this frame
-    pub fn is_action_just_released(&self, action: InputAction) -> bool {
+    #[must_use] pub fn is_action_just_released(&self, action: InputAction) -> bool {
         self.just_released_actions.contains(&action)
     }
     
     /// Get all currently active actions
-    pub fn get_active_actions(&self) -> &HashSet<InputAction> {
+    #[must_use] pub fn get_active_actions(&self) -> &HashSet<InputAction> {
         &self.active_actions
     }
     
     /// Get performance statistics
-    pub fn get_performance_stats(&self) -> (u128, u64) {
+    #[must_use] pub fn get_performance_stats(&self) -> (u128, u64) {
         (self.max_process_time_us, self.frame_count)
     }
     
@@ -172,11 +172,12 @@ pub fn process_input_system(
     input_config: Res<InputConfig>,
     current_state: Res<State<GameState>>,
 ) {
-    input_manager.process_input(&input, &input_config, &**current_state);
+    input_manager.process_input(&input, &input_config, &current_state);
 }
 
-/// Backwards compatibility layer - provides the same interface as raw KeyCode input
+/// Backwards compatibility layer - provides the same interface as raw `KeyCode` input
 #[derive(Resource)]
+#[derive(Default)]
 pub struct InputCompatLayer {
     // Cache the last input state for backwards compatibility
     pub arrow_up: bool,
@@ -201,31 +202,6 @@ pub struct InputCompatLayer {
     pub f2_just_pressed: bool,
 }
 
-impl Default for InputCompatLayer {
-    fn default() -> Self {
-        Self {
-            arrow_up: false,
-            arrow_down: false,
-            arrow_left: false,
-            arrow_right: false,
-            shift_left: false,
-            control_left: false,
-            space: false,
-            key_f: false,
-            key_w: false,
-            key_s: false,
-            key_a: false,
-            key_d: false,
-            key_q: false,
-            key_e: false,
-            f1: false,
-            f2: false,
-            f_just_pressed: false,
-            f1_just_pressed: false,
-            f2_just_pressed: false,
-        }
-    }
-}
 /// System to update backwards compatibility layer
 pub fn update_input_compat_layer(
     input_manager: Res<InputManager>,

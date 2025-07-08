@@ -2,8 +2,8 @@
 //! System:   Aircraft
 //! Purpose:  Handles entity movement and physics
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Transform, MainRotor, GameConfig, Helicopter
-//! Writes:   AircraftFlight, Transform, Velocity
+//! Reads:    `ActiveEntity`, Transform, `MainRotor`, `GameConfig`, Helicopter
+//! Writes:   `AircraftFlight`, Transform, Velocity
 //! Invariants:
 //!   * Physics values are validated and finite
 //!   * Only active entities can be controlled
@@ -42,10 +42,10 @@ pub fn helicopter_movement(
     }
     // Rotation - DIRECT velocity control
     let steering = control_manager.get_control_value(ControlAction::Steer);
-    if steering != 0.0 {
-        target_angular_velocity.y = steering * rotation_speed;
-    } else {
+    if steering == 0.0 {
         target_angular_velocity.y = 0.0; // Force zero rotation
+    } else {
+        target_angular_velocity.y = steering * rotation_speed;
     }
     // HELICOPTER SPECIFIC: Vertical movement using throttle input
     let throttle = control_manager.get_control_value(ControlAction::Throttle);
@@ -59,7 +59,7 @@ pub fn helicopter_movement(
     velocity.angvel = target_angular_velocity;
     // Use unified velocity validation and ground collision
     PhysicsUtilities::validate_velocity(&mut velocity, config.as_ref());
-    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.5, 5.0);
+    PhysicsUtilities::apply_ground_collision(&mut velocity, transform, 0.5, 5.0);
 }
 pub fn rotate_helicopter_rotors(
     time: Res<Time>,
@@ -69,12 +69,12 @@ pub fn rotate_helicopter_rotors(
     let main_rotor_speed = 20.0; // Fast rotation for main rotor
     let tail_rotor_speed = 35.0; // Even faster for tail rotor
     // Rotate main rotors (around Y axis)
-    for mut transform in main_rotor_query.iter_mut() {
+    for mut transform in &mut main_rotor_query {
         let rotation = Quat::from_rotation_y(time.elapsed_secs() * main_rotor_speed);
         transform.rotation = rotation;
     }
     // Rotate tail rotors (around Z axis)  
-    for mut transform in tail_rotor_query.iter_mut() {
+    for mut transform in &mut tail_rotor_query {
         let rotation = Quat::from_rotation_z(time.elapsed_secs() * tail_rotor_speed);
         transform.rotation = rotation;
     }
@@ -97,21 +97,21 @@ pub fn f16_movement(
     } else if pitch_input < 0.0 {
         flight.pitch = (flight.pitch + dt * 3.0 * pitch_input).clamp(-1.0, 1.0); // Nose down
     } else {
-        flight.pitch = flight.pitch * (1.0 - dt * 5.0); // Return to center
+        flight.pitch *= 1.0 - dt * 5.0; // Return to center
     }
     // Roll control (banking left/right)
     let roll_input = control_manager.get_control_value(ControlAction::Roll);
-    if roll_input != 0.0 {
-        flight.roll = (flight.roll + dt * 4.0 * roll_input).clamp(-1.0, 1.0);
+    if roll_input == 0.0 {
+        flight.roll *= 1.0 - dt * 3.0; // Return to center
     } else {
-        flight.roll = flight.roll * (1.0 - dt * 3.0); // Return to center
+        flight.roll = (flight.roll + dt * 4.0 * roll_input).clamp(-1.0, 1.0);
     }
     // Yaw control (rudder)
     let yaw_input = control_manager.get_control_value(ControlAction::Yaw);
-    if yaw_input != 0.0 {
-        flight.yaw = (flight.yaw + dt * 2.0 * yaw_input).clamp(-1.0, 1.0);
+    if yaw_input == 0.0 {
+        flight.yaw *= 1.0 - dt * 4.0; // Return to center
     } else {
-        flight.yaw = flight.yaw * (1.0 - dt * 4.0); // Return to center
+        flight.yaw = (flight.yaw + dt * 2.0 * yaw_input).clamp(-1.0, 1.0);
     }
     // Throttle control
     let throttle_input = control_manager.get_control_value(ControlAction::Throttle);

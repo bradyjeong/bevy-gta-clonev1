@@ -2,8 +2,8 @@
 //! System:   Modern Lod System
 //! Purpose:  Manages camera positioning and following
 //! Schedule: Update
-//! Reads:    ActiveEntity, VegetationBatchable, LodLevel, Car, Camera
-//! Writes:   VegetationLOD, LodLevel
+//! Reads:    `ActiveEntity`, `VegetationBatchable`, `LodLevel`, Car, Camera
+//! Writes:   `VegetationLOD`, `LodLevel`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Physics values are validated and finite
@@ -33,7 +33,7 @@ pub fn modern_lod_system(
     let camera_pos = camera_transform.translation();
     
     // Update vehicle LOD levels
-    for (entity, mut lod_level, transform) in vehicle_query.iter_mut() {
+    for (entity, mut lod_level, transform) in &mut vehicle_query {
         let distance = camera_pos.distance(transform.translation());
         let new_level = calculate_vehicle_lod(distance, &config);
         
@@ -47,7 +47,7 @@ pub fn modern_lod_system(
     }
     
     // Update NPC LOD levels
-    for (entity, mut lod_level, transform) in npc_query.iter_mut() {
+    for (entity, mut lod_level, transform) in &mut npc_query {
         let distance = camera_pos.distance(transform.translation());
         let new_level = calculate_npc_lod(distance, &config);
         
@@ -61,7 +61,7 @@ pub fn modern_lod_system(
     }
     
     // Update vegetation LOD levels
-    for (entity, mut veg_lod, transform) in vegetation_query.iter_mut() {
+    for (entity, mut veg_lod, transform) in &mut vegetation_query {
         let distance = camera_pos.distance(transform.translation());
         let new_level = calculate_vegetation_lod(distance);
         

@@ -41,18 +41,15 @@ pub struct DirtyVegetationInstancing {
 
 /// Priority levels for dirty flag processing
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default)]
 pub enum DirtyPriority {
     Low = 0,
+    #[default]
     Normal = 1,
     High = 2,
     Critical = 3,
 }
 
-impl Default for DirtyPriority {
-    fn default() -> Self {
-        DirtyPriority::Normal
-    }
-}
 
 /// Bundle for entities that support all dirty flags
 #[derive(Bundle, Default)]
@@ -65,6 +62,7 @@ pub struct DirtyFlagsBundle {
 
 /// Component to track the last time an entity was processed
 #[derive(Component, Debug, Clone)]
+#[derive(Default)]
 pub struct LastProcessed {
     pub transform_frame: u64,
     pub visibility_frame: u64,
@@ -72,16 +70,6 @@ pub struct LastProcessed {
     pub lod_frame: u64,
 }
 
-impl Default for LastProcessed {
-    fn default() -> Self {
-        Self {
-            transform_frame: 0,
-            visibility_frame: 0,
-            physics_frame: 0,
-            lod_frame: 0,
-        }
-    }
-}
 
 /// Resource for tracking frame counter
 #[derive(Resource, Default)]
@@ -141,46 +129,46 @@ pub struct DirtyFlagsMetrics {
 }
 
 impl DirtyTransform {
-    pub fn new(priority: DirtyPriority, frame: u64) -> Self {
+    #[must_use] pub fn new(priority: DirtyPriority, frame: u64) -> Self {
         Self {
             marked_frame: frame,
             priority,
         }
     }
     
-    pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
+    #[must_use] pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
         current_frame.saturating_sub(self.marked_frame) > stale_threshold
     }
 }
 
 impl DirtyVisibility {
-    pub fn new(priority: DirtyPriority, frame: u64) -> Self {
+    #[must_use] pub fn new(priority: DirtyPriority, frame: u64) -> Self {
         Self {
             marked_frame: frame,
             priority,
         }
     }
     
-    pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
+    #[must_use] pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
         current_frame.saturating_sub(self.marked_frame) > stale_threshold
     }
 }
 
 impl DirtyPhysics {
-    pub fn new(priority: DirtyPriority, frame: u64) -> Self {
+    #[must_use] pub fn new(priority: DirtyPriority, frame: u64) -> Self {
         Self {
             marked_frame: frame,
             priority,
         }
     }
     
-    pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
+    #[must_use] pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
         current_frame.saturating_sub(self.marked_frame) > stale_threshold
     }
 }
 
 impl DirtyLOD {
-    pub fn new(priority: DirtyPriority, frame: u64, distance: f32) -> Self {
+    #[must_use] pub fn new(priority: DirtyPriority, frame: u64, distance: f32) -> Self {
         Self {
             marked_frame: frame,
             priority,
@@ -188,24 +176,24 @@ impl DirtyLOD {
         }
     }
     
-    pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
+    #[must_use] pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
         current_frame.saturating_sub(self.marked_frame) > stale_threshold
     }
     
-    pub fn distance_changed_significantly(&self, new_distance: f32, threshold: f32) -> bool {
+    #[must_use] pub fn distance_changed_significantly(&self, new_distance: f32, threshold: f32) -> bool {
         (self.last_distance - new_distance).abs() > threshold
     }
 }
 
 impl DirtyVegetationInstancing {
-    pub fn new(priority: DirtyPriority, frame: u64) -> Self {
+    #[must_use] pub fn new(priority: DirtyPriority, frame: u64) -> Self {
         Self {
             marked_frame: frame,
             priority,
         }
     }
     
-    pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
+    #[must_use] pub fn is_stale(&self, current_frame: u64, stale_threshold: u64) -> bool {
         current_frame.saturating_sub(self.marked_frame) > stale_threshold
     }
 }
@@ -218,8 +206,8 @@ pub trait MarkDirty {
     fn mark_lod_dirty(&mut self, priority: DirtyPriority, frame: u64, distance: f32);
 }
 
-/// Implement MarkDirty for EntityCommands for easy entity marking
-impl<'w> MarkDirty for EntityCommands<'w> {
+/// Implement `MarkDirty` for `EntityCommands` for easy entity marking
+impl MarkDirty for EntityCommands<'_> {
     fn mark_transform_dirty(&mut self, priority: DirtyPriority, frame: u64) {
         self.insert(DirtyTransform::new(priority, frame));
     }

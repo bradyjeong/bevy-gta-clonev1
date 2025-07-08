@@ -2,14 +2,12 @@
 //! System:   Road Network
 //! Purpose:  Manages road splines and network connectivity
 //! Schedule: Initialization
-//! Reads:    RoadEntity, IntersectionEntity
-//! Writes:   RoadNetwork
+//! Reads:    `RoadEntity`, `IntersectionEntity`
+//! Writes:   `RoadNetwork`
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use std::collections::HashMap;
-use game_core::prelude::*;
 
 // Use game_core types directly for consistency
 pub use game_core::components::{RoadType, RoadSpline, RoadNetwork};
@@ -43,7 +41,7 @@ pub fn road_network_monitoring_system(
     if road_network.is_changed() {
         let road_count = road_network.roads.len();
         let intersection_count = road_network.intersections.len();
-        println!("🛣️ ROAD NETWORK: {} roads, {} intersections", road_count, intersection_count);
+        println!("🛣️ ROAD NETWORK: {road_count} roads, {intersection_count} intersections");
     }
 }
 

@@ -2,8 +2,8 @@
 //! System:   Layered Generation
 //! Purpose:  Generates world content in layers (roads, buildings, vegetation)
 //! Schedule: Update
-//! Reads:    ActiveEntity, Transform
-//! Writes:   Commands, WorldManager
+//! Reads:    `ActiveEntity`, Transform
+//! Writes:   Commands, `WorldManager`
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ impl Default for LayeredChunkData {
 }
 
 pub fn layered_generation_system(
-    mut commands: Commands,
+    commands: Commands,
     active_query: Query<&Transform, With<ActiveEntity>>,
     mut world_manager: ResMut<WorldManager>,
     time: Res<Time>,
@@ -58,7 +58,7 @@ pub fn layered_generation_system(
         world_manager.update_active_chunks(player_pos, 800.0);
         
         // Process chunks that need generation
-        for &coord in world_manager.active_chunks.clone().iter() {
+        for &coord in &world_manager.active_chunks.clone() {
             advance_chunk_generation(&mut world_manager, coord, current_time);
         }
     }
@@ -246,7 +246,7 @@ fn generate_vegetation_for_chunk(
 }
 
 // Utility functions
-pub fn get_next_layer_to_generate(completed_layers: &HashSet<ContentLayer>) -> Option<ContentLayer> {
+#[must_use] pub fn get_next_layer_to_generate(completed_layers: &HashSet<ContentLayer>) -> Option<ContentLayer> {
     let all_layers = [
         ContentLayer::Roads,
         ContentLayer::Buildings,
@@ -263,6 +263,6 @@ pub fn get_next_layer_to_generate(completed_layers: &HashSet<ContentLayer>) -> O
     None
 }
 
-pub fn is_chunk_fully_generated(completed_layers: &HashSet<ContentLayer>) -> bool {
+#[must_use] pub fn is_chunk_fully_generated(completed_layers: &HashSet<ContentLayer>) -> bool {
     completed_layers.len() >= 4 // All layers completed
 }

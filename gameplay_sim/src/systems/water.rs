@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use game_core::prelude::*;
 
 // Temporary stubs - will be properly implemented
 pub fn water_wave_system() {
@@ -106,7 +105,7 @@ pub fn yacht_movement_system(
     mut yacht_query: Query<(&mut Transform, &mut Velocity, &Yacht)>,
     time: Res<Time>,
 ) {
-    for (mut transform, mut velocity, yacht) in yacht_query.iter_mut() {
+    for (mut transform, mut velocity, yacht) in &mut yacht_query {
         let mut thrust = 0.0;
         let mut turn = 0.0;
         
@@ -129,11 +128,11 @@ pub fn yacht_movement_system(
         }
         
         // Apply thrust in forward direction
-        if thrust != 0.0 {
+        if thrust == 0.0 {
+            velocity.linvel *= 0.9; // Damping
+        } else {
             let forward = transform.forward();
             velocity.linvel = forward.as_vec3() * thrust;
-        } else {
-            velocity.linvel *= 0.9; // Damping
         }
     }
 }
@@ -142,7 +141,7 @@ pub fn water_effects_system(
     mut water_query: Query<&mut Transform, With<WaterBody>>,
     time: Res<Time>,
 ) {
-    for mut transform in water_query.iter_mut() {
+    for mut transform in &mut water_query {
         // Simple wave animation
         let wave_offset = (time.elapsed_secs() * 2.0).sin() * 0.1;
         transform.translation.y += wave_offset * 0.1;

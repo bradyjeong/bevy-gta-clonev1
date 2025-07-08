@@ -52,7 +52,7 @@ impl Default for VehicleStatsConfig {
 }
 
 impl VehicleStatsConfig {
-    pub fn get_stats(&self, vehicle_type: &str) -> Option<&VehicleStats> {
+    #[must_use] pub fn get_stats(&self, vehicle_type: &str) -> Option<&VehicleStats> {
         self.vehicle_configs.get(vehicle_type)
     }
 }

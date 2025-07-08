@@ -2,8 +2,8 @@
 //! System:   Map System
 //! Purpose:  Handles user interface display and interaction
 //! Schedule: Update
-//! Reads:    ActiveEntity, Transform, Player, mut, MapSystem
-//! Writes:   Visibility, MapChunk, MapSystem
+//! Reads:    `ActiveEntity`, Transform, Player, mut, `MapSystem`
+//! Writes:   Visibility, `MapChunk`, `MapSystem`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -14,7 +14,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use game_core::prelude::*;
 // TEMP_PHASE_6_BRIDGE - Use game_core constants directly
-use game_core::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
+use game_core::constants::STATIC_GROUP;
 
 use crate::systems::world::road_network::{RoadSpline, RoadNetwork};
 use crate::systems::world::road_generation::is_on_road_spline;
@@ -128,14 +128,12 @@ pub fn map_streaming_system(
     let streaming_radius_chunks = (map_system.streaming_radius / CHUNK_SIZE) as i32;
     
     // Update existing chunks
-    for (entity, mut chunk) in chunk_query.iter_mut() {
+    for (entity, mut chunk) in &mut chunk_query {
         chunk.distance_to_player = player_pos.distance(chunk_coord_to_world(chunk.coord));
         
         // Unload distant chunks
-        if chunk.distance_to_player > map_system.streaming_radius {
-            if chunk.is_loaded {
-                unload_chunk(&mut commands, entity, &mut chunk);
-            }
+        if chunk.distance_to_player > map_system.streaming_radius && chunk.is_loaded {
+            unload_chunk(&mut commands, entity, &mut chunk);
         }
     }
     
@@ -173,7 +171,7 @@ pub fn map_lod_system(
     let Ok(player_transform) = player_query.single() else { return; };
     let player_pos = player_transform.translation;
     
-    for mut chunk in chunk_query.iter_mut() {
+    for mut chunk in &mut chunk_query {
         if !chunk.is_loaded { continue; }
         
         let distance = player_pos.distance(chunk_coord_to_world(chunk.coord));
@@ -254,7 +252,7 @@ fn spawn_building(
     // REPLACED: Use UnifiedEntityFactory for building spawning
     // This eliminates duplicate building spawning code
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-    use crate::config::GameConfig;
+    
     
     let mut factory = UnifiedEntityFactory::with_config(game_core::config::GameConfig::default());
     let current_time = 0.0; // Placeholder time
@@ -412,10 +410,10 @@ fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork) -> ChunkTem
         
         // Skip if too close to roads using proper road detection
         if is_on_road_spline(world_pos, road_network, 25.0) {
-            println!("DEBUG: MAP_SYSTEM - Skipping building at {:?} - on road", world_pos);
+            println!("DEBUG: MAP_SYSTEM - Skipping building at {world_pos:?} - on road");
             continue;
         }
-        println!("DEBUG: MAP_SYSTEM - Spawning building at {:?}", world_pos);
+        println!("DEBUG: MAP_SYSTEM - Spawning building at {world_pos:?}");
         
         let building_type = if distance_from_center < 5.0 {
             if MAP_RNG.with(|rng| rng.borrow_mut().gen_bool(0.3)) { BuildingType::Skyscraper } else { BuildingType::Commercial }

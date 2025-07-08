@@ -2,8 +2,8 @@
 //! System:   Vegetation LOD
 //! Purpose:  Manages level-of-detail for vegetation
 //! Schedule: Update
-//! Reads:    ActiveEntity, Transform, VegetationLOD
-//! Writes:   VegetationLOD, Visibility
+//! Reads:    `ActiveEntity`, Transform, `VegetationLOD`
+//! Writes:   `VegetationLOD`, Visibility
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ pub struct VegetationBillboard {
 }
 
 thread_local! {
-    static LAST_LOG: RefCell<f32> = RefCell::new(0.0);
+    static LAST_LOG: RefCell<f32> = const { RefCell::new(0.0) };
 }
 
 pub fn vegetation_lod_system(
@@ -58,7 +58,7 @@ pub fn vegetation_lod_system(
         
         let mut updated_count = 0;
         
-        for (entity, mut veg_lod, transform, mut visibility) in vegetation_query.iter_mut() {
+        for (entity, mut veg_lod, transform, mut visibility) in &mut vegetation_query {
             // Throttle updates to every 0.2 seconds per vegetation entity
             if current_time - veg_lod.last_update < 0.2 {
                 continue;
@@ -97,7 +97,7 @@ pub fn vegetation_billboard_system(
     mut billboard_query: Query<(&mut Transform, &VegetationLOD, &VegetationBillboard), (Without<ActiveEntity>, With<VegetationBillboard>)>,
 ) {
     if let Ok(active_transform) = active_query.single() {
-        for (mut transform, veg_lod, billboard) in billboard_query.iter_mut() {
+        for (mut transform, veg_lod, billboard) in &mut billboard_query {
             // Only update billboards for entities at billboard LOD level
             if matches!(veg_lod.detail_level, VegetationDetailLevel::Billboard) {
                 // Make billboard face the camera
@@ -111,8 +111,8 @@ pub fn vegetation_billboard_system(
 pub fn vegetation_billboard_mesh_generator(
     mut commands: Commands,
     vegetation_query: Query<(Entity, &VegetationLOD), (Changed<VegetationLOD>, With<VegetationLOD>)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, veg_lod) in vegetation_query.iter() {
         match veg_lod.detail_level {
@@ -200,10 +200,10 @@ pub fn vegetation_instancing_system(
     
     for (transform, veg_lod) in vegetation_query.iter() {
         match veg_lod.detail_level {
-            VegetationDetailLevel::High => high_detail_instances.push(transform.clone()),
-            VegetationDetailLevel::Medium => medium_detail_instances.push(transform.clone()),
-            VegetationDetailLevel::Low => low_detail_instances.push(transform.clone()),
-            VegetationDetailLevel::Billboard => billboard_instances.push(transform.clone()),
+            VegetationDetailLevel::High => high_detail_instances.push(*transform),
+            VegetationDetailLevel::Medium => medium_detail_instances.push(*transform),
+            VegetationDetailLevel::Low => low_detail_instances.push(*transform),
+            VegetationDetailLevel::Billboard => billboard_instances.push(*transform),
             VegetationDetailLevel::Hidden => {} // Skip hidden vegetation
         }
     }

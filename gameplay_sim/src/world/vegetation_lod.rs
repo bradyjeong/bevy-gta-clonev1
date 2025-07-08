@@ -2,8 +2,8 @@
 //! System:   Vegetation Lod
 //! Purpose:  Manages camera positioning and following
 //! Schedule: Update
-//! Reads:    LODFrameCounter, ActiveEntity, PerformanceStats, Transform, VegetationMeshLOD
-//! Writes:   LODFrameCounter, PerformanceStats, Transform, VegetationLOD, DistanceCache
+//! Reads:    `LODFrameCounter`, `ActiveEntity`, `PerformanceStats`, Transform, `VegetationMeshLOD`
+//! Writes:   `LODFrameCounter`, `PerformanceStats`, Transform, `VegetationLOD`, `DistanceCache`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -36,7 +36,7 @@ pub fn vegetation_lod_system(
     let Ok(active_transform) = active_query.single() else { return };
     let active_pos = active_transform.translation;
 
-    for (entity, mut veg_lod, transform, mut visibility, mut mesh_handle) in vegetation_query.iter_mut() {
+    for (entity, mut veg_lod, transform, mut visibility, mut mesh_handle) in &mut vegetation_query {
         // Use distance cache for efficient distance calculation
         let distance = get_cached_distance(
             &mut distance_cache,
@@ -78,7 +78,7 @@ pub fn vegetation_billboard_system(
     let Ok(active_transform) = active_query.single() else { return };
     let camera_pos = active_transform.translation;
 
-    for (mut transform, veg_lod, billboard) in billboard_query.iter_mut() {
+    for (mut transform, veg_lod, billboard) in &mut billboard_query {
         // Only update billboards for entities at billboard LOD level
         if matches!(veg_lod.detail_level, VegetationDetailLevel::Billboard) {
             let direction = (camera_pos - transform.translation).normalize();
@@ -149,7 +149,7 @@ pub fn adaptive_vegetation_lod_system(
     };
     
     if distance_multiplier != 1.0 {
-        for mut veg_lod in vegetation_query.iter_mut() {
+        for mut veg_lod in &mut vegetation_query {
             let adjusted_distance = veg_lod.distance_to_player * distance_multiplier;
             veg_lod.update_from_distance(adjusted_distance, 0);
         }
@@ -183,15 +183,14 @@ pub fn vegetation_lod_performance_monitor(
     // Only log every 5 seconds to reduce spam
     use std::time::{Duration, Instant};
     thread_local! {
-        static LAST_LOG: std::cell::Cell<Option<Instant>> = std::cell::Cell::new(None);
+        static LAST_LOG: std::cell::Cell<Option<Instant>> = const { std::cell::Cell::new(None) };
     }
     
     if cfg!(feature = "debug-ui") {
         LAST_LOG.with(|last| {
             let now = Instant::now();
             let should_log = last.get()
-                .map(|last_time| now.duration_since(last_time) > Duration::from_secs(5))
-                .unwrap_or(true);
+                .is_none_or(|last_time| now.duration_since(last_time) > Duration::from_secs(5));
                 
             if should_log {
                 info!(

@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use game_core::prelude::*;
 use crate::factories::StandardRenderingPattern;
 
 /// Simplified rendering factory for consistent entity rendering
@@ -7,7 +6,7 @@ use crate::factories::StandardRenderingPattern;
 pub struct RenderingFactory;
 
 impl RenderingFactory {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self
     }
 

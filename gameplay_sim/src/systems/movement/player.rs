@@ -2,8 +2,8 @@
 //! System:   Human Player Movement System
 //! Purpose:  Handles player character movement, animation, and behavior
 //! Schedule: Update (continuous)
-//! Reads:    Time, ControlManager, Velocity, Transform, HumanMovement, HumanAnimation, HumanBehavior
-//! Writes:   Velocity, HumanMovement, HumanAnimation, HumanBehavior
+//! Reads:    Time, `ControlManager`, Velocity, Transform, `HumanMovement`, `HumanAnimation`, `HumanBehavior`
+//! Writes:   Velocity, `HumanMovement`, `HumanAnimation`, `HumanBehavior`
 //! Invariants:
 //!   * Player movement respects physics constraints
 //!   * Animation states sync with movement direction

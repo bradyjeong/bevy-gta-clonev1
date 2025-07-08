@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::cell::RefCell;
 use game_core::prelude::*;
-use crate::bevy16_compat::QueryExt;
+// Removed bevy16_compat - using direct Bevy methods
 use rand::Rng;
 
 thread_local! {
@@ -108,14 +108,14 @@ pub fn human_fidget_system(
     time: Res<Time>,
     mut behavior_query: Query<(&mut HumanBehavior, &mut HumanAnimation), With<HumanEmotions>>,
 ) {
-    for (mut behavior, mut animation) in behavior_query.iter_mut() {
+    for (behavior, mut animation) in &mut behavior_query {
         // Update fidget timer
         animation.next_fidget_time -= time.delta_secs();
         
         if animation.next_fidget_time <= 0.0 {
             // Trigger a fidget animation
             // Fidgeting is reflected in higher step frequency
-            animation.step_frequency = animation.step_frequency * 1.2;
+            animation.step_frequency *= 1.2;
             
             // Set next fidget time based on confidence level
             let base_fidget_time = match behavior.confidence_level {

@@ -1,7 +1,6 @@
 //! Camera systems
 //! Phase 4: Implement camera functionality
 
-use bevy::prelude::*;
 
 pub fn setup_camera() {
     todo!("Phase 4: Implement camera setup")

@@ -2,8 +2,8 @@
 //! System:   Realistic Vehicle Physics Core
 //! Purpose:  Processes user input and control mapping
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, RealisticVehicle, Transform, GameConfig, Time
-//! Writes:   TirePhysics
+//! Reads:    `ActiveEntity`, `RealisticVehicle`, Transform, `GameConfig`, Time
+//! Writes:   `TirePhysics`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Physics values are validated and finite

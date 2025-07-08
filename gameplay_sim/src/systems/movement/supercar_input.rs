@@ -2,8 +2,8 @@
 //! System:   Supercar Input
 //! Purpose:  Processes user input and control mapping
 //! Schedule: Update
-//! Reads:    ActiveEntity, Car, SuperCar, mut, ControlManager
-//! Writes:   SuperCar
+//! Reads:    `ActiveEntity`, Car, `SuperCar`, mut, `ControlManager`
+//! Writes:   `SuperCar`
 //! Invariants:
 //!   * Only active entities can be controlled
 //! Owner:    @simulation-team
@@ -46,7 +46,7 @@ fn handle_driving_mode_changes(supercar: &mut SuperCar, _control_manager: &Contr
 }
 fn handle_launch_control(supercar: &mut SuperCar, control_manager: &ControlManager) {
     // Launch control activation (both brake and accelerate pressed)
-    let current_speed_ms = supercar.last_velocity_cache.map(|v| v.length()).unwrap_or(0.0);
+    let current_speed_ms = supercar.last_velocity_cache.map_or(0.0, bevy::prelude::Vec3::length);
     let current_speed_mph = current_speed_ms * 2.237; // Convert m/s to mph
     if control_manager.is_control_active(ControlAction::Brake) && 
        control_manager.is_control_active(ControlAction::Accelerate) &&

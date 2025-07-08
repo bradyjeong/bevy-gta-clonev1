@@ -1,4 +1,3 @@
-use bevy::prelude::*;
 
 /// Minimal exhaust effects system stub
 pub fn exhaust_effects_system() {

@@ -2,7 +2,7 @@
 //! System:   Npc
 //! Purpose:  Handles entity movement and physics
 //! Schedule: Update
-//! Reads:    ActiveEntity, Transform, Cullable, NPC, Time
+//! Reads:    `ActiveEntity`, Transform, Cullable, NPC, Time
 //! Writes:   NPC
 //! Invariants:
 //!   * Distance calculations are cached for performance
@@ -37,7 +37,7 @@ pub fn unified_npc_movement(
         Vec3::ZERO
     };
     
-    for (entity, mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
+    for (entity, mut transform, mut velocity, mut npc, cullable) in &mut npc_query {
         // Skip if culled
         if cullable.is_culled {
             velocity.linvel = Vec3::ZERO;
@@ -125,7 +125,7 @@ pub fn optimized_npc_movement(
         Vec3::ZERO
     };
     
-    for (mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
+    for (mut transform, mut velocity, mut npc, cullable) in &mut npc_query {
         // Skip if culled
         if cullable.is_culled {
             velocity.linvel = Vec3::ZERO;

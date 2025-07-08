@@ -2,8 +2,8 @@
 //! System:   Unified Lod
 //! Purpose:  Handles entity movement and physics
 //! Schedule: Update
-//! Reads:    VehicleRendering, VehicleState, ActiveEntity, PerformanceStats, Transform
-//! Writes:   VehicleState, PerformanceStats, NPCState, Visibility, MasterLODCoordinator
+//! Reads:    `VehicleRendering`, `VehicleState`, `ActiveEntity`, `PerformanceStats`, Transform
+//! Writes:   `VehicleState`, `PerformanceStats`, `NPCState`, Visibility, `MasterLODCoordinator`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -72,7 +72,7 @@ pub struct LODPerformanceStats {
 }
 
 impl LODPluginConfig {
-    pub fn vehicle() -> Self {
+    #[must_use] pub fn vehicle() -> Self {
         Self {
             distances: vec![50.0, 150.0, 300.0],
             cull_distance: 500.0,
@@ -82,7 +82,7 @@ impl LODPluginConfig {
         }
     }
 
-    pub fn npc() -> Self {
+    #[must_use] pub fn npc() -> Self {
         Self {
             distances: vec![25.0, 75.0, 100.0],
             cull_distance: 150.0,
@@ -92,7 +92,7 @@ impl LODPluginConfig {
         }
     }
 
-    pub fn vegetation() -> Self {
+    #[must_use] pub fn vegetation() -> Self {
         Self {
             distances: vec![50.0, 150.0, 300.0],
             cull_distance: 400.0,
@@ -102,7 +102,7 @@ impl LODPluginConfig {
         }
     }
 
-    pub fn building() -> Self {
+    #[must_use] pub fn building() -> Self {
         Self {
             distances: vec![100.0, 300.0, 500.0],
             cull_distance: 800.0,
@@ -112,7 +112,7 @@ impl LODPluginConfig {
         }
     }
 
-    pub fn chunk() -> Self {
+    #[must_use] pub fn chunk() -> Self {
         Self {
             distances: vec![150.0, 300.0, 500.0],
             cull_distance: 800.0,
@@ -122,7 +122,7 @@ impl LODPluginConfig {
         }
     }
 
-    pub fn get_lod_level(&self, distance: f32) -> usize {
+    #[must_use] pub fn get_lod_level(&self, distance: f32) -> usize {
         for (level, &threshold) in self.distances.iter().enumerate() {
             if distance <= threshold + self.hysteresis {
                 return level;
@@ -131,7 +131,7 @@ impl LODPluginConfig {
         self.distances.len() // Beyond all LOD levels
     }
 
-    pub fn should_cull(&self, distance: f32) -> bool {
+    #[must_use] pub fn should_cull(&self, distance: f32) -> bool {
         distance > self.cull_distance + self.hysteresis
     }
 }
@@ -175,7 +175,7 @@ pub fn master_unified_lod_system(
     // Update chunk entity visibility
     {
         let mut chunk_query = visibility_param_set.p0();
-        for (_entity, chunk_entity, mut visibility) in chunk_query.iter_mut() {
+        for (_entity, chunk_entity, mut visibility) in &mut chunk_query {
         if let Some(chunk) = world_manager.get_chunk(chunk_entity.coord) {
             let should_be_visible = match chunk.state {
                 ChunkState::Loaded { entity_count } => {
@@ -277,7 +277,7 @@ fn should_layer_be_visible(layer: ContentLayer, lod_level: usize, distance: f32)
     }
 }
 
-/// Vehicle LOD processing plugin - replaces vehicles/lod_manager.rs
+/// Vehicle LOD processing plugin - replaces `vehicles/lod_manager.rs`
 fn process_vehicle_lod(
     commands: &mut Commands,
     lod_coordinator: &mut MasterLODCoordinator,
@@ -349,7 +349,7 @@ fn process_vehicle_lod(
     lod_coordinator.performance_stats.processing_times.insert(EntityType::Vehicle, processing_time);
 }
 
-/// NPC LOD processing plugin - replaces world/npc_lod.rs
+/// NPC LOD processing plugin - replaces `world/npc_lod.rs`
 fn process_npc_lod(
     commands: &mut Commands,
     lod_coordinator: &mut MasterLODCoordinator,
@@ -422,7 +422,7 @@ fn process_npc_lod(
     lod_coordinator.performance_stats.processing_times.insert(EntityType::NPC, processing_time);
 }
 
-/// Vegetation LOD processing plugin - replaces world/vegetation_lod.rs
+/// Vegetation LOD processing plugin - replaces `world/vegetation_lod.rs`
 fn process_vegetation_lod(
     commands: &mut Commands,
     lod_coordinator: &mut MasterLODCoordinator,
@@ -504,19 +504,19 @@ fn process_vegetation_lod(
     lod_coordinator.performance_stats.processing_times.insert(EntityType::Vegetation, processing_time);
 }
 
-/// Component to signal vehicle LOD updates (replaces vehicles/lod_manager.rs functionality)
+/// Component to signal vehicle LOD updates (replaces `vehicles/lod_manager.rs` functionality)
 #[derive(Component)]
 pub struct VehicleLODUpdate {
     pub new_lod: VehicleLOD,
 }
 
-/// Component to signal NPC LOD updates (replaces world/npc_lod.rs functionality)
+/// Component to signal NPC LOD updates (replaces `world/npc_lod.rs` functionality)
 #[derive(Component)]
 pub struct NPCLODUpdate {
     pub new_lod: NPCLOD,
 }
 
-/// Component to signal vegetation LOD updates (replaces world/vegetation_lod.rs functionality)
+/// Component to signal vegetation LOD updates (replaces `world/vegetation_lod.rs` functionality)
 #[derive(Component)]
 pub struct VegetationLODUpdate {
     pub new_detail_level: VegetationDetailLevel,

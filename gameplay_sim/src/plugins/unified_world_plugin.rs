@@ -122,8 +122,8 @@ fn debug_unified_world_activity(
         
         println!("🌍 UNIFIED WORLD STATUS:");
         println!("  📦 Total chunks: {}", world_manager.chunks.len());
-        println!("  ✅ Loaded chunks: {}", loaded_chunks);
-        println!("  ⏳ Loading chunks: {}", loading_chunks);
+        println!("  ✅ Loaded chunks: {loaded_chunks}");
+        println!("  ⏳ Loading chunks: {loading_chunks}");
         println!("  🛣️ Roads: managed separately");
         println!("  🎯 Active chunks: {}", world_manager.active_chunks.len());
         println!("  📊 Total chunks: {}", world_manager.chunks.len());

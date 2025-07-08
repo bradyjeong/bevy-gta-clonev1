@@ -22,10 +22,10 @@ impl std::fmt::Display for BundleError {
         match self {
             BundleError::InvalidPosition => write!(f, "Invalid position for entity"),
             BundleError::InvalidSize { size, min_size, max_size } => {
-                write!(f, "Invalid size {:?}, must be between {} and {}", size, min_size, max_size)
+                write!(f, "Invalid size {size:?}, must be between {min_size} and {max_size}")
             }
             BundleError::InvalidMass { mass, min_mass, max_mass } => {
-                write!(f, "Invalid mass {}, must be between {} and {}", mass, min_mass, max_mass)
+                write!(f, "Invalid mass {mass}, must be between {min_mass} and {max_mass}")
             }
             BundleError::NotImplemented => write!(f, "Feature not yet implemented"),
         }
@@ -36,12 +36,13 @@ impl std::error::Error for BundleError {}
 
 /// Generic bundle factory for creating different types of entities
 #[derive(Resource)]
+#[derive(Default)]
 pub struct GenericBundleFactory {
     physics_config: PhysicsConfig,
 }
 
 impl GenericBundleFactory {
-    pub fn new(config: &GameConfig) -> Self {
+    #[must_use] pub fn new(config: &GameConfig) -> Self {
         Self {
             physics_config: config.physics.clone(),
         }
@@ -190,10 +191,3 @@ impl GenericBundleFactory {
     }
 }
 
-impl Default for GenericBundleFactory {
-    fn default() -> Self {
-        Self {
-            physics_config: PhysicsConfig::default(),
-        }
-    }
-}

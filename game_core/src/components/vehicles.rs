@@ -298,7 +298,7 @@ pub struct VehicleState {
 }
 
 impl VehicleState {
-    pub fn new(vehicle_type: VehicleType) -> Self {
+    #[must_use] pub fn new(vehicle_type: VehicleType) -> Self {
         let (max_speed, acceleration) = match vehicle_type {
             VehicleType::Car => (60.0, 20.0),
             VehicleType::BasicCar => (60.0, 20.0),

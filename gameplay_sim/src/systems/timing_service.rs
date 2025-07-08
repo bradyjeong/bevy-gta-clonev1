@@ -9,7 +9,6 @@
 
 use bevy::prelude::*;
 use std::collections::HashMap;
-use game_core::prelude::*;
 
 #[derive(Resource)]
 pub struct TimingService {
@@ -77,12 +76,12 @@ impl TimingService {
     }
     
     /// Get current time
-    pub fn current_time(&self) -> f32 {
+    #[must_use] pub fn current_time(&self) -> f32 {
         self.current_time
     }
     
     /// Get delta time
-    pub fn delta_time(&self) -> f32 {
+    #[must_use] pub fn delta_time(&self) -> f32 {
         self.delta_time
     }
     
@@ -128,11 +127,11 @@ impl TimingService {
         self.system_intervals.insert(system_type, interval);
     }
     
-    pub fn get_current_time(&self) -> f32 {
+    #[must_use] pub fn get_current_time(&self) -> f32 {
         self.current_time
     }
     
-    pub fn get_delta_time(&self) -> f32 {
+    #[must_use] pub fn get_delta_time(&self) -> f32 {
         self.delta_time
     }
     
@@ -145,7 +144,7 @@ impl TimingService {
 }
 
 impl EntityTimer {
-    pub fn new(timer_type: EntityTimerType, interval: f32) -> Self {
+    #[must_use] pub fn new(timer_type: EntityTimerType, interval: f32) -> Self {
         Self {
             last_update: 0.0,
             interval,
@@ -196,7 +195,7 @@ impl Default for ManagedTiming {
 }
 
 impl ManagedTiming {
-    pub fn new(timer_type: EntityTimerType) -> Self {
+    #[must_use] pub fn new(timer_type: EntityTimerType) -> Self {
         Self {
             last_update: 0.0,
             update_interval: match timer_type {

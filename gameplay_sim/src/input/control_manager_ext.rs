@@ -1,6 +1,6 @@
 //! ───────────────────────────────────────────────
-//! System:   ControlManager Extensions
-//! Purpose:  Extension methods for ControlManager
+//! System:   `ControlManager` Extensions
+//! Purpose:  Extension methods for `ControlManager`
 //! Schedule: Update
 //! Reads:    Input states
 //! Writes:   Control states
@@ -9,10 +9,9 @@
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
-use bevy::prelude::*;
 use crate::input::ControlManager;
 
-/// Extension trait for ControlManager providing additional input methods
+/// Extension trait for `ControlManager` providing additional input methods
 pub trait ControlManagerExt {
     fn is_accelerating(&self) -> bool;
     fn is_braking(&self) -> bool;
@@ -84,18 +83,18 @@ impl ControlManagerExt for ControlManager {
 }
 
 // Export functions for backward compatibility
-pub fn is_accelerating(control_manager: &ControlManager) -> bool {
+#[must_use] pub fn is_accelerating(control_manager: &ControlManager) -> bool {
     control_manager.is_accelerating()
 }
 
-pub fn is_braking(control_manager: &ControlManager) -> bool {
+#[must_use] pub fn is_braking(control_manager: &ControlManager) -> bool {
     control_manager.is_braking()
 }
 
-pub fn is_turning_left(control_manager: &ControlManager) -> bool {
+#[must_use] pub fn is_turning_left(control_manager: &ControlManager) -> bool {
     control_manager.is_turning_left()
 }
 
-pub fn is_turning_right(control_manager: &ControlManager) -> bool {
+#[must_use] pub fn is_turning_right(control_manager: &ControlManager) -> bool {
     control_manager.is_turning_right()
 }

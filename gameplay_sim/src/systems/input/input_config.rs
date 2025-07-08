@@ -114,7 +114,7 @@ impl Default for InputConfig {
 }
 
 impl InputConfig {
-    pub fn get_key_for_action(&self, state: &GameState, action: InputAction) -> Option<KeyCode> {
+    #[must_use] pub fn get_key_for_action(&self, state: &GameState, action: InputAction) -> Option<KeyCode> {
         self.bindings
             .get(state)
             .and_then(|state_bindings| state_bindings.get(&action))
@@ -124,15 +124,15 @@ impl InputConfig {
     pub fn set_key_for_action(&mut self, state: GameState, action: InputAction, key: KeyCode) -> Result<(), String> {
         // Validate no conflicts within the same state
         if let Some(state_bindings) = self.bindings.get(&state) {
-            for (existing_action, existing_key) in state_bindings.iter() {
+            for (existing_action, existing_key) in state_bindings {
                 if *existing_key == key && *existing_action != action {
-                    return Err(format!("Key {:?} already bound to {:?} in state {:?}", key, existing_action, state));
+                    return Err(format!("Key {key:?} already bound to {existing_action:?} in state {state:?}"));
                 }
             }
         }
         self.bindings
             .entry(state)
-            .or_insert_with(HashMap::new)
+            .or_default()
             .insert(action, key);
         Ok(())
     }
@@ -149,19 +149,18 @@ impl InputConfig {
         self.use_fallback = false;
     }
 
-    pub fn is_fallback_enabled(&self) -> bool {
+    #[must_use] pub fn is_fallback_enabled(&self) -> bool {
         self.use_fallback
     }
     /// Get all bindings for a specific state
-    pub fn get_state_bindings(&self, state: &GameState) -> Option<&HashMap<InputAction, KeyCode>> {
+    #[must_use] pub fn get_state_bindings(&self, state: &GameState) -> Option<&HashMap<InputAction, KeyCode>> {
         self.bindings.get(state)
     }
 
     /// Check if an action is available in a given state
-    pub fn is_action_available(&self, state: &GameState, action: InputAction) -> bool {
+    #[must_use] pub fn is_action_available(&self, state: &GameState, action: InputAction) -> bool {
         self.bindings.get(state)
-            .map(|bindings| bindings.contains_key(&action))
-            .unwrap_or(false)
+            .is_some_and(|bindings| bindings.contains_key(&action))
     }
 }
 

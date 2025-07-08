@@ -49,7 +49,7 @@ pub fn generate_road_mesh_cached(
     handle
 }
 
-pub fn generate_road_mesh(road: &RoadSpline) -> Mesh {
+#[must_use] pub fn generate_road_mesh(road: &RoadSpline) -> Mesh {
     generate_road_mesh_internal(road)
 }
 
@@ -115,7 +115,7 @@ fn generate_road_mesh_internal(road: &RoadSpline) -> Mesh {
     mesh
 }
 
-pub fn generate_road_markings_mesh(road: &RoadSpline) -> Vec<Mesh> {
+#[must_use] pub fn generate_road_markings_mesh(road: &RoadSpline) -> Vec<Mesh> {
     let mut markings = Vec::new();
     
     match road.road_type {
@@ -377,7 +377,7 @@ fn generate_edge_lines_mesh(road: &RoadSpline) -> Mesh {
     mesh
 }
 
-pub fn generate_intersection_mesh(intersection: &RoadIntersection, connected_roads: &[&RoadSpline]) -> Mesh {
+#[must_use] pub fn generate_intersection_mesh(intersection: &RoadIntersection, connected_roads: &[&RoadSpline]) -> Mesh {
     match intersection.intersection_type {
         IntersectionType::Cross => generate_cross_intersection_mesh(intersection, connected_roads),
         IntersectionType::TJunction => generate_t_intersection_mesh(intersection, connected_roads),

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use game_core::prelude::*;
-use crate::factories::entity_factory::validation::*;
+use crate::factories::entity_factory::validation::validate_position;
 
 pub fn spawn_vehicle(
     commands: &mut Commands,

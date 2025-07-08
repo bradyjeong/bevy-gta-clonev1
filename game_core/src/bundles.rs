@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
-use crate::components::placeholders::*;
+use crate::components::{Building, Car, DynamicContent, MovementController, NPCAppearance, NPCBehaviorComponent, NPCState, VehicleState, VehicleType};
+use crate::components::placeholders::{MovementTracker, UnifiedChunkEntity, UnifiedCullable};
 // Note: These will be moved to appropriate crates during domain separation
 // Temporarily commenting out until systems are migrated
 

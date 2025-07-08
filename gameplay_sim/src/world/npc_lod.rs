@@ -2,8 +2,8 @@
 //! System:   Npc Lod
 //! Purpose:  Handles user interface display and interaction
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Transform, DistanceCache, NPCRendering, TimingService
-//! Writes:   NPCState, DistanceCache, TimingService
+//! Reads:    `ActiveEntity`, Transform, `DistanceCache`, `NPCRendering`, `TimingService`
+//! Writes:   `NPCState`, `DistanceCache`, `TimingService`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -40,7 +40,7 @@ pub fn npc_lod_system(
     let Ok((active_entity, active_transform)) = active_query.single() else { return };
     let player_pos = active_transform.translation;
     
-    for (entity, mut npc_state, rendering, transform, managed_timing) in npc_query.iter_mut() {
+    for (entity, mut npc_state, rendering, transform, managed_timing) in &mut npc_query {
         // Register entity for timing management if not already managed
         if managed_timing.is_none() {
             timing_service.register_entity(entity, EntityTimerType::NPCLOD, 0.1);

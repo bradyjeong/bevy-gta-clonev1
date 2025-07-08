@@ -2,13 +2,12 @@
 //! System:   Unified Distance Culling
 //! Purpose:  Manages distance-based culling for all entities
 //! Schedule: Update
-//! Reads:    ActiveEntity, Transform, UnifiedCullable
-//! Writes:   Visibility, UnifiedCullable
+//! Reads:    `ActiveEntity`, Transform, `UnifiedCullable`
+//! Writes:   Visibility, `UnifiedCullable`
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use std::collections::HashMap;
 use game_core::prelude::*;
 
 const MAX_ENTITIES_PER_FRAME: usize = 100;
@@ -36,7 +35,7 @@ impl Default for UnifiedCullable {
 }
 
 impl UnifiedCullable {
-    pub fn vehicle() -> Self {
+    #[must_use] pub fn vehicle() -> Self {
         Self {
             max_distance: 200.0,
             current_lod: 0,
@@ -46,7 +45,7 @@ impl UnifiedCullable {
         }
     }
     
-    pub fn building() -> Self {
+    #[must_use] pub fn building() -> Self {
         Self {
             max_distance: 300.0,
             current_lod: 0,
@@ -56,7 +55,7 @@ impl UnifiedCullable {
         }
     }
     
-    pub fn npc() -> Self {
+    #[must_use] pub fn npc() -> Self {
         Self {
             max_distance: 100.0,
             current_lod: 0,
@@ -66,7 +65,7 @@ impl UnifiedCullable {
         }
     }
     
-    pub fn tree() -> Self {
+    #[must_use] pub fn tree() -> Self {
         Self {
             max_distance: 150.0,
             current_lod: 0,
@@ -83,7 +82,7 @@ pub struct DirtyVisibility {
 }
 
 impl DirtyVisibility {
-    pub fn new(priority: DirtyPriority) -> Self {
+    #[must_use] pub fn new(priority: DirtyPriority) -> Self {
         Self { priority }
     }
 }
@@ -120,7 +119,7 @@ pub fn unified_distance_culling_system(
         stats.entities_processed = 0;
         stats.entities_culled = 0;
         
-        for (entity, mut cullable, transform, mut visibility) in cullable_query.iter_mut() {
+        for (entity, mut cullable, transform, mut visibility) in &mut cullable_query {
             if processed >= MAX_ENTITIES_PER_FRAME {
                 break;
             }
@@ -262,7 +261,7 @@ pub fn mark_entity_for_lod_update(commands: &mut Commands, entity: Entity) {
 }
 
 pub fn cleanup_culled_entities_system(
-    mut commands: Commands,
+    commands: Commands,
     cullable_query: Query<Entity, (With<UnifiedCullable>, With<DynamicContent>)>,
     active_query: Query<&Transform, With<ActiveEntity>>,
 ) {
@@ -288,7 +287,7 @@ pub struct CullableEntityBundle {
 }
 
 impl CullableEntityBundle {
-    pub fn new(position: Vec3, max_distance: f32) -> Self {
+    #[must_use] pub fn new(position: Vec3, max_distance: f32) -> Self {
         Self {
             cullable: UnifiedCullable {
                 max_distance,

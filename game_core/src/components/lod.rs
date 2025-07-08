@@ -2,8 +2,10 @@ use bevy::prelude::*;
 
 /// Level of Detail component for performance optimization
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default)]
 pub enum LodLevel {
     /// Full detail - all systems active
+    #[default]
     High,
     /// Reduced detail - simplified physics and effects
     Medium,
@@ -11,25 +13,20 @@ pub enum LodLevel {
     Sleep,
 }
 
-impl Default for LodLevel {
-    fn default() -> Self {
-        LodLevel::High
-    }
-}
 
 impl LodLevel {
     /// Returns true if this LOD level should have physics enabled
-    pub fn has_physics(&self) -> bool {
+    #[must_use] pub fn has_physics(&self) -> bool {
         matches!(self, LodLevel::High | LodLevel::Medium)
     }
     
     /// Returns true if this LOD level should have visual effects
-    pub fn has_effects(&self) -> bool {
+    #[must_use] pub fn has_effects(&self) -> bool {
         matches!(self, LodLevel::High)
     }
     
     /// Returns true if this LOD level should have audio
-    pub fn has_audio(&self) -> bool {
+    #[must_use] pub fn has_audio(&self) -> bool {
         matches!(self, LodLevel::High)
     }
 }

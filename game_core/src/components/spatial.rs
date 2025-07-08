@@ -29,7 +29,7 @@ pub enum CullingCategory {
 
 impl DistanceCullingConfig {
     /// Create config optimized for vehicles
-    pub fn vehicle() -> Self {
+    #[must_use] pub fn vehicle() -> Self {
         Self {
             lod_distances: vec![50.0, 150.0, 300.0], // Full, Medium, Low LOD
             cull_distance: 500.0,
@@ -40,7 +40,7 @@ impl DistanceCullingConfig {
     }
 
     /// Create config optimized for NPCs
-    pub fn npc() -> Self {
+    #[must_use] pub fn npc() -> Self {
         Self {
             lod_distances: vec![25.0, 75.0, 100.0], // Full, Medium, Low LOD
             cull_distance: 150.0,
@@ -51,7 +51,7 @@ impl DistanceCullingConfig {
     }
 
     /// Create config optimized for vegetation
-    pub fn vegetation() -> Self {
+    #[must_use] pub fn vegetation() -> Self {
         Self {
             lod_distances: vec![50.0, 150.0, 300.0], // Full, Medium, Billboard
             cull_distance: 400.0,
@@ -62,7 +62,7 @@ impl DistanceCullingConfig {
     }
 
     /// Create config optimized for buildings
-    pub fn building() -> Self {
+    #[must_use] pub fn building() -> Self {
         Self {
             lod_distances: vec![100.0, 300.0, 500.0], // Buildings visible at longer distances
             cull_distance: 800.0,
@@ -72,13 +72,13 @@ impl DistanceCullingConfig {
         }
     }
 
-    /// Alias for building() for backwards compatibility
-    pub fn buildings() -> Self {
+    /// Alias for `building()` for backwards compatibility
+    #[must_use] pub fn buildings() -> Self {
         Self::building()
     }
 
     /// Create config optimized for effects
-    pub fn effect() -> Self {
+    #[must_use] pub fn effect() -> Self {
         Self {
             lod_distances: vec![30.0, 60.0, 120.0],
             cull_distance: 120.0,
@@ -89,7 +89,7 @@ impl DistanceCullingConfig {
     }
 
     /// Create config optimized for map chunks
-    pub fn chunk() -> Self {
+    #[must_use] pub fn chunk() -> Self {
         Self {
             lod_distances: vec![150.0, 300.0, 500.0],
             cull_distance: 800.0,
@@ -99,13 +99,13 @@ impl DistanceCullingConfig {
         }
     }
 
-    /// Alias for chunk() for backwards compatibility
-    pub fn chunks() -> Self {
+    /// Alias for `chunk()` for backwards compatibility
+    #[must_use] pub fn chunks() -> Self {
         Self::chunk()
     }
 
     /// Get LOD level for given distance
-    pub fn get_lod_level(&self, distance: f32) -> usize {
+    #[must_use] pub fn get_lod_level(&self, distance: f32) -> usize {
         for (level, &threshold) in self.lod_distances.iter().enumerate() {
             if distance <= threshold + self.hysteresis {
                 return level;
@@ -115,7 +115,7 @@ impl DistanceCullingConfig {
     }
 
     /// Check if entity should be culled
-    pub fn should_cull(&self, distance: f32) -> bool {
+    #[must_use] pub fn should_cull(&self, distance: f32) -> bool {
         distance > self.cull_distance + self.hysteresis
     }
 }
@@ -131,7 +131,7 @@ pub struct UnifiedCullable {
 }
 
 impl UnifiedCullable {
-    pub fn new(config: DistanceCullingConfig) -> Self {
+    #[must_use] pub fn new(config: DistanceCullingConfig) -> Self {
         Self {
             config,
             current_lod: 0,
@@ -141,35 +141,35 @@ impl UnifiedCullable {
         }
     }
 
-    pub fn vehicle() -> Self {
+    #[must_use] pub fn vehicle() -> Self {
         Self::new(DistanceCullingConfig::vehicle())
     }
 
-    pub fn npc() -> Self {
+    #[must_use] pub fn npc() -> Self {
         Self::new(DistanceCullingConfig::npc())
     }
 
-    pub fn building() -> Self {
+    #[must_use] pub fn building() -> Self {
         Self::new(DistanceCullingConfig::building())
     }
 
-    pub fn vegetation() -> Self {
+    #[must_use] pub fn vegetation() -> Self {
         Self::new(DistanceCullingConfig::vegetation())
     }
 
-    pub fn effect() -> Self {
+    #[must_use] pub fn effect() -> Self {
         Self::new(DistanceCullingConfig::effect())
     }
 
-    pub fn chunk() -> Self {
+    #[must_use] pub fn chunk() -> Self {
         Self::new(DistanceCullingConfig::chunk())
     }
 
-    pub fn should_cull(&self, distance: f32) -> bool {
+    #[must_use] pub fn should_cull(&self, distance: f32) -> bool {
         distance > self.config.cull_distance
     }
 
-    pub fn get_lod_level(&self, distance: f32) -> usize {
+    #[must_use] pub fn get_lod_level(&self, distance: f32) -> usize {
         for (i, &lod_distance) in self.config.lod_distances.iter().enumerate() {
             if distance <= lod_distance {
                 return i;
@@ -186,7 +186,7 @@ impl UnifiedCullable {
     }
 
     /// Check if this entity needs an update based on time and distance change
-    pub fn needs_update(&self, current_time: f32, current_distance: f32) -> bool {
+    #[must_use] pub fn needs_update(&self, current_time: f32, current_distance: f32) -> bool {
         let time_elapsed = current_time - self.last_update;
         let distance_changed = (current_distance - self.last_distance).abs() > self.config.hysteresis;
         
@@ -202,14 +202,14 @@ pub struct MovementTracker {
 }
 
 impl MovementTracker {
-    pub fn new(position: Vec3, threshold: f32) -> Self {
+    #[must_use] pub fn new(position: Vec3, threshold: f32) -> Self {
         Self {
             last_position: position,
             movement_threshold: threshold,
         }
     }
 
-    pub fn has_moved_significantly(&self, current_position: Vec3) -> bool {
+    #[must_use] pub fn has_moved_significantly(&self, current_position: Vec3) -> bool {
         self.last_position.distance(current_position) > self.movement_threshold
     }
 
@@ -220,34 +220,30 @@ impl MovementTracker {
 
 /// Chunk coordinate for world streaming
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Default)]
 pub struct ChunkCoord {
     pub x: i32,
     pub z: i32,
 }
 
-impl Default for ChunkCoord {
-    fn default() -> Self {
-        Self { x: 0, z: 0 }
-    }
-}
 
 impl ChunkCoord {
-    pub fn new(x: i32, z: i32) -> Self {
+    #[must_use] pub fn new(x: i32, z: i32) -> Self {
         Self { x, z }
     }
 
-    pub fn from_world_position(position: Vec3, chunk_size: f32) -> Self {
+    #[must_use] pub fn from_world_position(position: Vec3, chunk_size: f32) -> Self {
         Self {
             x: (position.x / chunk_size).floor() as i32,
             z: (position.z / chunk_size).floor() as i32,
         }
     }
 
-    pub fn from_world_pos(world_pos: Vec3, chunk_size: f32) -> Self {
+    #[must_use] pub fn from_world_pos(world_pos: Vec3, chunk_size: f32) -> Self {
         Self::from_world_position(world_pos, chunk_size)
     }
 
-    pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
+    #[must_use] pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
         Vec3::new(
             self.x as f32 * chunk_size + chunk_size * 0.5,
             0.0,
@@ -255,7 +251,7 @@ impl ChunkCoord {
         )
     }
     
-    pub fn distance_to(&self, other: ChunkCoord) -> f32 {
+    #[must_use] pub fn distance_to(&self, other: ChunkCoord) -> f32 {
         let dx = (self.x - other.x) as f32;
         let dz = (self.z - other.z) as f32;
         (dx * dx + dz * dz).sqrt()

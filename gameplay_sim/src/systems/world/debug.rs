@@ -1,4 +1,3 @@
-use bevy::prelude::*;
 
 /// Minimal debug system stub for game state debugging
 pub fn debug_game_state() {

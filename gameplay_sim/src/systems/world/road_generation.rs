@@ -2,8 +2,8 @@
 //! System:   Road Generation
 //! Purpose:  Procedurally generates roads based on player position
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Transform, RoadEntity
-//! Writes:   RoadNetwork, Commands
+//! Reads:    `ActiveEntity`, Transform, `RoadEntity`
+//! Writes:   `RoadNetwork`, Commands
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ pub struct RoadGenerationCache {
     pub last_player_chunk: Option<(i32, i32)>,
 }
 
-/// Trait for extending RoadNetwork functionality
+/// Trait for extending `RoadNetwork` functionality
 pub trait RoadNetworkExtensions {
     fn clear_cache(&mut self);
     fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32>;
@@ -157,7 +157,7 @@ pub fn road_generation_system(
                 // Simple distance check - only remove roads that are extremely far away
                 let distance = active_pos.distance(transform.translation);
                 if distance > cleanup_radius {
-                    println!("DEBUG: Cleaning up road entity at distance {}", distance);
+                    println!("DEBUG: Cleaning up road entity at distance {distance}");
                     commands.entity(entity).despawn();
                 }
             }
@@ -165,7 +165,7 @@ pub fn road_generation_system(
         
         // Determine which chunks need roads
         let (chunk_x, chunk_z) = current_chunk;
-        let chunk_radius = ((active_radius as f32 / chunk_size).ceil() as i32).max(3); // Ensure at least 3x3 chunk coverage
+        let chunk_radius = ((active_radius / chunk_size).ceil() as i32).max(3); // Ensure at least 3x3 chunk coverage
         
         // Generate roads for nearby chunks
         for dx in -chunk_radius..=chunk_radius {
@@ -263,11 +263,11 @@ fn spawn_road_entity(commands: &mut Commands, road_id: u32, start: Vec3, end: Ve
     ));
 }
 
-pub fn is_on_road_spline(position: Vec3, road_network: &RoadNetwork, tolerance: f32) -> bool {
+#[must_use] pub fn is_on_road_spline(position: Vec3, road_network: &RoadNetwork, tolerance: f32) -> bool {
     road_network.get_road_at_position(position, tolerance).is_some()
 }
 
-pub fn find_nearest_road_position(position: Vec3, road_network: &RoadNetwork) -> Vec3 {
+#[must_use] pub fn find_nearest_road_position(position: Vec3, road_network: &RoadNetwork) -> Vec3 {
     if let Some((_, _, nearest_pos)) = road_network.find_nearest_road(position) {
         nearest_pos
     } else {

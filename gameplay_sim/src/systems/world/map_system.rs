@@ -2,13 +2,13 @@
 //! System:   Map System
 //! Purpose:  Generates and manages map terrain and landmarks
 //! Schedule: Initialization and Update
-//! Reads:    ActiveEntity, Transform, Chunk
+//! Reads:    `ActiveEntity`, Transform, Chunk
 //! Writes:   Commands, Mesh, Material
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::bevy16_compat::EntityCommandsExt;
+// Removed bevy16_compat - using direct Bevy methods
 use bevy::render::mesh::Mesh;
 use bevy::render::render_asset::RenderAssetUsages;
 use std::collections::HashMap;
@@ -76,14 +76,14 @@ pub enum LandmarkType {
 }
 
 impl MapSystem {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             generated_chunks: HashMap::new(),
             chunk_templates: Vec::new(),
         }
     }
     
-    pub fn generate_chunk_template(&self, chunk_x: i32, chunk_z: i32) -> ChunkTemplate {
+    #[must_use] pub fn generate_chunk_template(&self, chunk_x: i32, chunk_z: i32) -> ChunkTemplate {
         let mut rng = StdRng::seed_from_u64(
             ((chunk_x as u64) << 32) | ((chunk_z as u64) & 0xFFFFFFFF)
         );
@@ -182,7 +182,7 @@ pub fn map_generation_system(
         let mut chunks_to_remove = Vec::new();
         
         for (chunk_key, chunk_entity) in &map_system.generated_chunks {
-            let distance = ((chunk_key.0 - current_chunk.0).abs() + (chunk_key.1 - current_chunk.1).abs());
+            let distance = (chunk_key.0 - current_chunk.0).abs() + (chunk_key.1 - current_chunk.1).abs();
             
             if distance > cleanup_radius {
                 commands.entity(*chunk_entity).despawn_recursive();

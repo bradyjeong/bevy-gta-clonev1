@@ -2,13 +2,13 @@
 //! System:   NPC Spawn
 //! Purpose:  Spawns and manages NPCs in the world
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Transform, EntityLimits
+//! Reads:    `ActiveEntity`, Transform, `EntityLimits`
 //! Writes:   Commands, NPC entities
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::bevy16_compat::EntityCommandsExt;
+// Removed bevy16_compat - using direct Bevy methods
 use rand::Rng;
 use game_core::prelude::*;
 use crate::systems::world::npc_lod::spawn_npc_with_lod;
@@ -124,6 +124,6 @@ pub fn migrate_legacy_npcs(
             },
         ));
         
-        println!("DEBUG: Migrated NPC entity {:?} to unified architecture", entity);
+        println!("DEBUG: Migrated NPC entity {entity:?} to unified architecture");
     }
 }

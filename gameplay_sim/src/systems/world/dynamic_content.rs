@@ -2,8 +2,8 @@
 //! System:   Dynamic Content
 //! Purpose:  Handles entity movement and physics
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, EntityLimits, Transform, Car, GameConfig
-//! Writes:   UnifiedEntityFactory, EntityLimits, Transform, Velocity
+//! Reads:    `ActiveEntity`, `EntityLimits`, Transform, Car, `GameConfig`
+//! Writes:   `UnifiedEntityFactory`, `EntityLimits`, Transform, Velocity
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -72,8 +72,7 @@ pub fn dynamic_content_system(
         // CRITICAL PERFORMANCE OPTIMIZATION: Process every 8.0 seconds OR when player moves significantly
         let movement_threshold = 100.0;
         let player_moved = timer.last_player_pos
-            .map(|last_pos| active_pos.distance(last_pos) > movement_threshold)
-            .unwrap_or(true);
+            .is_none_or(|last_pos| active_pos.distance(last_pos) > movement_threshold);
         let should_update = timer.timer >= 8.0 || player_moved;
         if !should_update {
             return;
@@ -101,7 +100,7 @@ pub fn dynamic_content_system(
                     ContentType::Vehicle => 25.0,
                     ContentType::NPC => 3.0,
                 };
-                (transform.translation, dynamic_content.content_type.clone(), radius)
+                (transform.translation, dynamic_content.content_type, radius)
             })
             .collect();
         // Add existing vehicles (non-dynamic) to the collision avoidance list with larger radius
@@ -171,7 +170,7 @@ pub fn vehicle_separation_system(
         .enumerate()
         .map(|(i, (transform, _))| (transform.translation, Entity::from_raw(i as u32)))
         .collect();
-    for (mut transform, mut velocity) in vehicle_query.iter_mut() {
+    for (mut transform, mut velocity) in &mut vehicle_query {
         let current_pos = transform.translation;
         for (other_pos, _) in &vehicles {
             if *other_pos == current_pos { continue; }
@@ -195,7 +194,7 @@ pub fn vehicle_separation_system(
 // These functions were marked with #[allow(dead_code)] and have been
 // consolidated into the unified spawning pipeline for Phase 3.
 /// NEW UNIFIED SPAWN FUNCTION - Phase 2.1
-/// This replaces spawn_dynamic_content_safe using the unified factory
+/// This replaces `spawn_dynamic_content_safe` using the unified factory
 fn spawn_dynamic_content_safe_unified(
     commands: &mut Commands,
     position: Vec3,
@@ -222,7 +221,7 @@ fn spawn_dynamic_content_safe_unified(
                 existing_content,
                 current_time,
             ) {
-                println!("DEBUG: Spawned building using unified factory at {:?}", position);
+                println!("DEBUG: Spawned building using unified factory at {position:?}");
             }
         }
     }
@@ -238,7 +237,7 @@ fn spawn_dynamic_content_safe_unified(
             existing_content,
             current_time,
         ) {
-            println!("DEBUG: Spawned vehicle using unified factory at {:?}", position);
+            println!("DEBUG: Spawned vehicle using unified factory at {position:?}");
         }
     }
     // Trees - configurable spawn rate, not on roads, not in water
@@ -253,7 +252,7 @@ fn spawn_dynamic_content_safe_unified(
             existing_content,
             current_time,
         ) {
-            println!("DEBUG: Spawned tree using unified factory at {:?}", position);
+            println!("DEBUG: Spawned tree using unified factory at {position:?}");
         }
     }
     // NPCs - configurable spawn rate, anywhere
@@ -268,7 +267,7 @@ fn spawn_dynamic_content_safe_unified(
             existing_content,
             current_time,
         ) {
-            println!("DEBUG: Spawned NPC using unified factory at {:?}", position);
+            println!("DEBUG: Spawned NPC using unified factory at {position:?}");
         }
     }
 }

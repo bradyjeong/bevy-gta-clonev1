@@ -2,8 +2,8 @@
 //! System:   Unified Distance Culling
 //! Purpose:  Handles entity movement and physics
 //! Schedule: Update (throttled)
-//! Reads:    VehicleState, ActiveEntity, DirtyLOD, MapChunk, Transform
-//! Writes:   Visibility, DistanceCache, PerformanceStats, UnifiedCullingTimer
+//! Reads:    `VehicleState`, `ActiveEntity`, `DirtyLOD`, `MapChunk`, Transform
+//! Writes:   Visibility, `DistanceCache`, `PerformanceStats`, `UnifiedCullingTimer`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -33,7 +33,7 @@ pub struct DistanceCullingConfig {
 
 impl DistanceCullingConfig {
     /// Create config optimized for vehicles
-    pub fn vehicle() -> Self {
+    #[must_use] pub fn vehicle() -> Self {
         Self {
             lod_distances: vec![50.0, 150.0, 300.0], // Full, Medium, Low LOD
             cull_distance: 500.0,
@@ -44,7 +44,7 @@ impl DistanceCullingConfig {
     }
 
     /// Create config optimized for NPCs
-    pub fn npc() -> Self {
+    #[must_use] pub fn npc() -> Self {
         Self {
             lod_distances: vec![25.0, 75.0, 100.0], // Full, Medium, Low LOD
             cull_distance: 150.0,
@@ -55,7 +55,7 @@ impl DistanceCullingConfig {
     }
 
     /// Create config optimized for vegetation
-    pub fn vegetation() -> Self {
+    #[must_use] pub fn vegetation() -> Self {
         Self {
             lod_distances: vec![50.0, 150.0, 300.0], // Full, Medium, Billboard
             cull_distance: 400.0,
@@ -66,7 +66,7 @@ impl DistanceCullingConfig {
     }
 
     /// Create config optimized for buildings
-    pub fn buildings() -> Self {
+    #[must_use] pub fn buildings() -> Self {
         Self {
             lod_distances: vec![100.0, 300.0, 500.0], // Buildings visible at longer distances
             cull_distance: 800.0,
@@ -77,7 +77,7 @@ impl DistanceCullingConfig {
     }
 
     /// Create config optimized for map chunks
-    pub fn chunks() -> Self {
+    #[must_use] pub fn chunks() -> Self {
         Self {
             lod_distances: vec![150.0, 300.0, 500.0],
             cull_distance: 800.0,
@@ -88,7 +88,7 @@ impl DistanceCullingConfig {
     }
 
     /// Get LOD level for given distance
-    pub fn get_lod_level(&self, distance: f32) -> usize {
+    #[must_use] pub fn get_lod_level(&self, distance: f32) -> usize {
         for (level, &threshold) in self.lod_distances.iter().enumerate() {
             if distance <= threshold + self.hysteresis {
                 return level;
@@ -98,7 +98,7 @@ impl DistanceCullingConfig {
     }
 
     /// Check if entity should be culled
-    pub fn should_cull(&self, distance: f32) -> bool {
+    #[must_use] pub fn should_cull(&self, distance: f32) -> bool {
         distance > self.cull_distance + self.hysteresis
     }
 }
@@ -114,7 +114,7 @@ pub struct UnifiedCullable {
 }
 
 impl UnifiedCullable {
-    pub fn new(config: DistanceCullingConfig) -> Self {
+    #[must_use] pub fn new(config: DistanceCullingConfig) -> Self {
         Self {
             config,
             current_lod: 0,
@@ -124,28 +124,28 @@ impl UnifiedCullable {
         }
     }
 
-    pub fn vehicle() -> Self {
+    #[must_use] pub fn vehicle() -> Self {
         Self::new(DistanceCullingConfig::vehicle())
     }
 
-    pub fn npc() -> Self {
+    #[must_use] pub fn npc() -> Self {
         Self::new(DistanceCullingConfig::npc())
     }
 
-    pub fn vegetation() -> Self {
+    #[must_use] pub fn vegetation() -> Self {
         Self::new(DistanceCullingConfig::vegetation())
     }
 
-    pub fn building() -> Self {
+    #[must_use] pub fn building() -> Self {
         Self::new(DistanceCullingConfig::buildings())
     }
 
-    pub fn chunk() -> Self {
+    #[must_use] pub fn chunk() -> Self {
         Self::new(DistanceCullingConfig::chunks())
     }
 
     /// Check if this entity needs an update based on time and distance change
-    pub fn needs_update(&self, current_time: f32, current_distance: f32) -> bool {
+    #[must_use] pub fn needs_update(&self, current_time: f32, current_distance: f32) -> bool {
         let time_elapsed = current_time - self.last_update;
         let distance_changed = (current_distance - self.last_distance).abs() > self.config.hysteresis;
         
@@ -198,7 +198,7 @@ pub fn new_unified_distance_culling_system(
     let mut processed = 0;
     const MAX_ENTITIES_PER_FRAME: usize = 15;
     
-    for (entity, mut cullable, transform, mut visibility) in cullable_query.iter_mut() {
+    for (entity, mut cullable, transform, mut visibility) in &mut cullable_query {
         // Early exit if time budget exceeded
         if start_time.elapsed() > MAX_FRAME_TIME {
             break;
@@ -359,7 +359,7 @@ pub struct VegetationLODUpdate {
     pub distance: f32,
 }
 
-/// System for chunk LOD using unified culling (replaces map_system chunk LOD)
+/// System for chunk LOD using unified culling (replaces `map_system` chunk LOD)
 pub fn unified_chunk_lod_system(
     chunk_query: Query<(Entity, &UnifiedCullable, &MapChunk), (With<DirtyLOD>, Changed<UnifiedCullable>)>,
     mut commands: Commands,
@@ -462,7 +462,7 @@ pub fn unified_culling_movement_tracker(
     }
 }
 
-/// Helper function to convert old Cullable component to UnifiedCullable
+/// Helper function to convert old Cullable component to `UnifiedCullable`
 pub fn migrate_cullable_to_unified(
     query: Query<(Entity, &Cullable), Without<UnifiedCullable>>,
     mut commands: Commands,

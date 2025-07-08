@@ -2,7 +2,7 @@
 //! System:   Vehicle Movement System
 //! Purpose:  Handles realistic vehicle physics and movement for cars, supercars, and aircraft
 //! Schedule: Update (continuous)
-//! Reads:    ControlManager, GameConfig, Time, Velocity, Transform, vehicle components
+//! Reads:    `ControlManager`, `GameConfig`, Time, Velocity, Transform, vehicle components
 //! Writes:   Velocity, vehicle physics state, audio events
 //! Invariants:
 //!   * Vehicle physics respect mass and drag properties
@@ -62,7 +62,7 @@ pub fn car_movement(
     velocity.angvel = target_angular_velocity;
     // Apply unified physics safety systems
     PhysicsUtilities::validate_velocity(&mut velocity, config.as_ref());
-    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 1.0);
+    PhysicsUtilities::apply_ground_collision(&mut velocity, transform, 0.1, 1.0);
     // Performance monitoring
     let processing_time = start_time.elapsed().as_millis() as f32;
     if processing_time > 1.0 {
@@ -302,10 +302,10 @@ fn update_gear_and_rpm(supercar: &mut SuperCar, current_speed_mph: f32, dt: f32)
     // Automatic gear shifting (7-speed dual-clutch)
     if supercar.rpm >= supercar.shift_rpm && supercar.gear < 7 {
         supercar.gear += 1;
-        supercar.rpm = supercar.rpm * 0.7; // RPM drop on upshift
+        supercar.rpm *= 0.7; // RPM drop on upshift
     } else if supercar.rpm <= supercar.downshift_rpm && supercar.gear > 1 {
         supercar.gear -= 1;
-        supercar.rpm = supercar.rpm * 1.3; // RPM increase on downshift
+        supercar.rpm *= 1.3; // RPM increase on downshift
     }
 }
 
@@ -325,7 +325,7 @@ fn update_advanced_turbo_system(supercar: &mut SuperCar, dt: f32, turbo_requeste
         supercar.current_turbo_time += dt;
         // Overheat protection with progressive cooling
         if supercar.current_turbo_time >= supercar.max_turbo_time {
-            supercar.turbo_cooldown = 6.0 + (supercar.turbo_stage as f32 * 1.5); // Longer cooldown for more turbos
+            supercar.turbo_cooldown = 6.0 + (f32::from(supercar.turbo_stage) * 1.5); // Longer cooldown for more turbos
             supercar.current_turbo_time = 0.0;
         }
     } else {
@@ -343,7 +343,7 @@ fn update_advanced_turbo_system(supercar: &mut SuperCar, dt: f32, turbo_requeste
         }
     }
     // Update turbo whistle intensity for audio
-    supercar.turbo_whistle_intensity = supercar.turbo_pressure * (supercar.turbo_stage as f32 * 0.25);
+    supercar.turbo_whistle_intensity = supercar.turbo_pressure * (f32::from(supercar.turbo_stage) * 0.25);
 }
 fn handle_launch_control(supercar: &mut SuperCar, control_manager: &ControlManager, current_speed_mph: f32) {
     // Launch control activation (both brake and accelerate pressed)
@@ -443,7 +443,7 @@ fn calculate_enhanced_power_curve(supercar: &SuperCar) -> f32 {
 fn calculate_turbo_multiplier(supercar: &SuperCar) -> f32 {
     if supercar.turbo_boost {
         // Progressive turbo boost based on number of active turbos
-        1.0 + (supercar.turbo_pressure * supercar.turbo_stage as f32 * 0.2)
+        1.0 + (supercar.turbo_pressure * f32::from(supercar.turbo_stage) * 0.2)
     } else {
         1.0
     }
@@ -489,7 +489,7 @@ fn calculate_natural_deceleration(supercar: &SuperCar, _current_speed_ms: f32) -
     // Natural deceleration with enhanced engine braking
     let base_decel = 0.98;
     // Engine braking based on gear
-    let engine_braking = 1.0 - (supercar.gear as f32 * 0.005); // Lower gears have more engine braking
+    let engine_braking = 1.0 - (f32::from(supercar.gear) * 0.005); // Lower gears have more engine braking
     base_decel * engine_braking
 }
 fn calculate_hypercar_steering(supercar: &SuperCar, steering_input: f32, current_speed_mph: f32) -> Vec3 {

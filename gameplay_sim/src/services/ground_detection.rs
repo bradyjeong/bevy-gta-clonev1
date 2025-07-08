@@ -25,7 +25,7 @@ impl Default for GroundDetectionService {
 impl GroundDetectionService {
     /// Get ground height at a given XZ position using Rapier's built-in raycasting
     /// This is the proper way to use Rapier's physics for ground detection
-    pub fn get_ground_height(
+    #[must_use] pub fn get_ground_height(
         &self,
         position: Vec2,
         rapier_context: &RapierContext,
@@ -57,7 +57,7 @@ impl GroundDetectionService {
             let ground_height = ray_origin.y - intersection;
             
             // Validate ground height is reasonable
-            if ground_height >= MIN_GROUND_HEIGHT && ground_height <= MAX_GROUND_HEIGHT {
+            if (MIN_GROUND_HEIGHT..=MAX_GROUND_HEIGHT).contains(&ground_height) {
                 return ground_height;
             }
         }
@@ -67,7 +67,7 @@ impl GroundDetectionService {
     }
 
     /// Get ground height with offset for entity spawning
-    pub fn get_spawn_height(
+    #[must_use] pub fn get_spawn_height(
         &self,
         position: Vec2,
         entity_height: f32,
@@ -79,7 +79,7 @@ impl GroundDetectionService {
     }
 
     /// Validate if a position has valid ground
-    pub fn has_valid_ground(
+    #[must_use] pub fn has_valid_ground(
         &self,
         position: Vec2,
         rapier_context: &RapierContext,
@@ -107,9 +107,9 @@ impl GroundDetectionService {
         ).is_some()
     }
 
-    /// Get ground height without requiring RapierContext access
+    /// Get ground height without requiring `RapierContext` access
     /// Uses simple terrain estimation until physics integration is fixed
-    pub fn get_ground_height_simple(&self, position: Vec2) -> f32 {
+    #[must_use] pub fn get_ground_height_simple(&self, position: Vec2) -> f32 {
         // Match the actual terrain height from setup_basic_world
         // Terrain is at y=-0.15, so ground surface is at -0.1
         
@@ -126,7 +126,7 @@ impl GroundDetectionService {
     }
 
     /// Check if a position is suitable for NPC spawning (avoiding roads, buildings, etc.)
-    pub fn is_spawn_position_valid(&self, position: Vec2) -> bool {
+    #[must_use] pub fn is_spawn_position_valid(&self, position: Vec2) -> bool {
         // Simple validation - in practice this would check for:
         // - Not on roads
         // - Not inside buildings
@@ -139,7 +139,7 @@ impl GroundDetectionService {
     }
 
     /// Find ground at a given position (compatibility method)
-    pub fn find_ground_at(&self, position: Vec3) -> Option<f32> {
+    #[must_use] pub fn find_ground_at(&self, position: Vec3) -> Option<f32> {
         // For now, just return the position's Y coordinate
         // This is a simple fallback implementation
         Some(position.y)

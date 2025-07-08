@@ -130,7 +130,7 @@ impl UnifiedDistanceCalculator {
     }
     
     /// Get performance statistics
-    pub fn get_stats(&self) -> DistanceCalculatorStats {
+    #[must_use] pub fn get_stats(&self) -> DistanceCalculatorStats {
         DistanceCalculatorStats {
             batch_count: self.batch_count,
             individual_count: self.individual_count,
@@ -165,7 +165,7 @@ pub fn unified_distance_processing_system(
 
 /// Utility functions for easy distance calculations
 pub mod distance_utils {
-    use super::*;
+    use super::{CurveExt, Entity, IntoSystem, RelationshipTarget, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
     
     /// Calculate distance immediately (for critical path)
     pub fn calculate_distance_immediate(

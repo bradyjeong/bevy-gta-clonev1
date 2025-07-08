@@ -5,7 +5,7 @@ use bevy::prelude::*;
 pub struct MeshFactory;
 
 impl MeshFactory {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self
     }
 

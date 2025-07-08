@@ -27,17 +27,17 @@ impl From<Transform> for SerializableTransform {
     }
 }
 
-impl Into<Transform> for SerializableTransform {
-    fn into(self) -> Transform {
+impl From<SerializableTransform> for Transform {
+    fn from(val: SerializableTransform) -> Self {
         Transform {
-            translation: Vec3::from_array(self.translation),
+            translation: Vec3::from_array(val.translation),
             rotation: Quat::from_xyzw(
-                self.rotation[0],
-                self.rotation[1],
-                self.rotation[2],
-                self.rotation[3],
+                val.rotation[0],
+                val.rotation[1],
+                val.rotation[2],
+                val.rotation[3],
             ),
-            scale: Vec3::from_array(self.scale),
+            scale: Vec3::from_array(val.scale),
         }
     }
 }

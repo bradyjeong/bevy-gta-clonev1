@@ -1,15 +1,13 @@
 //! ───────────────────────────────────────────────
 //! Module:   Road Network 
 //! Purpose:  Road generation and network management
-//! Schedule: DynamicContent
-//! Reads:    GameConfig, Transform, ChunkData
-//! Writes:   Commands, RoadNetwork  
+//! Schedule: `DynamicContent`
+//! Reads:    `GameConfig`, Transform, `ChunkData`
+//! Writes:   Commands, `RoadNetwork`\
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use game_core::prelude::*;
-use std::collections::HashMap;
 
 // All impl blocks removed to fix orphan rule violations
 // RoadNetwork implementations should be in game_core where the type is defined
@@ -34,7 +32,7 @@ pub enum SurfaceType {
 }
 
 // Local helper functions for road generation
-pub fn generate_road_mesh(width: f32, length: f32) -> Vec<Vec3> {
+#[must_use] pub fn generate_road_mesh(width: f32, length: f32) -> Vec<Vec3> {
     vec![
         Vec3::new(-width/2.0, 0.0, -length/2.0),
         Vec3::new(width/2.0, 0.0, -length/2.0),
@@ -43,7 +41,7 @@ pub fn generate_road_mesh(width: f32, length: f32) -> Vec<Vec3> {
     ]
 }
 
-pub fn calculate_road_curvature(start: Vec3, end: Vec3, control: Vec3) -> f32 {
+#[must_use] pub fn calculate_road_curvature(start: Vec3, end: Vec3, control: Vec3) -> f32 {
     let mid = (start + end) / 2.0;
     let deviation = (control - mid).length();
     let base_distance = (end - start).length();

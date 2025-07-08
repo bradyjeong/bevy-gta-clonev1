@@ -2,8 +2,8 @@
 //! System:   Road Generation
 //! Purpose:  Handles entity movement and physics
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Transform, RoadEntity, NPC, Time
-//! Writes:   Transform, RoadNetwork
+//! Reads:    `ActiveEntity`, Transform, `RoadEntity`, NPC, Time
+//! Writes:   Transform, `RoadNetwork`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Physics values are validated and finite
@@ -101,7 +101,7 @@ pub fn road_network_system(
             // Simple distance check - only remove roads that are extremely far away
             let distance = active_pos.distance(transform.translation);
             if distance > cleanup_radius {
-                println!("DEBUG: Cleaning up road entity at distance {}", distance);
+                println!("DEBUG: Cleaning up road entity at distance {distance}");
                 commands.entity(entity).despawn();
             }
         }
@@ -149,7 +149,7 @@ fn spawn_road_entity(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    use crate::constants::*;
+    use bevy_rapier3d::geometry::Group;
     
     // Calculate road start position for better distance calculations
     let start_pos = road.evaluate(0.0);
@@ -170,7 +170,7 @@ fn spawn_road_entity(
         // Add physics for proper collision with vehicles and buildings
         RigidBody::Fixed,
         create_road_collider(road),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP), // Only vehicles collide with roads, not characters
+        CollisionGroups::new(Group::GROUP_1, Group::GROUP_2), // Only vehicles collide with roads, not characters
     )).id();
     
     // Main road surface mesh
@@ -237,7 +237,7 @@ fn create_marking_material(materials: &mut ResMut<Assets<StandardMaterial>>) -> 
 }
 
 // Enhanced road detection for vehicles and NPCs
-pub fn is_on_road_spline(position: Vec3, road_network: &RoadNetwork, tolerance: f32) -> bool {
+#[must_use] pub fn is_on_road_spline(position: Vec3, road_network: &RoadNetwork, tolerance: f32) -> bool {
     for road in road_network.roads.values() {
         if is_point_on_road_spline(position, road, tolerance) {
             return true;
@@ -270,7 +270,7 @@ pub fn update_road_dependent_systems(
     mut npc_query: Query<&mut Transform, (With<NPC>, Without<crate::components::Car>, Without<ActiveEntity>)>,
 ) {
     // Update vehicle positions to stay on roads
-    for mut transform in vehicle_query.iter_mut() {
+    for mut transform in &mut vehicle_query {
         if !is_on_road_spline(transform.translation, &road_network, 2.0) {
             // Find nearest road and snap to it
             if let Some(nearest_road_pos) = find_nearest_road_position(transform.translation, &road_network) {
@@ -281,7 +281,7 @@ pub fn update_road_dependent_systems(
     }
     
     // Similar for NPCs
-    for mut transform in npc_query.iter_mut() {
+    for mut transform in &mut npc_query {
         if !is_on_road_spline(transform.translation, &road_network, 1.0) {
             if let Some(nearest_road_pos) = find_nearest_road_position(transform.translation, &road_network) {
                 transform.translation.x = nearest_road_pos.x;

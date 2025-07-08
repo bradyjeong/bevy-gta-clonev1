@@ -2,8 +2,8 @@
 //! System:   NPC LOD
 //! Purpose:  Manages level-of-detail for NPCs
 //! Schedule: Update
-//! Reads:    ActiveEntity, Transform, NPCState
-//! Writes:   NPCState, Visibility
+//! Reads:    `ActiveEntity`, Transform, `NPCState`
+//! Writes:   `NPCState`, Visibility
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
@@ -43,7 +43,7 @@ pub fn npc_lod_system(
         let active_pos = active_transform.translation;
         let current_time = time.elapsed_secs();
         
-        for (entity, mut npc_state, transform, mut visibility) in npc_query.iter_mut() {
+        for (entity, mut npc_state, transform, mut visibility) in &mut npc_query {
             // Throttle LOD updates to every 0.1 seconds per NPC
             if current_time - npc_state.last_lod_update < 0.1 {
                 continue;

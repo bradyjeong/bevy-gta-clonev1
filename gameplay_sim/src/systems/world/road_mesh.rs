@@ -2,7 +2,7 @@
 //! System:   Road Mesh Generation
 //! Purpose:  Generates road meshes from splines
 //! Schedule: On demand
-//! Reads:    RoadSpline, RoadType
+//! Reads:    `RoadSpline`, `RoadType`
 //! Writes:   Mesh assets
 //! Owner:    @rendering-team
 //! ───────────────────────────────────────────────
@@ -11,7 +11,6 @@ use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use std::collections::HashMap;
 use crate::systems::world::road_network::{RoadSpline, RoadType};
-use game_core::prelude::*;
 
 #[derive(Resource, Default)]
 pub struct RoadMeshCache {
@@ -40,7 +39,7 @@ pub fn generate_road_mesh_cached(
     handle
 }
 
-pub fn generate_road_mesh(road: &RoadSpline) -> Mesh {
+#[must_use] pub fn generate_road_mesh(road: &RoadSpline) -> Mesh {
     generate_road_mesh_internal(road)
 }
 
@@ -115,7 +114,7 @@ fn calculate_segments(road: &RoadSpline) -> usize {
     base_segments.clamp(10, 100)
 }
 
-pub fn generate_road_markings_mesh(road: &RoadSpline) -> Vec<Mesh> {
+#[must_use] pub fn generate_road_markings_mesh(road: &RoadSpline) -> Vec<Mesh> {
     let mut markings = Vec::new();
     
     match road.road_type {
@@ -342,7 +341,7 @@ fn generate_dashed_center_line_mesh(road: &RoadSpline) -> Mesh {
 
 
 // Oracle's missing function stub
-pub fn generate_intersection_mesh() -> Option<Mesh> {
+#[must_use] pub fn generate_intersection_mesh() -> Option<Mesh> {
     // Intersection mesh stub - no implementation yet
     None
 }

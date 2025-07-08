@@ -2,8 +2,8 @@
 //! System:   Control Manager
 //! Purpose:  Handles entity movement and physics
 //! Schedule: Update (throttled)
-//! Reads:    ActiveEntity, Transform, Car, NPC, Helicopter
-//! Writes:   NPC, ControlManager
+//! Reads:    `ActiveEntity`, Transform, Car, NPC, Helicopter
+//! Writes:   NPC, `ControlManager`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Physics values are validated and finite
@@ -13,14 +13,13 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::bevy16_compat::TimeExt;
+// Removed bevy16_compat - using direct Bevy methods
 use std::collections::HashMap;
 use std::time::Instant;
 
 use game_core::prelude::*;
 use super::input_config::InputAction;
 use super::input_manager::InputManager;
-use crate::input::VehicleType as ConfigVehicleType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ControlAction {
@@ -176,7 +175,7 @@ impl ControlManager {
     }
 
     /// Get the active entity
-    pub fn get_active_entity(&self) -> Option<Entity> {
+    #[must_use] pub fn get_active_entity(&self) -> Option<Entity> {
         self.active_entity
     }
 
@@ -292,22 +291,22 @@ impl ControlManager {
     }
 
     /// Get current control actions
-    pub fn get_controls(&self) -> &HashMap<ControlAction, f32> {
+    #[must_use] pub fn get_controls(&self) -> &HashMap<ControlAction, f32> {
         &self.active_controls
     }
 
     /// Check if a control action is currently active
-    pub fn is_control_active(&self, action: ControlAction) -> bool {
+    #[must_use] pub fn is_control_active(&self, action: ControlAction) -> bool {
         self.active_controls.contains_key(&action) && self.active_controls[&action] > 0.0
     }
 
     /// Get the value of a control action (0.0 if not active)
-    pub fn get_control_value(&self, action: ControlAction) -> f32 {
+    #[must_use] pub fn get_control_value(&self, action: ControlAction) -> f32 {
         *self.active_controls.get(&action).unwrap_or(&0.0)
     }
 
     /// Check if emergency controls are active
-    pub fn is_emergency_active(&self) -> bool {
+    #[must_use] pub fn is_emergency_active(&self) -> bool {
         self.is_control_active(ControlAction::Emergency)
     }
 
@@ -317,7 +316,7 @@ impl ControlManager {
     }
 
     /// Get AI control decision for an entity
-    pub fn get_ai_decision(&self, entity: Entity) -> Option<&AIControlDecision> {
+    #[must_use] pub fn get_ai_decision(&self, entity: Entity) -> Option<&AIControlDecision> {
         self.ai_decisions.get(&entity)
     }
 
@@ -327,12 +326,12 @@ impl ControlManager {
     }
 
     /// Get physics configuration
-    pub fn get_physics_config(&self) -> &VehiclePhysicsConfig {
+    #[must_use] pub fn get_physics_config(&self) -> &VehiclePhysicsConfig {
         &self.physics_config
     }
 
     /// Get performance statistics
-    pub fn get_performance_stats(&self) -> (u64, u64, u64) {
+    #[must_use] pub fn get_performance_stats(&self) -> (u64, u64, u64) {
         (self.update_count, self.max_update_time, self.ai_decisions.len() as u64)
     }
 
@@ -342,7 +341,7 @@ impl ControlManager {
     }
 
     /// Get active actions for a specific entity (for now, returns global active controls)
-    pub fn get_active_actions(&self, _entity: Entity) -> Option<Vec<ControlAction>> {
+    #[must_use] pub fn get_active_actions(&self, _entity: Entity) -> Option<Vec<ControlAction>> {
         if self.active_controls.is_empty() {
             None
         } else {
@@ -357,30 +356,30 @@ pub fn update_control_manager_system(
     input_manager: Res<InputManager>,
     current_state: Res<State<GameState>>,
 ) {
-    control_manager.update_controls(&input_manager, &**current_state);
+    control_manager.update_controls(&input_manager, &current_state);
 }
 
 /// System to apply AI control decisions to NPCs
 pub fn apply_ai_controls_system(
-    mut control_manager: ResMut<ControlManager>,
+    control_manager: ResMut<ControlManager>,
     mut npc_query: Query<(Entity, &mut Transform, &mut Velocity), With<NPCState>>,
     time: Res<Time>,
 ) {
-    for (entity, mut transform, mut velocity) in npc_query.iter_mut() {
+    for (entity, mut transform, mut velocity) in &mut npc_query {
         if let Some(ai_decision) = control_manager.get_ai_decision(entity) {
             // Apply AI decision to NPC movement
-            let movement = ai_decision.movement_direction * ai_decision.speed_factor * time.delta_seconds();
+            let movement = ai_decision.movement_direction * ai_decision.speed_factor * time.delta_secs();
             transform.translation += movement;
             
             // Apply rotation
             if ai_decision.rotation_target != 0.0 {
-                let rotation_speed = 2.0 * time.delta_seconds();
+                let rotation_speed = 2.0 * time.delta_secs();
                 let target_rotation = Quat::from_rotation_y(ai_decision.rotation_target);
                 transform.rotation = transform.rotation.slerp(target_rotation, rotation_speed);
             }
             
             // Update velocity for physics consistency
-            velocity.linvel = movement / time.delta_seconds();
+            velocity.linvel = movement / time.delta_secs();
         }
     }
 }
@@ -394,7 +393,7 @@ pub fn npc_ai_decision_system(
     for (entity, transform) in npc_query.iter() {
         // Simple wander behavior
         let time_offset = entity.index() as f32 * 0.1;
-        let wander_angle = (time.elapsed_seconds() + time_offset).sin() * 0.5;
+        let wander_angle = (time.elapsed_secs() + time_offset).sin() * 0.5;
         
         let ai_decision = AIControlDecision {
             movement_direction: Vec3::new(wander_angle.cos(), 0.0, wander_angle.sin()) * 2.0,
@@ -408,15 +407,13 @@ pub fn npc_ai_decision_system(
 }
 
 /// Helper function to check if entity is accelerating
-pub fn is_accelerating(control_manager: &ControlManager, entity: Entity) -> bool {
+#[must_use] pub fn is_accelerating(control_manager: &ControlManager, entity: Entity) -> bool {
     control_manager.get_active_actions(entity)
-        .map(|actions| actions.contains(&ControlAction::Accelerate))
-        .unwrap_or(false)
+        .is_some_and(|actions| actions.contains(&ControlAction::Accelerate))
 }
 
 /// Helper function to check if entity is braking
-pub fn is_braking(control_manager: &ControlManager, entity: Entity) -> bool {
+#[must_use] pub fn is_braking(control_manager: &ControlManager, entity: Entity) -> bool {
     control_manager.get_active_actions(entity)
-        .map(|actions| actions.contains(&ControlAction::Brake))
-        .unwrap_or(false)
+        .is_some_and(|actions| actions.contains(&ControlAction::Brake))
 }

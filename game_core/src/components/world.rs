@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 
 
-/// NPC Behavior Component - replaces old NPCBehavior
+/// NPC Behavior Component - replaces old `NPCBehavior`
 #[derive(Component, Debug, Clone)]
 pub struct NPCBehaviorComponent {
     pub speed: f32,
@@ -106,7 +106,7 @@ pub enum NPCBehaviorType {
 }
 
 impl NPCState {
-    pub fn new(npc_type: NPCType) -> Self {
+    #[must_use] pub fn new(npc_type: NPCType) -> Self {
         use rand::prelude::*;
         let mut rng = thread_rng();
         
@@ -134,7 +134,7 @@ impl NPCState {
 }
 
 impl NPCAppearance {
-    pub fn random() -> Self {
+    #[must_use] pub fn random() -> Self {
         use rand::prelude::*;
         let mut rng = thread_rng();
         
@@ -222,7 +222,7 @@ pub struct Cullable {
 }
 
 impl Cullable {
-    pub fn new(max_distance: f32) -> Self {
+    #[must_use] pub fn new(max_distance: f32) -> Self {
         Self {
             max_distance,
             is_culled: false,
@@ -259,7 +259,7 @@ impl Default for RoadType {
 }
 
 impl RoadType {
-    pub fn width(&self) -> f32 {
+    #[must_use] pub fn width(&self) -> f32 {
         match self {
             RoadType::Highway => 12.0,
             RoadType::MainStreet => 8.0,
@@ -268,7 +268,7 @@ impl RoadType {
         }
     }
     
-    pub fn priority(&self) -> u32 {
+    #[must_use] pub fn priority(&self) -> u32 {
         match self {
             RoadType::Highway => 4,
             RoadType::MainStreet => 3,
@@ -298,7 +298,7 @@ impl Default for RoadSpline {
 }
 
 impl RoadSpline {
-    pub fn closest_point(&self, position: Vec3) -> (f32, Vec3) {
+    #[must_use] pub fn closest_point(&self, position: Vec3) -> (f32, Vec3) {
         if self.points.is_empty() {
             return (0.0, position);
         }
@@ -317,7 +317,7 @@ impl RoadSpline {
         (min_distance, closest_point)
     }
     
-    pub fn evaluate(&self, t: f32) -> Vec3 {
+    #[must_use] pub fn evaluate(&self, t: f32) -> Vec3 {
         if self.points.is_empty() {
             return Vec3::ZERO;
         }
@@ -338,7 +338,7 @@ impl RoadSpline {
         start.lerp(end, local_t)
     }
     
-    pub fn direction_at(&self, t: f32) -> Vec3 {
+    #[must_use] pub fn direction_at(&self, t: f32) -> Vec3 {
         if self.points.len() < 2 {
             return Vec3::X; // Default direction
         }
@@ -358,7 +358,7 @@ impl RoadSpline {
         (end - start).normalize_or_zero()
     }
     
-    pub fn length(&self) -> f32 {
+    #[must_use] pub fn length(&self) -> f32 {
         if self.points.len() < 2 {
             return 0.0;
         }
@@ -409,7 +409,7 @@ pub struct RoadIntersection {
 }
 
 impl RoadNetwork {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             roads: std::collections::HashMap::new(),
             intersections: std::collections::HashMap::new(),
@@ -467,7 +467,7 @@ impl RoadNetwork {
         self.roads.iter().map(|(id, road)| (*id, road))
     }
     
-    pub fn get_road_at_position(&self, position: Vec3, tolerance: f32) -> Option<(u32, &RoadSpline)> {
+    #[must_use] pub fn get_road_at_position(&self, position: Vec3, tolerance: f32) -> Option<(u32, &RoadSpline)> {
         self.roads.iter()
             .find(|(_, road)| {
                 road.points.iter().any(|&point| position.distance(point) < tolerance)
@@ -475,7 +475,7 @@ impl RoadNetwork {
             .map(|(id, road)| (*id, road))
     }
     
-    pub fn find_nearest_road(&self, position: Vec3) -> Option<(u32, &RoadSpline, Vec3)> {
+    #[must_use] pub fn find_nearest_road(&self, position: Vec3) -> Option<(u32, &RoadSpline, Vec3)> {
         self.roads.iter()
             .map(|(id, road)| {
                 let nearest_point = road.points.iter()
@@ -663,21 +663,13 @@ impl Default for PerformanceStats {
 
 // Mesh caching components
 #[derive(Resource)]
+#[derive(Default)]
 pub struct MeshCache {
     pub road_meshes: std::collections::HashMap<String, Handle<Mesh>>,
     pub npc_body_meshes: std::collections::HashMap<String, Handle<Mesh>>,
     pub intersection_meshes: std::collections::HashMap<String, Handle<Mesh>>,
 }
 
-impl Default for MeshCache {
-    fn default() -> Self {
-        Self {
-            road_meshes: std::collections::HashMap::new(),
-            npc_body_meshes: std::collections::HashMap::new(),
-            intersection_meshes: std::collections::HashMap::new(),
-        }
-    }
-}
 
 // Entity limit tracking
 #[derive(Resource)]

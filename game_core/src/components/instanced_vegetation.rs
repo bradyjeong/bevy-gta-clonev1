@@ -34,7 +34,7 @@ pub struct InstancedPalmFrond {
 }
 
 impl InstancedPalmFrond {
-    pub fn new(max_instances: usize) -> Self {
+    #[must_use] pub fn new(max_instances: usize) -> Self {
         Self {
             instances: Vec::with_capacity(max_instances),
             max_instances,
@@ -57,7 +57,7 @@ impl InstancedPalmFrond {
         self.dirty = true;
     }
 
-    pub fn is_full(&self) -> bool {
+    #[must_use] pub fn is_full(&self) -> bool {
         self.instances.len() >= self.max_instances
     }
 }
@@ -71,7 +71,7 @@ pub struct InstancedLeafCluster {
 }
 
 impl InstancedLeafCluster {
-    pub fn new(max_instances: usize) -> Self {
+    #[must_use] pub fn new(max_instances: usize) -> Self {
         Self {
             instances: Vec::with_capacity(max_instances),
             max_instances,
@@ -94,7 +94,7 @@ impl InstancedLeafCluster {
         self.dirty = true;
     }
 
-    pub fn is_full(&self) -> bool {
+    #[must_use] pub fn is_full(&self) -> bool {
         self.instances.len() >= self.max_instances
     }
 }
@@ -108,7 +108,7 @@ pub struct InstancedTreeTrunk {
 }
 
 impl InstancedTreeTrunk {
-    pub fn new(max_instances: usize) -> Self {
+    #[must_use] pub fn new(max_instances: usize) -> Self {
         Self {
             instances: Vec::with_capacity(max_instances),
             max_instances,
@@ -131,7 +131,7 @@ impl InstancedTreeTrunk {
         self.dirty = true;
     }
 
-    pub fn is_full(&self) -> bool {
+    #[must_use] pub fn is_full(&self) -> bool {
         self.instances.len() >= self.max_instances
     }
 }
@@ -145,7 +145,7 @@ pub struct InstancedBush {
 }
 
 impl InstancedBush {
-    pub fn new(max_instances: usize) -> Self {
+    #[must_use] pub fn new(max_instances: usize) -> Self {
         Self {
             instances: Vec::with_capacity(max_instances),
             max_instances,
@@ -168,7 +168,7 @@ impl InstancedBush {
         self.dirty = true;
     }
 
-    pub fn is_full(&self) -> bool {
+    #[must_use] pub fn is_full(&self) -> bool {
         self.instances.len() >= self.max_instances
     }
 }
@@ -210,18 +210,15 @@ pub enum VegetationType {
 
 /// Vegetation LOD detail levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Default)]
 pub enum VegetationDetailLevel {
+    #[default]
     Full,
     Medium,
     Billboard,
     Culled,
 }
 
-impl Default for VegetationDetailLevel {
-    fn default() -> Self {
-        VegetationDetailLevel::Full
-    }
-}
 
 /// Vegetation LOD component
 #[derive(Component, Debug, Clone)]
@@ -258,13 +255,14 @@ impl VegetationLOD {
         };
     }
     
-    pub fn should_be_visible(&self) -> bool {
+    #[must_use] pub fn should_be_visible(&self) -> bool {
         !matches!(self.detail_level, VegetationDetailLevel::Culled)
     }
 }
 
 /// Mesh LOD component for vegetation
 #[derive(Component, Debug, Clone)]
+#[derive(Default)]
 pub struct VegetationMeshLOD {
     pub current_mesh: Handle<Mesh>,
     pub full_mesh: Handle<Mesh>,
@@ -272,19 +270,9 @@ pub struct VegetationMeshLOD {
     pub billboard_mesh: Handle<Mesh>,
 }
 
-impl Default for VegetationMeshLOD {
-    fn default() -> Self {
-        Self {
-            current_mesh: Handle::default(),
-            full_mesh: Handle::default(),
-            medium_mesh: Handle::default(),
-            billboard_mesh: Handle::default(),
-        }
-    }
-}
 
 impl VegetationMeshLOD {
-    pub fn get_mesh_for_level(&self, level: VegetationDetailLevel) -> Option<Handle<Mesh>> {
+    #[must_use] pub fn get_mesh_for_level(&self, level: VegetationDetailLevel) -> Option<Handle<Mesh>> {
         match level {
             VegetationDetailLevel::Full => Some(self.full_mesh.clone()),
             VegetationDetailLevel::Medium => Some(self.medium_mesh.clone()),
@@ -323,7 +311,7 @@ pub struct VegetationBatchable {
 }
 
 impl VegetationBatchable {
-    pub fn palm_frond() -> Self {
+    #[must_use] pub fn palm_frond() -> Self {
         Self {
             vegetation_type: VegetationType::PalmFrond,
             mesh_id: None,
@@ -331,7 +319,7 @@ impl VegetationBatchable {
         }
     }
 
-    pub fn leaf_cluster() -> Self {
+    #[must_use] pub fn leaf_cluster() -> Self {
         Self {
             vegetation_type: VegetationType::LeafCluster,
             mesh_id: None,
@@ -339,7 +327,7 @@ impl VegetationBatchable {
         }
     }
 
-    pub fn tree_trunk() -> Self {
+    #[must_use] pub fn tree_trunk() -> Self {
         Self {
             vegetation_type: VegetationType::TreeTrunk,
             mesh_id: None,
@@ -347,7 +335,7 @@ impl VegetationBatchable {
         }
     }
 
-    pub fn bush() -> Self {
+    #[must_use] pub fn bush() -> Self {
         Self {
             vegetation_type: VegetationType::Bush,
             mesh_id: None,
@@ -369,7 +357,7 @@ pub struct InstancedVegetationBundle {
 }
 
 impl InstancedVegetationBundle {
-    pub fn new(name: &str, transform: Transform, vegetation_type: VegetationType) -> Self {
+    #[must_use] pub fn new(name: &str, transform: Transform, vegetation_type: VegetationType) -> Self {
         Self {
             name: Name::new(name.to_string()),
             transform,

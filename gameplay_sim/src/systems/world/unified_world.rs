@@ -2,17 +2,16 @@
 //! System:   Unified World Manager
 //! Purpose:  Manages world chunks and spatial organization
 //! Schedule: Update
-//! Reads:    ActiveEntity, Transform, ChunkData
-//! Writes:   Commands, WorldManager
+//! Reads:    `ActiveEntity`, Transform, `ChunkData`
+//! Writes:   Commands, `WorldManager`
 //! Owner:    @simulation-team
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::bevy16_compat::EntityCommandsExt;
+// Removed bevy16_compat - using direct Bevy methods
 use std::collections::HashMap;
 use game_core::prelude::*;
 use game_core::components::{RoadNetwork, ChunkState};
-use crate::systems::world::road_generation::RoadNetworkExtensions;
 
 const CHUNK_SIZE: f32 = 200.0;
 const CHUNK_CLEANUP_RADIUS: f32 = 1000.0;
@@ -35,7 +34,7 @@ pub type UnifiedWorldManager = WorldManager;
 pub use game_core::world::ContentLayer;
 pub use game_core::spatial::ChunkCoord;
 
-/// Utility functions for ChunkCoord using local CHUNK_SIZE constant
+/// Utility functions for `ChunkCoord` using local `CHUNK_SIZE` constant
 pub trait ChunkCoordExt {
     fn from_world_pos_local(world_pos: Vec3) -> Self;
     fn to_world_pos_local(&self) -> Vec3;
@@ -68,7 +67,7 @@ pub struct ChunkData {
 }
 
 impl ChunkData {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             entities: Vec::new(),
             last_updated: 0.0,
@@ -105,7 +104,7 @@ pub struct PlacementGrid {
 }
 
 impl PlacementGrid {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             grid: HashMap::new(),
             cell_size: 50.0, // 4 cells per chunk
@@ -130,7 +129,7 @@ impl PlacementGrid {
         }
     }
     
-    pub fn can_place(&self, position: Vec3, _content_type: ContentType, radius: f32, min_distance: f32) -> bool {
+    #[must_use] pub fn can_place(&self, position: Vec3, _content_type: ContentType, radius: f32, min_distance: f32) -> bool {
         let base_cell = self.world_to_grid(position);
         
         // Check current cell and adjacent cells
@@ -154,7 +153,7 @@ impl PlacementGrid {
         true
     }
     
-    pub fn get_nearby_entities(&self, position: Vec3, radius: f32) -> Vec<(Vec3, ContentType, f32)> {
+    #[must_use] pub fn get_nearby_entities(&self, position: Vec3, radius: f32) -> Vec<(Vec3, ContentType, f32)> {
         let mut result = Vec::new();
         let base_cell = self.world_to_grid(position);
         
@@ -187,7 +186,7 @@ impl PlacementGrid {
 }
 
 impl WorldManager {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             chunks: HashMap::new(),
             active_chunks: Vec::new(),
@@ -198,18 +197,18 @@ impl WorldManager {
     }
     
     pub fn get_or_create_chunk(&mut self, coord: ChunkCoord) -> &mut ChunkData {
-        self.chunks.entry(coord).or_insert_with(ChunkData::new)
+        self.chunks.entry(coord).or_default()
     }
     
     pub fn get_chunk_mut(&mut self, coord: ChunkCoord) -> Option<&mut ChunkData> {
         self.chunks.get_mut(&coord)
     }
     
-    pub fn get_chunk(&self, coord: ChunkCoord) -> Option<&ChunkData> {
+    #[must_use] pub fn get_chunk(&self, coord: ChunkCoord) -> Option<&ChunkData> {
         self.chunks.get(&coord)
     }
     
-    pub fn calculate_lod_level(&self, distance: f32) -> u32 {
+    #[must_use] pub fn calculate_lod_level(&self, distance: f32) -> u32 {
         if distance < 150.0 {
             0 // High detail
         } else if distance < 300.0 {
@@ -273,8 +272,8 @@ impl WorldManager {
         }
     }
     
-    pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
-        self.chunks.get(&coord).map_or(false, |chunk| chunk.is_loaded)
+    #[must_use] pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
+        self.chunks.get(&coord).is_some_and(|chunk| chunk.is_loaded)
     }
     
     pub fn mark_chunk_loaded(&mut self, coord: ChunkCoord) {
@@ -311,7 +310,7 @@ pub fn world_management_system(
         world_manager.update_active_chunks(player_pos, 800.0);
         
         // Ensure active chunks are loaded
-        for &chunk_coord in world_manager.active_chunks.clone().iter() {
+        for &chunk_coord in &world_manager.active_chunks.clone() {
             if !world_manager.is_chunk_loaded(chunk_coord) {
                 world_manager.mark_chunk_loaded(chunk_coord);
                 
@@ -353,15 +352,15 @@ pub fn spatial_query_system(
 
 // Utility functions
 
-pub fn world_pos_to_chunk_coord(world_pos: Vec3) -> ChunkCoord {
+#[must_use] pub fn world_pos_to_chunk_coord(world_pos: Vec3) -> ChunkCoord {
     ChunkCoord::from_world_pos(world_pos, CHUNK_SIZE)
 }
 
-pub fn chunk_coord_to_world_pos(coord: ChunkCoord) -> Vec3 {
+#[must_use] pub fn chunk_coord_to_world_pos(coord: ChunkCoord) -> Vec3 {
     coord.to_world_pos(CHUNK_SIZE)
 }
 
-pub fn get_chunk_bounds(coord: ChunkCoord) -> (Vec3, Vec3) {
+#[must_use] pub fn get_chunk_bounds(coord: ChunkCoord) -> (Vec3, Vec3) {
     let center = coord.to_world_pos(CHUNK_SIZE);
     let half_size = CHUNK_SIZE * 0.5;
     
@@ -371,7 +370,7 @@ pub fn get_chunk_bounds(coord: ChunkCoord) -> (Vec3, Vec3) {
     (min, max)
 }
 
-pub fn is_position_in_chunk(world_pos: Vec3, coord: ChunkCoord) -> bool {
+#[must_use] pub fn is_position_in_chunk(world_pos: Vec3, coord: ChunkCoord) -> bool {
     let (min, max) = get_chunk_bounds(coord);
     
     world_pos.x >= min.x && world_pos.x <= max.x &&

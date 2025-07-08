@@ -2,8 +2,8 @@
 //! System:   Lod Manager
 //! Purpose:  Manages timing and throttling intervals
 //! Schedule: Update
-//! Reads:    VehicleRendering, DistanceCache, Transform, ActiveEntity
-//! Writes:   VehicleState, DistanceCache
+//! Reads:    `VehicleRendering`, `DistanceCache`, Transform, `ActiveEntity`
+//! Writes:   `VehicleState`, `DistanceCache`
 //! Invariants:
 //!   * Distance calculations are cached for performance
 //!   * Only active entities can be controlled
@@ -33,7 +33,7 @@ pub fn vehicle_lod_system(
     let Ok((active_entity, active_transform)) = active_query.single() else { return };
     let player_pos = active_transform.translation;
     
-    for (entity, mut vehicle_state, rendering, transform) in vehicle_query.iter_mut() {
+    for (entity, mut vehicle_state, rendering, transform) in &mut vehicle_query {
         
         let distance = get_cached_distance(
             &mut distance_cache,

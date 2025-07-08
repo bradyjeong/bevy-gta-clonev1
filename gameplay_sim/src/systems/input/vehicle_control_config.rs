@@ -44,7 +44,7 @@ impl Default for VehicleControlConfig {
 
 impl VehicleControlConfig {
     fn setup_default_controls(&mut self) {
-        use VehicleType::*;
+        use VehicleType::{Car, Walking};
         // ---- Walking ----
         self.vehicle_controls.insert(Walking, vec![
             ControlBinding { action: InputAction::Forward,  key: KeyCode::ArrowUp,    description: "Walk forward".into(),  category: ControlCategory::Primary },
@@ -82,7 +82,7 @@ impl VehicleControlConfig {
     }
 
     // --- Public helpers ----------------------------------------------------
-    pub fn get_key_for_vehicle_action(
+    #[must_use] pub fn get_key_for_vehicle_action(
         &self,
         vehicle_type: VehicleType,
         action: InputAction,
@@ -93,14 +93,14 @@ impl VehicleControlConfig {
             .copied()
     }
 
-    pub fn get_vehicle_controls(
+    #[must_use] pub fn get_vehicle_controls(
         &self,
         vehicle_type: VehicleType,
     ) -> Option<&Vec<ControlBinding>> {
         self.vehicle_controls.get(&vehicle_type)
     }
 
-    pub fn get_vehicle_controls_by_category(
+    #[must_use] pub fn get_vehicle_controls_by_category(
         &self,
         vehicle_type: VehicleType,
         category: ControlCategory,
@@ -111,7 +111,7 @@ impl VehicleControlConfig {
             .unwrap_or_default()
     }
 
-    pub fn get_available_actions(
+    #[must_use] pub fn get_available_actions(
         &self,
         vehicle_type: VehicleType,
     ) -> Vec<InputAction> {
@@ -121,19 +121,18 @@ impl VehicleControlConfig {
             .unwrap_or_default()
     }
 
-    pub fn is_action_available_for_vehicle(
+    #[must_use] pub fn is_action_available_for_vehicle(
         &self,
         vehicle_type: VehicleType,
         action: InputAction,
     ) -> bool {
         self.lookup_cache
             .get(&vehicle_type)
-            .map(|m| m.contains_key(&action))
-            .unwrap_or(false)
+            .is_some_and(|m| m.contains_key(&action))
     }
 
     // Convenience translation from GameState (in game_core) to VehicleType
-    pub fn game_state_to_vehicle_type(state: &GameState) -> VehicleType {
+    #[must_use] pub fn game_state_to_vehicle_type(state: &GameState) -> VehicleType {
         match state {
             GameState::Walking  => VehicleType::Walking,
             GameState::Driving  => VehicleType::Car,
@@ -142,7 +141,7 @@ impl VehicleControlConfig {
         }
     }
 
-    pub fn get_controls_for_state(
+    #[must_use] pub fn get_controls_for_state(
         &self,
         state: &GameState,
     ) -> Option<&Vec<ControlBinding>> {
@@ -161,8 +160,7 @@ impl VehicleControlConfig {
         if let Some(controls) = self.vehicle_controls.get(&vehicle_type) {
             if controls.iter().any(|c| c.key == new_key && c.action != action) {
                 return Err(format!(
-                    "Key {:?} already bound to another action for {:?}",
-                    new_key, vehicle_type
+                    "Key {new_key:?} already bound to another action for {vehicle_type:?}"
                 ));
             }
         }
@@ -175,7 +173,7 @@ impl VehicleControlConfig {
                 return Ok(());
             }
         }
-        Err(format!("Action {:?} not found for {:?}", action, vehicle_type))
+        Err(format!("Action {action:?} not found for {vehicle_type:?}"))
     }
 
     pub fn add_control(
@@ -201,7 +199,7 @@ impl VehicleControlConfig {
 
         self.vehicle_controls
             .entry(vehicle_type)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(binding);
         self.rebuild_lookup_cache();
         Ok(())

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-/// Unified material factory that eliminates duplicate StandardMaterial creation
+/// Unified material factory that eliminates duplicate `StandardMaterial` creation
 /// CRITICAL: This replaces 53+ duplicate material patterns across the codebase
 #[derive(Resource)]
 pub struct MaterialFactory {
@@ -62,27 +62,27 @@ impl MaterialFactory {
     }
     
     /// Get standard vehicle glass material
-    pub fn get_vehicle_glass(&self) -> Handle<StandardMaterial> {
+    #[must_use] pub fn get_vehicle_glass(&self) -> Handle<StandardMaterial> {
         self.vehicle_glass_template.clone()
     }
     
     /// Get standard vehicle wheel material
-    pub fn get_vehicle_wheel(&self) -> Handle<StandardMaterial> {
+    #[must_use] pub fn get_vehicle_wheel(&self) -> Handle<StandardMaterial> {
         self.vehicle_wheel_template.clone()
     }
     
     /// Get standard road asphalt material
-    pub fn get_road_asphalt(&self) -> Handle<StandardMaterial> {
+    #[must_use] pub fn get_road_asphalt(&self) -> Handle<StandardMaterial> {
         self.road_asphalt_template.clone()
     }
     
     /// Get standard water surface material
-    pub fn get_water_surface(&self) -> Handle<StandardMaterial> {
+    #[must_use] pub fn get_water_surface(&self) -> Handle<StandardMaterial> {
         self.water_surface_template.clone()
     }
     
     /// Get standard building concrete material
-    pub fn get_building_concrete(&self) -> Handle<StandardMaterial> {
+    #[must_use] pub fn get_building_concrete(&self) -> Handle<StandardMaterial> {
         self.building_concrete_template.clone()
     }
     

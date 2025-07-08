@@ -12,24 +12,18 @@ pub use limits::EntityLimitManager;
 
 /// Unified Entity Factory - orchestrates all entity spawning
 #[derive(Resource)]
+#[derive(Default)]
 pub struct UnifiedEntityFactory {
     pub limit_manager: EntityLimitManager,
 }
 
-impl Default for UnifiedEntityFactory {
-    fn default() -> Self {
-        Self {
-            limit_manager: EntityLimitManager::default(),
-        }
-    }
-}
 
 impl UnifiedEntityFactory {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn with_config(config: GameConfig) -> Self {
+    #[must_use] pub fn with_config(config: GameConfig) -> Self {
         let mut factory = Self::new();
         factory.configure_from_config(&config);
         factory

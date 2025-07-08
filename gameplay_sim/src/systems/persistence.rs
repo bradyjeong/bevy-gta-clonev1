@@ -2,7 +2,6 @@
 //! Phase 4: Implement persistence functionality
 
 use bevy::prelude::*;
-use game_core::prelude::*;
 
 pub fn setup_persistence() {
     todo!("Phase 4: Implement persistence setup")
