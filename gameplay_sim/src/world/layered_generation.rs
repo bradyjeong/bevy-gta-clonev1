@@ -85,7 +85,7 @@ fn advance_chunk_generation(
             // All layers complete - need to calculate LOD separately to avoid borrow issues
             let distance = chunk.distance_to_player;
             // Store distance first, then calculate LOD
-            drop(chunk); // Release the mutable borrow
+            let _ = chunk; // Release the mutable borrow
             let lod_level = world_manager.calculate_lod_level(distance);
             if let Some(chunk) = world_manager.get_chunk_mut(coord) {
                 chunk.state = ChunkState::Loaded { entity_count: 0 };
