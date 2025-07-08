@@ -12,7 +12,7 @@
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use crate::systems::world::road_network::{RoadSpline, RoadType, IntersectionType, RoadIntersection};
-use crate::components::world::MeshCache;
+use game_core::prelude::MeshCache;
 
 // PROPER ROAD MESH GENERATION (Like GTA) - OPTIMIZED WITH CACHING
 
@@ -24,9 +24,9 @@ pub fn generate_road_mesh_cached(
     // Create cache key based on road properties
     let cache_key = format!("{:?}_{}_{}_{}", 
         road.road_type, 
-        road.control_points.len(),
+        road.points.len(),
         (road.length() * 10.0) as u32, // Discretized length
-        road.control_points.iter()
+        road.points.iter()
             .map(|p| format!("{:.1}_{:.1}_{:.1}", p.x, p.y, p.z))
             .collect::<Vec<_>>()
             .join("_")
@@ -146,7 +146,7 @@ fn calculate_segments(road: &RoadSpline) -> usize {
     let length = road.length();
     let base_segments = (length / 20.0) as usize; // Segment every 20 units (was 5)
     
-    if road.control_points.len() > 2 {
+    if road.points.len() > 2 {
         // Curved road - reduced segments
         (base_segments).max(4).min(30) // Much fewer segments
     } else {
@@ -383,6 +383,8 @@ pub fn generate_intersection_mesh(intersection: &RoadIntersection, connected_roa
         IntersectionType::TJunction => generate_t_intersection_mesh(intersection, connected_roads),
         IntersectionType::Curve => generate_curved_intersection_mesh(intersection, connected_roads),
         IntersectionType::HighwayOnramp => generate_onramp_mesh(intersection, connected_roads),
+        IntersectionType::CrossRoads => generate_cross_intersection_mesh(intersection, connected_roads),
+        IntersectionType::Roundabout => generate_curved_intersection_mesh(intersection, connected_roads),
     }
 }
 

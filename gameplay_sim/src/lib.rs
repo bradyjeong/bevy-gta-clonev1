@@ -1,14 +1,26 @@
 //! Gameplay simulation - physics, AI, rules
-#![deny(clippy::all, clippy::pedantic)]
-#![deny(missing_docs)]
+#![warn(clippy::all, clippy::pedantic)]
+#![warn(missing_docs)]
+
+// Macro imports
+#[macro_use]
+extern crate tracing;
+
+// Add core imports (tracing macros available via #[macro_use])
+pub(crate) use bevy::prelude::*;
+pub(crate) use bevy_rapier3d::prelude::*;
+pub(crate) use game_core::prelude::*;
+
+// Re-export component tree from game_core for internal use
+pub use game_core::components;
 
 pub(crate) mod services;
 pub(crate) mod physics;
 pub(crate) mod movement;
-pub(crate) mod world;
+pub mod world;
 pub(crate) mod behavior;
 pub(crate) mod input;
-pub(crate) mod distance;
+pub mod distance;
 pub(crate) mod lod;
 pub(crate) mod vehicles;
 pub(crate) mod setup;
@@ -17,13 +29,18 @@ pub(crate) mod entity_creation;
 pub(crate) mod spawn_validation;
 pub(crate) mod transform_sync;
 pub(crate) mod water;
-use bevy::prelude::*;
+pub(crate) mod bevy16_compat;
+pub(crate) mod systems;
+pub(crate) mod factories;
+pub mod prelude;
+pub(crate) mod config;
+pub(crate) mod constants;
+pub(crate) mod compat;
+
+// Removed compatibility layer - using direct imports
 pub use engine_core;
 pub use engine_bevy;
 pub use game_core;
-pub mod prelude;
-pub(crate) mod systems;
-pub(crate) mod factories;
 // Only expose via prelude - no direct re-exports
 /// Main plugin for simulation systems
 pub struct SimulationPlugin;

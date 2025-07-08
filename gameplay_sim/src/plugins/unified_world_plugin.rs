@@ -94,7 +94,7 @@ fn initialize_unified_world(mut world_manager: ResMut<UnifiedWorldManager>) {
     // Clear any existing data
     world_manager.chunks.clear();
     world_manager.placement_grid.clear();
-    world_manager.road_network.reset();
+    // Note: Road network managed separately
     
     println!("DEBUG: Unified world system initialized!");
 }
@@ -113,19 +113,19 @@ fn debug_unified_world_activity(
         *last_report_time = current_time;
         
         let loaded_chunks = world_manager.chunks.values()
-            .filter(|chunk| matches!(chunk.state, crate::systems::world::unified_world::ChunkState::Loaded { .. }))
+            .filter(|chunk| chunk.is_loaded)
             .count();
         
         let loading_chunks = world_manager.chunks.values()
-            .filter(|chunk| matches!(chunk.state, crate::systems::world::unified_world::ChunkState::Loading))
+            .filter(|chunk| !chunk.is_loaded)
             .count();
         
         println!("🌍 UNIFIED WORLD STATUS:");
         println!("  📦 Total chunks: {}", world_manager.chunks.len());
         println!("  ✅ Loaded chunks: {}", loaded_chunks);
         println!("  ⏳ Loading chunks: {}", loading_chunks);
-        println!("  🛣️ Roads generated: {}", world_manager.road_network.roads.len());
-        println!("  🎯 Active chunk: {:?}", world_manager.active_chunk);
-        println!("  ⚡ Max chunks/frame: {}", world_manager.max_chunks_per_frame);
+        println!("  🛣️ Roads: managed separately");
+        println!("  🎯 Active chunks: {}", world_manager.active_chunks.len());
+        println!("  📊 Total chunks: {}", world_manager.chunks.len());
     }
 }

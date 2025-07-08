@@ -14,7 +14,7 @@ use game_core::prelude::*;
 const MAX_ENTITIES_PER_FRAME: usize = 100;
 const DISTANCE_CACHE_SIZE: usize = 2048;
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct UnifiedCullable {
     pub max_distance: f32,
     pub current_lod: usize,
@@ -35,7 +35,49 @@ impl Default for UnifiedCullable {
     }
 }
 
-#[derive(Component)]
+impl UnifiedCullable {
+    pub fn vehicle() -> Self {
+        Self {
+            max_distance: 200.0,
+            current_lod: 0,
+            is_culled: false,
+            last_distance: 0.0,
+            dirty: true,
+        }
+    }
+    
+    pub fn building() -> Self {
+        Self {
+            max_distance: 300.0,
+            current_lod: 0,
+            is_culled: false,
+            last_distance: 0.0,
+            dirty: true,
+        }
+    }
+    
+    pub fn npc() -> Self {
+        Self {
+            max_distance: 100.0,
+            current_lod: 0,
+            is_culled: false,
+            last_distance: 0.0,
+            dirty: true,
+        }
+    }
+    
+    pub fn tree() -> Self {
+        Self {
+            max_distance: 150.0,
+            current_lod: 0,
+            is_culled: false,
+            last_distance: 0.0,
+            dirty: true,
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone)]
 pub struct DirtyVisibility {
     pub priority: DirtyPriority,
 }
@@ -46,17 +88,17 @@ impl DirtyVisibility {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DirtyPriority {
     High,
     Normal,
     Low,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone, Copy)]
 pub struct DirtyLOD;
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Debug, Clone)]
 pub struct DistanceCullingStats {
     pub entities_processed: usize,
     pub entities_culled: usize,

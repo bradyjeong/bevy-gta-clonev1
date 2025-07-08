@@ -1,12 +1,14 @@
 use bevy::prelude::*;
+// UI imports removed - focus on core gameplay
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
-use crate::constants::*;
-use crate::bundles::VisibleChildBundle;
+use game_core::prelude::*;
+// TEMP_PHASE_6_BRIDGE - Use game_core constants directly
+use game_core::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
+use game_core::bundles::VisibleChildBundle;
 use crate::systems::audio::FootstepTimer;
 use crate::systems::human_behavior::HumanEmotions;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
-use crate::systems::distance_cache::MovementTracker;
+use game_core::prelude::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
 
 pub fn setup_basic_world(
@@ -23,39 +25,44 @@ pub fn setup_basic_world(
         Transform::from_xyz(0.0, 15.0, 25.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
+    // UI components temporarily disabled to focus on core gameplay
+    /*
     // Controls UI
     commands
         .spawn((
-            Node {
-                position_type: PositionType::Absolute,
-                top: Val::Px(20.0),
-                left: Val::Px(20.0),
-                width: Val::Px(400.0),
-                height: Val::Auto,
-                padding: UiRect::all(Val::Px(10.0)),
+            NodeBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(20.0),
+                    left: Val::Px(20.0),
+                    width: Val::Px(400.0),
+                    height: Val::Auto,
+                    padding: UiRect::all(Val::Px(10.0)),
+                    ..default()
+                },
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+                border_radius: BorderRadius::all(Val::Px(5.0)),
+                visibility: Visibility::Visible,
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
-            BorderRadius::all(Val::Px(5.0)),
-            Visibility::Visible,
-            InheritedVisibility::VISIBLE,
-            ViewVisibility::default(),
         ))
         .with_children(|parent| {
             parent.spawn((
-                Text::new("CONTROLS - Walking:\n\nArrow Keys: Move\nF: Enter Vehicle"),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
+                TextBundle::from_section(
+                    "CONTROLS - Walking:\n\nArrow Keys: Move\nF: Enter Vehicle",
+                    TextStyle {
+                        font_size: 16.0,
+                        color: Color::WHITE,
+                        ..default()
+                    },
+                ),
                 ControlsDisplay,
                 ControlsText,
-                Visibility::Visible,
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
             ));
         });
+    */
 
 
 
@@ -99,10 +106,11 @@ pub fn setup_basic_world(
         HumanAnimation::default(),
         HumanBehavior::default(),
         PlayerBody::default(),
-        FootstepTimer::default(),
-        HumanEmotions::default(),
-        MovementTracker::new(Vec3::new(0.0, 1.0, 0.0), 5.0), // Track movement with 5m threshold
     ));
+    
+    commands.entity(player_entity).insert(FootstepTimer::default());
+    commands.entity(player_entity).insert(HumanEmotions::default());
+    commands.entity(player_entity).insert(MovementTracker::new(Vec3::new(0.0, 1.0, 0.0), 5.0));
     
     // Register player in spawn registry
     spawn_registry.register_entity(player_entity, Vec3::new(0.0, player_y, 0.0), SpawnableType::Player);

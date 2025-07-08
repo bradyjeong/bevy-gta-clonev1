@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
-use crate::constants::*;
+use game_core::prelude::*;
+// TEMP_PHASE_6_BRIDGE - Use game_core constants directly
+use game_core::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
 
 /// Luxury color schemes for the Bugatti Chiron
 #[derive(Clone, Copy)]

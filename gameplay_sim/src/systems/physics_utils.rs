@@ -14,6 +14,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use game_core::prelude::*;
+use game_core::config::GameConfig;
 use crate::systems::input::{ControlManager, ControlAction};
 
 /// Unified physics utilities for consistent physics behavior across all movement systems
@@ -223,7 +224,7 @@ impl PhysicsBodySetup {
     }
 }
 /// Unified input processing results for all movement systems
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct MovementInputs {
     pub throttle: f32,
     pub brake: f32,

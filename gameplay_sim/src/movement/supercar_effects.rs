@@ -11,7 +11,7 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::{Car, SuperCar, ActiveEntity, ExhaustFlame};
+use game_core::prelude::{Car, SuperCar, ActiveEntity, ExhaustFlame};
 
 /// Pre-spawned exhaust flame pool for performance
 #[derive(Resource)]

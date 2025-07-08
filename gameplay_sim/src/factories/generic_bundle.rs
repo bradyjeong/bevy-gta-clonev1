@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use game_core::prelude::*;
+use crate::game_config::PhysicsConfig;
 
 /// Bundle specification trait for generic entity creation
 pub trait BundleSpec: Send + Sync + 'static {
@@ -8,7 +9,7 @@ pub trait BundleSpec: Send + Sync + 'static {
 }
 
 /// Errors that can occur during bundle creation
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BundleError {
     InvalidPosition,
     InvalidSize { size: Vec3, min_size: f32, max_size: f32 },
@@ -97,13 +98,13 @@ impl GenericBundleFactory {
         mesh: Handle<Mesh>,
         material: Handle<StandardMaterial>,
     ) -> Result<(
-        Vehicle,
+        game_core::components::vehicles::Vehicle,
         Cullable,
-        MaterialMeshBundle<StandardMaterial>,
+        (Mesh3d, MeshMaterial3d<StandardMaterial>),
     ), BundleError> {
         let safe_position = self.validate_position(position)?;
         
-        let vehicle = Vehicle {
+        let vehicle = game_core::components::vehicles::Vehicle {
             max_speed: 60.0,
             current_speed: 0.0,
             fuel: 100.0,
@@ -117,12 +118,7 @@ impl GenericBundleFactory {
             max_distance: 150.0,
         };
         
-        let mesh_bundle = MaterialMeshBundle {
-            mesh,
-            material,
-            transform: Transform::from_translation(safe_position),
-            ..default()
-        };
+        let mesh_bundle = (Mesh3d(mesh), MeshMaterial3d(material));
         
         Ok((vehicle, cullable, mesh_bundle))
     }
@@ -136,16 +132,17 @@ impl GenericBundleFactory {
     ) -> Result<(
         Building,
         Cullable,
-        MaterialMeshBundle<StandardMaterial>,
+        (Mesh3d, MeshMaterial3d<StandardMaterial>),
     ), BundleError> {
         let safe_position = self.validate_position(position)?;
         
         let building = Building {
             building_type: BuildingType::Residential,
             height: 12.0,
-            max_occupants: 4,
-            current_occupants: 0,
-            spawn_time: 0.0,
+            max_occupants: Some(4),
+            current_occupants: Some(0),
+            scale: Vec3::ONE,
+            spawn_time: Some(0.0),
         };
         
         let cullable = Cullable {
@@ -153,12 +150,7 @@ impl GenericBundleFactory {
             max_distance: 300.0,
         };
         
-        let mesh_bundle = MaterialMeshBundle {
-            mesh,
-            material,
-            transform: Transform::from_translation(safe_position),
-            ..default()
-        };
+        let mesh_bundle = (Mesh3d(mesh), MeshMaterial3d(material));
         
         Ok((building, cullable, mesh_bundle))
     }
@@ -172,16 +164,19 @@ impl GenericBundleFactory {
     ) -> Result<(
         NPC,
         Cullable,
-        MaterialMeshBundle<StandardMaterial>,
+        (Mesh3d, MeshMaterial3d<StandardMaterial>),
     ), BundleError> {
         let safe_position = self.validate_position(position)?;
         
         let npc = NPC {
-            health: 100.0,
-            max_health: 100.0,
+            health: Some(100.0),
+            max_health: Some(100.0),
             speed: 2.0,
-            behavior_state: NPCBehaviorState::Idle,
-            spawn_time: 0.0,
+            behavior_state: Some(NPCBehaviorState::Idle),
+            spawn_time: Some(0.0),
+            last_update: 0.0,
+            target_position: Vec3::ZERO,
+            update_interval: 1.0,
         };
         
         let cullable = Cullable {
@@ -189,12 +184,7 @@ impl GenericBundleFactory {
             max_distance: 100.0,
         };
         
-        let mesh_bundle = MaterialMeshBundle {
-            mesh,
-            material,
-            transform: Transform::from_translation(safe_position),
-            ..default()
-        };
+        let mesh_bundle = (Mesh3d(mesh), MeshMaterial3d(material));
         
         Ok((npc, cullable, mesh_bundle))
     }

@@ -33,9 +33,9 @@ pub fn car_movement(
     let mut target_linear_velocity = Vec3::ZERO;
     let mut target_angular_velocity = Vec3::ZERO;
     // Use UNIFIED ControlManager controls
+    let forward = transform.forward();
     if control_manager.is_control_active(ControlAction::Accelerate) {
         let accel_value = control_manager.get_control_value(ControlAction::Accelerate);
-        let forward = transform.forward();
         target_linear_velocity += forward * speed * accel_value;
     }
     if control_manager.is_control_active(ControlAction::Brake) {
@@ -61,7 +61,7 @@ pub fn car_movement(
     velocity.linvel = target_linear_velocity;
     velocity.angvel = target_angular_velocity;
     // Apply unified physics safety systems
-    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::validate_velocity(&mut velocity, config.as_ref());
     PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 1.0);
     // Performance monitoring
     let processing_time = start_time.elapsed().as_millis() as f32;

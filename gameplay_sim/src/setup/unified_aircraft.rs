@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
-use crate::constants::*;
+use game_core::prelude::*;
+// TEMP_PHASE_6_BRIDGE - Use game_core constants directly
+use game_core::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
-use crate::systems::world::unified_distance_culling::UnifiedCullable;
+// Using game_core UnifiedCullable instead of local one
 use crate::systems::MovementTracker;
 use crate::config::GameConfig;
 
@@ -88,9 +89,9 @@ fn spawn_aircraft_unified(
     // Validate spawn position
     let safe_position = SpawnValidator::spawn_entity_safely(
         spawn_registry,
+        Entity::PLACEHOLDER, // Will be updated after spawn
         spawn_position,
         SpawnableType::Vehicle,
-        Entity::PLACEHOLDER, // Will be updated after spawn
     );
     
     if let Some(validated_position) = safe_position {

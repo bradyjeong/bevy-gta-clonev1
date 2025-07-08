@@ -12,10 +12,11 @@
 
 use bevy::prelude::*;
 use std::collections::HashMap;
-use crate::components::*;
+use game_core::prelude::*;
 use crate::systems::world::unified_world::{
-    UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkState, UNIFIED_STREAMING_RADIUS,
+    UnifiedWorldManager, ContentLayer, UNIFIED_STREAMING_RADIUS, ChunkCoordExt,
 };
+use game_core::prelude::{UnifiedChunkEntity, ChunkState};
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
 // MASTER UNIFIED LOD AND CULLING SYSTEM
@@ -177,8 +178,8 @@ pub fn master_unified_lod_system(
         for (_entity, chunk_entity, mut visibility) in chunk_query.iter_mut() {
         if let Some(chunk) = world_manager.get_chunk(chunk_entity.coord) {
             let should_be_visible = match chunk.state {
-                ChunkState::Loaded { lod_level } => {
-                    should_layer_be_visible(chunk_entity.layer, lod_level, chunk.distance_to_player)
+                ChunkState::Loaded { entity_count } => {
+                    should_layer_be_visible(u32_to_content_layer(chunk_entity.layer), 0, chunk.distance_to_player)
                 }
                 _ => false,
             };
@@ -210,9 +211,9 @@ pub fn master_unified_lod_system(
 fn update_chunk_lod_levels(world_manager: &mut UnifiedWorldManager, active_pos: Vec3) {
     let chunks_to_update: Vec<_> = world_manager.chunks.iter()
         .filter_map(|(coord, chunk)| {
-            if let ChunkState::Loaded { lod_level } = chunk.state {
-                let distance = active_pos.distance(chunk.coord.to_world_pos());
-                Some((*coord, distance, lod_level))
+            if let ChunkState::Loaded { entity_count } = chunk.state {
+                let distance = active_pos.distance(chunk.coord.to_world_pos_local());
+                Some((*coord, distance, 0))
             } else {
                 None
             }
@@ -224,9 +225,21 @@ fn update_chunk_lod_levels(world_manager: &mut UnifiedWorldManager, active_pos: 
         if new_lod != old_lod {
             if let Some(chunk) = world_manager.chunks.get_mut(&coord) {
                 chunk.distance_to_player = distance;
-                chunk.state = ChunkState::Loaded { lod_level: new_lod };
+                chunk.state = ChunkState::Loaded { entity_count: 0 };
             }
         }
+    }
+}
+
+fn u32_to_content_layer(layer: u32) -> ContentLayer {
+    match layer {
+        0 => ContentLayer::Roads,
+        1 => ContentLayer::Buildings,
+        2 => ContentLayer::Vehicles,
+        3 => ContentLayer::Vegetation,
+        4 => ContentLayer::Landmarks,
+        5 => ContentLayer::NPCs,
+        _ => ContentLayer::Roads, // Default fallback
     }
 }
 
@@ -256,6 +269,10 @@ fn should_layer_be_visible(layer: ContentLayer, lod_level: usize, distance: f32)
         ContentLayer::NPCs => {
             // NPCs only at very close range
             lod_level == 0 && distance <= 150.0
+        }
+        ContentLayer::Landmarks => {
+            // Landmarks visible at all distances with LOD
+            lod_level <= 3
         }
     }
 }
@@ -290,11 +307,11 @@ fn process_vehicle_lod(
         }
         
         let distance = get_cached_distance(
-            active_entity,
-            entity,
-            active_pos,
-            transform.translation,
             distance_cache,
+            entity,
+            active_entity,
+            transform.translation,
+            active_pos,
         );
         
         let new_lod_level = config.get_lod_level(distance);
@@ -362,11 +379,11 @@ fn process_npc_lod(
         }
         
         let distance = get_cached_distance(
-            active_entity,
-            entity,
-            active_pos,
-            transform.translation,
             distance_cache,
+            entity,
+            active_entity,
+            transform.translation,
+            active_pos,
         );
         
         let new_lod_level = config.get_lod_level(distance);
@@ -435,11 +452,11 @@ fn process_vegetation_lod(
         }
         
         let distance = get_cached_distance(
-            active_entity,
-            entity,
-            active_pos,
-            transform.translation,
             distance_cache,
+            entity,
+            active_entity,
+            transform.translation,
+            active_pos,
         );
         
         let new_lod_level = config.get_lod_level(distance);
@@ -666,7 +683,7 @@ pub fn unified_cleanup_system(
             let distance_to_any_chunk = world_manager
                 .chunks
                 .values()
-                .map(|chunk| transform.translation.distance(chunk.coord.to_world_pos()))
+                .map(|chunk| transform.translation.distance(chunk.coord.to_world_pos_local()))
                 .fold(f32::INFINITY, f32::min);
             
             if distance_to_any_chunk > UNIFIED_STREAMING_RADIUS * 2.0 {

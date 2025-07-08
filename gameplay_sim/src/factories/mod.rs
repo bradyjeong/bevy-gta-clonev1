@@ -19,3 +19,40 @@ pub use mesh_factory::*;
 pub use transform_factory::*;
 pub use generic_bundle::*;
 pub use rendering_factory::*;
+
+// TEMP_PHASE_6_BRIDGE – Define missing types locally instead of importing from gameplay_render
+#[derive(Debug, Clone, Default)]
+pub enum StandardRenderingPattern {
+    #[default]
+    Default,
+    HighPoly,
+    LowPoly,
+    NPCHead,
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum RenderingBundleType {
+    #[default]
+    Default,
+    Vehicle,
+    Building,
+    NPC,
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum VehicleBodyType {
+    #[default]
+    Sedan,
+    SUV,
+    Sports,
+    Truck,
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum MaterialType {
+    #[default]
+    Default,
+    Metal,
+    Glass,
+    Plastic,
+}

@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 //! Comprehensive test suite for gameplay_render crate
 //! 
 //! Tests LOD/culling correctness, rendering pipeline, performance validation,

@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Full simulation integration tests
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;

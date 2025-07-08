@@ -22,20 +22,17 @@ pub fn spawn_tree(
     let entity = commands.spawn((
         Tree {
             height: 6.0,
-            trunk_radius: 0.3,
+            age: 0.0,
             tree_type: TreeType::Oak,
-            spawn_time: _current_time,
+            spawn_time: Some(_current_time),
         },
         Cullable {
             is_culled: false,
             max_distance: 200.0,
         },
-        MaterialMeshBundle {
-            mesh: trunk_mesh,
-            material: trunk_material,
-            transform: Transform::from_translation(safe_position),
-            ..default()
-        },
+        Mesh3d(trunk_mesh),
+        MeshMaterial3d(trunk_material),
+        Transform::from_translation(safe_position),
     )).id();
     
     Ok(Some(entity))

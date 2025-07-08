@@ -30,7 +30,7 @@ pub const DEFAULT_TOLERANCE: f32 = 0.01;
 /// Macro for creating simple test scenarios
 #[macro_export]
 macro_rules! test_scenario {
-    ($name:ident, $seed:expr, $setup:expr) => {
+    ($name:ident, $seed:expr_2021, $setup:expr_2021) => {
         #[test]
         fn $name() {
             let mut world = spawn_test_world($seed);
@@ -43,7 +43,7 @@ macro_rules! test_scenario {
 /// Macro for creating golden frame tests
 #[macro_export]
 macro_rules! golden_frame_test {
-    ($name:ident, $render_fn:expr) => {
+    ($name:ident, $render_fn:expr_2021) => {
         #[test]
         fn $name() {
             let mut app = MinimalBevyApp::with_rendering();
@@ -64,7 +64,7 @@ macro_rules! golden_frame_test {
 /// Macro for creating physics simulation tests
 #[macro_export]
 macro_rules! physics_test {
-    ($name:ident, $seed:expr, $setup:expr, $validate:expr) => {
+    ($name:ident, $seed:expr_2021, $setup:expr_2021, $validate:expr_2021) => {
         #[test]
         fn $name() {
             let mut app = MinimalBevyApp::with_physics();

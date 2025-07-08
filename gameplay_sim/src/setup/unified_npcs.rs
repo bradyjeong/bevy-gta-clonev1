@@ -3,7 +3,7 @@ use rand::prelude::*;
 
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::services::ground_detection::GroundDetectionService;
-use crate::config::GameConfig;
+use game_core::config::GameConfig;
 
 /// UNIFIED NPC SETUP SYSTEM
 /// Consolidates setup_new_npcs (good patterns) and setup_npcs (bad patterns)
@@ -21,7 +21,8 @@ pub fn setup_initial_npcs_unified(
     game_config: Res<GameConfig>,
 ) {
     // Initialize UnifiedEntityFactory for consistent spawning
-    let mut entity_factory = UnifiedEntityFactory::with_config(game_config.clone());
+    let mut entity_factory = UnifiedEntityFactory::new();
+    entity_factory.configure_from_config(&*game_config);
     
     let mut rng = thread_rng();
     let mut spawned_count = 0;

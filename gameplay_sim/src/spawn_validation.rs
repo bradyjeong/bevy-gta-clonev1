@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use std::collections::{HashMap, HashSet};
-use crate::components::ContentType;
+use game_core::prelude::ContentType;
 
 
 // Universal spawn validation system to prevent entity overlap and collision issues

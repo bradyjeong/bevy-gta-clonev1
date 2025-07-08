@@ -13,11 +13,26 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
-use crate::systems::world::road_network::RoadNetwork;
-use crate::components::RoadEntity;
+use game_core::prelude::*;
+use game_core::components::RoadNetwork;
+use game_core::prelude::RoadEntity;
 use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh};
-use crate::bundles::VisibleChildBundle;
+use game_core::bundles::VisibleChildBundle;
+
+pub trait RoadNetworkExtensions {
+    fn clear_cache(&mut self);
+    fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32>;
+}
+
+impl RoadNetworkExtensions for ResMut<'_, RoadNetwork> {
+    fn clear_cache(&mut self) {
+        self.clear_cache();
+    }
+    
+    fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32> {
+        self.generate_chunk_roads(chunk_x, chunk_z)
+    }
+}
 
 // MAIN ROAD GENERATION SYSTEM (Replaces old grid system)
 // UNIFIED Y-COORDINATE SYSTEM (prevents z-fighting):

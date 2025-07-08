@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 use crate::systems::input::{
     InputConfig, InputManager, InputCompatLayer, ControlManager, VehicleControlConfig,
-    process_input_system, update_input_compat_layer,
-    control_action_system, control_validation_system
+    process_input_system, update_input_compat_layer, update_control_manager_system, apply_ai_controls_system,
 };
 
 pub struct InputPlugin;
@@ -24,8 +23,8 @@ impl Plugin for InputPlugin {
         
         // New unified control systems - run in Update
         app.add_systems(Update, (
-            control_action_system,
-            control_validation_system.after(control_action_system),
+            update_control_manager_system,
+            apply_ai_controls_system.after(update_control_manager_system),
         ));
         
         info!("Input Plugin initialized with unified controls and backwards compatibility");
@@ -35,7 +34,7 @@ impl Plugin for InputPlugin {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::game_state::GameState;
+    use game_core::game_state::GameState;
     use bevy::input::InputPlugin as BevyInputPlugin;
     
     #[test]

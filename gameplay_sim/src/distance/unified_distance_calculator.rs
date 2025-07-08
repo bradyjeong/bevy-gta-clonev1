@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::systems::distance_cache::DistanceCache;
-use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
+use engine_bevy::prelude::{UnifiedPerformanceTracker, PerformanceCategory};
 
 /// Unified distance calculator that batches calculations and leverages caching
 #[derive(Resource)]
@@ -27,7 +27,7 @@ struct DistanceRequest {
 }
 
 /// Result of a distance calculation
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct DistanceResult {
     pub distance: f32,
     pub distance_squared: f32,
@@ -101,13 +101,12 @@ impl UnifiedDistanceCalculator {
         
         // Process requests directly without intermediate batching to avoid borrowing issues
         for request in self.distance_requests.drain(..) {
-            let distance = distance_cache.get_distance(
+            let (distance, distance_squared) = distance_cache.get_distance(
                 request.entity1,
                 request.entity2,
                 request.pos1,
                 request.pos2,
             );
-            let distance_squared = distance * distance;
             
             results.push(DistanceResult {
                 distance,

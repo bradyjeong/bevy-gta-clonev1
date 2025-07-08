@@ -12,9 +12,9 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::*;
+use game_core::prelude::*;
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance_squared};
-use crate::systems::world::map_system::MapChunk;
+use crate::world::map_system::MapChunk;
 
 /// Configuration for distance-based culling and LOD for different entity types
 #[derive(Clone, Debug)]
@@ -210,11 +210,11 @@ pub fn new_unified_distance_culling_system(
         
         // Use cached distance calculation for efficiency
         let distance_squared = get_cached_distance_squared(
-            active_entity,
-            entity,
-            player_pos,
-            transform.translation,
             &mut distance_cache,
+            entity,
+            active_entity,
+            transform.translation,
+            player_pos,
         );
         let distance = distance_squared.sqrt();
         

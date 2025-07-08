@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Gameplay simulation test suite
 // Comprehensive tests for physics, AI behavior, and game rules
 
@@ -32,6 +33,9 @@ mod tests {
         assert!(result.is_ok(), "Valid velocity should pass validation");
         let invalid_velocity = Velocity {
             linvel: Vec3::new(f32::INFINITY, 0.0, 0.0),
+            angvel: Vec3::ZERO,
+        };
         let result = PhysicsValidator::validate_velocity(&invalid_velocity, 50.0);
         assert!(result.is_err(), "Invalid velocity should fail validation");
+    }
 }

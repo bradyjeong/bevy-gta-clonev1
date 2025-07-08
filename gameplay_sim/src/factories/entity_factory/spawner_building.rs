@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use game_core::prelude::*;
 use crate::factories::entity_factory::validation::*;
 
+
 pub fn spawn_building(
     commands: &mut Commands,
     position: Vec3,
@@ -32,12 +33,9 @@ pub fn spawn_building(
             is_culled: false,
             max_distance: 300.0,
         },
-        MaterialMeshBundle {
-            mesh,
-            material,
-            transform: Transform::from_translation(safe_position),
-            ..default()
-        },
+        Mesh3d(mesh),
+        MeshMaterial3d(material),
+        Transform::from_translation(safe_position),
     )).id();
     
     Ok(Some(entity))

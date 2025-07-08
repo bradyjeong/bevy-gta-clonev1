@@ -9,8 +9,9 @@
 
 use bevy::prelude::*;
 use game_core::prelude::*;
+use crate::compat::{TransformBundle, VisibilityBundle};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum NPCLOD {
     High,   // Full model, animations
     Medium, // Simplified model
@@ -18,7 +19,7 @@ pub enum NPCLOD {
     Hidden, // Not visible
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct NPCState {
     pub current_lod: NPCLOD,
     pub last_lod_update: f32,
@@ -78,30 +79,31 @@ fn determine_npc_lod(distance: f32) -> NPCLOD {
     }
 }
 
-pub fn npc_animation_lod_system(
-    npc_query: Query<&NPCState, With<NPC>>,
-    mut animation_query: Query<&mut AnimationPlayer>,
-) {
-    for npc_state in npc_query.iter() {
-        // Adjust animation quality based on LOD
-        // This is a simplified example - real implementation would 
-        // need proper entity relationships
-        match npc_state.current_lod {
-            NPCLOD::High => {
-                // Full animation at normal speed
-            }
-            NPCLOD::Medium => {
-                // Reduced animation quality or frame rate
-            }
-            NPCLOD::Low => {
-                // Minimal or no animation
-            }
-            NPCLOD::Hidden => {
-                // No animation processing needed
-            }
-        }
-    }
-}
+// TODO: Re-enable when AnimationPlayer is properly available in Bevy 0.16
+// pub fn npc_animation_lod_system(
+//     npc_query: Query<&NPCState, With<NPC>>,
+//     mut animation_query: Query<&mut AnimationPlayer>,
+// ) {
+//     for npc_state in npc_query.iter() {
+//         // Adjust animation quality based on LOD
+//         // This is a simplified example - real implementation would 
+//         // need proper entity relationships
+//         match npc_state.current_lod {
+//             NPCLOD::High => {
+//                 // Full animation at normal speed
+//             }
+//             NPCLOD::Medium => {
+//                 // Reduced animation quality or frame rate
+//             }
+//             NPCLOD::Low => {
+//                 // Minimal or no animation
+//             }
+//             NPCLOD::Hidden => {
+//                 // No animation processing needed
+//             }
+//         }
+//     }
+// }
 
 pub fn npc_mesh_lod_system(
     npc_query: Query<&NPCState, (With<NPC>, Changed<NPCState>)>,
@@ -136,7 +138,16 @@ pub fn spawn_npc_with_lod(
     commands.spawn((
         TransformBundle::from_transform(Transform::from_translation(position)),
         VisibilityBundle::default(),
-        NPC,
+        NPC {
+            target_position: Vec3::ZERO,
+            speed: 1.0,
+            last_update: 0.0,
+            update_interval: 0.5,
+            health: None,
+            max_health: None,
+            behavior_state: None,
+            spawn_time: None,
+        },
         NPCState::default(),
         DynamicContent {
             content_type: ContentType::NPC,

@@ -145,7 +145,7 @@ pub fn initialize_simple_services_v2(mut commands: Commands) {
     commands.insert_resource(PhysicsService::new());
     commands.insert_resource(LegacyTimingService::new());
     
-    info!("✅ SIMPLE SERVICES V2: Initialized config, physics, and timing services");
+    println!("✅ SIMPLE SERVICES V2: Initialized config, physics, and timing services");
 }
 
 /// System to update timing service

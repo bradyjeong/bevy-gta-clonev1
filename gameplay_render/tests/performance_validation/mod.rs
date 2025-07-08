@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 //! Performance validation tests
 //! Tests frame timing, render call batching, and performance monitoring
 

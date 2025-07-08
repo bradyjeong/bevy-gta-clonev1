@@ -10,7 +10,7 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::{Car, SuperCar, ActiveEntity, DrivingMode};
+use game_core::prelude::{Car, SuperCar, ActiveEntity, DrivingMode};
 use crate::systems::input::{ControlManager, ControlAction};
 
 /// Focused system for handling supercar input processing

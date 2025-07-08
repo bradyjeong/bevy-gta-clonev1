@@ -10,7 +10,7 @@
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
 use std::collections::HashMap;
-use crate::systems::world::road_network::RoadSpline;
+use crate::systems::world::road_network::{RoadSpline, RoadType};
 use game_core::prelude::*;
 
 #[derive(Resource, Default)]
@@ -23,7 +23,7 @@ pub fn generate_road_mesh_cached(
     meshes: &mut ResMut<Assets<Mesh>>,
     mut mesh_cache: ResMut<RoadMeshCache>,
 ) -> Handle<Mesh> {
-    let cache_key = format!("road_{}_{}", road.id, road.control_points.len());
+    let cache_key = format!("road_{}_{}", road.points.len(), road.points.len());
     
     if let Some(handle) = mesh_cache.road_meshes.get(&cache_key) {
         return handle.clone();
@@ -338,4 +338,11 @@ fn generate_dashed_center_line_mesh(road: &RoadSpline) -> Mesh {
     }
     
     mesh
+}
+
+
+// Oracle's missing function stub
+pub fn generate_intersection_mesh() -> Option<Mesh> {
+    // Intersection mesh stub - no implementation yet
+    None
 }

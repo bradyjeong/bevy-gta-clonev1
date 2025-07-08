@@ -106,9 +106,10 @@ pub fn unified_lod_system(
                 continue; // Don't cull the active entity
             }
             
+            let frame = lod_coordinator.frame_counter.frame;
             let distance = lod_coordinator.distance_cache.get_distance(
                 entity,
-                lod_coordinator.frame_counter.frame,
+                frame,
                 transform.translation,
                 active_pos,
             );

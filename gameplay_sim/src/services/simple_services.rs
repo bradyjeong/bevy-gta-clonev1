@@ -1,5 +1,7 @@
 use bevy::prelude::*;
+use tracing::info;
 use game_core::prelude::*;
+use game_core::config::game_config::PhysicsConfig;
 use crate::systems::timing_service::TimingService as BaseTimingService;
 
 /// Simplified service injection using direct Bevy resources
@@ -100,11 +102,11 @@ impl EnhancedTimingService {
     }
     
     pub fn current_time(&self) -> f32 {
-        self.base_service.current_time
+        self.base_service.current_time()
     }
     
     pub fn delta_time(&self) -> f32 {
-        self.base_service.delta_time
+        self.base_service.delta_time()
     }
 }
 

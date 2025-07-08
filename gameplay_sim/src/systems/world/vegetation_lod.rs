@@ -10,8 +10,9 @@
 use bevy::prelude::*;
 use std::cell::RefCell;
 use game_core::prelude::*;
+use crate::compat::{TransformBundle, VisibilityBundle};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum VegetationDetailLevel {
     High,       // Full 3D model
     Medium,     // Simplified 3D model
@@ -20,7 +21,7 @@ pub enum VegetationDetailLevel {
     Hidden,     // Not visible
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct VegetationLOD {
     pub detail_level: VegetationDetailLevel,
     pub last_update: f32,
@@ -37,7 +38,7 @@ impl Default for VegetationLOD {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct VegetationBillboard {
     pub original_up: Vec3,
 }
@@ -119,7 +120,7 @@ pub fn vegetation_billboard_mesh_generator(
                 // Switch to billboard representation
                 // In a real implementation, you'd swap the mesh and material
                 // Here we just add the billboard component if needed
-                if let Some(mut entity_commands) = commands.get_entity(entity) {
+                if let Ok(mut entity_commands) = commands.get_entity(entity) {
                     entity_commands.insert(VegetationBillboard {
                         original_up: Vec3::Y,
                     });
@@ -127,7 +128,7 @@ pub fn vegetation_billboard_mesh_generator(
             }
             _ => {
                 // Remove billboard component for non-billboard LODs
-                if let Some(mut entity_commands) = commands.get_entity(entity) {
+                if let Ok(mut entity_commands) = commands.get_entity(entity) {
                     entity_commands.remove::<VegetationBillboard>();
                 }
             }
@@ -208,4 +209,23 @@ pub fn vegetation_instancing_system(
     }
     
     // In a full implementation, you'd submit these as instanced draws
+}
+
+
+// Oracle's missing vegetation LOD stubs
+pub fn adaptive_vegetation_lod_system() {
+    // Adaptive vegetation LOD stub - no implementation yet
+}
+
+pub fn vegetation_lod_performance_monitor() {
+    // Vegetation LOD performance monitor stub - no implementation yet
+}
+
+pub fn vegetation_lod_batching_system() {
+    // Vegetation LOD batching stub - no implementation yet
+}
+
+#[derive(Resource, Default)]
+pub struct LODFrameCounter {
+    pub frame: u64,
 }

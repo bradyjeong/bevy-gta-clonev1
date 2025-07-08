@@ -20,7 +20,7 @@ pub fn spawn_vehicle(
     });
     
     let entity = commands.spawn((
-        Vehicle {
+        game_core::components::vehicles::Vehicle {
             max_speed: 60.0,
             current_speed: 0.0,
             fuel: 100.0,
@@ -32,12 +32,9 @@ pub fn spawn_vehicle(
             is_culled: false,
             max_distance: 150.0,
         },
-        MaterialMeshBundle {
-            mesh,
-            material,
-            transform: Transform::from_translation(safe_position),
-            ..default()
-        },
+        Mesh3d(mesh),
+        MeshMaterial3d(material),
+        Transform::from_translation(safe_position),
     )).id();
     
     Ok(Some(entity))

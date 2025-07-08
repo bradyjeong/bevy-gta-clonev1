@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use game_core::prelude::*;
+use crate::factories::StandardRenderingPattern;
 
 /// Simplified rendering factory for consistent entity rendering
 #[derive(Resource)]
@@ -17,12 +18,11 @@ impl RenderingFactory {
         material: Handle<StandardMaterial>,
         position: Vec3,
     ) -> Entity {
-        commands.spawn(MaterialMeshBundle {
-            mesh,
-            material,
-            transform: Transform::from_translation(position),
-            ..default()
-        }).id()
+        commands.spawn((
+            Mesh3d(mesh),
+            MeshMaterial3d(material),
+            Transform::from_translation(position),
+        )).id()
     }
 
     /// Create a vehicle with basic rendering
@@ -90,6 +90,50 @@ impl RenderingFactory {
         });
 
         Self::create_rendered_entity(commands, mesh, material, position)
+    }
+
+    /// Create mesh and material for a specific rendering pattern
+    pub fn create_mesh_and_material(
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        pattern: StandardRenderingPattern,
+    ) -> (Handle<Mesh>, Handle<StandardMaterial>) {
+        match pattern {
+            StandardRenderingPattern::NPCHead => {
+                let mesh = meshes.add(Sphere::new(0.2));
+                let material = materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.8, 0.6, 0.5),
+                    ..default()
+                });
+                (mesh, material)
+            }
+            StandardRenderingPattern::Default => {
+                let mesh = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
+                let material = materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.7, 0.7, 0.7),
+                    ..default()
+                });
+                (mesh, material)
+            }
+            StandardRenderingPattern::HighPoly => {
+                let mesh = meshes.add(Sphere::new(0.5));
+                let material = materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.9, 0.9, 0.9),
+                    metallic: 0.3,
+                    perceptual_roughness: 0.1,
+                    ..default()
+                });
+                (mesh, material)
+            }
+            StandardRenderingPattern::LowPoly => {
+                let mesh = meshes.add(Cuboid::new(0.8, 0.8, 0.8));
+                let material = materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.5, 0.5, 0.5),
+                    ..default()
+                });
+                (mesh, material)
+            }
+        }
     }
 }
 

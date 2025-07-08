@@ -11,7 +11,7 @@
 
 use bevy::prelude::*;
 use std::collections::HashMap;
-use crate::game_state::GameState;
+use game_core::game_state::GameState;
 use super::input_config::InputAction;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

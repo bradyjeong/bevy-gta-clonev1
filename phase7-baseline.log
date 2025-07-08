@@ -1,0 +1,2874 @@
+warning: /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/Cargo.toml: unused manifest key: workspace.features
+warning: unused import: `bevy::prelude::*`
+ --> engine_bevy/src/lib.rs:5:5
+  |
+5 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: trait `AudioSink` is never used
+  --> engine_bevy/src/adapters.rs:14:11
+   |
+14 | pub trait AudioSink {
+   |           ^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `engine_bevy` (lib) generated 2 warnings (run `cargo fix --lib -p engine_bevy` to apply 1 suggestion)
+warning: `engine_bevy` (lib test) generated 2 warnings (2 duplicates)
+warning: unused import: `bevy::prelude::*`
+ --> game_core/src/lib.rs:5:5
+  |
+5 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `crate::components::*`
+ --> game_core/src/persistence/save_system.rs:5:5
+  |
+5 | use crate::components::*;
+  |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::game_state::GameState`
+ --> game_core/src/persistence/load_system.rs:4:5
+  |
+4 | use crate::game_state::GameState;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `compat::*`
+  --> game_core/src/lib.rs:35:9
+   |
+35 | pub use compat::*;
+   |         ^^^^^^^^^
+
+warning: unnecessary parentheses around function argument
+  --> engine_core/tests/math_property_tests.rs:76:27
+   |
+76 |     prop::array::uniform3((-1000.0f32..1000.0f32))
+   |                           ^                     ^
+   |
+   = note: `#[warn(unused_parens)]` on by default
+help: remove these parentheses
+   |
+76 -     prop::array::uniform3((-1000.0f32..1000.0f32))
+76 +     prop::array::uniform3(-1000.0f32..1000.0f32)
+   |
+
+warning: unnecessary parentheses around block return value
+  --> engine_core/tests/math_property_tests.rs:84:5
+   |
+84 |     (-1000.0f32..1000.0f32)
+   |     ^                     ^
+   |
+help: remove these parentheses
+   |
+84 -     (-1000.0f32..1000.0f32)
+84 +     -1000.0f32..1000.0f32
+   |
+
+warning: unnecessary parentheses around function argument
+  --> engine_core/tests/math_property_tests.rs:89:9
+   |
+89 |         (-100.0f32..100.0f32)
+   |         ^                   ^
+   |
+help: remove these parentheses
+   |
+89 -         (-100.0f32..100.0f32)
+89 +         -100.0f32..100.0f32
+   |
+
+warning: value assigned to `time_before_zeros` is never read
+   --> engine_core/tests/timing_property_tests.rs:258:17
+    |
+258 |         let mut time_before_zeros = 0.0;
+    |                 ^^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` on by default
+
+warning: `game_core` (lib) generated 4 warnings (run `cargo fix --lib -p game_core` to apply 4 suggestions)
+warning: `engine_core` (test "math_property_tests") generated 3 warnings (run `cargo fix --test "math_property_tests"` to apply 3 suggestions)
+warning: `game_core` (lib test) generated 4 warnings (4 duplicates)
+warning: `engine_core` (test "timing_property_tests") generated 1 warning
+    Checking gameplay_sim v0.1.0 (/Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/gameplay_sim)
+warning: unused import: `bevy::render::mesh::*`
+ --> test_utils/src/golden_frame.rs:2:5
+  |
+2 | use bevy::render::mesh::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `test_utils` (lib) generated 1 warning (run `cargo fix --lib -p test_utils` to apply 1 suggestion)
+warning: `test_utils` (lib test) generated 1 warning (1 duplicate)
+error[E0432]: unresolved import `crate::game_state`
+  --> gameplay_sim/src/plugins/input_plugin.rs:37:16
+   |
+37 |     use crate::game_state::GameState;
+   |                ^^^^^^^^^^
+   |                |
+   |                unresolved import
+   |                help: a similar path exists: `game_core::game_state`
+
+warning: unused import: `bevy_rapier3d::prelude::*`
+  --> gameplay_sim/src/lib.rs:11:16
+   |
+11 | pub(crate) use bevy_rapier3d::prelude::*;
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `ConfigService`, `EnhancedTimingService`, `PhysicsService`, `initialize_simple_services`, and `update_timing_service_system`
+ --> gameplay_sim/src/services/mod.rs:4:27
+  |
+4 | pub use simple_services::{ConfigService, PhysicsService, EnhancedTimingService, initialize_simple_services, update_timing_service_system};
+  |                           ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `GroundDetectionPlugin` and `GroundDetectionService`
+ --> gameplay_sim/src/services/mod.rs:5:28
+  |
+5 | pub use ground_detection::{GroundDetectionService, GroundDetectionPlugin};
+  |                            ^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `debug`, `error`, and `info`
+ --> gameplay_sim/src/physics/utilities.rs:6:15
+  |
+6 | use tracing::{info, warn, error, debug};
+  |               ^^^^        ^^^^^  ^^^^^
+
+warning: unused import: `bevy::prelude::*`
+ --> gameplay_sim/src/physics/safeguards.rs:4:5
+  |
+4 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `player::*`
+  --> gameplay_sim/src/movement/mod.rs:23:9
+   |
+23 | pub use player::*;
+   |         ^^^^^^^^^
+
+warning: unused import: `vehicles::*`
+  --> gameplay_sim/src/movement/mod.rs:24:9
+   |
+24 | pub use vehicles::*;
+   |         ^^^^^^^^^^^
+
+warning: unused import: `aircraft::*`
+  --> gameplay_sim/src/movement/mod.rs:25:9
+   |
+25 | pub use aircraft::*;
+   |         ^^^^^^^^^^^
+
+warning: unused import: `realistic_vehicle_physics::*`
+  --> gameplay_sim/src/movement/mod.rs:26:9
+   |
+26 | pub use realistic_vehicle_physics::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `realistic_vehicle_input::*`
+  --> gameplay_sim/src/movement/mod.rs:27:9
+   |
+27 | pub use realistic_vehicle_input::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `realistic_vehicle_physics_core::*`
+  --> gameplay_sim/src/movement/mod.rs:28:9
+   |
+28 | pub use realistic_vehicle_physics_core::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `supercar_input::*`
+  --> gameplay_sim/src/movement/mod.rs:29:9
+   |
+29 | pub use supercar_input::*;
+   |         ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `supercar_physics::*`
+  --> gameplay_sim/src/movement/mod.rs:30:9
+   |
+30 | pub use supercar_physics::*;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `supercar_effects::*`
+  --> gameplay_sim/src/movement/mod.rs:31:9
+   |
+31 | pub use supercar_effects::*;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `vehicle_sets::*`
+  --> gameplay_sim/src/movement/mod.rs:32:9
+   |
+32 | pub use vehicle_sets::*;
+   |         ^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+  --> gameplay_sim/src/world/road_network.rs:11:5
+   |
+11 | use game_core::prelude::*;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+  --> gameplay_sim/src/world/road_network.rs:12:5
+   |
+12 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unexpected `cfg` condition value: `debug-movement`
+  --> gameplay_sim/src/world/debug.rs:23:11
+   |
+23 |     #[cfg(feature = "debug-movement")]
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^ help: remove the condition
+   |
+   = note: no expected values for `feature`
+   = help: consider adding `debug-movement` as a feature in `Cargo.toml`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: unused imports: `CHARACTER_GROUP` and `VEHICLE_GROUP`
+  --> gameplay_sim/src/world/map_system.rs:17:42
+   |
+17 | use game_core::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
+   |                                          ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::config::GameConfig`
+   --> gameplay_sim/src/world/map_system.rs:257:9
+    |
+257 |     use crate::config::GameConfig;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::config::GameConfig`
+   --> gameplay_sim/src/world/layered_generation.rs:508:9
+    |
+508 |     use crate::config::GameConfig;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::config::GameConfig`
+   --> gameplay_sim/src/world/layered_generation.rs:623:9
+    |
+623 |     use crate::config::GameConfig;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::config::GameConfig`
+   --> gameplay_sim/src/world/layered_generation.rs:738:9
+    |
+738 |     use crate::config::GameConfig;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unexpected `cfg` condition value: `debug-ui`
+   --> gameplay_sim/src/world/vegetation_lod.rs:189:13
+    |
+189 |     if cfg!(feature = "debug-ui") {
+    |             ^^^^^^^^^^^^^^^^^^^^ help: remove the condition
+    |
+    = note: no expected values for `feature`
+    = help: consider adding `debug-ui` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unused import: `npc::*`
+  --> gameplay_sim/src/world/mod.rs:33:9
+   |
+33 | pub use npc::*;
+   |         ^^^^^^
+
+warning: unused import: `culling::*`
+  --> gameplay_sim/src/world/mod.rs:34:9
+   |
+34 | pub use culling::*;
+   |         ^^^^^^^^^^
+
+warning: unused import: `dynamic_content::*`
+  --> gameplay_sim/src/world/mod.rs:35:9
+   |
+35 | pub use dynamic_content::*;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `performance::*`
+  --> gameplay_sim/src/world/mod.rs:36:9
+   |
+36 | pub use performance::*;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `road_network::*`
+  --> gameplay_sim/src/world/mod.rs:37:9
+   |
+37 | pub use road_network::*;
+   |         ^^^^^^^^^^^^^^^
+
+warning: unused import: `road_mesh::*`
+  --> gameplay_sim/src/world/mod.rs:38:9
+   |
+38 | pub use road_mesh::*;
+   |         ^^^^^^^^^^^^
+
+warning: unused import: `road_generation::*`
+  --> gameplay_sim/src/world/mod.rs:39:9
+   |
+39 | pub use road_generation::*;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `debug::*`
+  --> gameplay_sim/src/world/mod.rs:40:9
+   |
+40 | pub use debug::*;
+   |         ^^^^^^^^
+
+warning: unused import: `map_system::*`
+  --> gameplay_sim/src/world/mod.rs:41:9
+   |
+41 | pub use map_system::*;
+   |         ^^^^^^^^^^^^^
+
+warning: unused import: `unified_world::*`
+  --> gameplay_sim/src/world/mod.rs:44:9
+   |
+44 | pub use unified_world::*;
+   |         ^^^^^^^^^^^^^^^^
+
+warning: unused import: `layered_generation::*`
+  --> gameplay_sim/src/world/mod.rs:45:9
+   |
+45 | pub use layered_generation::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `unified_lod::*`
+  --> gameplay_sim/src/world/mod.rs:46:9
+   |
+46 | pub use unified_lod::*;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `npc_lod::*`
+  --> gameplay_sim/src/world/mod.rs:47:9
+   |
+47 | pub use npc_lod::*;
+   |         ^^^^^^^^^^
+
+warning: unused import: `npc_spawn::*`
+  --> gameplay_sim/src/world/mod.rs:48:9
+   |
+48 | pub use npc_spawn::*;
+   |         ^^^^^^^^^^^^
+
+warning: unused import: `vegetation_lod::*`
+  --> gameplay_sim/src/world/mod.rs:50:9
+   |
+50 | pub use vegetation_lod::*;
+   |         ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `unified_distance_culling::UnifiedCullable`
+  --> gameplay_sim/src/world/mod.rs:52:9
+   |
+52 | pub use unified_distance_culling::UnifiedCullable;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `NPCLODUpdate`, `VegetationLODUpdate`, and `VehicleLODUpdate`
+  --> gameplay_sim/src/world/mod.rs:54:23
+   |
+54 | pub use unified_lod::{VehicleLODUpdate, NPCLODUpdate, VegetationLODUpdate};
+   |                       ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `unified_factory_setup::*`
+  --> gameplay_sim/src/world/mod.rs:55:9
+   |
+55 | pub use unified_factory_setup::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `bevy::prelude::*`
+  --> gameplay_sim/src/input/control_manager_ext.rs:12:5
+   |
+12 | use bevy::prelude::*;
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `input_config::*`
+  --> gameplay_sim/src/input/mod.rs:18:9
+   |
+18 | pub use input_config::*;
+   |         ^^^^^^^^^^^^^^^
+
+warning: unused import: `input_manager::*`
+  --> gameplay_sim/src/input/mod.rs:19:9
+   |
+19 | pub use input_manager::*;
+   |         ^^^^^^^^^^^^^^^^
+
+warning: unused import: `control_manager_ext::*`
+  --> gameplay_sim/src/input/mod.rs:22:9
+   |
+22 | pub use control_manager_ext::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `unified_distance_calculator::*`
+ --> gameplay_sim/src/distance/mod.rs:3:9
+  |
+3 | pub use unified_distance_calculator::*;
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `modern_lod_system::*`
+  --> gameplay_sim/src/lod/mod.rs:14:9
+   |
+14 | pub use modern_lod_system::*;
+   |         ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `world::*`
+ --> gameplay_sim/src/setup/mod.rs:9:9
+  |
+9 | pub use world::*;
+  |         ^^^^^^^^
+
+warning: unused import: `vehicles::*`
+  --> gameplay_sim/src/setup/mod.rs:10:9
+   |
+10 | pub use vehicles::*;
+   |         ^^^^^^^^^^^
+
+warning: unused import: `environment::*`
+  --> gameplay_sim/src/setup/mod.rs:11:9
+   |
+11 | pub use environment::*;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `unified_vehicles::*`
+  --> gameplay_sim/src/setup/mod.rs:12:9
+   |
+12 | pub use unified_vehicles::*;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `unified_npcs::*`
+  --> gameplay_sim/src/setup/mod.rs:13:9
+   |
+13 | pub use unified_npcs::*;
+   |         ^^^^^^^^^^^^^^^
+
+warning: unused import: `unified_aircraft::*`
+  --> gameplay_sim/src/setup/mod.rs:14:9
+   |
+14 | pub use unified_aircraft::*;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `MaterialFactory`, `RenderingBundleType`, and `StandardRenderingPattern`
+ --> gameplay_sim/src/water.rs:4:24
+  |
+4 | use crate::factories::{MaterialFactory, RenderingFactory, StandardRenderingPattern, RenderingBundleType};
+  |                        ^^^^^^^^^^^^^^^                    ^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `bevy::asset::Assets`
+ --> gameplay_sim/src/bevy16_compat.rs:4:5
+  |
+4 | use bevy::asset::Assets;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::input::VehicleType as ConfigVehicleType`
+  --> gameplay_sim/src/systems/input/control_manager.rs:23:5
+   |
+23 | use crate::input::VehicleType as ConfigVehicleType;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `bevy_rapier3d::prelude::*`
+ --> gameplay_sim/src/systems/interaction.rs:2:5
+  |
+2 | use bevy_rapier3d::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `realistic_vehicle_physics::*`
+  --> gameplay_sim/src/systems/movement/mod.rs:26:9
+   |
+26 | pub use realistic_vehicle_physics::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `bevy::prelude::*`
+ --> gameplay_sim/src/systems/realistic_physics_safeguards.rs:4:5
+  |
+4 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+  --> gameplay_sim/src/systems/world/road_network.rs:11:5
+   |
+11 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+  --> gameplay_sim/src/systems/world/road_network.rs:12:5
+   |
+12 | use game_core::prelude::*;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+  --> gameplay_sim/src/systems/world/road_mesh.rs:14:5
+   |
+14 | use game_core::prelude::*;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `RoadSpline`
+  --> gameplay_sim/src/systems/world/road_generation.rs:15:56
+   |
+15 | use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType};
+   |                                                        ^^^^^^^^^^
+
+warning: unused import: `bevy::prelude::*`
+ --> gameplay_sim/src/systems/world/debug.rs:1:5
+  |
+1 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unnecessary parentheses around assigned value
+   --> gameplay_sim/src/systems/world/map_system.rs:185:28
+    |
+185 |             let distance = ((chunk_key.0 - current_chunk.0).abs() + (chunk_key.1 - current_chunk.1).abs());
+    |                            ^                                                                             ^
+    |
+    = note: `#[warn(unused_parens)]` on by default
+help: remove these parentheses
+    |
+185 -             let distance = ((chunk_key.0 - current_chunk.0).abs() + (chunk_key.1 - current_chunk.1).abs());
+185 +             let distance = (chunk_key.0 - current_chunk.0).abs() + (chunk_key.1 - current_chunk.1).abs();
+    |
+
+warning: unused import: `std::collections::HashMap`
+  --> gameplay_sim/src/systems/world/unified_distance_culling.rs:11:5
+   |
+11 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `culling::*`
+  --> gameplay_sim/src/systems/world/mod.rs:33:9
+   |
+33 | pub use culling::*;
+   |         ^^^^^^^^^^
+
+warning: unused import: `performance::*`
+  --> gameplay_sim/src/systems/world/mod.rs:35:9
+   |
+35 | pub use performance::*;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `road_network::*`
+  --> gameplay_sim/src/systems/world/mod.rs:36:9
+   |
+36 | pub use road_network::*;
+   |         ^^^^^^^^^^^^^^^
+
+warning: unused import: `road_mesh::*`
+  --> gameplay_sim/src/systems/world/mod.rs:37:9
+   |
+37 | pub use road_mesh::*;
+   |         ^^^^^^^^^^^^
+
+warning: unused import: `road_generation::*`
+  --> gameplay_sim/src/systems/world/mod.rs:38:9
+   |
+38 | pub use road_generation::*;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `map_system::*`
+  --> gameplay_sim/src/systems/world/mod.rs:40:9
+   |
+40 | pub use map_system::*;
+   |         ^^^^^^^^^^^^^
+
+warning: unused import: `unified_lod::*`
+  --> gameplay_sim/src/systems/world/mod.rs:44:9
+   |
+44 | pub use unified_lod::*;
+   |         ^^^^^^^^^^^^^^
+
+warning: unused import: `vegetation_lod::*`
+  --> gameplay_sim/src/systems/world/mod.rs:48:9
+   |
+48 | pub use vegetation_lod::*;
+   |         ^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `UnifiedCullable` and `unified_distance_culling_system`
+  --> gameplay_sim/src/systems/world/mod.rs:51:5
+   |
+51 |     UnifiedCullable, unified_distance_culling_system
+   |     ^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `unified_factory_setup::*`
+  --> gameplay_sim/src/systems/world/mod.rs:53:9
+   |
+53 | pub use unified_factory_setup::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+  --> gameplay_sim/src/systems/timing_service.rs:12:5
+   |
+12 | use game_core::prelude::*;
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `bevy::prelude::*`
+ --> gameplay_sim/src/systems/performance_monitor.rs:4:5
+  |
+4 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+ --> gameplay_sim/src/systems/persistence.rs:5:5
+  |
+5 | use game_core::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `bevy::prelude::*`
+ --> gameplay_sim/src/systems/camera.rs:4:5
+  |
+4 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+ --> gameplay_sim/src/systems/water.rs:3:5
+  |
+3 | use game_core::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `bevy::prelude::*`
+ --> gameplay_sim/src/systems/effects.rs:1:5
+  |
+1 | use bevy::prelude::*;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+ --> gameplay_sim/src/factories/entity_builder_unified.rs:3:5
+  |
+3 | use game_core::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+ --> gameplay_sim/src/factories/rendering_factory.rs:2:5
+  |
+2 | use game_core::prelude::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `entity_factory::*`
+  --> gameplay_sim/src/factories/mod.rs:13:9
+   |
+13 | pub use entity_factory::*;
+   |         ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `entity_factory_unified::*`
+  --> gameplay_sim/src/factories/mod.rs:14:9
+   |
+14 | pub use entity_factory_unified::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `entity_builder_unified::*`
+  --> gameplay_sim/src/factories/mod.rs:15:9
+   |
+15 | pub use entity_builder_unified::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `generic_bundle::*`
+  --> gameplay_sim/src/factories/mod.rs:20:9
+   |
+20 | pub use generic_bundle::*;
+   |         ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `engine_core::prelude::*`
+ --> gameplay_sim/src/prelude.rs:4:9
+  |
+4 | pub use engine_core::prelude::*;
+  |         ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `engine_bevy::prelude::*`
+ --> gameplay_sim/src/prelude.rs:5:9
+  |
+5 | pub use engine_bevy::prelude::*;
+  |         ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::prelude::*`
+ --> gameplay_sim/src/prelude.rs:6:9
+  |
+6 | pub use game_core::prelude::*;
+  |         ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `debug`, `error`, `info`, and `warn`
+ --> gameplay_sim/src/prelude.rs:7:19
+  |
+7 | pub use tracing::{info, warn, error, debug};
+  |                   ^^^^  ^^^^  ^^^^^  ^^^^^
+
+warning: unused imports: `Assets`, `Commands`, `Component`, `Entity`, `Handle`, `Mesh`, `Query`, and `StandardMaterial`
+  --> gameplay_sim/src/compat.rs:8:5
+   |
+8  |     Query,
+   |     ^^^^^
+9  |     // Other common types
+10 |     StandardMaterial, Mesh, Handle, Assets, Commands, Entity, Component, Resource, Bundle,
+   |     ^^^^^^^^^^^^^^^^  ^^^^  ^^^^^^  ^^^^^^  ^^^^^^^^  ^^^^^^  ^^^^^^^^^
+
+warning: unused imports: `CHARACTER_GROUP as GAME_CORE_CHARACTER_GROUP`, `STATIC_GROUP as GAME_CORE_STATIC_GROUP`, and `VEHICLE_GROUP as GAME_CORE_VEHICLE_GROUP`
+  --> gameplay_sim/src/compat.rs:57:5
+   |
+57 |     STATIC_GROUP as GAME_CORE_STATIC_GROUP,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+58 |     VEHICLE_GROUP as GAME_CORE_VEHICLE_GROUP,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+59 |     CHARACTER_GROUP as GAME_CORE_CHARACTER_GROUP,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `game_core::world::RoadNetwork`
+   --> gameplay_sim/src/compat.rs:165:9
+    |
+165 | pub use game_core::world::RoadNetwork;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0116]: cannot define inherent `impl` for a type outside of the crate where the type is defined
+  --> gameplay_sim/src/systems/world/road_generation.rs:26:1
+   |
+26 | impl RoadNetwork {
+   | ^^^^^^^^^^^^^^^^ impl for type defined outside of crate
+   |
+   = note: define and implement a trait or new type instead
+
+error[E0116]: cannot define inherent `impl` for a type outside of the crate where the type is defined
+  --> gameplay_sim/src/systems/world/unified_world.rs:37:1
+   |
+37 | impl ChunkCoord {
+   | ^^^^^^^^^^^^^^^ impl for type defined outside of crate
+   |
+   = note: define and implement a trait or new type instead
+
+error[E0308]: mismatched types
+  --> gameplay_sim/src/movement/vehicles.rs:70:56
+   |
+70 |     PhysicsUtilities::validate_velocity(&mut velocity, &*config);
+   |     -----------------------------------                ^^^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+   |     |
+   |     arguments to this function are incorrect
+   |
+   = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+  --> gameplay_sim/src/config.rs:7:1
+   |
+7  | pub struct GameConfig {
+   | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+  --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+   |
+7  | pub struct GameConfig {
+   | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+  --> gameplay_sim/src/systems/physics_utils.rs:25:12
+   |
+25 |     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+   |            ^^^^^^^^^^^^^^^^^                          -------------------
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/movement/vehicles.rs:202:56
+    |
+202 |     PhysicsUtilities::validate_velocity(&mut velocity, &*config);
+    |     -----------------------------------                ^^^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+    |     |
+    |     arguments to this function are incorrect
+    |
+    = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+   --> gameplay_sim/src/config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+   --> gameplay_sim/src/systems/physics_utils.rs:25:12
+    |
+25  |     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+    |            ^^^^^^^^^^^^^^^^^                          -------------------
+
+error[E0308]: mismatched types
+  --> gameplay_sim/src/movement/aircraft.rs:69:56
+   |
+69 |     PhysicsUtilities::validate_velocity(&mut velocity, &*config);
+   |     -----------------------------------                ^^^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+   |     |
+   |     arguments to this function are incorrect
+   |
+   = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+  --> gameplay_sim/src/config.rs:7:1
+   |
+7  | pub struct GameConfig {
+   | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+  --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+   |
+7  | pub struct GameConfig {
+   | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+  --> gameplay_sim/src/systems/physics_utils.rs:25:12
+   |
+25 |     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+   |            ^^^^^^^^^^^^^^^^^                          -------------------
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/movement/aircraft.rs:215:56
+    |
+215 |     PhysicsUtilities::validate_velocity(&mut velocity, &*config);
+    |     -----------------------------------                ^^^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+    |     |
+    |     arguments to this function are incorrect
+    |
+    = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+   --> gameplay_sim/src/config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+   --> gameplay_sim/src/systems/physics_utils.rs:25:12
+    |
+25  |     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+    |            ^^^^^^^^^^^^^^^^^                          -------------------
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:187:8
+    |
+187 |     if is_accelerating(control_manager) {
+    |        ^^^^^^^^^^^^^^^----------------- argument #2 of type `bevy::prelude::Entity` is missing
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/input/control_manager.rs:411:8
+    |
+411 | pub fn is_accelerating(control_manager: &ControlManager, entity: Entity) -> bool {
+    |        ^^^^^^^^^^^^^^^                                   --------------
+help: provide the argument
+    |
+187 |     if is_accelerating(control_manager, /* bevy::prelude::Entity */) {
+    |                                       +++++++++++++++++++++++++++++
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:194:8
+    |
+194 |     if is_braking(control_manager) {
+    |        ^^^^^^^^^^----------------- argument #2 of type `bevy::prelude::Entity` is missing
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/input/control_manager.rs:418:8
+    |
+418 | pub fn is_braking(control_manager: &ControlManager, entity: Entity) -> bool {
+    |        ^^^^^^^^^^                                   --------------
+help: provide the argument
+    |
+194 |     if is_braking(control_manager, /* bevy::prelude::Entity */) {
+    |                                  +++++++++++++++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:420:51
+    |
+420 |     PhysicsUtilities::validate_velocity(velocity, config);
+    |     -----------------------------------           ^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+    |     |
+    |     arguments to this function are incorrect
+    |
+    = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+   --> gameplay_sim/src/config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+   --> gameplay_sim/src/systems/physics_utils.rs:25:12
+    |
+25  |     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+    |            ^^^^^^^^^^^^^^^^^                          -------------------
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:426:63
+    |
+426 |     PhysicsUtilities::apply_world_bounds(velocity, transform, config);
+    |     ------------------------------------                      ^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+    |     |
+    |     arguments to this function are incorrect
+    |
+    = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+   --> gameplay_sim/src/config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+   --> gameplay_sim/src/systems/physics_utils.rs:103:12
+    |
+103 |     pub fn apply_world_bounds(
+    |            ^^^^^^^^^^^^^^^^^^
+...
+106 |         config: &GameConfig
+    |         -------------------
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/movement/realistic_vehicle_input.rs:40:8
+    |
+40  |     if is_accelerating(control_manager) {
+    |        ^^^^^^^^^^^^^^^----------------- argument #2 of type `bevy::prelude::Entity` is missing
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/input/control_manager.rs:411:8
+    |
+411 | pub fn is_accelerating(control_manager: &ControlManager, entity: Entity) -> bool {
+    |        ^^^^^^^^^^^^^^^                                   --------------
+help: provide the argument
+    |
+40  |     if is_accelerating(control_manager, /* bevy::prelude::Entity */) {
+    |                                       +++++++++++++++++++++++++++++
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/movement/realistic_vehicle_input.rs:47:8
+    |
+47  |     if is_braking(control_manager) {
+    |        ^^^^^^^^^^----------------- argument #2 of type `bevy::prelude::Entity` is missing
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/input/control_manager.rs:418:8
+    |
+418 | pub fn is_braking(control_manager: &ControlManager, entity: Entity) -> bool {
+    |        ^^^^^^^^^^                                   --------------
+help: provide the argument
+    |
+47  |     if is_braking(control_manager, /* bevy::prelude::Entity */) {
+    |                                  +++++++++++++++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:374:51
+    |
+374 |     PhysicsUtilities::validate_velocity(velocity, config);
+    |     -----------------------------------           ^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+    |     |
+    |     arguments to this function are incorrect
+    |
+    = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+   --> gameplay_sim/src/config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+   --> gameplay_sim/src/systems/physics_utils.rs:25:12
+    |
+25  |     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+    |            ^^^^^^^^^^^^^^^^^                          -------------------
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/movement/realistic_vehicle_physics_core.rs:380:63
+    |
+380 |     PhysicsUtilities::apply_world_bounds(velocity, transform, config);
+    |     ------------------------------------                      ^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+    |     |
+    |     arguments to this function are incorrect
+    |
+    = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+   --> gameplay_sim/src/config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+   --> gameplay_sim/src/systems/physics_utils.rs:103:12
+    |
+103 |     pub fn apply_world_bounds(
+    |            ^^^^^^^^^^^^^^^^^^
+...
+106 |         config: &GameConfig
+    |         -------------------
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/movement/supercar_physics.rs:131:56
+    |
+131 |     PhysicsUtilities::validate_velocity(&mut velocity, &*config);
+    |     -----------------------------------                ^^^^^^^^ expected `game_core::config::GameConfig`, found `config::GameConfig`
+    |     |
+    |     arguments to this function are incorrect
+    |
+    = note: `config::GameConfig` and `game_core::config::GameConfig` have similar names, but are actually distinct types
+note: `config::GameConfig` is defined in the current crate
+   --> gameplay_sim/src/config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: `game_core::config::GameConfig` is defined in crate `game_core`
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/config/game_config.rs:7:1
+    |
+7   | pub struct GameConfig {
+    | ^^^^^^^^^^^^^^^^^^^^^
+note: associated function defined here
+   --> gameplay_sim/src/systems/physics_utils.rs:25:12
+    |
+25  |     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+    |            ^^^^^^^^^^^^^^^^^                          -------------------
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:187:8
+    |
+187 |     if is_accelerating(control_manager) {
+    |        ^^^^^^^^^^^^^^^----------------- argument #2 of type `test_utils::Entity` is missing
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/input/control_manager.rs:411:8
+    |
+411 | pub fn is_accelerating(control_manager: &ControlManager, entity: Entity) -> bool {
+    |        ^^^^^^^^^^^^^^^                                   --------------
+help: provide the argument
+    |
+187 |     if is_accelerating(control_manager, /* test_utils::Entity */) {
+    |                                       ++++++++++++++++++++++++++
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/movement/realistic_vehicle_physics.rs:194:8
+    |
+194 |     if is_braking(control_manager) {
+    |        ^^^^^^^^^^----------------- argument #2 of type `test_utils::Entity` is missing
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/input/control_manager.rs:418:8
+    |
+418 | pub fn is_braking(control_manager: &ControlManager, entity: Entity) -> bool {
+    |        ^^^^^^^^^^                                   --------------
+help: provide the argument
+    |
+194 |     if is_braking(control_manager, /* test_utils::Entity */) {
+    |                                  ++++++++++++++++++++++++++
+
+error[E0609]: no field `world` on type `bevy::prelude::Res<'_, config::GameConfig>`
+  --> gameplay_sim/src/world/dynamic_content.rs:93:41
+   |
+93 |         let active_radius = game_config.world.active_radius;
+   |                                         ^^^^^ unknown field
+   |
+   = note: available fields are: `max_entities`, `lod_distances`, `physics`
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/movement/realistic_vehicle_input.rs:40:8
+    |
+40  |     if is_accelerating(control_manager) {
+    |        ^^^^^^^^^^^^^^^----------------- argument #2 of type `test_utils::Entity` is missing
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/input/control_manager.rs:411:8
+    |
+411 | pub fn is_accelerating(control_manager: &ControlManager, entity: Entity) -> bool {
+    |        ^^^^^^^^^^^^^^^                                   --------------
+help: provide the argument
+    |
+40  |     if is_accelerating(control_manager, /* test_utils::Entity */) {
+    |                                       ++++++++++++++++++++++++++
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/movement/realistic_vehicle_input.rs:47:8
+    |
+47  |     if is_braking(control_manager) {
+    |        ^^^^^^^^^^----------------- argument #2 of type `test_utils::Entity` is missing
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/input/control_manager.rs:418:8
+    |
+418 | pub fn is_braking(control_manager: &ControlManager, entity: Entity) -> bool {
+    |        ^^^^^^^^^^                                   --------------
+help: provide the argument
+    |
+47  |     if is_braking(control_manager, /* test_utils::Entity */) {
+    |                                  ++++++++++++++++++++++++++
+
+error[E0609]: no field `spawn_rates` on type `&config::GameConfig`
+   --> gameplay_sim/src/world/dynamic_content.rs:245:83
+    |
+245 |     if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < game_config.spawn_rates.buildings {
+    |                                                                                   ^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `max_entities`, `lod_distances`, `physics`
+
+error[E0609]: no field `spawn_rates` on type `&config::GameConfig`
+   --> gameplay_sim/src/world/dynamic_content.rs:263:99
+    |
+263 |     else if on_road && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < game_config.spawn_rates.vehicles {
+    |                                                                                                   ^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `max_entities`, `lod_distances`, `physics`
+
+error[E0609]: no field `spawn_rates` on type `&config::GameConfig`
+   --> gameplay_sim/src/world/dynamic_content.rs:279:131
+    |
+279 | ...| rng.borrow_mut().gen_range(0.0..1.0)) < game_config.spawn_rates.trees {
+    |                                                          ^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `max_entities`, `lod_distances`, `physics`
+
+error[E0609]: no field `spawn_rates` on type `&config::GameConfig`
+   --> gameplay_sim/src/world/dynamic_content.rs:295:88
+    |
+295 |     else if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < game_config.spawn_rates.npcs {
+    |                                                                                        ^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `max_entities`, `lod_distances`, `physics`
+
+error[E0609]: no field `control_points` on type `&game_core::components::RoadSpline`
+  --> gameplay_sim/src/world/road_mesh.rs:27:14
+   |
+27 |         road.control_points.len(),
+   |              ^^^^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `points`, `road_type`, `width`, `connections`
+
+error[E0609]: no field `control_points` on type `&game_core::components::RoadSpline`
+  --> gameplay_sim/src/world/road_mesh.rs:29:14
+   |
+29 |         road.control_points.iter()
+   |              ^^^^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `points`, `road_type`, `width`, `connections`
+
+error[E0609]: no field `control_points` on type `&game_core::components::RoadSpline`
+   --> gameplay_sim/src/world/road_mesh.rs:149:13
+    |
+149 |     if road.control_points.len() > 2 {
+    |             ^^^^^^^^^^^^^^ unknown field
+    |
+    = note: available fields are: `points`, `road_type`, `width`, `connections`
+
+error[E0609]: no field `radius` on type `&RoadIntersection`
+   --> gameplay_sim/src/world/road_mesh.rs:390:31
+    |
+390 |     let radius = intersection.radius;
+    |                               ^^^^^^ unknown field
+    |
+    = note: available fields are: `position`, `connected_roads`, `intersection_type`
+
+error[E0609]: no field `generated_chunks` on type `bevy::prelude::ResMut<'_, game_core::components::RoadNetwork>`
+  --> gameplay_sim/src/world/road_generation.rs:73:55
+   |
+73 |     if road_network.roads.is_empty() && !road_network.generated_chunks.is_empty() {
+   |                                                       ^^^^^^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `roads`, `intersections`, `next_road_id`, `next_intersection_id`
+
+error[E0609]: no field `world` on type `test_utils::Res<'_, config::GameConfig>`
+  --> gameplay_sim/src/world/dynamic_content.rs:93:41
+   |
+93 |         let active_radius = game_config.world.active_radius;
+   |                                         ^^^^^ unknown field
+   |
+   = note: available fields are: `max_entities`, `lod_distances`, `physics`
+
+error[E0599]: no method named `clear_cache` found for struct `bevy::prelude::ResMut<'_, game_core::components::RoadNetwork>` in the current scope
+  --> gameplay_sim/src/world/road_generation.rs:74:22
+   |
+74 |         road_network.clear_cache();
+   |                      ^^^^^^^^^^^ method not found in `ResMut<'_, RoadNetwork>`
+
+error[E0599]: no method named `generate_chunk_roads` found for struct `bevy::prelude::ResMut<'_, game_core::components::RoadNetwork>` in the current scope
+   --> gameplay_sim/src/world/road_generation.rs:115:49
+    |
+115 |                 let new_road_ids = road_network.generate_chunk_roads(check_chunk_x, check_chunk_z);
+    |                                                 ^^^^^^^^^^^^^^^^^^^^ method not found in `ResMut<'_, RoadNetwork>`
+
+error[E0609]: no field `generated_chunks` on type `test_utils::ResMut<'_, game_core::components::RoadNetwork>`
+  --> gameplay_sim/src/world/road_generation.rs:73:55
+   |
+73 |     if road_network.roads.is_empty() && !road_network.generated_chunks.is_empty() {
+   |                                                       ^^^^^^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `roads`, `intersections`, `next_road_id`, `next_intersection_id`
+
+error[E0599]: no method named `clear_cache` found for struct `test_utils::ResMut<'_, game_core::components::RoadNetwork>` in the current scope
+  --> gameplay_sim/src/world/road_generation.rs:74:22
+   |
+74 |         road_network.clear_cache();
+   |                      ^^^^^^^^^^^ method not found in `ResMut<'_, RoadNetwork>`
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/map_system.rs:265:29
+    |
+265 |             commands.entity(entity).insert(Building);
+    |                      ------ ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |                      |
+    |                      arguments to this method are incorrect
+    |
+    = note: expected struct `bevy::prelude::Entity`
+                 found enum `std::option::Option<bevy::prelude::Entity>`
+note: method defined here
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_ecs-0.16.1/src/system/commands/mod.rs:445:12
+    |
+445 |     pub fn entity(&mut self, entity: Entity) -> EntityCommands {
+    |            ^^^^^^
+help: consider using `Option::expect` to unwrap the `std::option::Option<bevy::prelude::Entity>` value, panicking if the value is an `Option::None`
+    |
+265 |             commands.entity(entity.expect("REASON")).insert(Building);
+    |                                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/map_system.rs:266:13
+    |
+253 | ) -> Entity {
+    |      ------ expected `bevy::prelude::Entity` because of return type
+...
+266 |             entity
+    |             ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |
+    = note: expected struct `bevy::prelude::Entity`
+                 found enum `std::option::Option<bevy::prelude::Entity>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<bevy::prelude::Entity>` value, panicking if the value is an `Option::None`
+    |
+266 |             entity.expect("REASON")
+    |                   +++++++++++++++++
+
+error[E0599]: no method named `generate_chunk_roads` found for struct `test_utils::ResMut<'_, game_core::components::RoadNetwork>` in the current scope
+   --> gameplay_sim/src/world/road_generation.rs:115:49
+    |
+115 |                 let new_road_ids = road_network.generate_chunk_roads(check_chunk_x, check_chunk_z);
+    |                                                 ^^^^^^^^^^^^^^^^^^^^ method not found in `ResMut<'_, RoadNetwork>`
+
+error[E0061]: this method takes 1 argument but 0 arguments were supplied
+   --> gameplay_sim/src/world/unified_world.rs:220:66
+    |
+220 |             chunk.distance_to_player = active_pos.distance(coord.to_world_pos());
+    |                                                                  ^^^^^^^^^^^^-- argument #1 of type `f32` is missing
+    |
+note: method defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/spatial.rs:244:12
+    |
+244 |     pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
+    |            ^^^^^^^^^^^^
+help: provide the argument
+    |
+220 |             chunk.distance_to_player = active_pos.distance(coord.to_world_pos(/* f32 */));
+    |                                                                               +++++++++
+
+error[E0599]: no variant or associated item named `Unloading` found for enum `game_core::components::ChunkState` in the current scope
+   --> gameplay_sim/src/world/unified_world.rs:223:78
+    |
+223 |                 if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
+    |                                                                              ^^^^^^^^^ variant or associated item not found in `ChunkState`
+    |
+help: there is a variant with a similar name
+    |
+223 -                 if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
+223 +                 if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Loading) {
+    |
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/map_system.rs:265:29
+    |
+265 |             commands.entity(entity).insert(Building);
+    |                      ------ ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |                      |
+    |                      arguments to this method are incorrect
+    |
+    = note: expected struct `test_utils::Entity`
+                 found enum `std::option::Option<test_utils::Entity>`
+note: method defined here
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_ecs-0.16.1/src/system/commands/mod.rs:445:12
+    |
+445 |     pub fn entity(&mut self, entity: Entity) -> EntityCommands {
+    |            ^^^^^^
+help: consider using `Option::expect` to unwrap the `std::option::Option<test_utils::Entity>` value, panicking if the value is an `Option::None`
+    |
+265 |             commands.entity(entity.expect("REASON")).insert(Building);
+    |                                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/map_system.rs:266:13
+    |
+253 | ) -> Entity {
+    |      ------ expected `test_utils::Entity` because of return type
+...
+266 |             entity
+    |             ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |
+    = note: expected struct `test_utils::Entity`
+                 found enum `std::option::Option<test_utils::Entity>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<test_utils::Entity>` value, panicking if the value is an `Option::None`
+    |
+266 |             entity.expect("REASON")
+    |                   +++++++++++++++++
+
+error[E0599]: no variant or associated item named `Unloading` found for enum `game_core::components::ChunkState` in the current scope
+   --> gameplay_sim/src/world/unified_world.rs:224:47
+    |
+224 |                     chunk.state = ChunkState::Unloading;
+    |                                               ^^^^^^^^^ variant or associated item not found in `ChunkState`
+    |
+help: there is a variant with a similar name
+    |
+224 -                     chunk.state = ChunkState::Unloading;
+224 +                     chunk.state = ChunkState::Loading;
+    |
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/world/unified_world.rs:234:28
+    |
+234 |         let active_chunk = ChunkCoord::from_world_pos(active_pos);
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^------------ argument #2 of type `f32` is missing
+    |
+note: associated function defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/spatial.rs:240:12
+    |
+240 |     pub fn from_world_pos(world_pos: Vec3, chunk_size: f32) -> Self {
+    |            ^^^^^^^^^^^^^^
+help: provide the argument
+    |
+234 |         let active_chunk = ChunkCoord::from_world_pos(active_pos, /* f32 */);
+    |                                                                 +++++++++++
+
+error[E0061]: this method takes 1 argument but 0 arguments were supplied
+   --> gameplay_sim/src/world/unified_world.rs:240:58
+    |
+240 |                 let distance = active_pos.distance(coord.to_world_pos());
+    |                                                          ^^^^^^^^^^^^-- argument #1 of type `f32` is missing
+    |
+note: method defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/spatial.rs:244:12
+    |
+244 |     pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
+    |            ^^^^^^^^^^^^
+help: provide the argument
+    |
+240 |                 let distance = active_pos.distance(coord.to_world_pos(/* f32 */));
+    |                                                                       +++++++++
+
+error[E0061]: this method takes 1 argument but 0 arguments were supplied
+   --> gameplay_sim/src/world/unified_world.rs:258:35
+    |
+258 |         let _chunk_center = coord.to_world_pos();
+    |                                   ^^^^^^^^^^^^-- argument #1 of type `f32` is missing
+    |
+note: method defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/spatial.rs:244:12
+    |
+244 |     pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
+    |            ^^^^^^^^^^^^
+help: provide the argument
+    |
+258 |         let _chunk_center = coord.to_world_pos(/* f32 */);
+    |                                                +++++++++
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> gameplay_sim/src/world/unified_world.rs:292:25
+    |
+292 |     let current_chunk = ChunkCoord::from_world_pos(active_pos);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^------------ argument #2 of type `f32` is missing
+    |
+note: associated function defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/spatial.rs:240:12
+    |
+240 |     pub fn from_world_pos(world_pos: Vec3, chunk_size: f32) -> Self {
+    |            ^^^^^^^^^^^^^^
+help: provide the argument
+    |
+292 |     let current_chunk = ChunkCoord::from_world_pos(active_pos, /* f32 */);
+    |                                                              +++++++++++
+
+error[E0061]: this method takes 1 argument but 0 arguments were supplied
+   --> gameplay_sim/src/world/unified_world.rs:333:43
+    |
+333 |         Transform::from_translation(coord.to_world_pos()),
+    |                                           ^^^^^^^^^^^^-- argument #1 of type `f32` is missing
+    |
+note: method defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/spatial.rs:244:12
+    |
+244 |     pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
+    |            ^^^^^^^^^^^^
+help: provide the argument
+    |
+333 |         Transform::from_translation(coord.to_world_pos(/* f32 */)),
+    |                                                        +++++++++
+
+error[E0609]: no field `last_update` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+  --> gameplay_sim/src/world/layered_generation.rs:72:11
+   |
+72 |     chunk.last_update = current_time;
+   |           ^^^^^^^^^^^ unknown field
+   |
+help: one of the expressions' fields has a field of the same name
+   |
+72 |     chunk.unwrap().last_update = current_time;
+   |           +++++++++
+
+error[E0609]: no field `roads_generated` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+  --> gameplay_sim/src/world/layered_generation.rs:75:32
+   |
+75 |     let next_layer = if !chunk.roads_generated {
+   |                                ^^^^^^^^^^^^^^^ unknown field
+   |
+help: one of the expressions' fields has a field of the same name
+   |
+75 |     let next_layer = if !chunk.unwrap().roads_generated {
+   |                                +++++++++
+
+error[E0609]: no field `buildings_generated` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+  --> gameplay_sim/src/world/layered_generation.rs:77:22
+   |
+77 |     } else if !chunk.buildings_generated {
+   |                      ^^^^^^^^^^^^^^^^^^^ unknown field
+   |
+help: one of the expressions' fields has a field of the same name
+   |
+77 |     } else if !chunk.unwrap().buildings_generated {
+   |                      +++++++++
+
+error[E0609]: no field `vehicles_generated` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+  --> gameplay_sim/src/world/layered_generation.rs:79:22
+   |
+79 |     } else if !chunk.vehicles_generated {
+   |                      ^^^^^^^^^^^^^^^^^^ unknown field
+   |
+help: one of the expressions' fields has a field of the same name
+   |
+79 |     } else if !chunk.unwrap().vehicles_generated {
+   |                      +++++++++
+
+error[E0609]: no field `vegetation_generated` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+  --> gameplay_sim/src/world/layered_generation.rs:81:22
+   |
+81 |     } else if !chunk.vegetation_generated {
+   |                      ^^^^^^^^^^^^^^^^^^^^ unknown field
+   |
+help: one of the expressions' fields has a field of the same name
+   |
+81 |     } else if !chunk.unwrap().vegetation_generated {
+   |                      +++++++++
+
+error[E0609]: no field `distance_to_player` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+  --> gameplay_sim/src/world/layered_generation.rs:85:30
+   |
+85 |         let distance = chunk.distance_to_player;
+   |                              ^^^^^^^^^^^^^^^^^^ unknown field
+   |
+help: one of the expressions' fields has a field of the same name
+   |
+85 |         let distance = chunk.unwrap().distance_to_player;
+   |                              +++++++++
+
+error[E0609]: no field `state` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+  --> gameplay_sim/src/world/layered_generation.rs:90:15
+   |
+90 |         chunk.state = ChunkState::Loaded { lod_level };
+   |               ^^^^^ unknown field
+   |
+help: one of the expressions' fields has a field of the same name
+   |
+90 |         chunk.unwrap().state = ChunkState::Loaded { lod_level };
+   |               +++++++++
+
+error[E0559]: variant `game_core::components::ChunkState::Loaded` has no field named `lod_level`
+  --> gameplay_sim/src/world/layered_generation.rs:90:44
+   |
+90 |         chunk.state = ChunkState::Loaded { lod_level };
+   |                                            ^^^^^^^^^ `game_core::components::ChunkState::Loaded` does not have this field
+   |
+   = note: available fields are: `entity_count`
+
+error[E0599]: no method named `generate_chunk_roads` found for struct `game_core::components::RoadNetwork` in the current scope
+   --> gameplay_sim/src/world/layered_generation.rs:147:51
+    |
+147 |     let new_road_ids = world_manager.road_network.generate_chunk_roads(coord.x, coord.z);
+    |                                                   ^^^^^^^^^^^^^^^^^^^^ method not found in `RoadNetwork`
+
+error[E0609]: no field `roads_generated` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+   --> gameplay_sim/src/world/layered_generation.rs:186:11
+    |
+186 |     chunk.roads_generated = true;
+    |           ^^^^^^^^^^^^^^^ unknown field
+    |
+help: one of the expressions' fields has a field of the same name
+    |
+186 |     chunk.unwrap().roads_generated = true;
+    |           +++++++++
+
+error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+   --> gameplay_sim/src/world/layered_generation.rs:302:58
+    |
+302 |         let intersection_id = world_manager.road_network.add_intersection(
+    |                                                          ^^^^^^^^^^^^^^^^
+303 |             position,
+304 |             connected_roads,
+    |             --------------- unexpected argument #2 of type `std::vec::Vec<u32>`
+    |
+note: method defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/world.rs:414:12
+    |
+414 |     pub fn add_intersection(&mut self, position: Vec3, intersection_type: IntersectionType) -> u32 {
+    |            ^^^^^^^^^^^^^^^^
+help: remove the extra argument
+    |
+303 -             position,
+304 -             connected_roads,
+303 +             position,
+    |
+
+error[E0061]: this function takes 0 arguments but 2 arguments were supplied
+   --> gameplay_sim/src/world/layered_generation.rs:398:29
+    |
+398 |     let intersection_mesh = generate_intersection_mesh(intersection, &[]);
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^ ------------  --- unexpected argument #2 of type `&[_; 0]`
+    |                                                        |
+    |                                                        unexpected argument #1 of type `&RoadIntersection`
+    |
+note: function defined here
+   --> gameplay_sim/src/systems/world/road_mesh.rs:345:8
+    |
+345 | pub fn generate_intersection_mesh() -> Option<Mesh> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: remove the extra arguments
+    |
+398 -     let intersection_mesh = generate_intersection_mesh(intersection, &[]);
+398 +     let intersection_mesh = generate_intersection_mesh();
+    |
+
+error[E0277]: the trait bound `std::option::Option<bevy::prelude::Mesh>: Into<bevy::prelude::Mesh>` is not satisfied
+   --> gameplay_sim/src/world/layered_generation.rs:400:27
+    |
+400 |         Mesh3d(meshes.add(intersection_mesh)),
+    |                       --- ^^^^^^^^^^^^^^^^^ the trait `bevy::prelude::MeshBuilder` is not implemented for `std::option::Option<bevy::prelude::Mesh>`
+    |                       |
+    |                       required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `bevy::prelude::MeshBuilder`:
+              AnnulusMeshBuilder
+              Capsule2dMeshBuilder
+              Capsule3dMeshBuilder
+              CircleMeshBuilder
+              CircularSectorMeshBuilder
+              CircularSegmentMeshBuilder
+              ConeMeshBuilder
+              ConicalFrustumMeshBuilder
+            and 14 others
+    = note: required for `bevy::prelude::Mesh` to implement `From<std::option::Option<bevy::prelude::Mesh>>`
+    = note: required for `std::option::Option<bevy::prelude::Mesh>` to implement `Into<bevy::prelude::Mesh>`
+note: required by a bound in `bevy::prelude::Assets::<A>::add`
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_asset-0.16.1/src/assets.rs:387:39
+    |
+387 |     pub fn add(&mut self, asset: impl Into<A>) -> Handle<A> {
+    |                                       ^^^^^^^ required by this bound in `Assets::<A>::add`
+
+error[E0609]: no field `buildings_generated` on type `std::option::Option<&mut systems::world::unified_world::ChunkData>`
+   --> gameplay_sim/src/world/layered_generation.rs:494:11
+    |
+494 |     chunk.buildings_generated = true;
+    |           ^^^^^^^^^^^^^^^^^^^ unknown field
+    |
+help: one of the expressions' fields has a field of the same name
+    |
+494 |     chunk.unwrap().buildings_generated = true;
+    |           +++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:516:29
+    |
+516 |             commands.entity(entity).insert((
+    |                      ------ ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |                      |
+    |                      arguments to this method are incorrect
+    |
+    = note: expected struct `bevy::prelude::Entity`
+                 found enum `std::option::Option<bevy::prelude::Entity>`
+note: method defined here
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_ecs-0.16.1/src/system/commands/mod.rs:445:12
+    |
+445 |     pub fn entity(&mut self, entity: Entity) -> EntityCommands {
+    |            ^^^^^^
+help: consider using `Option::expect` to unwrap the `std::option::Option<bevy::prelude::Entity>` value, panicking if the value is an `Option::None`
+    |
+516 |             commands.entity(entity.expect("REASON")).insert((
+    |                                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:522:13
+    |
+504 | ) -> Entity {
+    |      ------ expected `bevy::prelude::Entity` because of return type
+...
+522 |             entity
+    |             ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |
+    = note: expected struct `bevy::prelude::Entity`
+                 found enum `std::option::Option<bevy::prelude::Entity>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<bevy::prelude::Entity>` value, panicking if the value is an `Option::None`
+    |
+522 |             entity.expect("REASON")
+    |                   +++++++++++++++++
+
+error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+   --> gameplay_sim/src/world/layered_generation.rs:302:58
+    |
+302 |         let intersection_id = world_manager.road_network.add_intersection(
+    |                                                          ^^^^^^^^^^^^^^^^
+303 |             position,
+304 |             connected_roads,
+    |             --------------- unexpected argument #2 of type `test_utils::Vec<u32>`
+    |
+note: method defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/world.rs:414:12
+    |
+414 |     pub fn add_intersection(&mut self, position: Vec3, intersection_type: IntersectionType) -> u32 {
+    |            ^^^^^^^^^^^^^^^^
+help: remove the extra argument
+    |
+303 -             position,
+304 -             connected_roads,
+303 +             position,
+    |
+
+error[E0277]: the trait bound `std::option::Option<test_utils::Mesh>: Into<test_utils::Mesh>` is not satisfied
+   --> gameplay_sim/src/world/layered_generation.rs:400:27
+    |
+400 |         Mesh3d(meshes.add(intersection_mesh)),
+    |                       --- ^^^^^^^^^^^^^^^^^ the trait `test_utils::MeshBuilder` is not implemented for `std::option::Option<test_utils::Mesh>`
+    |                       |
+    |                       required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `test_utils::MeshBuilder`:
+              AnnulusMeshBuilder
+              Capsule2dMeshBuilder
+              Capsule3dMeshBuilder
+              CircleMeshBuilder
+              CircularSectorMeshBuilder
+              CircularSegmentMeshBuilder
+              ConeMeshBuilder
+              ConicalFrustumMeshBuilder
+            and 14 others
+    = note: required for `test_utils::Mesh` to implement `From<std::option::Option<test_utils::Mesh>>`
+    = note: required for `std::option::Option<test_utils::Mesh>` to implement `Into<test_utils::Mesh>`
+note: required by a bound in `test_utils::Assets::<A>::add`
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_asset-0.16.1/src/assets.rs:387:39
+    |
+387 |     pub fn add(&mut self, asset: impl Into<A>) -> Handle<A> {
+    |                                       ^^^^^^^ required by this bound in `Assets::<A>::add`
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:631:29
+    |
+631 |             commands.entity(entity).insert((
+    |                      ------ ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |                      |
+    |                      arguments to this method are incorrect
+    |
+    = note: expected struct `bevy::prelude::Entity`
+                 found enum `std::option::Option<bevy::prelude::Entity>`
+note: method defined here
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_ecs-0.16.1/src/system/commands/mod.rs:445:12
+    |
+445 |     pub fn entity(&mut self, entity: Entity) -> EntityCommands {
+    |            ^^^^^^
+help: consider using `Option::expect` to unwrap the `std::option::Option<bevy::prelude::Entity>` value, panicking if the value is an `Option::None`
+    |
+631 |             commands.entity(entity.expect("REASON")).insert((
+    |                                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:637:13
+    |
+619 | ) -> Entity {
+    |      ------ expected `bevy::prelude::Entity` because of return type
+...
+637 |             entity
+    |             ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |
+    = note: expected struct `bevy::prelude::Entity`
+                 found enum `std::option::Option<bevy::prelude::Entity>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<bevy::prelude::Entity>` value, panicking if the value is an `Option::None`
+    |
+637 |             entity.expect("REASON")
+    |                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:516:29
+    |
+516 |             commands.entity(entity).insert((
+    |                      ------ ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |                      |
+    |                      arguments to this method are incorrect
+    |
+    = note: expected struct `test_utils::Entity`
+                 found enum `std::option::Option<test_utils::Entity>`
+note: method defined here
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_ecs-0.16.1/src/system/commands/mod.rs:445:12
+    |
+445 |     pub fn entity(&mut self, entity: Entity) -> EntityCommands {
+    |            ^^^^^^
+help: consider using `Option::expect` to unwrap the `std::option::Option<test_utils::Entity>` value, panicking if the value is an `Option::None`
+    |
+516 |             commands.entity(entity.expect("REASON")).insert((
+    |                                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:522:13
+    |
+504 | ) -> Entity {
+    |      ------ expected `test_utils::Entity` because of return type
+...
+522 |             entity
+    |             ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |
+    = note: expected struct `test_utils::Entity`
+                 found enum `std::option::Option<test_utils::Entity>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<test_utils::Entity>` value, panicking if the value is an `Option::None`
+    |
+522 |             entity.expect("REASON")
+    |                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:746:29
+    |
+746 |             commands.entity(entity).insert((
+    |                      ------ ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |                      |
+    |                      arguments to this method are incorrect
+    |
+    = note: expected struct `bevy::prelude::Entity`
+                 found enum `std::option::Option<bevy::prelude::Entity>`
+note: method defined here
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_ecs-0.16.1/src/system/commands/mod.rs:445:12
+    |
+445 |     pub fn entity(&mut self, entity: Entity) -> EntityCommands {
+    |            ^^^^^^
+help: consider using `Option::expect` to unwrap the `std::option::Option<bevy::prelude::Entity>` value, panicking if the value is an `Option::None`
+    |
+746 |             commands.entity(entity.expect("REASON")).insert((
+    |                                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:752:13
+    |
+734 | ) -> Entity {
+    |      ------ expected `bevy::prelude::Entity` because of return type
+...
+752 |             entity
+    |             ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |
+    = note: expected struct `bevy::prelude::Entity`
+                 found enum `std::option::Option<bevy::prelude::Entity>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<bevy::prelude::Entity>` value, panicking if the value is an `Option::None`
+    |
+752 |             entity.expect("REASON")
+    |                   +++++++++++++++++
+
+error[E0026]: variant `game_core::components::ChunkState::Loaded` does not have a field named `lod_level`
+   --> gameplay_sim/src/world/unified_lod.rs:181:38
+    |
+181 |                 ChunkState::Loaded { lod_level } => {
+    |                                      ^^^^^^^^^
+    |                                      |
+    |                                      variant `game_core::components::ChunkState::Loaded` does not have this field
+    |                                      help: `game_core::components::ChunkState::Loaded` has a field named `entity_count`
+
+error[E0027]: pattern does not mention field `entity_count`
+   --> gameplay_sim/src/world/unified_lod.rs:181:17
+    |
+181 |                 ChunkState::Loaded { lod_level } => {
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ missing field `entity_count`
+    |
+help: include the missing field in the pattern
+    |
+181 |                 ChunkState::Loaded { lod_level, entity_count } => {
+    |                                               ++++++++++++++
+help: if you don't care about this missing field, you can explicitly ignore it
+    |
+181 |                 ChunkState::Loaded { lod_level, entity_count: _ } => {
+    |                                               +++++++++++++++++
+help: or always ignore missing fields here
+    |
+181 |                 ChunkState::Loaded { lod_level, .. } => {
+    |                                               ++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/unified_lod.rs:182:45
+    |
+182 |                     should_layer_be_visible(chunk_entity.layer, lod_level, chunk.distance_to_player)
+    |                     ----------------------- ^^^^^^^^^^^^^^^^^^ expected `ContentLayer`, found `u32`
+    |                     |
+    |                     arguments to this function are incorrect
+    |
+note: function defined here
+   --> gameplay_sim/src/world/unified_lod.rs:234:4
+    |
+234 | fn should_layer_be_visible(layer: ContentLayer, lod_level: usize, distance: f32) -> bool {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^ -------------------
+
+error[E0026]: variant `game_core::components::ChunkState::Loaded` does not have a field named `lod_level`
+   --> gameplay_sim/src/world/unified_lod.rs:214:41
+    |
+214 |             if let ChunkState::Loaded { lod_level } = chunk.state {
+    |                                         ^^^^^^^^^
+    |                                         |
+    |                                         variant `game_core::components::ChunkState::Loaded` does not have this field
+    |                                         help: `game_core::components::ChunkState::Loaded` has a field named `entity_count`
+
+error[E0027]: pattern does not mention field `entity_count`
+   --> gameplay_sim/src/world/unified_lod.rs:214:20
+    |
+214 |             if let ChunkState::Loaded { lod_level } = chunk.state {
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ missing field `entity_count`
+    |
+help: include the missing field in the pattern
+    |
+214 |             if let ChunkState::Loaded { lod_level, entity_count } = chunk.state {
+    |                                                  ++++++++++++++
+help: if you don't care about this missing field, you can explicitly ignore it
+    |
+214 |             if let ChunkState::Loaded { lod_level, entity_count: _ } = chunk.state {
+    |                                                  +++++++++++++++++
+help: or always ignore missing fields here
+    |
+214 |             if let ChunkState::Loaded { lod_level, .. } = chunk.state {
+    |                                                  ++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:631:29
+    |
+631 |             commands.entity(entity).insert((
+    |                      ------ ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |                      |
+    |                      arguments to this method are incorrect
+    |
+    = note: expected struct `test_utils::Entity`
+                 found enum `std::option::Option<test_utils::Entity>`
+note: method defined here
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_ecs-0.16.1/src/system/commands/mod.rs:445:12
+    |
+445 |     pub fn entity(&mut self, entity: Entity) -> EntityCommands {
+    |            ^^^^^^
+help: consider using `Option::expect` to unwrap the `std::option::Option<test_utils::Entity>` value, panicking if the value is an `Option::None`
+    |
+631 |             commands.entity(entity.expect("REASON")).insert((
+    |                                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:637:13
+    |
+619 | ) -> Entity {
+    |      ------ expected `test_utils::Entity` because of return type
+...
+637 |             entity
+    |             ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |
+    = note: expected struct `test_utils::Entity`
+                 found enum `std::option::Option<test_utils::Entity>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<test_utils::Entity>` value, panicking if the value is an `Option::None`
+    |
+637 |             entity.expect("REASON")
+    |                   +++++++++++++++++
+
+error[E0061]: this method takes 1 argument but 0 arguments were supplied
+   --> gameplay_sim/src/world/unified_lod.rs:215:64
+    |
+215 |                 let distance = active_pos.distance(chunk.coord.to_world_pos());
+    |                                                                ^^^^^^^^^^^^-- argument #1 of type `f32` is missing
+    |
+note: method defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/spatial.rs:244:12
+    |
+244 |     pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
+    |            ^^^^^^^^^^^^
+help: provide the argument
+    |
+215 |                 let distance = active_pos.distance(chunk.coord.to_world_pos(/* f32 */));
+    |                                                                             +++++++++
+
+error[E0559]: variant `game_core::components::ChunkState::Loaded` has no field named `lod_level`
+   --> gameplay_sim/src/world/unified_lod.rs:228:52
+    |
+228 |                 chunk.state = ChunkState::Loaded { lod_level: new_lod };
+    |                                                    ^^^^^^^^^ `game_core::components::ChunkState::Loaded` does not have this field
+    |
+    = note: available fields are: `entity_count`
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:746:29
+    |
+746 |             commands.entity(entity).insert((
+    |                      ------ ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |                      |
+    |                      arguments to this method are incorrect
+    |
+    = note: expected struct `test_utils::Entity`
+                 found enum `std::option::Option<test_utils::Entity>`
+note: method defined here
+   --> /Users/bradyjeong/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_ecs-0.16.1/src/system/commands/mod.rs:445:12
+    |
+445 |     pub fn entity(&mut self, entity: Entity) -> EntityCommands {
+    |            ^^^^^^
+help: consider using `Option::expect` to unwrap the `std::option::Option<test_utils::Entity>` value, panicking if the value is an `Option::None`
+    |
+746 |             commands.entity(entity.expect("REASON")).insert((
+    |                                   +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/world/layered_generation.rs:752:13
+    |
+734 | ) -> Entity {
+    |      ------ expected `test_utils::Entity` because of return type
+...
+752 |             entity
+    |             ^^^^^^ expected `Entity`, found `Option<Entity>`
+    |
+    = note: expected struct `test_utils::Entity`
+                 found enum `std::option::Option<test_utils::Entity>`
+help: consider using `Option::expect` to unwrap the `std::option::Option<test_utils::Entity>` value, panicking if the value is an `Option::None`
+    |
+752 |             entity.expect("REASON")
+    |                   +++++++++++++++++
+
+error[E0061]: this method takes 1 argument but 0 arguments were supplied
+   --> gameplay_sim/src/world/unified_lod.rs:670:73
+    |
+670 |                 .map(|chunk| transform.translation.distance(chunk.coord.to_world_pos()))
+    |                                                                         ^^^^^^^^^^^^-- argument #1 of type `f32` is missing
+    |
+note: method defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/spatial.rs:244:12
+    |
+244 |     pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
+    |            ^^^^^^^^^^^^
+help: provide the argument
+    |
+670 |                 .map(|chunk| transform.translation.distance(chunk.coord.to_world_pos(/* f32 */)))
+    |                                                                                      +++++++++
+
+error[E0599]: no function or associated item named `create_mesh_and_material` found for struct `rendering_factory::RenderingFactory` in the current scope
+   --> gameplay_sim/src/world/npc_lod.rs:159:54
+    |
+159 |             let (mesh, material) = RenderingFactory::create_mesh_and_material(
+    |                                                      ^^^^^^^^^^^^^^^^^^^^^^^^ function or associated item not found in `RenderingFactory`
+    |
+   ::: gameplay_sim/src/factories/rendering_factory.rs:6:1
+    |
+6   | pub struct RenderingFactory;
+    | --------------------------- function or associated item `create_mesh_and_material` not found for this struct
+    |
+note: if you're trying to build a new `rendering_factory::RenderingFactory`, consider using `rendering_factory::RenderingFactory::new` which returns `rendering_factory::RenderingFactory`
+   --> gameplay_sim/src/factories/rendering_factory.rs:9:5
+    |
+9   |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+error[E0559]: variant `StandardRenderingPattern::NPCHead` has no field named `build_factor`
+   --> gameplay_sim/src/world/npc_lod.rs:162:54
+    |
+162 |                 &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
+    |                                                      ^^^^^^^^^^^^ `StandardRenderingPattern::NPCHead` does not have this field
+    |
+    = note: all struct fields are already assigned
+
+error[E0599]: no function or associated item named `create_mesh_and_material` found for struct `rendering_factory::RenderingFactory` in the current scope
+   --> gameplay_sim/src/world/npc_lod.rs:167:54
+    |
+167 |             let (mesh, material) = RenderingFactory::create_mesh_and_material(
+    |                                                      ^^^^^^^^^^^^^^^^^^^^^^^^ function or associated item not found in `RenderingFactory`
+    |
+   ::: gameplay_sim/src/factories/rendering_factory.rs:6:1
+    |
+6   | pub struct RenderingFactory;
+    | --------------------------- function or associated item `create_mesh_and_material` not found for this struct
+    |
+note: if you're trying to build a new `rendering_factory::RenderingFactory`, consider using `rendering_factory::RenderingFactory::new` which returns `rendering_factory::RenderingFactory`
+   --> gameplay_sim/src/factories/rendering_factory.rs:9:5
+    |
+9   |     pub fn new() -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+error[E0559]: variant `StandardRenderingPattern::NPCHead` has no field named `build_factor`
+   --> gameplay_sim/src/world/npc_lod.rs:170:54
+    |
+170 |                 &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
+    |                                                      ^^^^^^^^^^^^ `StandardRenderingPattern::NPCHead` does not have this field
+    |
+    = note: all struct fields are already assigned
+
+error[E0599]: no method named `get_counts` found for struct `EntityLimitManager` in the current scope
+  --> gameplay_sim/src/world/unified_factory_setup.rs:38:72
+   |
+38 |         let (buildings, vehicles, npcs, trees) = factory.limit_manager.get_counts();
+   |                                                                        ^^^^^^^^^^
+   |
+  ::: gameplay_sim/src/factories/entity_factory/limits.rs:5:1
+   |
+5  | pub struct EntityLimitManager {
+   | ----------------------------- method `get_counts` not found for this struct
+   |
+help: there is a method `counts` with a similar name
+   |
+38 -         let (buildings, vehicles, npcs, trees) = factory.limit_manager.get_counts();
+38 +         let (buildings, vehicles, npcs, trees) = factory.limit_manager.counts();
+   |
+
+error[E0369]: cannot multiply `(f32, f32)` by `(f32, f32)`
+   --> gameplay_sim/src/distance/unified_distance_calculator.rs:110:45
+    |
+110 |             let distance_squared = distance * distance;
+    |                                    -------- ^ -------- (f32, f32)
+    |                                    |
+    |                                    (f32, f32)
+
+error[E0308]: mismatched types
+   --> gameplay_sim/src/distance/unified_distance_calculator.rs:113:17
+    |
+113 |                 distance,
+    |                 ^^^^^^^^ expected `f32`, found `(f32, f32)`
+    |
+    = note: expected type `f32`
+              found tuple `(f32, f32)`
+
+error[E0609]: no field `world` on type `&config::GameConfig`
+  --> gameplay_sim/src/lod/modern_lod_system.rs:80:32
+   |
+80 |     let lod_distances = config.world.lod_distances;
+   |                                ^^^^^ unknown field
+   |
+   = note: available fields are: `max_entities`, `lod_distances`, `physics`
+
+error[E0609]: no field `npc` on type `&config::GameConfig`
+  --> gameplay_sim/src/lod/modern_lod_system.rs:89:29
+   |
+89 |     let intervals = &config.npc.update_intervals;
+   |                             ^^^ unknown field
+   |
+   = note: available fields are: `max_entities`, `lod_distances`, `physics`
+
+error[E0599]: no method named `update_frame` found for struct `bevy::prelude::ResMut<'_, compat::PerformanceCounters>` in the current scope
+   --> gameplay_sim/src/lod/modern_lod_system.rs:184:26
+    |
+184 |     performance_counters.update_frame(time.delta_secs());
+    |                          ^^^^^^^^^^^^ method not found in `ResMut<'_, PerformanceCounters>`
+
+error[E0599]: no method named `reset_per_frame_counters` found for struct `bevy::prelude::ResMut<'_, compat::PerformanceCounters>` in the current scope
+   --> gameplay_sim/src/lod/modern_lod_system.rs:204:26
+    |
+204 |     performance_counters.reset_per_frame_counters();
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^ method not found in `ResMut<'_, PerformanceCounters>`
+
+error[E0599]: no method named `update_frame` found for struct `test_utils::ResMut<'_, compat::PerformanceCounters>` in the current scope
+   --> gameplay_sim/src/lod/modern_lod_system.rs:184:26
+    |
+184 |     performance_counters.update_frame(time.delta_secs());
+    |                          ^^^^^^^^^^^^ method not found in `ResMut<'_, PerformanceCounters>`
+
+error[E0599]: no method named `reset_per_frame_counters` found for struct `test_utils::ResMut<'_, compat::PerformanceCounters>` in the current scope
+   --> gameplay_sim/src/lod/modern_lod_system.rs:204:26
+    |
+204 |     performance_counters.reset_per_frame_counters();
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^ method not found in `ResMut<'_, PerformanceCounters>`
+
+error[E0308]: mismatched types
+  --> gameplay_sim/src/bevy16_compat.rs:47:9
+   |
+41 | impl<'w, 's, D: QueryData, F: QueryFilter> QueryExt<'w, 's, D, F> for Query<'w, 's, D, F> 
+   |              - expected this type parameter
+...
+45 |     fn get_single(&self) -> Result<D::Item<'w>, bevy::ecs::query::QuerySingleError> {
+   |                             ------------------------------------------------------- expected `std::result::Result<<D as QueryData>::Item<'w>, QuerySingleError>` because of return type
+46 |         // Direct call to single() - API is the same in Bevy 0.16
+47 |         self.single()
+   |         ^^^^^^^^^^^^^ expected `Result<<D as QueryData>::Item<'_>, ...>`, found `Result<..., ...>`
+   |
+   = note: expected enum `std::result::Result<<D as QueryData>::Item<'w>, _>`
+              found enum `std::result::Result<<<D as QueryData>::ReadOnly as QueryData>::Item<'_>, _>`
+help: consider further restricting this bound
+   |
+41 | impl<'w, 's, D: QueryData<ReadOnly = D>, F: QueryFilter> QueryExt<'w, 's, D, F> for Query<'w, 's, D, F> 
+   |                          ++++++++++++++
+
+warning: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+  --> gameplay_sim/src/systems/human_behavior.rs:47:82
+   |
+47 |     let Ok((mut emotions, mut behavior, mut movement, animation)) = player_query.get_single_mut() else {
+   |                                                                                  ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:24:73
+   |
+24 |             if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                                                         ^^^^^^^^^^
+
+warning: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:66:85
+   |
+66 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                                                     ^^^^^^^^^^
+
+warning: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:81:85
+   |
+81 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                                                     ^^^^^^^^^^
+
+warning: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:96:85
+   |
+96 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                                                     ^^^^^^^^^^
+
+warning: use of deprecated method `test_utils::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+  --> gameplay_sim/src/systems/human_behavior.rs:47:82
+   |
+47 |     let Ok((mut emotions, mut behavior, mut movement, animation)) = player_query.get_single_mut() else {
+   |                                                                                  ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `test_utils::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:24:73
+   |
+24 |             if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                                                                         ^^^^^^^^^^
+
+warning: use of deprecated method `test_utils::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:66:85
+   |
+66 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                                                     ^^^^^^^^^^
+
+warning: use of deprecated method `test_utils::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:81:85
+   |
+81 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                                                     ^^^^^^^^^^
+
+warning: use of deprecated method `test_utils::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_sim/src/systems/interaction.rs:96:85
+   |
+96 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                                                     ^^^^^^^^^^
+
+error[E0609]: no field `id` on type `&game_core::components::RoadSpline`
+  --> gameplay_sim/src/systems/world/road_mesh.rs:26:48
+   |
+26 |     let cache_key = format!("road_{}_{}", road.id, road.control_points.len());
+   |                                                ^^ unknown field
+   |
+   = note: available fields are: `points`, `road_type`, `width`, `connections`
+
+error[E0609]: no field `control_points` on type `&game_core::components::RoadSpline`
+  --> gameplay_sim/src/systems/world/road_mesh.rs:26:57
+   |
+26 |     let cache_key = format!("road_{}_{}", road.id, road.control_points.len());
+   |                                                         ^^^^^^^^^^^^^^ unknown field
+   |
+   = note: available fields are: `points`, `road_type`, `width`, `connections`
+
+error[E0599]: no method named `direction_at` found for reference `&game_core::components::RoadSpline` in the current scope
+  --> gameplay_sim/src/systems/world/road_mesh.rs:63:30
+   |
+63 |         let direction = road.direction_at(t);
+   |                              ^^^^^^^^^^^^ method not found in `&RoadSpline`
+
+error[E0599]: no method named `direction_at` found for reference `&game_core::components::RoadSpline` in the current scope
+   --> gameplay_sim/src/systems/world/road_mesh.rs:152:30
+    |
+152 |         let direction = road.direction_at(t);
+    |                              ^^^^^^^^^^^^ method not found in `&RoadSpline`
+
+error[E0599]: no method named `direction_at` found for reference `&game_core::components::RoadSpline` in the current scope
+   --> gameplay_sim/src/systems/world/road_mesh.rs:204:30
+    |
+204 |         let direction = road.direction_at(t);
+    |                              ^^^^^^^^^^^^ method not found in `&RoadSpline`
+
+error[E0599]: no method named `direction_at` found for reference `&game_core::components::RoadSpline` in the current scope
+   --> gameplay_sim/src/systems/world/road_mesh.rs:285:30
+    |
+285 |         let direction = road.direction_at(t);
+    |                              ^^^^^^^^^^^^ method not found in `&RoadSpline`
+
+error[E0609]: no field `generated_chunks` on type `&mut std::collections::HashMap<std::string::String, bool>`
+  --> gameplay_sim/src/systems/world/road_generation.rs:39:22
+   |
+39 |             if cache.generated_chunks.contains(&(chunk_x, chunk_z)) {
+   |                      ^^^^^^^^^^^^^^^^ unknown field
+
+error[E0609]: no field `generated_chunks` on type `&mut std::collections::HashMap<std::string::String, bool>`
+  --> gameplay_sim/src/systems/world/road_generation.rs:42:19
+   |
+42 |             cache.generated_chunks.insert((chunk_x, chunk_z));
+   |                   ^^^^^^^^^^^^^^^^ unknown field
+
+warning: use of deprecated method `bevy::prelude::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+   --> gameplay_sim/src/systems/world/map_system.rs:188:48
+    |
+188 |                 commands.entity(*chunk_entity).despawn_recursive();
+    |                                                ^^^^^^^^^^^^^^^^^
+
+error[E0277]: the trait bound `ChunkCoord: std::default::Default` is not satisfied
+  --> gameplay_sim/src/systems/world/unified_world.rs:65:5
+   |
+58 | #[derive(Default)]
+   |          ------- in this derive macro expansion
+...
+65 |     pub coord: ChunkCoord,
+   |     ^^^^^^^^^^^^^^^^^^^^^ the trait `std::default::Default` is not implemented for `ChunkCoord`
+
+warning: use of deprecated method `bevy::prelude::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+   --> gameplay_sim/src/systems/world/unified_world.rs:232:41
+    |
+232 |                 commands.entity(entity).despawn_recursive();
+    |                                         ^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `bevy::prelude::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+  --> gameplay_sim/src/systems/world/npc_spawn.rs:77:41
+   |
+77 |                 commands.entity(entity).despawn_recursive();
+   |                                         ^^^^^^^^^^^^^^^^^
+
+error[E0609]: no field `generated_chunks` on type `&mut std::collections::HashMap<test_utils::String, bool>`
+  --> gameplay_sim/src/systems/world/road_generation.rs:39:22
+   |
+39 |             if cache.generated_chunks.contains(&(chunk_x, chunk_z)) {
+   |                      ^^^^^^^^^^^^^^^^ unknown field
+
+error[E0609]: no field `generated_chunks` on type `&mut std::collections::HashMap<test_utils::String, bool>`
+  --> gameplay_sim/src/systems/world/road_generation.rs:42:19
+   |
+42 |             cache.generated_chunks.insert((chunk_x, chunk_z));
+   |                   ^^^^^^^^^^^^^^^^ unknown field
+
+warning: use of deprecated method `test_utils::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+   --> gameplay_sim/src/systems/world/map_system.rs:188:48
+    |
+188 |                 commands.entity(*chunk_entity).despawn_recursive();
+    |                                                ^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `test_utils::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+   --> gameplay_sim/src/systems/world/unified_world.rs:232:41
+    |
+232 |                 commands.entity(entity).despawn_recursive();
+    |                                         ^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated method `test_utils::EntityCommands::<'a>::despawn_recursive`: Use entity.despawn(), which now automatically despawns recursively.
+  --> gameplay_sim/src/systems/world/npc_spawn.rs:77:41
+   |
+77 |                 commands.entity(entity).despawn_recursive();
+   |                                         ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::bevy16_compat::EntityCommandsExt`
+  --> gameplay_sim/src/systems/world/npc_spawn.rs:11:5
+   |
+11 | use crate::bevy16_compat::EntityCommandsExt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::bevy16_compat::QueryExt`
+ --> gameplay_sim/src/systems/human_behavior.rs:4:5
+  |
+4 | use crate::bevy16_compat::QueryExt;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::bevy16_compat::EntityCommandsExt`
+  --> gameplay_sim/src/systems/world/unified_world.rs:11:5
+   |
+11 | use crate::bevy16_compat::EntityCommandsExt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::bevy16_compat::QueryExt`
+ --> gameplay_sim/src/systems/interaction.rs:4:5
+  |
+4 | use crate::bevy16_compat::QueryExt;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::bevy16_compat::EntityCommandsExt`
+  --> gameplay_sim/src/systems/world/map_system.rs:11:5
+   |
+11 | use crate::bevy16_compat::EntityCommandsExt;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: value assigned to `target_linear_velocity` is never read
+  --> gameplay_sim/src/movement/player.rs:51:13
+   |
+51 |     let mut target_linear_velocity = Vec3::ZERO;
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+   = note: `#[warn(unused_assignments)]` on by default
+
+error[E0004]: non-exhaustive patterns: `IntersectionType::CrossRoads` and `IntersectionType::Roundabout` not covered
+   --> gameplay_sim/src/world/road_mesh.rs:381:11
+    |
+381 |     match intersection.intersection_type {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ patterns `IntersectionType::CrossRoads` and `IntersectionType::Roundabout` not covered
+    |
+note: `IntersectionType` defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/world.rs:355:1
+    |
+355 | pub enum IntersectionType {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+356 |     TJunction,
+357 |     CrossRoads,
+    |     ---------- not covered
+358 |     Roundabout,
+    |     ---------- not covered
+    = note: the matched value is of type `IntersectionType`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern, a match arm with multiple or-patterns as shown, or multiple match arms
+    |
+385 ~         IntersectionType::HighwayOnramp => generate_onramp_mesh(intersection, connected_roads),
+386 ~         IntersectionType::CrossRoads | IntersectionType::Roundabout => todo!(),
+    |
+
+warning: unused variable: `service`
+   --> gameplay_sim/src/services/ground_detection.rs:171:13
+    |
+171 |         let service = GroundDetectionService::default();
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_service`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+error[E0507]: cannot move out of `c.state` which is behind a shared reference
+   --> gameplay_sim/src/world/unified_world.rs:202:45
+    |
+202 |             self.chunks.get(&coord).map(|c| c.state),
+    |                                             ^^^^^^^ move occurs because `c.state` has type `game_core::components::ChunkState`, which does not implement the `Copy` trait
+    |
+help: consider cloning the value if the performance cost is acceptable
+    |
+202 |             self.chunks.get(&coord).map(|c| c.state.clone()),
+    |                                                    ++++++++
+
+error[E0004]: non-exhaustive patterns: `ContentLayer::Landmarks` not covered
+   --> gameplay_sim/src/world/unified_lod.rs:235:11
+    |
+235 |     match layer {
+    |           ^^^^^ pattern `ContentLayer::Landmarks` not covered
+    |
+note: `ContentLayer` defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/world.rs:365:1
+    |
+365 | pub enum ContentLayer {
+    | ^^^^^^^^^^^^^^^^^^^^^
+...
+370 |     Landmarks,
+    |     --------- not covered
+    = note: the matched value is of type `ContentLayer`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+260 ~         },
+261 +         ContentLayer::Landmarks => todo!()
+    |
+
+warning: unused variable: `config`
+  --> gameplay_sim/src/world/unified_factory_setup.rs:17:61
+   |
+17 | pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConfig>) {
+   |                                                             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+error[E0004]: non-exhaustive patterns: `game_core::components::VehicleType::Car` not covered
+   --> gameplay_sim/src/vehicles/lod_manager.rs:142:11
+    |
+142 |     match vehicle_state.vehicle_type {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^ pattern `game_core::components::VehicleType::Car` not covered
+    |
+note: `game_core::components::VehicleType` defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/vehicles.rs:260:1
+    |
+260 | pub enum VehicleType {
+    | ^^^^^^^^^^^^^^^^^^^^
+261 |     Car,       // Generic car for compatibility
+    |     --- not covered
+    = note: the matched value is of type `game_core::components::VehicleType`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+252 ~         },
+253 +         game_core::components::VehicleType::Car => todo!()
+    |
+
+error[E0004]: non-exhaustive patterns: `game_core::components::VehicleType::Car` not covered
+   --> gameplay_sim/src/vehicles/lod_manager.rs:266:31
+    |
+266 |     let (size, color) = match vehicle_state.vehicle_type {
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^ pattern `game_core::components::VehicleType::Car` not covered
+    |
+note: `game_core::components::VehicleType` defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/vehicles.rs:260:1
+    |
+260 | pub enum VehicleType {
+    | ^^^^^^^^^^^^^^^^^^^^
+261 |     Car,       // Generic car for compatibility
+    |     --- not covered
+    = note: the matched value is of type `game_core::components::VehicleType`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+270 ~         VehicleType::F16 => (Vec3::new(15.0, 1.6, 1.5), Color::srgb(0.35, 0.37, 0.40)),
+271 ~         game_core::components::VehicleType::Car => todo!(),
+    |
+
+error[E0004]: non-exhaustive patterns: `game_core::components::VehicleType::Car` not covered
+   --> gameplay_sim/src/vehicles/lod_manager.rs:292:22
+    |
+292 |     let size = match vehicle_state.vehicle_type {
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^ pattern `game_core::components::VehicleType::Car` not covered
+    |
+note: `game_core::components::VehicleType` defined here
+   --> /Users/bradyjeong/Documents/Projects/Amp/gta4/gta_game/game_core/src/components/vehicles.rs:260:1
+    |
+260 | pub enum VehicleType {
+    | ^^^^^^^^^^^^^^^^^^^^
+261 |     Car,       // Generic car for compatibility
+    |     --- not covered
+    = note: the matched value is of type `game_core::components::VehicleType`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+295 ~         VehicleType::F16 => Vec3::new(15.0, 1.6, 1.5),
+296 ~         game_core::components::VehicleType::Car => todo!(),
+    |
+
+warning: unused variable: `entity_factory`
+  --> gameplay_sim/src/setup/unified_vehicles.rs:92:5
+   |
+92 |     entity_factory: &mut UnifiedEntityFactory,
+   |     ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity_factory`
+
+warning: unused variable: `entity_factory`
+   --> gameplay_sim/src/setup/unified_vehicles.rs:205:5
+    |
+205 |     entity_factory: &mut UnifiedEntityFactory,
+    |     ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity_factory`
+
+warning: unused variable: `entity_factory`
+   --> gameplay_sim/src/setup/unified_vehicles.rs:316:5
+    |
+316 |     entity_factory: &mut UnifiedEntityFactory,
+    |     ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity_factory`
+
+warning: unused variable: `config`
+  --> gameplay_sim/src/world/unified_factory_setup.rs:17:61
+   |
+17 | pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConfig>) {
+   |                                                             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: variable does not need to be mutable
+  --> gameplay_sim/src/bevy16_compat.rs:14:13
+   |
+14 |         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, bevy::render::render_asset::RenderAssetUsages::default());
+   |             ----^^^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: variable does not need to be mutable
+   --> gameplay_sim/src/systems/human_behavior.rs:111:10
+    |
+111 |     for (mut behavior, mut animation) in behavior_query.iter_mut() {
+    |          ----^^^^^^^^
+    |          |
+    |          help: remove this `mut`
+
+warning: unreachable pattern
+   --> gameplay_sim/src/systems/input/input_manager.rs:117:13
+    |
+117 |             _ => {}
+    |             ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> gameplay_sim/src/systems/input/input_manager.rs:117:13
+    |
+90  |             GameState::Walking => {
+    |             ------------------ matches some of the same values
+...
+101 |             GameState::Driving => {
+    |             ------------------ matches some of the same values
+...
+104 |             GameState::Flying => {
+    |             ----------------- matches some of the same values
+...
+108 |             GameState::Jetting => {
+    |             ------------------ matches some of the same values
+...
+117 |             _ => {}
+    |             ^ collectively making this unreachable
+    = note: `#[warn(unreachable_patterns)]` on by default
+
+warning: unreachable pattern
+   --> gameplay_sim/src/systems/input/input_manager.rs:264:9
+    |
+264 |         _ => {}
+    |         ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> gameplay_sim/src/systems/input/input_manager.rs:264:9
+    |
+237 |         GameState::Walking => {
+    |         ------------------ matches some of the same values
+...
+244 |         GameState::Driving => {
+    |         ------------------ matches some of the same values
+...
+247 |         GameState::Flying => {
+    |         ----------------- matches some of the same values
+...
+251 |         GameState::Jetting => {
+    |         ------------------ matches some of the same values
+...
+264 |         _ => {}
+    |         ^ collectively making this unreachable
+
+warning: variable does not need to be mutable
+   --> gameplay_sim/src/systems/input/control_manager.rs:365:5
+    |
+365 |     mut control_manager: ResMut<ControlManager>,
+    |     ----^^^^^^^^^^^^^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: unused variable: `transform`
+   --> gameplay_sim/src/systems/input/control_manager.rs:394:18
+    |
+394 |     for (entity, transform) in npc_query.iter() {
+    |                  ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_transform`
+
+warning: unused variable: `player_entity`
+  --> gameplay_sim/src/systems/interaction.rs:24:24
+   |
+24 |             if let Ok((player_entity, player_transform)) = player_query.get_single() {
+   |                        ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_player_entity`
+
+warning: unused variable: `player_transform`
+  --> gameplay_sim/src/systems/interaction.rs:66:51
+   |
+66 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                   ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_player_transform`
+
+warning: unused variable: `player_transform`
+  --> gameplay_sim/src/systems/interaction.rs:81:51
+   |
+81 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                   ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_player_transform`
+
+warning: unused variable: `player_transform`
+  --> gameplay_sim/src/systems/interaction.rs:96:51
+   |
+96 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                                   ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_player_transform`
+
+warning: variable does not need to be mutable
+  --> gameplay_sim/src/systems/interaction.rs:66:47
+   |
+66 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                               ----^^^^^^^^^^^^^^^^
+   |                                               |
+   |                                               help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> gameplay_sim/src/systems/interaction.rs:81:47
+   |
+81 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                               ----^^^^^^^^^^^^^^^^
+   |                                               |
+   |                                               help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> gameplay_sim/src/systems/interaction.rs:96:47
+   |
+96 |                     if let Ok((player_entity, mut player_transform)) = player_query.get_single() {
+   |                                               ----^^^^^^^^^^^^^^^^
+   |                                               |
+   |                                               help: remove this `mut`
+
+warning: value assigned to `target_linear_velocity` is never read
+  --> gameplay_sim/src/systems/movement/player.rs:48:13
+   |
+48 |     let mut target_linear_velocity = Vec3::ZERO;
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+
+warning: variable does not need to be mutable
+   --> gameplay_sim/src/systems/world/npc.rs:110:39
+    |
+110 |     for (mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
+    |                                       ----^^^
+    |                                       |
+    |                                       help: remove this `mut`
+
+warning: unused variable: `commands`
+  --> gameplay_sim/src/systems/world/layered_generation.rs:48:9
+   |
+48 |     mut commands: Commands,
+   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+warning: variable does not need to be mutable
+  --> gameplay_sim/src/systems/world/layered_generation.rs:48:5
+   |
+48 |     mut commands: Commands,
+   |     ----^^^^^^^^
+   |     |
+   |     help: remove this `mut`
+
+warning: unused variable: `coord`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:105:24
+    |
+105 | fn has_roads_generated(coord: ChunkCoord) -> bool {
+    |                        ^^^^^ help: if this is intentional, prefix it with an underscore: `_coord`
+
+warning: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:115:5
+    |
+115 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+warning: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:116:5
+    |
+116 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+warning: unused variable: `coord`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:156:28
+    |
+156 | fn has_buildings_generated(coord: ChunkCoord) -> bool {
+    |                            ^^^^^ help: if this is intentional, prefix it with an underscore: `_coord`
+
+warning: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:165:5
+    |
+165 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+warning: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:166:5
+    |
+166 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+warning: unused variable: `coord`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:209:29
+    |
+209 | fn has_vegetation_generated(coord: ChunkCoord) -> bool {
+    |                             ^^^^^ help: if this is intentional, prefix it with an underscore: `_coord`
+
+warning: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:218:5
+    |
+218 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+warning: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/layered_generation.rs:219:5
+    |
+219 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+warning: unused variable: `commands`
+  --> gameplay_sim/src/systems/world/unified_lod.rs:89:9
+   |
+89 |     mut commands: Commands,
+   |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+warning: unused variable: `time`
+  --> gameplay_sim/src/systems/world/unified_lod.rs:93:5
+   |
+93 |     time: Res<Time>,
+   |     ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+
+warning: variable does not need to be mutable
+  --> gameplay_sim/src/systems/world/unified_lod.rs:89:5
+   |
+89 |     mut commands: Commands,
+   |     ----^^^^^^^^
+   |     |
+   |     help: remove this `mut`
+
+warning: unused variable: `entity`
+  --> gameplay_sim/src/systems/world/npc_lod.rs:46:14
+   |
+46 |         for (entity, mut npc_state, transform, mut visibility) in npc_query.iter_mut() {
+   |              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+warning: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/npc_lod.rs:135:5
+    |
+135 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+warning: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/npc_lod.rs:136:5
+    |
+136 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+warning: unused variable: `game_config`
+  --> gameplay_sim/src/systems/world/npc_spawn.rs:23:5
+   |
+23 |     game_config: Res<GameConfig>,
+   |     ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_game_config`
+
+warning: unused variable: `entity`
+  --> gameplay_sim/src/systems/world/vegetation_lod.rs:61:14
+   |
+61 |         for (entity, mut veg_lod, transform, mut visibility) in vegetation_query.iter_mut() {
+   |              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+warning: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:114:9
+    |
+114 |     mut meshes: ResMut<Assets<Mesh>>,
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+warning: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:115:9
+    |
+115 |     mut materials: ResMut<Assets<StandardMaterial>>,
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+warning: variable does not need to be mutable
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:114:5
+    |
+114 |     mut meshes: ResMut<Assets<Mesh>>,
+    |     ----^^^^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:115:5
+    |
+115 |     mut materials: ResMut<Assets<StandardMaterial>>,
+    |     ----^^^^^^^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: unused variable: `meshes`
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:166:5
+    |
+166 |     meshes: &mut ResMut<Assets<Mesh>>,
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_meshes`
+
+warning: unused variable: `materials`
+   --> gameplay_sim/src/systems/world/vegetation_lod.rs:167:5
+    |
+167 |     materials: &mut ResMut<Assets<StandardMaterial>>,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_materials`
+
+warning: unused variable: `time`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:114:5
+    |
+114 |     time: Res<Time>,
+    |     ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+
+warning: unused variable: `entity`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:165:10
+    |
+165 |     for (entity, cullable, vehicle_state) in vehicle_query.iter() {
+    |          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+warning: unused variable: `vehicle_state`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:165:28
+    |
+165 |     for (entity, cullable, vehicle_state) in vehicle_query.iter() {
+    |                            ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vehicle_state`
+
+warning: unused variable: `target_lod`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:167:13
+    |
+167 |         let target_lod = if cullable.last_distance < 100.0 {
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_target_lod`
+
+warning: unused variable: `entity`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:183:10
+    |
+183 |     for (entity, cullable) in building_query.iter() {
+    |          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+warning: unused variable: `target_lod`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:185:13
+    |
+185 |         let target_lod = calculate_building_lod(cullable.last_distance);
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_target_lod`
+
+warning: unused variable: `entity`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:194:10
+    |
+194 |     for (entity, cullable) in npc_query.iter() {
+    |          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+warning: unused variable: `target_lod`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:196:13
+    |
+196 |         let target_lod = if cullable.last_distance < 50.0 {
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_target_lod`
+
+warning: unused variable: `active_pos`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:270:13
+    |
+270 |         let active_pos = active_transform.translation;
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_active_pos`
+
+warning: unused variable: `cleanup_distance`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:271:13
+    |
+271 |         let cleanup_distance = 2000.0; // Very conservative cleanup distance
+    |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cleanup_distance`
+
+warning: unused variable: `entity`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:273:13
+    |
+273 |         for entity in cullable_query.iter() {
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+warning: unused variable: `commands`
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:265:9
+    |
+265 |     mut commands: Commands,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+warning: variable does not need to be mutable
+   --> gameplay_sim/src/systems/world/unified_distance_culling.rs:265:5
+    |
+265 |     mut commands: Commands,
+    |     ----^^^^^^^^
+    |     |
+    |     help: remove this `mut`
+
+warning: unused variable: `safe_position`
+   --> gameplay_sim/src/factories/generic_bundle.rs:105:13
+    |
+105 |         let safe_position = self.validate_position(position)?;
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_safe_position`
+
+warning: unused variable: `safe_position`
+   --> gameplay_sim/src/factories/generic_bundle.rs:137:13
+    |
+137 |         let safe_position = self.validate_position(position)?;
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_safe_position`
+
+warning: unused variable: `safe_position`
+   --> gameplay_sim/src/factories/generic_bundle.rs:169:13
+    |
+169 |         let safe_position = self.validate_position(position)?;
+    |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_safe_position`
+
+Some errors have detailed explanations: E0004, E0026, E0027, E0061, E0116, E0277, E0308, E0369, E0507...
+For more information about an error, try `rustc --explain E0004`.
+warning: `gameplay_sim` (lib) generated 170 warnings
+error: could not compile `gameplay_sim` (lib) due to 92 previous errors; 170 warnings emitted
+warning: build failed, waiting for other jobs to finish...
+Some errors have detailed explanations: E0004, E0026, E0027, E0061, E0116, E0277, E0308, E0369, E0432...
+warning: `gameplay_sim` (lib test) generated 171 warnings (161 duplicates)
+error: could not compile `gameplay_sim` (lib test) due to 93 previous errors; 171 warnings emitted

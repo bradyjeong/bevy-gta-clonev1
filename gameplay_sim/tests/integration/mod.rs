@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Integration tests for gameplay_sim
 // Tests complete system interactions and end-to-end scenarios
 

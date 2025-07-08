@@ -5,6 +5,30 @@ use crate::components::placeholders::*;
 // Note: These will be moved to appropriate crates during domain separation
 // Temporarily commenting out until systems are migrated
 
+/// Bundle error type for entity factory operations
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BundleError {
+    NotImplemented,
+    InvalidConfiguration,
+    MissingComponent,
+    InvalidPhysicsConfiguration,
+    InvalidMeshConfiguration,
+}
+
+impl std::fmt::Display for BundleError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BundleError::NotImplemented => write!(f, "Bundle type not implemented"),
+            BundleError::InvalidConfiguration => write!(f, "Invalid bundle configuration"),
+            BundleError::MissingComponent => write!(f, "Missing required component"),
+            BundleError::InvalidPhysicsConfiguration => write!(f, "Invalid physics configuration"),
+            BundleError::InvalidMeshConfiguration => write!(f, "Invalid mesh configuration"),
+        }
+    }
+}
+
+impl std::error::Error for BundleError {}
+
 /// Bundle for entities that need to be visible and inherit visibility from parents
 #[derive(Bundle)]
 pub struct VisibleBundle {

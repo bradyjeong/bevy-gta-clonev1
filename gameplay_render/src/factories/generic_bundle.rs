@@ -2,10 +2,10 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use game_core::config::*;
 use game_core::components::*;
-use gameplay_sim::distance::MovementTracker;
+use gameplay_sim::components::MovementTracker;
 use game_core::bundles::*;
-use gameplay_sim::world::unified_world::UnifiedChunkEntity;
-use gameplay_sim::world::unified_distance_culling::UnifiedCullable;
+use game_core::components::UnifiedChunkEntity;
+use game_core::components::UnifiedCullable;
 
 /// Type alias for old NPCBehavior to maintain compatibility
 pub type NPCBehavior = NPCBehaviorComponent;
@@ -93,6 +93,7 @@ impl BundleSpec for VehicleBundleSpec {
             VehicleType::SuperCar => &config.vehicles.super_car,
             VehicleType::Helicopter => &config.vehicles.helicopter,
             VehicleType::F16 => &config.vehicles.f16,
+            VehicleType::Car => &config.vehicles.basic_car,
         };
         
         // Apply overrides with validation
@@ -305,6 +306,9 @@ impl BundleSpec for BuildingBundleSpec {
                 building_type: self.building_type,
                 height: size.y,
                 scale: size,
+                current_occupants: Some(0),
+                max_occupants: Some((size.y * size.x * 0.1) as u32),
+                spawn_time: Some(0.0),
             },
             transform,
             visibility: Visibility::Inherited,
@@ -691,14 +695,14 @@ impl GenericBundleFactory {
     /// Create unified chunk bundle
     pub fn unified_chunk(
         chunk_coord: (i32, i32),
-        layer: crate::systems::world::unified_world::ContentLayer,
+        layer: gameplay_sim::world::unified_world::ContentLayer,
         content_type: ContentType,
         position: Vec3,
         _max_distance: f32,
     ) -> UnifiedChunkBundle {
         UnifiedChunkBundle {
             chunk_entity: UnifiedChunkEntity { 
-                coord: crate::systems::world::unified_world::ChunkCoord::new(chunk_coord.0, chunk_coord.1), 
+                coord: game_core::components::ChunkCoord::new(chunk_coord.0, chunk_coord.1), 
                 layer 
             },
             dynamic_content: DynamicContent { content_type },

@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use game_core::prelude::*;
 
 // Universal spawn validation system to prevent entity overlap and collision issues
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SpawnableType {
     Vehicle,
     Aircraft,

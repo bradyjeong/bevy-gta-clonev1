@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use std::cell::RefCell;
 use game_core::prelude::*;
+use crate::bevy16_compat::QueryExt;
+use rand::Rng;
 
 thread_local! {
     static BEHAVIOR_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
@@ -14,7 +16,7 @@ pub struct HumanEmotions {
     pub last_mood_change: f32,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Mood {
     Calm,
     Excited,
@@ -92,7 +94,7 @@ pub fn human_emotional_state_system(
     };
     
     // Update movement patterns based on mood
-    movement.base_walk_speed = match emotions.mood {
+    movement.max_speed = match emotions.mood {
         Mood::Confident => 1.4,
         Mood::Excited => 1.6,
         Mood::Anxious => 0.8,
@@ -112,7 +114,8 @@ pub fn human_fidget_system(
         
         if animation.next_fidget_time <= 0.0 {
             // Trigger a fidget animation
-            animation.is_fidgeting = true;
+            // Fidgeting is reflected in higher step frequency
+            animation.step_frequency = animation.step_frequency * 1.2;
             
             // Set next fidget time based on confidence level
             let base_fidget_time = match behavior.confidence_level {

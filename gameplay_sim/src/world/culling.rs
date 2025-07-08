@@ -12,7 +12,7 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::{Cullable, ActiveEntity, CullingSettings};
+use game_core::prelude::{Cullable, ActiveEntity, CullingSettings};
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance_squared};
 
 #[derive(Default)]
@@ -43,11 +43,11 @@ pub fn distance_culling_system(
     for (entity, mut cullable, mut visibility, transform) in cullable_query.iter_mut() {
         // Use distance_squared for more efficient comparison
         let distance_squared = get_cached_distance_squared(
-            active_entity,
-            entity,
-            player_pos,
-            transform.translation,
             &mut distance_cache,
+            entity,
+            active_entity,
+            transform.translation,
+            player_pos,
         );
         let max_distance_squared = cullable.max_distance * cullable.max_distance;
         

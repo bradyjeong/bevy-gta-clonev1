@@ -8,9 +8,11 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
+use crate::bevy16_compat::EntityCommandsExt;
 use bevy::render::mesh::Mesh;
 use bevy::render::render_asset::RenderAssetUsages;
 use std::collections::HashMap;
+use crate::compat::{TransformBundle, VisibilityBundle};
 use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
 use game_core::prelude::*;

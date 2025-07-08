@@ -13,7 +13,7 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{Car, SuperCar, ActiveEntity, DrivingMode};
+use game_core::prelude::{Car, SuperCar, ActiveEntity, DrivingMode};
 use crate::systems::input::{ControlManager, ControlAction};
 use crate::systems::physics_utils::PhysicsUtilities;
 use crate::config::GameConfig;
@@ -128,7 +128,7 @@ pub fn supercar_physics_system(
     velocity.angvel = target_angular_velocity;
     
     // Apply unified physics safety systems
-    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::validate_velocity(&mut velocity, &*config);
     PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 1.0);
     
     // Track 0-60 time

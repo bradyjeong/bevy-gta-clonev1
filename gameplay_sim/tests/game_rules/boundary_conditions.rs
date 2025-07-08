@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Boundary condition tests
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;

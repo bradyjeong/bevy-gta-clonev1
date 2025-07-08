@@ -12,8 +12,9 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
-use crate::constants::*;
+use game_core::prelude::*;
+// TEMP_PHASE_6_BRIDGE - Use game_core constants directly
+use game_core::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
 
 use crate::systems::world::road_network::{RoadSpline, RoadNetwork};
 use crate::systems::world::road_generation::is_on_road_spline;
@@ -255,16 +256,16 @@ fn spawn_building(
     use crate::factories::entity_factory_unified::UnifiedEntityFactory;
     use crate::config::GameConfig;
     
-    let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
+    let mut factory = UnifiedEntityFactory::with_config(game_core::config::GameConfig::default());
     let current_time = 0.0; // Placeholder time
     
-    match factory.spawn_building_consolidated(commands, meshes, materials, building.position, current_time) {
-        Ok(entity) => {
+    match factory.spawn_entity_consolidated(commands, meshes, materials, ContentType::Building, building.position, None, &[], current_time) {
+        Ok(Some(entity)) => {
             // Add map-specific components to maintain compatibility
             commands.entity(entity).insert(Building);
             entity
         }
-        Err(_) => {
+        Ok(None) | Err(_) => {
             // Fallback to empty entity if spawn fails
             commands.spawn((
                 Transform::from_translation(building.position),

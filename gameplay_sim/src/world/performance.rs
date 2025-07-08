@@ -11,7 +11,7 @@
 
 use bevy::prelude::*;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
-use crate::components::{PerformanceStats, Cullable};
+use game_core::prelude::{PerformanceStats, Cullable};
 
 pub fn performance_monitoring_system(
     time: Res<Time>,

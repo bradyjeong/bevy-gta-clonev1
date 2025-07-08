@@ -10,17 +10,13 @@
 use bevy::prelude::*;
 use std::collections::HashSet;
 use game_core::prelude::*;
-use crate::systems::world::unified_world::{WorldManager, ChunkCoord};
+use crate::systems::world::unified_world::{WorldManager, ChunkCoord, UNIFIED_CHUNK_SIZE};
+use crate::compat::{TransformBundle, VisibilityBundle};
+
+// Re-export canonical types from game_core
+pub use game_core::world::ContentLayer;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
-pub enum ContentLayer {
-    Roads,
-    Buildings,
-    Vegetation,
-    Landmarks,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ChunkState {
     Empty,
     Loading,
@@ -119,13 +115,13 @@ fn generate_roads_for_chunk(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let chunk_center = coord.to_world_pos();
+    let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     
     // Simple road generation - just create a basic road entity
     let road_entity = commands.spawn((
         TransformBundle::from_transform(Transform::from_translation(chunk_center)),
         VisibilityBundle::default(),
-        RoadEntity { id: coord.x as u32 * 1000 + coord.z as u32 },
+        RoadEntity { road_id: coord.x as u32 * 1000 + coord.z as u32 },
         DynamicContent {
             content_type: ContentType::Road,
         },
@@ -169,7 +165,7 @@ fn generate_buildings_for_chunk(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let chunk_center = coord.to_world_pos();
+    let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     
     // Simple building generation
     let building_entity = commands.spawn((
@@ -222,7 +218,7 @@ fn generate_vegetation_for_chunk(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    let chunk_center = coord.to_world_pos();
+    let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     
     // Simple vegetation generation
     for i in 0..5 {

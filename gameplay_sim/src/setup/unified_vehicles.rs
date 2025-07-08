@@ -1,15 +1,15 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
-use crate::bundles::DynamicVehicleBundle;
+use game_core::prelude::*;
+use game_core::bundles::DynamicVehicleBundle;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::road_network::RoadNetwork;
-use crate::systems::world::unified_distance_culling::UnifiedCullable;
-use crate::systems::distance_cache::MovementTracker;
+// Using game_core UnifiedCullable instead of local one
+use game_core::prelude::MovementTracker;
 use crate::setup::vehicles::BugattiColorScheme;
-use crate::config::GameConfig;
+use game_core::config::GameConfig;
 
 /// Unified vehicle setup system that replaces all previous vehicle setup functions
 /// - Replaces setup_starter_vehicles (src/setup/starter_vehicles.rs)
@@ -32,7 +32,8 @@ pub fn setup_initial_vehicles_unified(
     config: Res<GameConfig>,
 ) {
     // Initialize UnifiedEntityFactory for consistent spawning
-    let mut entity_factory = UnifiedEntityFactory::with_config(config.clone());
+    let mut entity_factory = UnifiedEntityFactory::new();
+    entity_factory.configure_from_config(&*config);
     let current_time = 0.0; // Initial spawn time
     
     // Track all spawned vehicles for collision detection
@@ -48,6 +49,7 @@ pub fn setup_initial_vehicles_unified(
         &mut entity_factory,
         &mut existing_content,
         current_time,
+        &config,
     );
     
     // 2. SUPERCAR (1 Bugatti from simple_vehicles.rs)
@@ -60,6 +62,7 @@ pub fn setup_initial_vehicles_unified(
         &mut entity_factory,
         &mut existing_content,
         current_time,
+        &config,
     );
     
     // 3. LUXURY CARS (5-8 cars with proper validation - from luxury_cars)
@@ -72,6 +75,7 @@ pub fn setup_initial_vehicles_unified(
         &mut entity_factory,
         &mut existing_content,
         current_time,
+        &config,
     );
     
     info!("Unified vehicle setup complete - Spawned {} starter vehicles, {} supercar, {} luxury cars", 
@@ -88,6 +92,7 @@ fn setup_starter_vehicles_unified(
     entity_factory: &mut UnifiedEntityFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
+    config: &Res<GameConfig>,
 ) -> Vec<Entity> {
     let mut spawned_vehicles = Vec::new();
     
@@ -113,11 +118,11 @@ fn setup_starter_vehicles_unified(
         let vehicle_y = ground_height + 0.5; // Vehicle collider half-height above ground
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
         
-        // Validate position using UnifiedEntityFactory
-        let validated_position = match entity_factory.validate_position(final_position) {
-            Ok(pos) => pos,
-            Err(e) => {
-                warn!("Failed to validate starter vehicle {} position: {:?}", i, e);
+        // Validate position using ground service
+        let validated_position = match ground_service.as_ref().find_ground_at(final_position) {
+            Some(ground_y) => Vec3::new(final_position.x, ground_y + 1.0, final_position.z),
+            None => {
+                warn!("Failed to find ground for starter vehicle {} at position: {:?}", i, final_position);
                 continue;
             }
         };
@@ -136,10 +141,10 @@ fn setup_starter_vehicles_unified(
                 rigid_body: RigidBody::Dynamic,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
-                entity_factory.config.physics.vehicle_group(),
-                Group::from_bits_truncate(entity_factory.config.physics.static_group |
-                entity_factory.config.physics.vehicle_group |
-                entity_factory.config.physics.character_group)
+                Group::from_bits_truncate(config.physics.vehicle_group),
+                Group::from_bits_truncate(config.physics.static_group |
+                config.physics.vehicle_group |
+                config.physics.character_group)
                 ),
                 velocity: Velocity::default(),
                 damping: Damping { linear_damping: 1.0, angular_damping: 5.0 },
@@ -162,9 +167,9 @@ fn setup_starter_vehicles_unified(
         // Use spawn validator for safe positioning
         if let Some(safe_position) = SpawnValidator::spawn_entity_safely(
             spawn_registry,
+            vehicle_entity,
             validated_position,
             SpawnableType::Vehicle,
-            vehicle_entity,
         ) {
             // Update transform if position was adjusted
             if safe_position != validated_position {
@@ -200,6 +205,7 @@ fn setup_supercar_unified(
     entity_factory: &mut UnifiedEntityFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
+    config: &Res<GameConfig>,
 ) -> Option<Entity> {
     // Safe supercar position (away from other vehicles and player spawn)
     let preferred_position = Vec3::new(35.0, 0.0, 5.0);
@@ -210,11 +216,11 @@ fn setup_supercar_unified(
     let vehicle_y = ground_height + 0.5;
     let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
     
-    // Validate position
-    let validated_position = match entity_factory.validate_position(final_position) {
-        Ok(pos) => pos,
-        Err(e) => {
-            warn!("Failed to validate supercar position: {:?}", e);
+    // Validate position using ground service
+    let validated_position = match ground_service.as_ref().find_ground_at(final_position) {
+        Some(ground_y) => Vec3::new(final_position.x, ground_y + 1.0, final_position.z),
+        None => {
+            warn!("Failed to find ground for supercar at position: {:?}", final_position);
             return None;
         }
     };
@@ -234,10 +240,10 @@ fn setup_supercar_unified(
             rigid_body: RigidBody::Dynamic,
             collider: Collider::cuboid(1.1, 0.5, 2.4), // Slightly larger than basic car
             collision_groups: CollisionGroups::new(
-            entity_factory.config.physics.vehicle_group(),
-            Group::from_bits_truncate(entity_factory.config.physics.static_group |
-            entity_factory.config.physics.vehicle_group |
-            entity_factory.config.physics.character_group)
+            Group::from_bits_truncate(config.physics.vehicle_group),
+            Group::from_bits_truncate(config.physics.static_group |
+            config.physics.vehicle_group |
+            config.physics.character_group)
             ),
             velocity: Velocity::default(),
             damping: Damping { linear_damping: 1.0, angular_damping: 5.0 },
@@ -277,9 +283,9 @@ fn setup_supercar_unified(
     // Register with spawn validator
     if let Some(safe_position) = SpawnValidator::spawn_entity_safely(
         spawn_registry,
+        supercar_entity,
         validated_position,
         SpawnableType::Vehicle,
-        supercar_entity,
     ) {
         if safe_position != validated_position {
             if let Ok(mut entity_commands) = commands.get_entity(supercar_entity) {
@@ -310,6 +316,7 @@ fn setup_luxury_cars_unified(
     entity_factory: &mut UnifiedEntityFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
+    config: &Res<GameConfig>,
 ) -> Vec<Entity> {
     let mut spawned_vehicles = Vec::new();
     
@@ -346,11 +353,11 @@ fn setup_luxury_cars_unified(
         let vehicle_y = ground_height + 0.5;
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
         
-        // Validate position using UnifiedEntityFactory
-        let validated_position = match entity_factory.validate_position(final_position) {
-            Ok(pos) => pos,
-            Err(e) => {
-                warn!("Failed to validate luxury car {} position: {:?}", i, e);
+        // Validate position using ground service
+        let validated_position = match ground_service.as_ref().find_ground_at(final_position) {
+            Some(ground_y) => Vec3::new(final_position.x, ground_y + 1.0, final_position.z),
+            None => {
+                warn!("Failed to find ground for luxury car {} at position: {:?}", i, final_position);
                 continue;
             }
         };
@@ -369,10 +376,10 @@ fn setup_luxury_cars_unified(
                 rigid_body: RigidBody::Dynamic,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
-                entity_factory.config.physics.vehicle_group(),
-                Group::from_bits_truncate(entity_factory.config.physics.static_group |
-                entity_factory.config.physics.vehicle_group |
-                entity_factory.config.physics.character_group)
+                Group::from_bits_truncate(config.physics.vehicle_group),
+                Group::from_bits_truncate(config.physics.static_group |
+                config.physics.vehicle_group |
+                config.physics.character_group)
                 ),
                 velocity: Velocity::default(),
                 damping: Damping { linear_damping: 1.0, angular_damping: 5.0 },
@@ -400,9 +407,9 @@ fn setup_luxury_cars_unified(
         // Use spawn validator for safe positioning
         if let Some(safe_position) = SpawnValidator::spawn_entity_safely(
             spawn_registry,
+            vehicle_entity,
             validated_position,
             SpawnableType::Vehicle,
-            vehicle_entity,
         ) {
             // Update transform if position was adjusted
             if safe_position != validated_position {

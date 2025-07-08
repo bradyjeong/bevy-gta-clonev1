@@ -2,6 +2,9 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 
+#[macro_use]
+extern crate tracing;
+
 use bevy::prelude::*;
 pub use engine_core;
 pub use engine_bevy;
@@ -42,10 +45,11 @@ impl Plugin for RenderPlugin {
                 lod::lod_performance_monitoring_system,
                 // Audio systems
                 audio::realistic_vehicle_audio_system,
-                audio::vehicle_audio_culling_system,
-                audio::vehicle_audio_performance_system,
+                // Audio systems temporarily disabled - functions not available  
+                // audio::vehicle_audio_culling_system,
+                // audio::vehicle_audio_performance_system,
                 // Visual effects
-                effects::update_jet_flames,
+                effects::jet_flame_effects_system,
                 effects::update_flame_colors,
                 effects::exhaust_effects_system,
                 effects::update_waypoint_system,
@@ -63,7 +67,7 @@ impl Plugin for RenderPlugin {
                 // Debug systems
                 distance_cache_debug::distance_cache_debug_system,
                 // World rendering
-                world::unified_factory_setup_system,
+                // world::unified_factory_setup_system, // Function not available
             )
         )
         .add_systems(

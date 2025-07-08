@@ -13,7 +13,7 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{
+use game_core::prelude::{
     NPCState, NPCType, NPCLOD, Cullable, NPCBehaviorType, NPCAppearance, NPCGender,
     NPC_LOD_CULL_DISTANCE
 };
@@ -39,7 +39,7 @@ pub fn spawn_new_npc_system(
     }
     
     // Spawn new NPCs occasionally using unified spawning pipeline
-    if timing_service.current_time % 10.0 < 0.1 {  // REDUCED: From 5.0 to 10.0 seconds
+    if timing_service.current_time() % 10.0 < 0.1 {  // REDUCED: From 5.0 to 10.0 seconds
         let mut rng = thread_rng();
         
         // Try to find a valid spawn position using unified validation

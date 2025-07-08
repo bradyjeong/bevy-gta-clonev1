@@ -14,7 +14,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use std::cell::RefCell;
-use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation, HumanBehavior};
+use game_core::prelude::{Player, ActiveEntity, HumanMovement, HumanAnimation, HumanBehavior};
 use crate::systems::input::{ControlManager, ControlAction};
 
 thread_local! {

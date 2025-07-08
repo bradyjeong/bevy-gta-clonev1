@@ -7,6 +7,6 @@ pub use engine_core;
 
 pub(crate) mod adapters;
 pub mod prelude;
-pub(crate) mod services;
+pub mod services;
 
 // Only expose via prelude - no direct re-exports

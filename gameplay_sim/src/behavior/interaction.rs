@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{Player, Car, Helicopter, F16, ActiveEntity, InCar};
-use crate::game_state::GameState;
+use game_core::prelude::{Player, Car, Helicopter, F16, ActiveEntity, InCar};
+use game_core::game_state::GameState;
 
 pub fn interaction_system(
     input: Res<ButtonInput<KeyCode>>,

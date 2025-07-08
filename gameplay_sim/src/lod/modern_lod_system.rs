@@ -12,7 +12,8 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::*;
+use game_core::prelude::*;
+use crate::compat::PerformanceCounters;
 use crate::config::GameConfig;
 
 /// Modern LOD system that uses component-based approach
@@ -23,7 +24,7 @@ pub fn modern_lod_system(
     mut vegetation_query: Query<(Entity, &mut VegetationLOD, &GlobalTransform), (With<ActiveEntity>, With<VegetationBatchable>)>,
     camera_query: Query<&GlobalTransform, (With<Camera>, Without<ActiveEntity>)>,
     config: Res<GameConfig>,
-    mut performance_counters: ResMut<crate::config::performance_config::PerformanceCounters>,
+    mut performance_counters: ResMut<PerformanceCounters>,
 ) {
     let Some(camera_transform) = camera_query.iter().next() else {
         return;
@@ -175,7 +176,7 @@ fn update_vegetation_components(commands: &mut Commands, entity: Entity, detail_
 
 /// Resource-based performance monitoring system
 pub fn lod_performance_monitoring_system(
-    mut performance_counters: ResMut<crate::config::performance_config::PerformanceCounters>,
+    mut performance_counters: ResMut<PerformanceCounters>,
     time: Res<Time>,
     vehicles: Query<&LodLevel, With<ActiveEntity>>,
     vegetation: Query<&VegetationLOD>,
@@ -227,13 +228,13 @@ pub struct ModernLODPlugin;
 
 impl Plugin for ModernLODPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<crate::config::performance_config::PerformanceCounters>()
+        app.init_resource::<PerformanceCounters>()
             .add_systems(
                 Update,
                 (
                     modern_lod_system,
                     lod_performance_monitoring_system,
-                ).in_set(LodSystemSet)
+                ).into_configs().in_set(LodSystemSet)
             );
     }
 }

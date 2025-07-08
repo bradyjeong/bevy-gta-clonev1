@@ -16,8 +16,8 @@ use bevy_rapier3d::prelude::*;
 use std::collections::HashMap;
 use std::time::Instant;
 
-use crate::game_state::GameState;
-use crate::components::{Car, SuperCar, ActiveEntity, Player, Helicopter, F16, NPC};
+use game_core::game_state::GameState;
+use game_core::prelude::{Car, SuperCar, ActiveEntity, Player, Helicopter, F16, NPC};
 use super::input_config::InputAction;
 use super::input_manager::InputManager;
 use super::vehicle_control_config::{VehicleType as ConfigVehicleType, VehicleControlConfig as ExistingVehicleControlConfig};

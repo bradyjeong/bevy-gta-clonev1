@@ -3,14 +3,8 @@ use std::collections::HashMap;
 use game_core::prelude::*;
 use super::input_config::InputAction;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum VehicleType {
-    Walking,
-    Car,
-    SuperCar,
-    Helicopter,
-    F16,
-}
+// VehicleType moved to crate::input::vehicle_control_config for canonical definition
+use crate::input::VehicleType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ControlCategory {

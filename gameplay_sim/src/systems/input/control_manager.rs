@@ -13,13 +13,14 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use crate::bevy16_compat::TimeExt;
 use std::collections::HashMap;
 use std::time::Instant;
 
 use game_core::prelude::*;
 use super::input_config::InputAction;
 use super::input_manager::InputManager;
-use super::vehicle_control_config::{VehicleType as ConfigVehicleType, VehicleControlConfig as ExistingVehicleControlConfig};
+use crate::input::VehicleType as ConfigVehicleType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ControlAction {
@@ -38,6 +39,7 @@ pub enum ControlAction {
     Turbo,
     Afterburner,
     EmergencyBrake,
+    Emergency,
     
     // AI/NPC Actions
     NPCMove,
@@ -338,6 +340,15 @@ impl ControlManager {
     pub fn clear_stale_ai_decisions(&mut self, valid_entities: &[Entity]) {
         self.ai_decisions.retain(|entity, _| valid_entities.contains(entity));
     }
+
+    /// Get active actions for a specific entity (for now, returns global active controls)
+    pub fn get_active_actions(&self, _entity: Entity) -> Option<Vec<ControlAction>> {
+        if self.active_controls.is_empty() {
+            None
+        } else {
+            Some(self.active_controls.keys().copied().collect())
+        }
+    }
 }
 
 /// System to update control manager
@@ -394,4 +405,18 @@ pub fn npc_ai_decision_system(
         
         control_manager.update_ai_decision(entity, ai_decision);
     }
+}
+
+/// Helper function to check if entity is accelerating
+pub fn is_accelerating(control_manager: &ControlManager, entity: Entity) -> bool {
+    control_manager.get_active_actions(entity)
+        .map(|actions| actions.contains(&ControlAction::Accelerate))
+        .unwrap_or(false)
+}
+
+/// Helper function to check if entity is braking
+pub fn is_braking(control_manager: &ControlManager, entity: Entity) -> bool {
+    control_manager.get_active_actions(entity)
+        .map(|actions| actions.contains(&ControlAction::Brake))
+        .unwrap_or(false)
 }

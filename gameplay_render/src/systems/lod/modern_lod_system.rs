@@ -46,8 +46,8 @@ pub fn modern_lod_system(
     for (entity, mut lod_level, transform) in npc_query.iter_mut() {
         let distance = camera_transform.translation().distance(transform.translation());
         let new_level = calculate_npc_lod(distance, &config);
-        if lod_level.0 != new_level {
-            lod_level.0 = new_level;
+        if *lod_level != new_level {
+            *lod_level = new_level;
             update_npc_components(&mut commands, entity, new_level);
         }
     }

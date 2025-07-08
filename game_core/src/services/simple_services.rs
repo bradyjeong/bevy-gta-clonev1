@@ -83,5 +83,5 @@ pub fn initialize_simple_services(
     commands.insert_resource(ConfigService::new(config.clone()));
     commands.insert_resource(PhysicsService::new(config.physics.clone()));
     
-    info!("✅ SIMPLE SERVICES: Initialized config and physics services");
+    println!("✅ SIMPLE SERVICES: Initialized config and physics services");
 }

@@ -12,7 +12,7 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::{
+use game_core::prelude::{
     NPCState, NPCRendering, NPCLOD, NPCAppearance, ActiveEntity,
     NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart,
     NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE
@@ -53,11 +53,11 @@ pub fn npc_lod_system(
         }
         
         let distance = get_cached_distance(
-            active_entity,
-            entity,
-            player_pos,
-            transform.translation,
             &mut distance_cache,
+            entity,
+            active_entity,
+            transform.translation,
+            player_pos,
         );
         let new_lod = determine_npc_lod(distance);
         
@@ -159,7 +159,7 @@ fn spawn_npc_full_lod(
             let (mesh, material) = RenderingFactory::create_mesh_and_material(
                 meshes, 
                 materials, 
-                &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
+                StandardRenderingPattern::NPCHead
             );
             (Mesh3d(mesh), MeshMaterial3d(material))
         }.0,
@@ -167,7 +167,7 @@ fn spawn_npc_full_lod(
             let (mesh, material) = RenderingFactory::create_mesh_and_material(
                 meshes, 
                 materials, 
-                &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
+                StandardRenderingPattern::NPCHead
             );
             (Mesh3d(mesh), MeshMaterial3d(material))
         }.1,

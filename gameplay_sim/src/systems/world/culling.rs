@@ -40,11 +40,11 @@ pub fn distance_culling_system(
     for (entity, mut cullable, mut visibility, transform) in cullable_query.iter_mut() {
         // Use distance_squared for more efficient comparison
         let distance_squared = get_cached_distance_squared(
+            &mut distance_cache,
             active_entity,
             entity,
             player_pos,
             transform.translation,
-            &mut distance_cache,
         );
         let max_distance_squared = cullable.max_distance * cullable.max_distance;
         

@@ -3,10 +3,11 @@ use bevy_rapier3d::prelude::*;
 use std::time::Instant;
 use std::collections::HashMap;
 use game_core::prelude::*;
-use gameplay_sim::distance::DistanceCache;
+use gameplay_sim::systems::distance_cache::DistanceCache;
 use gameplay_sim::distance::unified_distance_calculator::{UnifiedDistanceCalculator, distance_utils};
 use gameplay_sim::world::unified_distance_culling::UnifiedCullable;
-use gameplay_ui::performance::{UnifiedPerformanceTracker, PerformanceCategory};
+use engine_bevy::services::performance_service::UnifiedPerformanceTracker;
+use engine_core::performance::PerformanceCategory;
 
 /// Advanced batch processing system for similar entities
 /// Provides enhanced performance through intelligent grouping and parallel processing
@@ -470,7 +471,7 @@ pub fn batch_size_optimization_system(
     optimize_batch_sizes(&mut batch_processor, fps_ratio, &config);
     
     // Update unified performance tracker with batch processing metrics
-    performance_tracker.update_frame_timing(average_frame_time * 1000.0, current_fps);
+    performance_tracker.update_frame(average_frame_time);
     
     info!(
         "Batch Size Optimization - FPS: {:.1} | Target: {:.1} | Ratio: {:.2}",
@@ -607,10 +608,8 @@ pub fn batch_performance_monitor_system(
         );
         
         // Update unified performance tracker with detailed batch metrics
-        if let Some(metrics) = performance_tracker.categories.get_mut(&PerformanceCategory::Batching) {
-            metrics.entity_count = processed;
-            metrics.operations_per_frame = processed;
-        }
+        // TODO: Use proper performance tracking API once available
+        debug!("Batch metrics: {} entities processed in {:.2}ms", processed, processing_time);
     }
     
     // Report current adaptive batch sizes

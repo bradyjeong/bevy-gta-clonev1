@@ -4,9 +4,9 @@ use crate::systems::camera::camera_follow_system;
 use crate::systems::interaction::interaction_system;
 use crate::systems::audio::{footstep_system, cleanup_footstep_sounds};
 use crate::systems::human_behavior::{human_emotional_state_system, human_fidget_system};
-use crate::systems::debug::debug_game_state;
+use crate::systems::world::debug::debug_game_state;
 use crate::systems::player_collision_resolution::{player_collision_resolution_system, player_movement_validation_system};
-use crate::game_state::GameState;
+use game_core::game_state::GameState;
 
 pub struct PlayerPlugin;
 

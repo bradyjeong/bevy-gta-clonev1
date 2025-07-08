@@ -6,22 +6,32 @@ use bevy::prelude::*;
 pub use engine_core;
 pub use engine_bevy;
 
+// Public API modules - canonical namespace design
 #[allow(missing_docs)]
-pub(crate) mod components;
+pub mod components;
 #[allow(missing_docs)]
-pub(crate) mod config;
+pub mod config;
 #[allow(missing_docs)]
-pub(crate) mod constants;
+pub mod world;
 #[allow(missing_docs)]
-pub(crate) mod bundles;
+pub mod spatial;
 #[allow(missing_docs)]
-pub(crate) mod game_state;
+pub mod constants;
 #[allow(missing_docs)]
-pub(crate) mod persistence;
+pub mod bundles;
 #[allow(missing_docs)]
-pub(crate) mod services;
+pub mod game_state;
 #[allow(missing_docs)]
-pub(crate) mod schedule;
+pub mod persistence;
+#[allow(missing_docs)]
+pub mod services;
+#[allow(missing_docs)]
+pub mod schedule;
 pub mod prelude;
+
+// Temporary compatibility layer (will be removed when migration complete)
+#[allow(missing_docs)]
+pub mod compat;
+pub use compat::*;
 
 // Only expose via prelude - no direct re-exports

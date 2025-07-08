@@ -106,7 +106,7 @@ pub fn supercar_physics_system(
     velocity.linvel = target_linear_velocity;
     velocity.angvel = target_angular_velocity;
     // Apply unified physics safety systems
-    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::validate_velocity(&mut velocity, config.as_ref());
     PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 1.0);
     // Track 0-60 time
     if supercar.is_timing_launch && current_speed_mph >= 60.0 {

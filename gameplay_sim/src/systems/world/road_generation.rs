@@ -13,6 +13,7 @@ use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
 use game_core::prelude::*;
 use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType};
+use crate::compat::{TransformBundle, VisibilityBundle};
 
 const CHUNK_SIZE: f32 = 200.0;
 
@@ -22,24 +23,22 @@ pub struct RoadGenerationCache {
     pub last_player_chunk: Option<(i32, i32)>,
 }
 
-impl RoadNetwork {
-    pub fn clear_cache(&mut self) {
+/// Trait for extending RoadNetwork functionality
+pub trait RoadNetworkExtensions {
+    fn clear_cache(&mut self);
+    fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32>;
+}
+
+impl RoadNetworkExtensions for RoadNetwork {
+    fn clear_cache(&mut self) {
         self.roads.clear();
         self.intersections.clear();
         self.next_road_id = 1;
         self.next_intersection_id = 1;
     }
     
-    pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32> {
+    fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32> {
         let mut road_ids = Vec::new();
-        
-        // Skip if chunk already generated
-        if let Ok(mut cache) = self.get_generation_cache() {
-            if cache.generated_chunks.contains(&(chunk_x, chunk_z)) {
-                return road_ids;
-            }
-            cache.generated_chunks.insert((chunk_x, chunk_z));
-        }
         
         // Generate deterministic roads for this chunk
         let mut rng = StdRng::seed_from_u64(
@@ -54,21 +53,35 @@ impl RoadNetwork {
         
         // Main roads (horizontal and vertical through chunk)
         if rng.gen_bool(0.7) {
-            let road_id = self.add_road(
-                chunk_center + Vec3::new(-CHUNK_SIZE * 0.5, 0.0, 0.0),
-                chunk_center + Vec3::new(CHUNK_SIZE * 0.5, 0.0, 0.0),
-                RoadType::MainStreet,
-            );
-            road_ids.push(road_id);
+            let start_point = chunk_center + Vec3::new(-CHUNK_SIZE * 0.5, 0.0, 0.0);
+            let end_point = chunk_center + Vec3::new(CHUNK_SIZE * 0.5, 0.0, 0.0);
+            
+            let road = RoadSpline {
+                points: vec![start_point, end_point],
+                road_type: RoadType::MainStreet,
+                width: 8.0,
+                connections: Vec::new(),
+            };
+            
+            self.roads.insert(self.next_road_id, road);
+            road_ids.push(self.next_road_id);
+            self.next_road_id += 1;
         }
         
         if rng.gen_bool(0.7) {
-            let road_id = self.add_road(
-                chunk_center + Vec3::new(0.0, 0.0, -CHUNK_SIZE * 0.5),
-                chunk_center + Vec3::new(0.0, 0.0, CHUNK_SIZE * 0.5),
-                RoadType::MainStreet,
-            );
-            road_ids.push(road_id);
+            let start_point = chunk_center + Vec3::new(0.0, 0.0, -CHUNK_SIZE * 0.5);
+            let end_point = chunk_center + Vec3::new(0.0, 0.0, CHUNK_SIZE * 0.5);
+            
+            let road = RoadSpline {
+                points: vec![start_point, end_point],
+                road_type: RoadType::MainStreet,
+                width: 8.0,
+                connections: Vec::new(),
+            };
+            
+            self.roads.insert(self.next_road_id, road);
+            road_ids.push(self.next_road_id);
+            self.next_road_id += 1;
         }
         
         // Secondary roads
@@ -91,17 +104,19 @@ impl RoadNetwork {
                 RoadType::Alley
             };
             
-            let road_id = self.add_road(start, end, road_type);
-            road_ids.push(road_id);
+            let road = RoadSpline {
+                points: vec![start, end],
+                road_type,
+                width: 6.0,
+                connections: Vec::new(),
+            };
+            
+            self.roads.insert(self.next_road_id, road);
+            road_ids.push(self.next_road_id);
+            self.next_road_id += 1;
         }
         
         road_ids
-    }
-    
-    fn get_generation_cache(&mut self) -> Result<&mut RoadGenerationCache, ()> {
-        // This is a placeholder - in a real implementation, this would access
-        // the cache resource properly
-        Err(())
     }
 }
 
@@ -242,7 +257,7 @@ fn spawn_road_entity(commands: &mut Commands, road_id: u32, start: Vec3, end: Ve
     let center = (start + end) * 0.5;
     
     commands.spawn((
-        RoadEntity { id: road_id },
+        RoadEntity { road_id },
         TransformBundle::from_transform(Transform::from_translation(center)),
         VisibilityBundle::default(),
     ));

@@ -128,6 +128,7 @@ impl<'a> VehicleBuilder<'a> {
                 VehicleType::SuperCar => self.builder.factory.config.vehicles.super_car.default_color,
                 VehicleType::Helicopter => self.builder.factory.config.vehicles.helicopter.default_color,
                 VehicleType::F16 => self.builder.factory.config.vehicles.f16.default_color,
+                VehicleType::Car => self.builder.factory.config.vehicles.basic_car.default_color,
             }
         });
         

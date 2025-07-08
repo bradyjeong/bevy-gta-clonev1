@@ -12,7 +12,7 @@
 use bevy::prelude::*;
 use std::collections::HashSet;
 use std::time::Instant;
-use crate::game_state::GameState;
+use game_core::game_state::GameState;
 use super::input_config::{InputConfig, InputAction};
 
 #[derive(Resource, Default)]

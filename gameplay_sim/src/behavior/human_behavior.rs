@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
-use crate::components::{Player, ActiveEntity, HumanAnimation, HumanBehavior, HumanMovement};
+use game_core::prelude::{Player, ActiveEntity, HumanAnimation, HumanBehavior, HumanMovement};
 
 thread_local! {
     static BEHAVIOR_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());

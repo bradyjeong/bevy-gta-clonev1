@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 //! Test utilities for gameplay_render tests
 //! Provides helpers for creating test scenarios, entities, and configurations
 

@@ -113,6 +113,115 @@ impl MaterialFactory {
             ..default()
         })
     }
+
+    /// Create simple material with basic color
+    pub fn create_simple_material(
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        color: Color,
+    ) -> Handle<StandardMaterial> {
+        materials.add(StandardMaterial {
+            base_color: color,
+            ..default()
+        })
+    }
+
+    /// Create aircraft material with metallic properties
+    pub fn create_aircraft_material(
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        color: Color,
+    ) -> Handle<StandardMaterial> {
+        materials.add(StandardMaterial {
+            base_color: color,
+            metallic: 0.3,
+            perceptual_roughness: 0.2,
+            ..default()
+        })
+    }
+
+    /// Create low detail material for distant objects
+    pub fn create_low_detail_material(
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        color: Color,
+    ) -> Handle<StandardMaterial> {
+        materials.add(StandardMaterial {
+            base_color: color,
+            unlit: true,
+            ..default()
+        })
+    }
+
+    /// Create water bottom material
+    pub fn create_water_bottom_material(
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        color: Color,
+    ) -> Handle<StandardMaterial> {
+        materials.add(StandardMaterial {
+            base_color: color,
+            metallic: 0.0,
+            perceptual_roughness: 1.0,
+            ..default()
+        })
+    }
+
+    /// Create vehicle metallic material
+    pub fn create_vehicle_metallic(
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        color: Color,
+    ) -> Handle<StandardMaterial> {
+        materials.add(StandardMaterial {
+            base_color: color,
+            metallic: 0.7,
+            perceptual_roughness: 0.2,
+            ..default()
+        })
+    }
+
+    /// Create basic vehicle color material
+    pub fn create_vehicle_color(
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        color: Color,
+    ) -> Handle<StandardMaterial> {
+        materials.add(StandardMaterial {
+            base_color: color,
+            metallic: 0.3,
+            perceptual_roughness: 0.4,
+            ..default()
+        })
+    }
+
+    /// Create wheel material
+    pub fn create_wheel_material(
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+    ) -> Handle<StandardMaterial> {
+        materials.add(StandardMaterial {
+            base_color: Color::srgb(0.1, 0.1, 0.1),
+            metallic: 0.1,
+            perceptual_roughness: 0.8,
+            ..default()
+        })
+    }
+
+    /// Create mesh and material for unified entity creation
+    pub fn create_mesh_and_material(
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        mesh_type: &str,
+        color: Color,
+    ) -> (Handle<Mesh>, Handle<StandardMaterial>) {
+        let mesh = match mesh_type {
+            "box" => meshes.add(Mesh::from(Cuboid::new(1.0, 1.0, 1.0))),
+            "sphere" => meshes.add(Mesh::from(Sphere::new(0.5))),
+            "plane" => meshes.add(Mesh::from(Plane3d::new(Vec3::Y, Vec2::splat(1.0)))),
+            _ => meshes.add(Mesh::from(Cuboid::new(1.0, 1.0, 1.0))),
+        };
+        
+        let material = materials.add(StandardMaterial {
+            base_color: color,
+            ..default()
+        });
+        
+        (mesh, material)
+    }
 }
 
 /// System to initialize the material factory during startup

@@ -14,7 +14,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
-use crate::components::{NPC, Cullable, ActiveEntity};
+use game_core::prelude::{NPC, Cullable, ActiveEntity};
 use crate::systems::input::ControlManager;
 
 thread_local! {

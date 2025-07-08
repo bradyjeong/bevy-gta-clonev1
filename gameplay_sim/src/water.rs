@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
+use game_core::prelude::*;
 use crate::factories::{MaterialFactory, RenderingFactory, StandardRenderingPattern, RenderingBundleType};
 
 pub fn setup_lake(
@@ -13,17 +13,16 @@ pub fn setup_lake(
     let lake_position = Vec3::new(300.0, -2.0, 300.0); // Positioned away from spawn and below ground
     
     // Create lake basin (carved out ground) - FACTORY PATTERN
-    let basin_entity = RenderingFactory::create_rendering_entity(
+    let basin_mesh = meshes.add(Cuboid::new(lake_size, lake_depth, lake_size));
+    let basin_material = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.3, 0.25, 0.2),
+        ..default()
+    });
+    let basin_entity = RenderingFactory::create_rendered_entity(
         &mut commands,
-        &mut meshes,
-        &mut materials,
-        StandardRenderingPattern::WaterBottom { 
-            size: lake_size, 
-            color: Color::srgb(0.3, 0.25, 0.2) 
-        },
+        basin_mesh,
+        basin_material,
         Vec3::new(lake_position.x, lake_position.y - lake_depth / 2.0, lake_position.z),
-        RenderingBundleType::Standalone,
-        None,
     );
     
     commands.entity(basin_entity).insert((
@@ -33,17 +32,17 @@ pub fn setup_lake(
     ));
     
     // Create lake water surface - FACTORY PATTERN
-    let water_entity = RenderingFactory::create_rendering_entity(
+    let water_mesh = meshes.add(Plane3d::default().mesh().size(lake_size, lake_size));
+    let water_material = materials.add(StandardMaterial {
+        base_color: Color::srgba(0.1, 0.4, 0.8, 0.7),
+        alpha_mode: AlphaMode::Blend,
+        ..default()
+    });
+    let water_entity = RenderingFactory::create_rendered_entity(
         &mut commands,
-        &mut meshes,
-        &mut materials,
-        StandardRenderingPattern::WaterSurface { 
-            size: lake_size, 
-            color: Color::srgba(0.1, 0.4, 0.8, 0.7) 
-        },
+        water_mesh,
+        water_material,
         Vec3::new(lake_position.x, lake_position.y, lake_position.z),
-        RenderingBundleType::Standalone,
-        None,
     );
     
     commands.entity(water_entity).insert((
@@ -64,7 +63,10 @@ pub fn setup_lake(
     // Create lake bottom
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(lake_size * 0.9, lake_size * 0.9))),
-        MeshMaterial3d(MaterialFactory::create_water_bottom_material(&mut materials, Color::srgb(0.2, 0.15, 0.1))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.2, 0.15, 0.1),
+            ..default()
+        })),
         Transform::from_xyz(lake_position.x, lake_position.y - lake_depth, lake_position.z),
         Name::new("Lake Bottom"),
     ));
@@ -78,17 +80,16 @@ pub fn setup_yacht(
     let yacht_position = Vec3::new(300.0, -1.0, 300.0); // On the lake surface
     
     // Yacht hull - FACTORY PATTERN
-    let yacht_id = RenderingFactory::create_rendering_entity(
+    let yacht_mesh = meshes.add(Cuboid::new(8.0, 2.0, 20.0)); // Yacht-like proportions
+    let yacht_material = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.9, 0.9, 0.9),
+        ..default()
+    });
+    let yacht_id = RenderingFactory::create_rendered_entity(
         &mut commands,
-        &mut meshes,
-        &mut materials,
-        StandardRenderingPattern::VehicleBody { 
-            vehicle_type: crate::factories::VehicleBodyType::Boat, 
-            color: Color::srgb(0.9, 0.9, 0.9) 
-        },
+        yacht_mesh,
+        yacht_material,
         yacht_position,
-        RenderingBundleType::Parent,
-        None,
     );
     
     commands.entity(yacht_id).insert((
@@ -109,7 +110,12 @@ pub fn setup_yacht(
     // Yacht cabin
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(6.0, 3.0, 8.0))),
-        MeshMaterial3d(MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.8, 0.8, 0.9), 0.3, 0.4)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.8, 0.8, 0.9),
+            metallic: 0.3,
+            perceptual_roughness: 0.4,
+            ..default()
+        })),
         Transform::from_xyz(0.0, 3.5, -2.0),
         Name::new("Yacht Cabin"),
     )).insert(ChildOf(yacht_id));
@@ -117,7 +123,12 @@ pub fn setup_yacht(
     // Yacht mast
     commands.spawn((
         Mesh3d(meshes.add(Cylinder::new(0.2, 15.0))),
-        MeshMaterial3d(MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.6, 0.4, 0.2), 0.1, 0.8)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.6, 0.4, 0.2),
+            metallic: 0.1,
+            perceptual_roughness: 0.8,
+            ..default()
+        })),
         Transform::from_xyz(0.0, 9.5, 2.0),
         Name::new("Yacht Mast"),
     )).insert(ChildOf(yacht_id));

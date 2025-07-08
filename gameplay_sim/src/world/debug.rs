@@ -10,8 +10,8 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::{Player, Car, Helicopter, F16, ActiveEntity};
-use crate::game_state::GameState;
+use game_core::prelude::{Player, Car, Helicopter, F16, ActiveEntity};
+use game_core::game_state::GameState;
 
 pub fn debug_player_position(
     _player_query: Query<&Transform, (With<Player>, With<ActiveEntity>)>,

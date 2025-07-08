@@ -37,7 +37,12 @@ pub fn is_in_water_area(position: Vec3) -> bool {
 }
 
 /// Checks if position is on road spline
-pub fn is_on_road_spline(position: Vec3, road_network: &RoadNetwork, tolerance: f32) -> bool {
+pub fn is_on_road_spline(position: Vec3, _road_network: &RoadNetwork, tolerance: f32) -> bool {
     // Simple road detection - can be enhanced with actual road spline data
-    road_network.find_nearest_point(position).distance(position) < tolerance
+    // For now, use a grid pattern approximation
+    let grid_size = 50.0;
+    let grid_x = (position.x / grid_size).round() * grid_size;
+    let grid_z = (position.z / grid_size).round() * grid_size;
+    let nearest_road_point = Vec3::new(grid_x, position.y, grid_z);
+    nearest_road_point.distance(position) < tolerance
 }

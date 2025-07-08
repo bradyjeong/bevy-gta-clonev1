@@ -12,7 +12,8 @@
 
 use bevy::prelude::*;
 use std::collections::HashMap;
-use crate::components::*;
+use game_core::prelude::*;
+use crate::systems::world::unified_world::ChunkCoordExt;
 use crate::systems::world::road_network::RoadNetwork;
 
 // UNIFIED WORLD GENERATION SYSTEM
@@ -28,46 +29,12 @@ pub const UNIFIED_STREAMING_RADIUS: f32 = 800.0;
 /// LOD transition distances - optimized for 60+ FPS target
 pub const LOD_DISTANCES: [f32; 3] = [150.0, 300.0, 500.0];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ChunkCoord {
-    pub x: i32,
-    pub z: i32,
-}
+// Re-export canonical types from game_core
+pub use game_core::spatial::ChunkCoord;
 
-impl ChunkCoord {
-    pub fn new(x: i32, z: i32) -> Self {
-        Self { x, z }
-    }
-    
-    pub fn from_world_pos(world_pos: Vec3) -> Self {
-        Self {
-            x: (world_pos.x / UNIFIED_CHUNK_SIZE).floor() as i32,
-            z: (world_pos.z / UNIFIED_CHUNK_SIZE).floor() as i32,
-        }
-    }
-    
-    pub fn to_world_pos(&self) -> Vec3 {
-        Vec3::new(
-            self.x as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5,
-            0.0,
-            self.z as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5,
-        )
-    }
-    
-    pub fn distance_to(&self, other: ChunkCoord) -> f32 {
-        let dx = (self.x - other.x) as f32;
-        let dz = (self.z - other.z) as f32;
-        (dx * dx + dz * dz).sqrt()
-    }
-}
+// impl ChunkCoord moved to game_core to fix orphan rule
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ChunkState {
-    Unloaded,
-    Loading,
-    Loaded { lod_level: usize },
-    Unloading,
-}
+// ChunkState enum removed - using the one from game_core
 
 #[derive(Debug, Clone)]
 pub struct ChunkData {
@@ -233,7 +200,7 @@ impl UnifiedWorldManager {
     
     pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
         matches!(
-            self.chunks.get(&coord).map(|c| c.state),
+            self.chunks.get(&coord).map(|c| c.state.clone()),
             Some(ChunkState::Loaded { .. })
         )
     }
@@ -251,11 +218,11 @@ impl UnifiedWorldManager {
         let mut to_unload = Vec::new();
         
         for (coord, chunk) in &mut self.chunks {
-            chunk.distance_to_player = active_pos.distance(coord.to_world_pos());
+            chunk.distance_to_player = active_pos.distance(coord.to_world_pos_local());
             
             if chunk.distance_to_player > UNIFIED_STREAMING_RADIUS + UNIFIED_CHUNK_SIZE {
-                if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
-                    chunk.state = ChunkState::Unloading;
+                if !matches!(chunk.state, ChunkState::Unloaded) {
+                    chunk.state = ChunkState::Unloaded;
                     to_unload.push(*coord);
                 }
             }
@@ -265,13 +232,13 @@ impl UnifiedWorldManager {
     }
     
     pub fn get_chunks_to_load(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
-        let active_chunk = ChunkCoord::from_world_pos(active_pos);
+        let active_chunk = ChunkCoord::from_world_pos_local(active_pos);
         let mut to_load = Vec::new();
         
         for dx in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
             for dz in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
                 let coord = ChunkCoord::new(active_chunk.x + dx, active_chunk.z + dz);
-                let distance = active_pos.distance(coord.to_world_pos());
+                let distance = active_pos.distance(coord.to_world_pos_local());
                 
                 if distance <= UNIFIED_STREAMING_RADIUS {
                     let chunk = self.get_chunk_mut(coord);
@@ -289,7 +256,7 @@ impl UnifiedWorldManager {
     
     pub fn clear_placement_grid_for_chunk(&mut self, coord: ChunkCoord) {
         // Remove all entities from placement grid within this chunk's bounds
-        let _chunk_center = coord.to_world_pos();
+        let _chunk_center = coord.to_world_pos_local();
         let _half_size = UNIFIED_CHUNK_SIZE * 0.5;
         
         // This is inefficient - in a full implementation, we'd track which
@@ -304,14 +271,8 @@ pub struct UnifiedChunkEntity {
     pub layer: ContentLayer,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ContentLayer {
-    Roads,
-    Buildings,
-    Vehicles,
-    Vegetation,
-    NPCs,
-}
+// Re-export canonical types from game_core
+pub use game_core::world::ContentLayer;
 
 /// Main unified world streaming system
 pub fn unified_world_streaming_system(
@@ -329,7 +290,7 @@ pub fn unified_world_streaming_system(
     world_manager.chunks_unloaded_this_frame = 0;
     
     // Update active chunk
-    let current_chunk = ChunkCoord::from_world_pos(active_pos);
+    let current_chunk = ChunkCoord::from_world_pos_local(active_pos);
     let _chunk_changed = world_manager.active_chunk != Some(current_chunk);
     world_manager.active_chunk = Some(current_chunk);
     
@@ -370,7 +331,7 @@ fn initiate_chunk_loading(
             coord,
             layer: ContentLayer::Roads, // Start with roads
         },
-        Transform::from_translation(coord.to_world_pos()),
+        Transform::from_translation(coord.to_world_pos_local()),
         Visibility::Visible,
         InheritedVisibility::VISIBLE,
         ViewVisibility::default(),

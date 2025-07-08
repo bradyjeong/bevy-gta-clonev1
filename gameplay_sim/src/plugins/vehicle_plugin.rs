@@ -7,9 +7,9 @@ use crate::systems::movement::{
     configure_vehicle_system_sets, VehicleSet,
 };
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames, update_flame_colors};
-use crate::systems::vehicles::vehicle_lod_system;
+use crate::vehicles::vehicle_lod_system;
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
-use crate::game_state::GameState;
+use game_core::game_state::GameState;
 
 pub struct VehiclePlugin;
 

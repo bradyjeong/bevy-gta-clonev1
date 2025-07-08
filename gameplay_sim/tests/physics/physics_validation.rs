@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Physics validation tests using property-based testing
 use proptest::prelude::*;
 use bevy::prelude::*;

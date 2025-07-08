@@ -13,7 +13,7 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{Helicopter, F16, ActiveEntity, MainRotor, TailRotor, AircraftFlight};
+use game_core::prelude::{Helicopter, F16, ActiveEntity, MainRotor, TailRotor, AircraftFlight};
 use crate::systems::input::{ControlManager, ControlAction};
 use crate::systems::physics_utils::PhysicsUtilities;
 use crate::config::GameConfig;
@@ -66,7 +66,7 @@ pub fn helicopter_movement(
     velocity.angvel = target_angular_velocity;
     
     // Use unified velocity validation and ground collision
-    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::validate_velocity(&mut velocity, &*config);
     PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.5, 5.0);
 }
 
@@ -212,7 +212,7 @@ pub fn f16_movement(
     }
     
     // Use unified physics safety systems
-    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::validate_velocity(&mut velocity, &*config);
     PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 1.0, 10.0);
     
     // === STALL HANDLING ===

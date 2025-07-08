@@ -22,6 +22,7 @@ debug-ui = []
 experimental = []
 # Testing and golden frame features
 golden-frames = []
+heavy_tests = []
 # GPU compute features
 gpu-culling = []
 default-members = [
@@ -37,8 +38,8 @@ default-members = [
 
 
 [workspace.dependencies]
-bevy = { version = "0.16.1", default-features = false, features = ["bevy_winit", "x11", "serialize", "shader_format_glsl"] }
-bevy_rapier3d = "0.25"
+bevy = { version = "0.16.1", default-features = false, features = ["bevy_winit", "x11", "serialize", "shader_format_glsl", "bevy_state"] }
+bevy_rapier3d = "0.30"
 leafwing_input_manager = "0.13"
 bytemuck = { version = "1.18", features = ["derive"] }
 rand = "0.8"
@@ -46,6 +47,7 @@ serde = { version = "1.0", features = ["derive"] }
 ron = "0.8"
 chrono = { version = "0.4", features = ["serde"] }
 image = "0.24"
+tracing = "0.1"
 
 
 

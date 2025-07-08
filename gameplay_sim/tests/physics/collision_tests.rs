@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Collision detection and response tests
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;

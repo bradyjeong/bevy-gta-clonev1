@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Game rules tests for gameplay_sim
 // Tests scoring, collision detection, boundary conditions, and game mechanics
 

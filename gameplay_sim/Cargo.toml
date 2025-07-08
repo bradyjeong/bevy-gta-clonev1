@@ -9,6 +9,8 @@ bevy_rapier3d = { workspace = true }
 serde = { workspace = true }
 ron = { workspace = true }
 rand = { workspace = true }
+tracing = { workspace = true }
+fastrand = "2.0"
 
 # Internal dependencies
 engine_core = { path = "../engine_core" }

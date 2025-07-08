@@ -137,6 +137,13 @@ impl GroundDetectionService {
         let distance_from_origin = position.length();
         distance_from_origin > 10.0 // Stay away from central road network
     }
+
+    /// Find ground at a given position (compatibility method)
+    pub fn find_ground_at(&self, position: Vec3) -> Option<f32> {
+        // For now, just return the position's Y coordinate
+        // This is a simple fallback implementation
+        Some(position.y)
+    }
 }
 
 /// Plugin to add ground detection service

@@ -11,11 +11,11 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::{
+use game_core::prelude::{
     VehicleState, VehicleRendering, VehicleLOD, VehicleType, ActiveEntity,
     LOD_FULL_DISTANCE, LOD_MEDIUM_DISTANCE, LOD_LOW_DISTANCE, LOD_CULL_DISTANCE
 };
-use crate::bundles::VisibleChildBundle;
+use game_core::bundles::VisibleChildBundle;
 // Simplified without timing service
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
@@ -36,11 +36,11 @@ pub fn vehicle_lod_system(
     for (entity, mut vehicle_state, rendering, transform) in vehicle_query.iter_mut() {
         
         let distance = get_cached_distance(
-            active_entity,
-            entity,
-            player_pos,
-            transform.translation,
             &mut distance_cache,
+            entity,
+            active_entity,
+            transform.translation,
+            player_pos,
         );
         let new_lod = determine_lod(distance);
         
@@ -250,6 +250,17 @@ fn spawn_full_vehicle_mesh(
             )).id();
             mesh_entities.push(wings);
         }
+        VehicleType::Car => {
+            // Generic car fallback
+            let body = commands.spawn((
+                Mesh3d(MeshFactory::create_generic_car(meshes)),
+                MeshMaterial3d(MaterialFactory::create_vehicle_color(materials, vehicle_state.color)),
+                TransformFactory::vehicle_chassis(),
+                ChildOf(parent_entity),
+                VisibleChildBundle::default(),
+            )).id();
+            mesh_entities.push(body);
+        }
     }
     
     mesh_entities
@@ -268,6 +279,7 @@ fn spawn_medium_vehicle_mesh(
         VehicleType::BasicCar => (Vec3::new(1.8, 0.6, 3.6), vehicle_state.color),
         VehicleType::Helicopter => (Vec3::new(2.5, 1.5, 5.0), Color::srgb(0.9, 0.9, 0.9)),
         VehicleType::F16 => (Vec3::new(15.0, 1.6, 1.5), Color::srgb(0.35, 0.37, 0.40)),
+        VehicleType::Car => (Vec3::new(1.7, 0.6, 3.8), vehicle_state.color),
     };
     
     let body = commands.spawn((
@@ -290,7 +302,7 @@ fn spawn_low_vehicle_mesh(
 ) -> Vec<Entity> {
     // Very basic box representation
     let size = match vehicle_state.vehicle_type {
-        VehicleType::SuperCar | VehicleType::BasicCar => Vec3::new(2.0, 1.0, 4.0),
+        VehicleType::SuperCar | VehicleType::BasicCar | VehicleType::Car => Vec3::new(2.0, 1.0, 4.0),
         VehicleType::Helicopter => Vec3::new(3.0, 2.0, 5.0),
         VehicleType::F16 => Vec3::new(15.0, 1.6, 1.5),
     };

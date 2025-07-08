@@ -225,6 +225,12 @@ pub struct ChunkCoord {
     pub z: i32,
 }
 
+impl Default for ChunkCoord {
+    fn default() -> Self {
+        Self { x: 0, z: 0 }
+    }
+}
+
 impl ChunkCoord {
     pub fn new(x: i32, z: i32) -> Self {
         Self { x, z }

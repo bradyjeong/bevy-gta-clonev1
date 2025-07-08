@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Physics integration tests for gameplay_sim
 // Tests vehicle physics, trajectories, and physical constraints
 

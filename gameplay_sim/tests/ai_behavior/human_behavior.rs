@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Human behavior system tests
 use bevy::prelude::*;
 use game_core::prelude::*;

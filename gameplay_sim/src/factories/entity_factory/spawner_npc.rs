@@ -34,12 +34,9 @@ pub fn spawn_npc(
             is_culled: false,
             max_distance: 100.0,
         },
-        MaterialMeshBundle {
-            mesh,
-            material,
-            transform: Transform::from_translation(safe_position),
-            ..default()
-        },
+        Mesh3d(mesh),
+        MeshMaterial3d(material),
+        Transform::from_translation(safe_position),
     )).id();
     
     Ok(Some(entity))

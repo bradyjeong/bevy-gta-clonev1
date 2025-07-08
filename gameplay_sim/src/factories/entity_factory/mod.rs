@@ -29,6 +29,12 @@ impl UnifiedEntityFactory {
         Self::default()
     }
 
+    pub fn with_config(config: GameConfig) -> Self {
+        let mut factory = Self::new();
+        factory.configure_from_config(&config);
+        factory
+    }
+
     pub fn configure_from_config(&mut self, config: &GameConfig) {
         self.limit_manager.configure_from_config(config);
     }
@@ -65,5 +71,27 @@ impl UnifiedEntityFactory {
         }
 
         Ok(entity)
+    }
+
+    /// Spawn NPC with consolidated logic
+    pub fn spawn_npc_consolidated(
+        &mut self,
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        position: Vec3,
+        current_time: f32,
+    ) -> Result<Entity, BundleError> {
+        let existing_content = Vec::new(); // Empty for now
+        self.spawn_entity_consolidated(
+            commands,
+            meshes,
+            materials,
+            ContentType::NPC,
+            position,
+            None,
+            &existing_content,
+            current_time,
+        ).map(|opt| opt.unwrap_or(Entity::from_raw(0)))
     }
 }

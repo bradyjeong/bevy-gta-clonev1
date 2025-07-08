@@ -13,7 +13,7 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
+use game_core::prelude::*;
 use crate::config::GameConfig;
 use crate::systems::physics_utils::PhysicsUtilities;
 

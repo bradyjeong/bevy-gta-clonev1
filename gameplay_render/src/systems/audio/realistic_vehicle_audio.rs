@@ -93,14 +93,11 @@ pub fn realistic_vehicle_audio_system(
 
 /// Calculate realistic engine audio based on RPM and load
 fn calculate_engine_audio(engine: &RealisticVehicle, dynamics: &VehicleDynamics) -> (f32, f32) {
-    let rpm_ratio = if engine.max_rpm > 0.0 {
-        engine.current_rpm / engine.max_rpm
-    } else {
-        0.0
-    };
+    // Use speed as a proxy for engine state since RPM fields are not available
+    let rpm_ratio = (dynamics.speed / 50.0).clamp(0.0, 1.0);
     
     let pitch = 0.5 + rpm_ratio * 2.0; // 0.5 to 2.5 pitch range
-    let volume = (engine.throttle_input * 0.7 + rpm_ratio * 0.3).clamp(0.1, 1.0);
+    let volume = (rpm_ratio * 0.7 + 0.3).clamp(0.1, 1.0);
     
     (pitch, volume)
 }

@@ -12,6 +12,10 @@ pub struct Player;
 #[derive(Component)]
 pub struct ActiveEntity;
 
+/// Resource tracking the currently active entity (vehicle/player)
+#[derive(Resource, Default)]
+pub struct ActiveEntityResource(pub Option<Entity>);
+
 #[derive(Component)]
 pub struct InCar(#[allow(dead_code)] pub Entity);
 

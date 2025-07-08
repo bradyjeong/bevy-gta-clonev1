@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::constants::*;
-use crate::bundles::VisibleChildBundle;
-use crate::components::world::Cullable;
+use game_core::bundles::VisibleChildBundle;
+use game_core::prelude::Cullable;
 
 // NOTE: Roads are now fully dynamic - no static setup needed
 // The dynamic road system guarantees immediate spawn area roads

@@ -13,7 +13,7 @@
 
 use bevy::prelude::*;
 use std::collections::{HashMap, VecDeque, BTreeMap};
-use crate::components::*;
+use game_core::prelude::*;
 use crate::config::GameConfig;
 use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;

@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Emotional state components for testing (mirrors gameplay_sim implementation)
 use bevy::prelude::*;
 

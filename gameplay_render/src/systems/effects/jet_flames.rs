@@ -1,8 +1,9 @@
 use bevy::prelude::*;
+use bevy::text::Text;
 use bevy_rapier3d::prelude::*;
-use game_core::components::vehicles::{F16Fighter, ExhaustFlame, VehicleBeacon};
-use game_core::components::player::Player;
-use game_core::components::ui::WaypointText;
+use game_core::components::{ExhaustFlame, VehicleBeacon, F16};
+use game_core::components::Player;
+use game_core::components::WaypointText;
 
 /// Flame effect component for jet engines
 #[derive(Component)]
@@ -24,7 +25,7 @@ impl Default for FlameEffect {
 
 /// System to handle flame effects for jet engines
 pub fn jet_flame_effects_system(
-    mut flame_query: Query<(&mut FlameEffect, &Transform), With<F16Fighter>>,
+    mut flame_query: Query<(&mut FlameEffect, &Transform), With<F16>>,
     time: Res<Time>,
 ) {
     for (mut flame, transform) in flame_query.iter_mut() {
@@ -48,7 +49,7 @@ pub fn jet_flame_effects_system(
 
 /// System to update flame colors based on intensity
 pub fn update_flame_colors(
-    flame_query: Query<(Entity, &FlameEffect), With<F16Fighter>>,
+    flame_query: Query<(Entity, &FlameEffect), With<F16>>,
     mut material_assets: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, flame_effect) in flame_query.iter() {
@@ -61,10 +62,12 @@ pub fn update_flame_colors(
         
         // Temperature affects blue component
         let temp_factor = (flame_effect.color_temperature - 2000.0) / 2000.0;
+        let [r, g, b] = base_color.to_srgba().to_u8_array_no_alpha();
+        let (r, g, b) = (r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0);
         let flame_color = Color::srgb(
-            base_color.r(),
-            base_color.g(),
-            base_color.b() + temp_factor * 0.3
+            r,
+            g,
+            b + temp_factor * 0.3
         );
         
         // Apply color to material (implementation would depend on material setup)

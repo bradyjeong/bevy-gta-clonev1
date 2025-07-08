@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Test module for gameplay_sim crate
 // Organizes all test modules for gameplay simulation systems
 

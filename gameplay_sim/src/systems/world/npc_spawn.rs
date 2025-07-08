@@ -8,6 +8,7 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
+use crate::bevy16_compat::EntityCommandsExt;
 use rand::Rng;
 use game_core::prelude::*;
 use crate::systems::world::npc_lod::spawn_npc_with_lod;

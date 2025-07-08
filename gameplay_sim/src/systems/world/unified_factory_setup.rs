@@ -15,14 +15,15 @@ use game_core::prelude::*;
 
 /// Setup system for the UnifiedEntityFactory resource
 pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConfig>) {
-    let factory = UnifiedEntityFactory::with_config(config.clone());
+    let mut factory = UnifiedEntityFactory::new();
+    factory.configure_from_config(&config);
     
     info!("✅ Phase 2.1: UnifiedEntityFactory initialized with consolidated spawn logic");
     info!("📊 Entity limits: Buildings: {}, Vehicles: {}, NPCs: {}, Trees: {}", 
-        factory.entity_limits.max_buildings,
-        factory.entity_limits.max_vehicles,
-        factory.entity_limits.max_npcs,
-        factory.entity_limits.max_trees
+        factory.limit_manager.max_buildings,
+        factory.limit_manager.max_vehicles,
+        factory.limit_manager.max_npcs,
+        factory.limit_manager.max_trees
     );
     commands.insert_resource(factory);
 }
@@ -33,7 +34,7 @@ pub fn unified_factory_debug_system(
 ) {
     // Only show stats every 10 seconds to avoid spam
     if (time.elapsed_secs() % 10.0) < time.delta_secs() {
-        let (buildings, vehicles, npcs, trees) = factory.entity_limits.get_counts();
+        let (buildings, vehicles, npcs, trees) = factory.limit_manager.counts();
         
         info!(
             "🏭 UNIFIED FACTORY STATUS:\n\
@@ -41,17 +42,15 @@ pub fn unified_factory_debug_system(
             • Buildings: {}/{} ({:.1}% full)\n\
             • Vehicles:  {}/{} ({:.1}% full)\n\
             • NPCs:      {}/{} ({:.1}% full)\n\
-            • Trees:     {}/{} ({:.1}% full)\n\
-            🚀 Position Cache Size: {} entries",
-            buildings, factory.entity_limits.max_buildings, 
-            (buildings as f32 / factory.entity_limits.max_buildings as f32) * 100.0,
-            vehicles, factory.entity_limits.max_vehicles,
-            (vehicles as f32 / factory.entity_limits.max_vehicles as f32) * 100.0,
-            npcs, factory.entity_limits.max_npcs,
-            (npcs as f32 / factory.entity_limits.max_npcs as f32) * 100.0,
-            trees, factory.entity_limits.max_trees,
-            (trees as f32 / factory.entity_limits.max_trees as f32) * 100.0,
-            factory.position_cache.len()
+            • Trees:     {}/{} ({:.1}% full)",
+            buildings, factory.limit_manager.max_buildings, 
+            (buildings as f32 / factory.limit_manager.max_buildings as f32) * 100.0,
+            vehicles, factory.limit_manager.max_vehicles,
+            (vehicles as f32 / factory.limit_manager.max_vehicles as f32) * 100.0,
+            npcs, factory.limit_manager.max_npcs,
+            (npcs as f32 / factory.limit_manager.max_npcs as f32) * 100.0,
+            trees, factory.limit_manager.max_trees,
+            (trees as f32 / factory.limit_manager.max_trees as f32) * 100.0
         );
     }
 }

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use game_core::prelude::*;
+use crate::bevy16_compat::QueryExt;
 
 /// System to handle player interaction with vehicles
 pub fn player_interaction_system(
@@ -12,7 +13,7 @@ pub fn player_interaction_system(
     car_query: Query<(Entity, &Transform), With<Car>>,
     helicopter_query: Query<(Entity, &Transform), With<Helicopter>>,
     f16_query: Query<(Entity, &Transform), With<F16>>,
-    active_entity: Res<ActiveEntity>,
+    active_entity: Res<ActiveEntityResource>,
 ) {
     if !input_manager.is_action_just_pressed(super::input::input_config::InputAction::Interact) {
         return;
@@ -27,7 +28,7 @@ pub fn player_interaction_system(
                 for (car_entity, car_transform) in car_query.iter() {
                     let distance = player_transform.translation.distance(car_transform.translation);
                     if distance < 3.0 {
-                        commands.insert_resource(ActiveEntity(Some(car_entity)));
+                        commands.insert_resource(ActiveEntityResource(Some(car_entity)));
                         next_state.set(GameState::Driving);
                         return;
                     }
@@ -37,7 +38,7 @@ pub fn player_interaction_system(
                 for (helicopter_entity, helicopter_transform) in helicopter_query.iter() {
                     let distance = player_transform.translation.distance(helicopter_transform.translation);
                     if distance < 5.0 { // Larger range for helicopters
-                        commands.insert_resource(ActiveEntity(Some(helicopter_entity)));
+                        commands.insert_resource(ActiveEntityResource(Some(helicopter_entity)));
                         next_state.set(GameState::Flying);
                         return;
                     }
@@ -47,7 +48,7 @@ pub fn player_interaction_system(
                 for (f16_entity, f16_transform) in f16_query.iter() {
                     let distance = player_transform.translation.distance(f16_transform.translation);
                     if distance < 4.0 {
-                        commands.insert_resource(ActiveEntity(Some(f16_entity)));
+                        commands.insert_resource(ActiveEntityResource(Some(f16_entity)));
                         next_state.set(GameState::Jetting);
                         return;
                     }
@@ -66,7 +67,7 @@ pub fn player_interaction_system(
                         commands.entity(player_entity).insert(Transform::from_translation(exit_position));
                     }
                     
-                    commands.insert_resource(ActiveEntity(None));
+                    commands.insert_resource(ActiveEntityResource(None));
                     next_state.set(GameState::Walking);
                 }
             }
@@ -81,7 +82,7 @@ pub fn player_interaction_system(
                         commands.entity(player_entity).insert(Transform::from_translation(exit_position));
                     }
                     
-                    commands.insert_resource(ActiveEntity(None));
+                    commands.insert_resource(ActiveEntityResource(None));
                     next_state.set(GameState::Walking);
                 }
             }
@@ -96,10 +97,13 @@ pub fn player_interaction_system(
                         commands.entity(player_entity).insert(Transform::from_translation(exit_position));
                     }
                     
-                    commands.insert_resource(ActiveEntity(None));
+                    commands.insert_resource(ActiveEntityResource(None));
                     next_state.set(GameState::Walking);
                 }
             }
         }
     }
 }
+
+// Alias for backward compatibility
+pub use player_interaction_system as interaction_system;

@@ -49,8 +49,7 @@ pub use npc_spawn::*;
 // pub use optimized_lod::*; // Removed - functionality moved to unified_lod.rs
 pub use vegetation_lod::*;
 // Export unified distance culling components (selective to avoid conflicts)
-pub use unified_distance_culling::{
-    UnifiedCullable, UnifiedDistanceCullingPlugin, new_unified_distance_culling_system,
-    VehicleLODUpdate, NPCLODUpdate, VegetationLODUpdate, ChunkLODUpdate, ChunkUnloadRequest
-};
+pub use unified_distance_culling::UnifiedCullable;
+// Export LOD update events from unified_lod instead
+pub use unified_lod::{VehicleLODUpdate, NPCLODUpdate, VegetationLODUpdate};
 pub use unified_factory_setup::*;

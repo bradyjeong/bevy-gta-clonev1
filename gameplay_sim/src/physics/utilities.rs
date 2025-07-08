@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;
 use crate::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
 use crate::systems::input::{ControlManager, ControlAction};
+use tracing::{info, warn, error, debug};
 
 /// Unified physics utilities for consistent physics behavior across all movement systems
 #[derive(Default)]
@@ -243,7 +244,7 @@ impl PhysicsBodySetup {
 }
 
 /// Unified input processing results for all movement systems
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct MovementInputs {
     pub throttle: f32,
     pub brake: f32,

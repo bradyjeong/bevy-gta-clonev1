@@ -9,10 +9,10 @@ use game_core::bundles::{
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};
 use crate::systems::audio::realistic_vehicle_audio::{VehicleAudioState, VehicleAudioSources};
-use gameplay_sim::distance::MovementTracker;
-use gameplay_sim::world::road_network::RoadNetwork;
+use gameplay_sim::components::MovementTracker;
+use game_core::components::world::RoadNetwork;
 use gameplay_sim::world::road_generation::is_on_road_spline;
-use gameplay_sim::world::unified_distance_culling::UnifiedCullable;
+use game_core::components::UnifiedCullable;
 
 use game_core::config::GameConfig;
 
@@ -66,7 +66,7 @@ impl Default for EntityLimitManager {
 
 impl EntityLimitManager {
     /// Configure entity limits from game config
-    pub fn configure_from_config(&mut self, config: &crate::config::GameConfig) {
+    pub fn configure_from_config(&mut self, config: &game_core::config::GameConfig) {
         self.max_buildings = config.entity_limits.buildings;
         self.max_vehicles = config.entity_limits.vehicles;
         self.max_npcs = config.entity_limits.npcs;
@@ -352,6 +352,9 @@ impl UnifiedEntityFactory {
                 building_type: BuildingType::Generic,
                 height,
                 scale: Vec3::new(width, height, width),
+                current_occupants: Some(0),
+                max_occupants: Some((height * width * 0.1) as u32),
+                spawn_time: Some(0.0),
             },
             // Physics components  
             RigidBody::Fixed,
@@ -481,6 +484,10 @@ impl UnifiedEntityFactory {
                 speed: rng.gen_range(2.0..5.0),
                 last_update: current_time,
                 update_interval: rng.gen_range(0.05..0.2),
+                behavior_state: Some(NPCBehaviorState::Idle),
+                health: Some(100.0),
+                max_health: Some(100.0),
+                spawn_time: Some(current_time),
             },
             // Visual mesh
             Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
@@ -615,6 +622,7 @@ impl UnifiedEntityFactory {
             VehicleType::SuperCar => &self.config.vehicles.super_car,
             VehicleType::Helicopter => &self.config.vehicles.helicopter,
             VehicleType::F16 => &self.config.vehicles.f16,
+            VehicleType::Car => &self.config.vehicles.basic_car,
         };
         
         // Create visual components using existing factories
@@ -623,6 +631,7 @@ impl UnifiedEntityFactory {
             VehicleType::SuperCar => MeshFactory::create_sports_car_body(meshes),
             VehicleType::Helicopter => MeshFactory::create_helicopter_body(meshes),
             VehicleType::F16 => MeshFactory::create_f16_body(meshes),
+            VehicleType::Car => MeshFactory::create_car_body(meshes),
         };
         
         let material_handle = MaterialFactory::create_vehicle_metallic(materials, color);

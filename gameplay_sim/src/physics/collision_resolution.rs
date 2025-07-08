@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{Player, ActiveEntity};
+use game_core::prelude::{Player, ActiveEntity};
 
 /// Physics-safe collision resolution using Rapier authority
 pub fn player_collision_resolution_system(

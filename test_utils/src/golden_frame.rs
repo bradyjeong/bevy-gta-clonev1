@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::pbr::*;
+use bevy::render::mesh::*;
 use image::{ImageBuffer, Rgba, GenericImageView};
 use std::path::Path;
 

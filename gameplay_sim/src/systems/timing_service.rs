@@ -11,7 +11,7 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use game_core::prelude::*;
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct TimingService {
     current_time: f32,
     delta_time: f32,
@@ -27,6 +27,7 @@ pub enum SystemType {
     Performance,
     Culling,
     LOD,
+    NPCLOD,
 }
 
 #[derive(Clone)]
@@ -42,6 +43,9 @@ pub enum EntityTimerType {
     LOD,
     Culling,
     Animation,
+    NPCLOD,
+    VehicleLOD,
+    VegetationLOD,
 }
 
 impl Default for TimingService {
@@ -70,6 +74,16 @@ impl TimingService {
     pub fn update(&mut self, time: &Time) {
         self.current_time = time.elapsed_secs();
         self.delta_time = time.delta_secs();
+    }
+    
+    /// Get current time
+    pub fn current_time(&self) -> f32 {
+        self.current_time
+    }
+    
+    /// Get delta time
+    pub fn delta_time(&self) -> f32 {
+        self.delta_time
     }
     
     pub fn should_run_system(&mut self, system_type: SystemType) -> bool {
@@ -152,4 +166,49 @@ pub fn timing_service_cleanup_system(
 ) {
     // Clean up entity timers older than 60 seconds
     timing_service.cleanup_old_timers(60.0);
+}
+
+// Oracle's missing timing stubs
+pub fn update_timing_service() {
+    // Update timing service stub - no implementation yet
+}
+
+pub fn cleanup_timing_service() {
+    // Cleanup timing service stub - no implementation yet
+}
+
+// Missing ManagedTiming component for Phase 6
+#[derive(Component, Debug, Clone)]
+pub struct ManagedTiming {
+    pub last_update: f32,
+    pub update_interval: f32,
+    pub timer_type: EntityTimerType,
+}
+
+impl Default for ManagedTiming {
+    fn default() -> Self {
+        Self {
+            last_update: 0.0,
+            update_interval: 1.0,
+            timer_type: EntityTimerType::Movement,
+        }
+    }
+}
+
+impl ManagedTiming {
+    pub fn new(timer_type: EntityTimerType) -> Self {
+        Self {
+            last_update: 0.0,
+            update_interval: match timer_type {
+                EntityTimerType::Movement => 0.1,
+                EntityTimerType::LOD => 1.5,
+                EntityTimerType::Culling => 0.5,
+                EntityTimerType::Animation => 0.2,
+                EntityTimerType::NPCLOD => 2.0,
+                EntityTimerType::VehicleLOD => 1.0,
+                EntityTimerType::VegetationLOD => 3.0,
+            },
+            timer_type,
+        }
+    }
 }

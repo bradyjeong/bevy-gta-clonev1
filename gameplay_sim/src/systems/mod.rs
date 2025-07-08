@@ -11,7 +11,16 @@ pub mod player_collision_resolution;
 pub mod realistic_physics_safeguards;
 pub mod spawn_validation;
 pub mod unified_distance_calculator;
-// TEMP: Disabled until factory migration
-// pub mod water;
 pub mod world;
 pub mod timing_service;
+pub mod performance_monitor;
+pub mod audio;
+pub mod persistence;
+pub mod camera;
+pub mod water;
+
+pub mod batching;
+pub mod effects;
+
+// Re-export commonly used types
+pub use game_core::prelude::MovementTracker;

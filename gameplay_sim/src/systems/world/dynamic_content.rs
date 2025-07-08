@@ -17,7 +17,7 @@ use rand::Rng;
 use std::cell::RefCell;
 use game_core::prelude::*;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-use crate::systems::world::road_network::RoadNetwork;
+use game_core::components::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
 
 thread_local! {
@@ -218,7 +218,7 @@ fn spawn_dynamic_content_safe_unified(
                 materials,
                 ContentType::Building,
                 position,
-                Some(road_network),
+                None,
                 existing_content,
                 current_time,
             ) {

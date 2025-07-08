@@ -72,6 +72,30 @@ impl TransformFactory {
         let angle = fastrand::f32() * std::f32::consts::TAU;
         Quat::from_rotation_y(angle)
     }
+
+    pub fn helicopter_body() -> Transform {
+        Transform::from_xyz(0.0, 0.0, 0.0)
+    }
+
+    pub fn landing_skid_left() -> Transform {
+        Transform::from_xyz(-0.5, -0.5, 0.0)
+    }
+
+    pub fn landing_skid_right() -> Transform {
+        Transform::from_xyz(0.5, -0.5, 0.0)
+    }
+
+    pub fn vehicle_body_center() -> Transform {
+        Transform::from_xyz(0.0, 0.0, 0.0)
+    }
+
+    pub fn vehicle_chassis() -> Transform {
+        Transform::from_xyz(0.0, 0.0, 0.0)
+    }
+
+    pub fn wheel_with_rotation(x: f32, y: f32, z: f32) -> Transform {
+        Transform::from_xyz(x, y, z)
+    }
 }
 
 impl Default for TransformFactory {

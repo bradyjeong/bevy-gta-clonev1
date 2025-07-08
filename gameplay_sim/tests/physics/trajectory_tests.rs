@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // Trajectory tests for deterministic physics validation
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;

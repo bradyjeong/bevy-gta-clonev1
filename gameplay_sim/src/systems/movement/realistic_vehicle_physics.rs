@@ -85,7 +85,7 @@ pub fn realistic_vehicle_physics_system(
         // Update vehicle speed for dynamics calculations
         dynamics.speed = velocity.linvel.length();
         // STEP 1: Process user input with realistic constraints
-        process_vehicle_input(&control_manager, &mut engine, &vehicle, dt);
+        process_vehicle_input(&control_manager, &mut engine, &vehicle, _entity, dt);
         // STEP 2: Calculate engine forces with realistic power delivery
         let engine_force = calculate_engine_force(&mut engine, &dynamics, dt);
         // STEP 3: Calculate suspension forces (simplified without ground detection for now)
@@ -153,17 +153,18 @@ fn process_vehicle_input(
     control_manager: &Res<ControlManager>,
     engine: &mut EnginePhysics,
     _vehicle: &RealisticVehicle,
+    entity: Entity,
     dt: f32,
 ) {
     // Use ControlManager for realistic vehicle input
     // Throttle input with realistic response
-    if is_accelerating(control_manager) {
+    if is_accelerating(control_manager, entity) {
         engine.throttle_input = (engine.throttle_input + dt * 2.0).clamp(0.0, 1.0);
     } else {
         engine.throttle_input = (engine.throttle_input - dt * 3.0).clamp(0.0, 1.0);
     }
     // Brake input with ABS simulation
-    if is_braking(control_manager) {
+    if is_braking(control_manager, entity) {
         engine.brake_input = (engine.brake_input + dt * 4.0).clamp(0.0, 1.0);
     } else {
         engine.brake_input = (engine.brake_input - dt * 5.0).clamp(0.0, 1.0);

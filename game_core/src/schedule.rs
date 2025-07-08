@@ -36,7 +36,7 @@ impl GlobalSystemSet {
 /// Macro to ensure a system is properly assigned to a global set
 #[macro_export]
 macro_rules! add_global_system {
-    ($app:expr, $system:expr, $set:expr) => {
+    ($app:expr_2021, $system:expr_2021, $set:expr_2021) => {
         $app.add_systems(Update, $system.in_set($set))
     };
 }

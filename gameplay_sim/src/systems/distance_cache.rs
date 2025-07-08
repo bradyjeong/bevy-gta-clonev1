@@ -14,7 +14,7 @@ pub struct DistanceCache {
     pub stats: DistanceCacheStats,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct DistanceCacheStats {
     pub hits: u64,
     pub misses: u64,
@@ -112,7 +112,7 @@ impl DistanceCache {
         self.cache.retain(|_key, (_, _, cached_frame)| {
             if removed >= cleanup_count {
                 true // Keep remaining entries for next cleanup
-            } else if self.current_frame - cached_frame > 300 { // 5 seconds at 60 FPS
+            } else if self.current_frame - *cached_frame > 300 { // 5 seconds at 60 FPS
                 removed += 1;
                 self.stats.cleanups += 1;
                 false // Remove old entry
@@ -155,8 +155,8 @@ impl DistanceCache {
     }
 }
 
-// Import MovementTracker from game_core
-use game_core::components::spatial::MovementTracker;
+// Import MovementTracker from game_core prelude
+use game_core::prelude::MovementTracker;
 
 /// System to advance the distance cache frame counter
 pub fn distance_cache_management_system(
@@ -171,6 +171,28 @@ pub fn distance_cache_management_system(
             tracker.update_position(transform.translation);
         }
     }
+}
+
+/// Get cached distance between two entities (standalone function)
+pub fn get_cached_distance(
+    distance_cache: &mut DistanceCache,
+    entity1: Entity,
+    entity2: Entity,
+    pos1: Vec3,
+    pos2: Vec3,
+) -> f32 {
+    distance_cache.get_distance(entity1, entity2, pos1, pos2).0
+}
+
+/// Get cached distance squared between two entities (standalone function)
+pub fn get_cached_distance_squared(
+    distance_cache: &mut DistanceCache,
+    entity1: Entity,
+    entity2: Entity,
+    pos1: Vec3,
+    pos2: Vec3,
+) -> f32 {
+    distance_cache.get_distance_squared(entity1, entity2, pos1, pos2)
 }
 
 /// Plugin to add distance caching system

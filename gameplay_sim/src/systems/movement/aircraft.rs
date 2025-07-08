@@ -33,8 +33,8 @@ pub fn helicopter_movement(
     let mut target_angular_velocity = Vec3::ZERO;
     // Use UNIFIED ControlManager for helicopter movement
     // Forward/backward movement
+    let forward = transform.forward();
     if control_manager.is_control_active(ControlAction::Accelerate) {
-        let forward = transform.forward();
         target_linear_velocity += forward * speed;
     }
     if control_manager.is_control_active(ControlAction::Brake) {
@@ -58,7 +58,7 @@ pub fn helicopter_movement(
     velocity.linvel = target_linear_velocity;
     velocity.angvel = target_angular_velocity;
     // Use unified velocity validation and ground collision
-    PhysicsUtilities::validate_velocity(&mut velocity, &config);
+    PhysicsUtilities::validate_velocity(&mut velocity, config.as_ref());
     PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.5, 5.0);
 }
 pub fn rotate_helicopter_rotors(

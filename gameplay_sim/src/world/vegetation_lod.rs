@@ -11,7 +11,7 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
-use crate::components::*;
+use game_core::prelude::*;
 use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
 
 /// Frame counter for LOD updates
@@ -39,11 +39,11 @@ pub fn vegetation_lod_system(
     for (entity, mut veg_lod, transform, mut visibility, mut mesh_handle) in vegetation_query.iter_mut() {
         // Use distance cache for efficient distance calculation
         let distance = get_cached_distance(
-            entity,
-            Entity::from_raw(0), // Use entity ID 0 as player placeholder
-            transform.translation,
-            active_pos,
             &mut distance_cache,
+            Entity::from_raw(0), // Use entity ID 0 as player placeholder
+            entity,
+            active_pos,
+            transform.translation,
         );
 
         let old_level = veg_lod.detail_level;

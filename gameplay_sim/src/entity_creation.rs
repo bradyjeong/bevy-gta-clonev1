@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
+use game_core::prelude::*;
 use crate::services::simple_services::{ConfigService, PhysicsService};
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 

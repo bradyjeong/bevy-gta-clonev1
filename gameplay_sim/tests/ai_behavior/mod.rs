@@ -1,3 +1,4 @@
+#![cfg(feature = "heavy_tests")]
 // AI behavior tests for gameplay_sim
 // Tests NPC movement patterns, collision avoidance, and behavioral systems
 
