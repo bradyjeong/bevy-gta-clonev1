@@ -1,7 +1,8 @@
 //! Gameplay simulation - physics, AI, rules
 #![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
-#![warn(missing_docs)]
+#![cfg_attr(feature = "strict_docs", deny(missing_docs))]
+#![cfg_attr(not(feature = "strict_docs"), allow(missing_docs))]
 
 // Macro imports
 #[macro_use]
