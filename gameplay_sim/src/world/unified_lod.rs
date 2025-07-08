@@ -178,7 +178,7 @@ pub fn master_unified_lod_system(
         for (_entity, chunk_entity, mut visibility) in &mut chunk_query {
         if let Some(chunk) = world_manager.get_chunk(chunk_entity.coord) {
             let should_be_visible = match chunk.state {
-                ChunkState::Loaded { entity_count } => {
+                ChunkState::Loaded { entity_count: _ } => {
                     should_layer_be_visible(u32_to_content_layer(chunk_entity.layer), 0, chunk.distance_to_player)
                 }
                 _ => false,
@@ -211,7 +211,7 @@ pub fn master_unified_lod_system(
 fn update_chunk_lod_levels(world_manager: &mut UnifiedWorldManager, active_pos: Vec3) {
     let chunks_to_update: Vec<_> = world_manager.chunks.iter()
         .filter_map(|(coord, chunk)| {
-            if let ChunkState::Loaded { entity_count } = chunk.state {
+            if let ChunkState::Loaded { entity_count: _ } = chunk.state {
                 let distance = active_pos.distance(chunk.coord.to_world_pos_local());
                 Some((*coord, distance, 0))
             } else {

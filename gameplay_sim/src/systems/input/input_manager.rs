@@ -114,7 +114,6 @@ impl InputManager {
                 if input.pressed(KeyCode::KeyE) { active_actions.insert(InputAction::YawRight); }
                 if input.pressed(KeyCode::Space) { active_actions.insert(InputAction::Afterburner); }
             }
-            _ => {}
         }
         
         // Common debug actions
@@ -237,7 +236,6 @@ pub fn update_input_compat_layer(
             compat_layer.arrow_right = input_manager.is_action_pressed(InputAction::RollRight);
             compat_layer.space = input_manager.is_action_pressed(InputAction::Afterburner);
         }
-        _ => {}
     }
     
     // Common actions

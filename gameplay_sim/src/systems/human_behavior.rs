@@ -44,7 +44,7 @@ pub fn human_emotional_state_system(
         (With<Player>, With<ActiveEntity>),
     >,
 ) {
-    let Ok((mut emotions, mut behavior, mut movement, animation)) = player_query.get_single_mut() else {
+    let Ok((mut emotions, mut behavior, mut movement, animation)) = player_query.single_mut() else {
         return;
     };
     

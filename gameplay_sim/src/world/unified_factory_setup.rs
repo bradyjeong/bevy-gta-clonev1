@@ -14,7 +14,7 @@ use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::config::GameConfig;
 
 /// Setup system for the `UnifiedEntityFactory` resource
-pub fn setup_unified_entity_factory(mut commands: Commands, config: Res<GameConfig>) {
+pub fn setup_unified_entity_factory(mut commands: Commands, _config: Res<GameConfig>) {
     let factory = UnifiedEntityFactory::with_config(game_core::config::GameConfig::default());
     
     info!("✅ Phase 2.1: UnifiedEntityFactory initialized with consolidated spawn logic");

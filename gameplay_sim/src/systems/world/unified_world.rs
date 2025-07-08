@@ -224,7 +224,7 @@ impl WorldManager {
         if let Some(chunk_data) = self.chunks.get(&coord) {
             // Despawn all entities in the chunk
             for &entity in &chunk_data.entities {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
         }
         

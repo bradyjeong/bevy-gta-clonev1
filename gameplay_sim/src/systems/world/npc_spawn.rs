@@ -74,7 +74,7 @@ pub fn cleanup_distant_npcs_system(
         
         for (entity, npc_transform) in npc_query.iter() {
             if active_pos.distance(npc_transform.translation) > cleanup_distance {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
         }
     }

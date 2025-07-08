@@ -20,7 +20,7 @@ pub fn player_interaction_system(
 
     match **current_state {
         GameState::Walking => {
-            if let Ok((player_entity, player_transform)) = player_query.get_single() {
+            if let Ok((player_entity, player_transform)) = player_query.single() {
                 // Check for nearby vehicles to enter
                 
                 // Check cars
@@ -62,7 +62,7 @@ pub fn player_interaction_system(
                     let exit_position = car_transform.translation + Vec3::new(2.0, 0.0, 0.0);
                     
                     // Find existing player or create new one
-                    if let Ok((player_entity, player_transform)) = player_query.get_single() {
+                    if let Ok((player_entity, player_transform)) = player_query.single() {
                         commands.entity(player_entity).insert(Transform::from_translation(exit_position));
                     }
                     
@@ -77,7 +77,7 @@ pub fn player_interaction_system(
                 if let Ok((_, helicopter_transform)) = helicopter_query.get(active_helicopter) {
                     let exit_position = helicopter_transform.translation + Vec3::new(0.0, -2.0, 2.0);
                     
-                    if let Ok((player_entity, player_transform)) = player_query.get_single() {
+                    if let Ok((player_entity, player_transform)) = player_query.single() {
                         commands.entity(player_entity).insert(Transform::from_translation(exit_position));
                     }
                     
@@ -92,7 +92,7 @@ pub fn player_interaction_system(
                 if let Ok((_, f16_transform)) = f16_query.get(active_f16) {
                     let exit_position = f16_transform.translation + Vec3::new(0.0, -1.0, 3.0);
                     
-                    if let Ok((player_entity, player_transform)) = player_query.get_single() {
+                    if let Ok((player_entity, player_transform)) = player_query.single() {
                         commands.entity(player_entity).insert(Transform::from_translation(exit_position));
                     }
                     

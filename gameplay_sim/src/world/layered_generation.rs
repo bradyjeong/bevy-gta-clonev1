@@ -86,7 +86,7 @@ fn advance_chunk_generation(
             let distance = chunk.distance_to_player;
             // Store distance first, then calculate LOD
             let _ = chunk; // Release the mutable borrow
-            let lod_level = world_manager.calculate_lod_level(distance);
+            let _lod_level = world_manager.calculate_lod_level(distance);
             if let Some(chunk) = world_manager.get_chunk_mut(coord) {
                 chunk.state = ChunkState::Loaded { entity_count: 0 };
             }
@@ -300,7 +300,7 @@ fn detect_and_spawn_intersections(
     }
     
     // Create intersection entities
-    for (position, connected_roads, intersection_type, road_type) in detected_intersections {
+    for (position, _connected_roads, intersection_type, road_type) in detected_intersections {
         println!("🚧 DEBUG: Creating intersection entity at {position:?} with type {intersection_type:?} and road type {road_type:?}");
         let intersection_id = world_manager.road_network.add_intersection(
             position,

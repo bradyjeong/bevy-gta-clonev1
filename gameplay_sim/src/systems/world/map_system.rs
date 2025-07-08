@@ -185,7 +185,7 @@ pub fn map_generation_system(
             let distance = (chunk_key.0 - current_chunk.0).abs() + (chunk_key.1 - current_chunk.1).abs();
             
             if distance > cleanup_radius {
-                commands.entity(*chunk_entity).despawn_recursive();
+                commands.entity(*chunk_entity).despawn();
                 chunks_to_remove.push(*chunk_key);
             }
         }

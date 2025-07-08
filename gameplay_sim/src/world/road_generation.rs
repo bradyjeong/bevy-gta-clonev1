@@ -26,11 +26,12 @@ pub trait RoadNetworkExtensions {
 
 impl RoadNetworkExtensions for ResMut<'_, RoadNetwork> {
     fn clear_cache(&mut self) {
-        self.clear_cache();
+        // TODO: Implement cache clearing
     }
     
     fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32> {
-        self.generate_chunk_roads(chunk_x, chunk_z)
+        // TODO: Implement chunk road generation
+        Vec::new()
     }
 }
 
