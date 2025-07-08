@@ -250,6 +250,7 @@ pub fn batching_performance_comparison_system(
 }
 
 /// Helper function to demonstrate entity marking
+#[allow(dead_code)]
 pub fn demo_entity_marking(
     commands: &mut Commands,
     entity: Entity,
@@ -294,6 +295,7 @@ pub fn demo_entity_marking(
 }
 
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub enum DirtyMarkType {
     Transform,
     Visibility,

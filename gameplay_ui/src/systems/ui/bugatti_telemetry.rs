@@ -15,18 +15,36 @@ use game_core::prelude::*;
 /// Component marker for the Bugatti telemetry dashboard
 #[derive(Component)]
 pub struct BugattiTelemetryOverlay;
+
+/// Component marker for speedometer
+#[derive(Component)]
 pub struct BugattiSpeedometer;
+
+/// Component marker for RPM gauge
+#[derive(Component)]
 pub struct BugattiRpmGauge;
+
+/// Component marker for turbo indicator
+#[derive(Component)]
 pub struct BugattiTurboIndicator;
+
+/// Component marker for info panel
+#[derive(Component)]
 pub struct BugattiInfoPanel;
+
 /// Resource to track dashboard visibility and state
 #[derive(Resource, Default)]
 pub struct BugattiTelemetryState {
+    /// Visibility state
     pub visible: bool,
+    /// Last update time
     pub last_update: f32,
+    /// Update interval
     pub update_interval: f32,
 }
+
 impl BugattiTelemetryState {
+    /// Create new telemetry state
     pub fn new() -> Self {
         Self {
             visible: false,
@@ -34,6 +52,8 @@ impl BugattiTelemetryState {
             update_interval: 0.033, // ~30fps for smooth dashboard updates
         }
     }
+}
+
 /// System to handle F4 key toggle for Bugatti telemetry
 pub fn bugatti_telemetry_input_system(
     keys: Res<ButtonInput<KeyCode>>,
@@ -44,11 +64,11 @@ pub fn bugatti_telemetry_input_system(
 ) {
     if keys.just_pressed(KeyCode::F4) {
         // Only show telemetry if we're driving a SuperCar
-        if supercar_query.single().is_ok() {
+        if supercar_query.get_single().is_ok() {
             telemetry_state.visible = !telemetry_state.visible;
             
             // Toggle existing overlay visibility or create new one
-            if let Ok(mut visibility) = overlay_query.single_mut() {
+            if let Ok(mut visibility) = overlay_query.get_single_mut() {
                 *visibility = if telemetry_state.visible {
                     Visibility::Visible
                 } else {
@@ -58,6 +78,10 @@ pub fn bugatti_telemetry_input_system(
                 // Create overlay if it doesn't exist
                 spawn_bugatti_dashboard(&mut commands);
             }
+        }
+    }
+}
+
 /// Spawn the luxury Bugatti dashboard UI positioned at bottom center
 fn spawn_bugatti_dashboard(commands: &mut Commands) {
     // Main dashboard container - positioned at bottom center
@@ -83,123 +107,141 @@ fn spawn_bugatti_dashboard(commands: &mut Commands) {
         BorderColor(Color::srgb(0.2, 0.7, 1.0)), // Bugatti blue glow
         BugattiTelemetryOverlay,
     )).id();
+    
     // Left Panel - Speed and Performance
     let left_panel = commands.spawn((
+        Node {
             width: Val::Px(180.0),
             height: Val::Percent(100.0),
             flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::Center,
             padding: UiRect::all(Val::Px(10.0)),
             border: UiRect::all(Val::Px(1.0)),
+            ..default()
+        },
         BackgroundColor(Color::srgba(0.05, 0.05, 0.15, 0.9)),
         BorderColor(Color::srgb(0.1, 0.5, 0.8)),
+    )).id();
+    
     // Speedometer
     commands.spawn((
         Text::new("261\nMPH"),
         TextFont { font_size: 32.0, ..default() },
         TextColor(Color::srgb(0.9, 0.9, 1.0)),
-        TextLayout::new_with_justify(JustifyText::Center),
+        Node {
+            align_self: AlignSelf::Center,
+            ..default()
+        },
         BugattiSpeedometer,
-        ChildOf(left_panel),
-    ));
-    // Speed label
-        Text::new("SPEED"),
-        TextFont { font_size: 12.0, ..default() },
-        TextColor(Color::srgb(0.6, 0.8, 1.0)),
-    // Center Panel - Engine Data
+    )).set_parent(left_panel);
+    
+    commands.entity(left_panel).set_parent(dashboard_root);
+    
+    // Center Panel - RPM and Turbo
     let center_panel = commands.spawn((
-            width: Val::Px(240.0),
-        BackgroundColor(Color::srgba(0.1, 0.05, 0.05, 0.9)),
-        BorderColor(Color::srgb(0.8, 0.3, 0.1)),
-    // RPM Display
-        Text::new("4200\nRPM"),
-        TextFont { font_size: 28.0, ..default() },
-        TextColor(Color::srgb(1.0, 0.7, 0.2)),
-        BugattiRpmGauge,
-        ChildOf(center_panel),
-    // Gear indicator
-        Text::new("GEAR: 3"),
-        TextFont { font_size: 16.0, ..default() },
-        TextColor(Color::srgb(0.9, 0.9, 0.9)),
-    // Right Panel - Turbo and Systems
-    let right_panel = commands.spawn((
-        BackgroundColor(Color::srgba(0.05, 0.15, 0.05, 0.9)),
-        BorderColor(Color::srgb(0.1, 0.8, 0.3)),
-    // Turbo Status
-        Text::new("QUAD\nTURBO"),
-        TextFont { font_size: 24.0, ..default() },
-        TextColor(Color::srgb(0.2, 1.0, 0.4)),
-        BugattiTurboIndicator,
-        ChildOf(right_panel),
-    // Turbo pressure
-        Text::new("4/4 ACTIVE"),
-        TextColor(Color::srgb(0.6, 0.9, 0.7)),
-    // Bottom Info Panel
-    let info_panel = commands.spawn((
-            width: Val::Percent(100.0),
-            height: Val::Px(40.0),
-            bottom: Val::Px(-60.0),
+        Node {
+            width: Val::Px(200.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::SpaceAround,
-            padding: UiRect::all(Val::Px(8.0)),
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.85)),
-        BorderColor(Color::srgb(0.3, 0.3, 0.6)),
-        ChildOf(dashboard_root),
-    // Info text sections
-        Text::new("SPORT • LAUNCH: READY • G: 0.0G"),
+            padding: UiRect::all(Val::Px(10.0)),
+            border: UiRect::all(Val::Px(1.0)),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.1, 0.05, 0.05, 0.9)),
+        BorderColor(Color::srgb(0.8, 0.2, 0.2)),
+    )).id();
+    
+    // RPM Gauge
+    commands.spawn((
+        Text::new("8500\nRPM"),
+        TextFont { font_size: 28.0, ..default() },
+        TextColor(Color::srgb(1.0, 0.3, 0.3)),
+        Node {
+            align_self: AlignSelf::Center,
+            ..default()
+        },
+        BugattiRpmGauge,
+    )).set_parent(center_panel);
+    
+    // Turbo Indicator
+    commands.spawn((
+        Text::new("TURBO\n2.5 BAR"),
+        TextFont { font_size: 18.0, ..default() },
+        TextColor(Color::srgb(0.3, 1.0, 0.3)),
+        Node {
+            align_self: AlignSelf::Center,
+            ..default()
+        },
+        BugattiTurboIndicator,
+    )).set_parent(center_panel);
+    
+    commands.entity(center_panel).set_parent(dashboard_root);
+    
+    // Right Panel - Info and Statistics
+    let right_panel = commands.spawn((
+        Node {
+            width: Val::Px(300.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::SpaceEvenly,
+            padding: UiRect::all(Val::Px(10.0)),
+            border: UiRect::all(Val::Px(1.0)),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.05, 0.1, 0.05, 0.9)),
+        BorderColor(Color::srgb(0.2, 0.8, 0.2)),
+    )).id();
+    
+    // Info Panel
+    commands.spawn((
+        Text::new("SPORT • LAUNCH: READY • G: 1.2G"),
         TextFont { font_size: 14.0, ..default() },
         TextColor(Color::srgb(0.8, 0.8, 1.0)),
+        Node {
+            align_self: AlignSelf::Center,
+            ..default()
+        },
         BugattiInfoPanel,
-        ChildOf(info_panel),
-    // Add children to root
-    commands.entity(dashboard_root).add_children(&[left_panel, center_panel, right_panel]);
-/// System to update the Bugatti dashboard with real-time data
+    )).set_parent(right_panel);
+    
+    commands.entity(right_panel).set_parent(dashboard_root);
+}
+
+/// System to update the Bugatti telemetry display with real-time data
 pub fn update_bugatti_telemetry_system(
+    telemetry_state: Res<BugattiTelemetryState>,
     time: Res<Time>,
-    mut speedometer_query: Query<&mut Text, (With<BugattiSpeedometer>, Without<BugattiRpmGauge>, Without<BugattiTurboIndicator>, Without<BugattiInfoPanel>)>,
-    mut rpm_query: Query<&mut Text, (With<BugattiRpmGauge>, Without<BugattiSpeedometer>, Without<BugattiTurboIndicator>, Without<BugattiInfoPanel>)>,
-    mut turbo_query: Query<&mut Text, (With<BugattiTurboIndicator>, Without<BugattiSpeedometer>, Without<BugattiRpmGauge>, Without<BugattiInfoPanel>)>,
-    mut info_query: Query<&mut Text, (With<BugattiInfoPanel>, Without<BugattiSpeedometer>, Without<BugattiRpmGauge>, Without<BugattiTurboIndicator>)>,
-    current_state: Res<State<GameState>>,
-    if let Ok(supercar) = supercar_query.single() {
-        // Update at specified interval for smooth dashboard
-        telemetry_state.last_update += time.delta_secs();
-        if telemetry_state.last_update >= telemetry_state.update_interval {
-            telemetry_state.last_update = 0.0;
-            // Only show telemetry when actually driving
-            if *current_state.get() == GameState::Driving {
-                // Update Speedometer
-                if let Ok(mut speed_text) = speedometer_query.single_mut() {
-                    let current_speed = (supercar.rpm / supercar.max_rpm) * supercar.max_speed;
-                    speed_text.0 = format!("{:.0}\nMPH", current_speed.min(supercar.max_speed));
-                }
-                
-                // Update RPM Gauge
-                if let Ok(mut rpm_text) = rpm_query.single_mut() {
-                    rpm_text.0 = format!("{:.0}\nRPM", supercar.rpm);
-                // Update Turbo Status
-                if let Ok(mut turbo_text) = turbo_query.single_mut() {
-                    let turbo_status = match supercar.turbo_stage {
-                        0 => "TURBO\nOFF",
-                        1 => "TURBO\n1/4",
-                        2 => "TURBO\n2/4", 
-                        3 => "TURBO\n3/4",
-                        4 => "QUAD\nTURBO",
-                        _ => "TURBO\nMAX",
-                    };
-                    turbo_text.0 = turbo_status.to_string();
-                // Update Info Panel
-                if let Ok(mut info_text) = info_query.single_mut() {
-                    let mode = match supercar.driving_mode {
-                        DrivingMode::Comfort => "COMFORT",
-                        DrivingMode::Sport => "SPORT",
-                        DrivingMode::Track => "TRACK",
-                        DrivingMode::Custom => "CUSTOM",
-                    
-                    let launch = if supercar.launch_control_engaged {
-                        "LAUNCHING"
-                    } else if supercar.launch_control {
-                        "READY"
-                    } else {
-                        "OFF"
-                    let total_g = (supercar.g_force_lateral.powi(2) + supercar.g_force_longitudinal.powi(2)).sqrt();
-                    info_text.0 = format!("{} • LAUNCH: {} • G: {:.1}G", mode, launch, total_g);
+    supercar_query: Query<(&SuperCar, &VehicleState, &Transform), (With<Car>, With<ActiveEntity>)>,
+    mut speedometer_query: Query<&mut Text, (With<BugattiSpeedometer>, Without<BugattiRpmGauge>, Without<BugattiInfoPanel>)>,
+    mut rpm_query: Query<&mut Text, (With<BugattiRpmGauge>, Without<BugattiSpeedometer>, Without<BugattiInfoPanel>)>,
+    mut info_query: Query<&mut Text, (With<BugattiInfoPanel>, Without<BugattiSpeedometer>, Without<BugattiRpmGauge>)>,
+) {
+    // Only update if telemetry is visible
+    if !telemetry_state.visible {
+        return;
+    }
+    
+    // Get SuperCar data
+    if let Ok((supercar, vehicle_state, transform)) = supercar_query.get_single() {
+        // Update speedometer
+        if let Ok(mut speed_text) = speedometer_query.get_single_mut() {
+            let speed_mph = vehicle_state.speed * 2.237; // Convert m/s to mph
+            speed_text.0 = format!("{:.0}\nMPH", speed_mph);
+        }
+        
+        // Update RPM gauge
+        if let Ok(mut rpm_text) = rpm_query.get_single_mut() {
+            let rpm = supercar.rpm.min(8500.0); // Redline at 8500 RPM
+            rpm_text.0 = format!("{:.0}\nRPM", rpm);
+        }
+        
+        // Update info panel
+        if let Ok(mut info_text) = info_query.get_single_mut() {
+            let mode = if supercar.launch_control_active { "LAUNCH" } else { "SPORT" };
+            let launch = if supercar.launch_control_ready { "READY" } else { "WAIT" };
+            let total_g = (vehicle_state.acceleration.length() / 9.81).abs();
+            info_text.0 = format!("{} • LAUNCH: {} • G: {:.1}G", mode, launch, total_g);
+        }
+    }
+}

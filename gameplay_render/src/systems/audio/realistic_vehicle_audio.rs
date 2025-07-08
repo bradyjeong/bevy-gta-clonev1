@@ -21,14 +21,18 @@ pub struct VehicleAudioState {
     pub tire_screech_volume: f32,   // 0.0 to 1.0 based on slip/drift
     pub wind_noise_volume: f32,     // 0.0 to 1.0 based on speed
     pub brake_noise_volume: f32,    // 0.0 to 1.0 based on braking force
+    #[allow(dead_code)]
     pub gear_shift_volume: f32,     // 0.0 to 1.0 triggered on gear shifts
+    #[allow(dead_code)]
     pub turbo_whistle_volume: f32,  // 0.0 to 1.0 based on turbo pressure
+    #[allow(dead_code)]
     pub last_gear: i8,              // Track gear changes for audio triggers
     pub distance_to_player: f32,    // Distance for 3D audio positioning
     pub audio_enabled: bool,        // Can disable for distant vehicles
 }
 
 #[derive(Component, Debug)]
+#[allow(dead_code)]
 pub struct VehicleAudioSources {
     pub engine_source: Entity,
     pub tire_source: Entity,
@@ -38,7 +42,7 @@ pub struct VehicleAudioSources {
 
 /// Update realistic vehicle audio based on physics state
 pub fn realistic_vehicle_audio_system(
-    time: Res<Time>,
+    _time: Res<Time>,
     mut audio_query: Query<(
         &mut VehicleAudioState, 
         &VehicleAudioSources, 
@@ -48,13 +52,13 @@ pub fn realistic_vehicle_audio_system(
         &Transform
     )>,
     player_query: Query<&Transform, (With<Player>, Without<RealisticVehicle>)>,
-    mut audio_events: EventWriter<AudioEvent>,
+    mut _audio_events: EventWriter<AudioEvent>,
 ) {
     let Ok(player_transform) = player_query.single() else {
         return;
     };
     
-    for (mut audio_state, audio_sources, engine, tire_physics, dynamics, transform) in audio_query.iter_mut() {
+    for (mut audio_state, _audio_sources, engine, tire_physics, dynamics, transform) in audio_query.iter_mut() {
         // Skip audio processing for distant vehicles
         audio_state.distance_to_player = player_transform.translation.distance(transform.translation);
         
@@ -92,7 +96,7 @@ pub fn realistic_vehicle_audio_system(
 }
 
 /// Calculate realistic engine audio based on RPM and load
-fn calculate_engine_audio(engine: &RealisticVehicle, dynamics: &VehicleDynamics) -> (f32, f32) {
+fn calculate_engine_audio(_engine: &RealisticVehicle, dynamics: &VehicleDynamics) -> (f32, f32) {
     // Use speed as a proxy for engine state since RPM fields are not available
     let rpm_ratio = (dynamics.speed / 50.0).clamp(0.0, 1.0);
     
@@ -145,6 +149,7 @@ impl VehicleAudioState {
 
 /// Placeholder audio event for integration with audio system
 #[derive(Event)]
+#[allow(dead_code)]
 pub struct AudioEvent {
     pub sound_type: AudioType,
     pub volume: f32,
@@ -153,6 +158,7 @@ pub struct AudioEvent {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum AudioType {
     Engine,
     TireScreech,

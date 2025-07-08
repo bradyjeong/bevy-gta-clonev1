@@ -127,6 +127,7 @@
 //! ```bash
 //! cargo run --features debug-movement,debug-audio,debug-ui
 //! ```
+#![deny(warnings)]
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 

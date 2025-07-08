@@ -80,6 +80,7 @@ impl Default for TimingService {
 }
 
 impl TimingService {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -89,7 +90,7 @@ impl TimingService {
         self.current_time += delta_time;
     }
     
-    pub fn should_run_system(&mut self, system_type: SystemType) -> bool {
+    pub fn should_run_system(&mut self, system_type: &SystemType) -> bool {
         match system_type {
             SystemType::VehicleLOD => {
                 if self.current_time - self.last_vehicle_lod_check >= self.vehicle_lod_interval {
@@ -153,6 +154,7 @@ impl TimingService {
         self.entity_timers.remove(&entity_id);
     }
     
+    #[must_use]
     pub fn get_entity_timers(&self) -> &HashMap<EntityId, EntityTimer> {
         &self.entity_timers
     }

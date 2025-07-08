@@ -1,10 +1,10 @@
 //! Service abstractions for game engine
 
-#[allow(missing_docs)]
+/// Simple service implementations for basic game functionality
 pub mod simple_services_v2;
-#[allow(missing_docs)]
+/// Timing service for system scheduling
 pub mod timing_service;
-#[allow(missing_docs)]
+/// Performance monitoring service
 pub mod performance_service;
 
 pub use simple_services_v2::*;

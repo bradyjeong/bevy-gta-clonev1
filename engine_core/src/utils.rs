@@ -1,6 +1,7 @@
 //! General utility functions
 
 /// Generate a random string for IDs
+#[must_use]
 pub fn generate_id(length: usize) -> String {
     use rand::Rng;
     const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";

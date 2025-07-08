@@ -1,4 +1,5 @@
 //! Gameplay UI - HUD, menus, debug overlays
+#![deny(warnings)]
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 

@@ -1,4 +1,5 @@
 // Pure utilities and math - no Bevy dependencies
+#![deny(warnings)]
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 

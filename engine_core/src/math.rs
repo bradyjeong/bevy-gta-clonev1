@@ -1,6 +1,7 @@
 //! Mathematical utilities and constants
 
 /// Clamp a value between min and max
+#[must_use]
 pub fn clamp_f32(value: f32, min: f32, max: f32) -> f32 {
     value.max(min).min(max)
 }

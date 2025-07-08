@@ -26,6 +26,8 @@ pub fn setup_fps_display(mut commands: Commands) {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             right: Val::Px(10.0),
+            ..default()
+        },
         FpsText,
     ));
 }
@@ -40,3 +42,4 @@ pub fn update_fps_display(
             }
         }
     }
+}

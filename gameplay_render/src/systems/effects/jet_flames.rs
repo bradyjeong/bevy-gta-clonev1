@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use game_core::components::{ExhaustFlame, VehicleBeacon, F16};
 use game_core::components::Player;
 use game_core::components::WaypointText;
@@ -49,9 +48,9 @@ pub fn jet_flame_effects_system(
 /// System to update flame colors based on intensity
 pub fn update_flame_colors(
     flame_query: Query<(Entity, &FlameEffect), With<F16>>,
-    mut material_assets: ResMut<Assets<StandardMaterial>>,
+    mut _material_assets: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (entity, flame_effect) in flame_query.iter() {
+    for (_entity, flame_effect) in flame_query.iter() {
         // Color flame based on temperature and intensity
         let base_color = Color::srgb(
             1.0, 
@@ -63,7 +62,7 @@ pub fn update_flame_colors(
         let temp_factor = (flame_effect.color_temperature - 2000.0) / 2000.0;
         let [r, g, b] = base_color.to_srgba().to_u8_array_no_alpha();
         let (r, g, b) = (r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0);
-        let flame_color = Color::srgb(
+        let _flame_color = Color::srgb(
             r,
             g,
             b + temp_factor * 0.3
@@ -99,7 +98,7 @@ pub fn update_waypoint_system(
     beacon_query: Query<&Transform, (With<VehicleBeacon>, Without<Player>)>,
     mut waypoint_text_query: Query<&mut Text, With<WaypointText>>,
 ) {
-    if let Ok(player_transform) = player_query.get_single() {
+    if let Ok(player_transform) = player_query.single() {
         let player_pos = player_transform.translation;
         for mut text in waypoint_text_query.iter_mut() {
             let mut waypoint_info = String::new();

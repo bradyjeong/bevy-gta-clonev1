@@ -740,7 +740,7 @@ fn get_batch_size_constraints(batch_type: BatchType) -> (usize, usize) {
 /// Performance monitoring and reporting system
 pub fn batch_performance_monitor_system(
     batch_processor: Res<BatchProcessor>,
-    mut performance_tracker: ResMut<UnifiedPerformanceTracker>,
+    mut _performance_tracker: ResMut<UnifiedPerformanceTracker>,
     time: Res<Time>,
     mut last_report: Local<f32>,
 ) {

@@ -1,5 +1,3 @@
-use bevy::prelude::*;
-
 /// Placeholder system for visibility fixes
 pub fn fix_missing_inherited_visibility() {
     // This functionality is available in the main src/systems/visibility_fix.rs

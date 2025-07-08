@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;
 use crate::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
 use crate::systems::input::{ControlManager, ControlAction};
-use tracing::{info, warn, error, debug};
+use tracing::warn;
 
 /// Unified physics utilities for consistent physics behavior across all movement systems
 #[derive(Default)]

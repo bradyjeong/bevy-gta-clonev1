@@ -58,8 +58,6 @@
 use bevy::prelude::*;
 use game_core::components::*;
 use crate::batching::*;
-use crate::batching_test::*;
-use crate::batch_processing::*;
 use game_core::config::GameConfig;
 
 /// A Bevy plugin that adds optimized batching systems with dirty flag management.

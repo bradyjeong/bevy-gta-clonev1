@@ -13,6 +13,7 @@ use bevy::prelude::*;
 use game_core::prelude::*;
 use gameplay_sim::systems::input::{InputConfig, InputAction};
 
+/// Controls UI system
 pub fn controls_ui_system(
     current_state: Res<State<GameState>>,
     input_config: Res<InputConfig>,
@@ -23,6 +24,7 @@ pub fn controls_ui_system(
         text.0 = controls_text;
     }
 }
+
 fn generate_dynamic_controls_text(state: GameState, input_config: &InputConfig) -> String {
     match state {
         GameState::Walking => {
@@ -35,68 +37,88 @@ fn generate_dynamic_controls_text(state: GameState, input_config: &InputConfig) 
             }
             if let Some(key) = input_config.get_key_for_action(&state, InputAction::Backward) {
                 controls.push(format!("{}: Backward", format_key_name(key)));
+            }
             if let Some(key) = input_config.get_key_for_action(&state, InputAction::TurnLeft) {
                 controls.push(format!("{}: Turn Left", format_key_name(key)));
+            }
             if let Some(key) = input_config.get_key_for_action(&state, InputAction::TurnRight) {
                 controls.push(format!("{}: Turn Right", format_key_name(key)));
+            }
             if let Some(key) = input_config.get_key_for_action(&state, InputAction::Run) {
                 controls.push(format!("{}: Run", format_key_name(key)));
+            }
             if let Some(key) = input_config.get_key_for_action(&state, InputAction::Interact) {
                 controls.push(format!("{}: Enter Vehicle", format_key_name(key)));
+            }
             controls.join("\n")
         },
         
         GameState::Driving => {
+            let mut controls = Vec::new();
             controls.push("CONTROLS - Car/SuperCar:\n".to_string());
+            
             // Driving controls
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Forward) {
                 controls.push(format!("{}: Accelerate", format_key_name(key)));
-                controls.push(format!("{}: Reverse", format_key_name(key)));
-                controls.push(format!("{}: Steer Left", format_key_name(key)));
-                controls.push(format!("{}: Steer Right", format_key_name(key)));
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Turbo) {
-                controls.push(format!("{}: Turbo Boost (SuperCar only)", format_key_name(key)));
-                controls.push(format!("{}: Exit Car", format_key_name(key)));
-            controls.push("\nSPECIAL CONTROLS:".to_string());
-            controls.push("F3: Performance Monitor".to_string());
-            controls.push("F4: Bugatti Dashboard (SuperCar only)".to_string());
-            controls.push("\nHold keys for acceleration".to_string());
-            controls.push("Find the Bugatti Chiron for max speed!".to_string());
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Backward) {
+                controls.push(format!("{}: Brake/Reverse", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::TurnLeft) {
+                controls.push(format!("{}: Turn Left", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::TurnRight) {
+                controls.push(format!("{}: Turn Right", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::ExitVehicle) {
+                controls.push(format!("{}: Exit Vehicle", format_key_name(key)));
+            }
+            controls.join("\n")
+        },
+        
         GameState::Flying => {
-            controls.push("🚁 HELICOPTER CONTROLS\n".to_string());
-            controls.push("🎮 FLIGHT CONTROLS:".to_string());
+            let mut controls = Vec::new();
+            controls.push("CONTROLS - Aircraft:\n".to_string());
+            
             // Flight controls
-                controls.push(format!("▶️  {} - Forward", format_key_name(key)));
-                controls.push(format!("◀️  {} - Backward", format_key_name(key)));
-                controls.push(format!("↖️  {} - Turn Left", format_key_name(key)));
-                controls.push(format!("↗️  {} - Turn Right", format_key_name(key)));
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::VerticalUp) {
-                controls.push(format!("⬆️  {} - Ascend / Gain Altitude", format_key_name(key)));
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::VerticalDown) {
-                controls.push(format!("⬇️  {} - Descend / Lose Altitude", format_key_name(key)));
-            controls.push("\n🚪 EXIT:".to_string());
-                controls.push(format!("🔄 {} - Exit Helicopter", format_key_name(key)));
-            controls.push("\n💡 TIP: Hold keys for smoother flight control".to_string());
-            controls.push("🎯 Master the skies like a pro pilot!".to_string());
-        GameState::Jetting => {
-            controls.push("CONTROLS - F16 Fighter:\n".to_string());
-            // F16 controls
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::PitchUp) {
-                controls.push(format!("{}: Pitch Up", format_key_name(key)));
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::PitchDown) {
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Forward) {
                 controls.push(format!("{}: Pitch Down", format_key_name(key)));
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Afterburner) {
-                controls.push(format!("{}: Afterburner", format_key_name(key)));
-                controls.push(format!("{}: Exit F16", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Backward) {
+                controls.push(format!("{}: Pitch Up", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::TurnLeft) {
+                controls.push(format!("{}: Roll Left", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::TurnRight) {
+                controls.push(format!("{}: Roll Right", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::YawLeft) {
+                controls.push(format!("{}: Yaw Left", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::YawRight) {
+                controls.push(format!("{}: Yaw Right", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Throttle) {
+                controls.push(format!("{}: Throttle", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::BrakeThrottle) {
+                controls.push(format!("{}: Brake", format_key_name(key)));
+            }
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::ExitVehicle) {
+                controls.push(format!("{}: Exit Aircraft", format_key_name(key)));
+            }
+            controls.join("\n")
+        },
+        
+        _ => {
+            "No controls available for this state".to_string()
+        }
+    }
+}
+
 fn format_key_name(key: KeyCode) -> String {
     match key {
-        KeyCode::ArrowUp => "UP".to_string(),
-        KeyCode::ArrowDown => "DOWN".to_string(),
-        KeyCode::ArrowLeft => "LEFT".to_string(),
-        KeyCode::ArrowRight => "RIGHT".to_string(),
-        KeyCode::Space => "SPACE".to_string(),
-        KeyCode::ShiftLeft => "SHIFT".to_string(),
-        KeyCode::ControlLeft => "CTRL".to_string(),
-        KeyCode::KeyF => "F".to_string(),
         KeyCode::KeyQ => "Q".to_string(),
         KeyCode::KeyE => "E".to_string(),
         KeyCode::KeyW => "W".to_string(),
@@ -114,4 +136,7 @@ fn format_key_name(key: KeyCode) -> String {
                 debug_str.strip_prefix("Key").unwrap_or(&debug_str).to_string()
             } else {
                 debug_str
+            }
         }
+    }
+}

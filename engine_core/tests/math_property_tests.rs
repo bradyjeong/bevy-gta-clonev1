@@ -47,8 +47,8 @@ pub mod extended_math {
         let mut result = [[0.0; 3]; 3];
         for i in 0..3 {
             for j in 0..3 {
-                for k in 0..3 {
-                    result[i][j] += a[i][k] * b[k][j];
+                for (k, b_row) in b.iter().enumerate() {
+                    result[i][j] += a[i][k] * b_row[j];
                 }
             }
         }
@@ -73,7 +73,7 @@ pub mod extended_math {
 use extended_math::*;
 
 fn vector_strategy() -> impl Strategy<Value = [f32; 3]> {
-    prop::array::uniform3((-1000.0f32..1000.0f32))
+    prop::array::uniform3(-1000.0f32..1000.0f32)
 }
 
 fn non_zero_vector_strategy() -> impl Strategy<Value = [f32; 3]> {
@@ -81,12 +81,12 @@ fn non_zero_vector_strategy() -> impl Strategy<Value = [f32; 3]> {
 }
 
 fn scalar_strategy() -> impl Strategy<Value = f32> {
-    (-1000.0f32..1000.0f32)
+    -1000.0f32..1000.0f32
 }
 
 fn matrix_strategy() -> impl Strategy<Value = [[f32; 3]; 3]> {
     prop::array::uniform3(prop::array::uniform3(
-        (-100.0f32..100.0f32)
+        -100.0f32..100.0f32
     ))
 }
 

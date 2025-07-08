@@ -24,10 +24,12 @@ impl Default for UnifiedPerformanceTracker {
 }
 
 impl UnifiedPerformanceTracker {
+    /// Create a new unified performance tracker
     pub fn new() -> Self {
         Self::default()
     }
     
+    /// Update frame timing data
     pub fn update_frame(&mut self, delta_time: f32) {
         self.core_tracker.update_time(delta_time);
         
@@ -51,38 +53,47 @@ impl UnifiedPerformanceTracker {
         self.core_tracker.clear_frame_stats();
     }
     
+    /// Record timing data for a performance category
     pub fn record_category_time(&mut self, category: PerformanceCategory, time_ms: f32) {
         self.core_tracker.record_category_time(category, time_ms);
     }
     
+    /// Record timing data for a specific system
     pub fn record_system_time(&mut self, system_name: &str, time_ms: f32) {
         self.core_tracker.record_system_time(system_name, time_ms);
     }
     
+    /// Update entity count statistics
     pub fn update_entity_counts(&mut self, total: usize, active: usize, culled: usize) {
         self.core_tracker.update_entity_counts(total, active, culled);
     }
     
+    /// Record a cache hit
     pub fn record_cache_hit(&mut self) {
         self.core_tracker.record_cache_hit();
     }
     
+    /// Record a cache miss
     pub fn record_cache_miss(&mut self) {
         self.core_tracker.record_cache_miss();
     }
     
+    /// Update cache statistics
     pub fn update_cache_stats(&mut self, entries: usize, memory: usize) {
         self.core_tracker.update_cache_stats(entries, memory);
     }
     
+    /// Add a performance alert
     pub fn add_alert(&mut self, category: PerformanceCategory, message: String, severity: AlertSeverity) {
         self.core_tracker.add_alert(category, message, severity);
     }
     
+    /// Get current FPS
     pub fn get_fps(&self) -> f32 {
         self.last_fps
     }
     
+    /// Get current frame time in milliseconds
     pub fn get_frame_time_ms(&self) -> f32 {
         if !self.frame_time_buffer.is_empty() {
             let avg: f32 = self.frame_time_buffer.iter().sum::<f32>() / self.frame_time_buffer.len() as f32;
@@ -92,23 +103,27 @@ impl UnifiedPerformanceTracker {
         }
     }
     
+    /// Get cache hit rate
     pub fn get_cache_hit_rate(&self) -> f32 {
         self.core_tracker.get_cache_hit_rate()
     }
     
+    /// Enable performance tracking
     pub fn enable(&mut self) {
         self.core_tracker.enable();
     }
     
+    /// Disable performance tracking
     pub fn disable(&mut self) {
         self.core_tracker.disable();
     }
     
-    // Delegate to core tracker
+    /// Get metrics for a specific category
     pub fn get_category_metrics(&self, category: PerformanceCategory) -> Option<&CategoryMetrics> {
         self.core_tracker.get_category_metrics(category)
     }
     
+    /// Get timing data for a specific system
     pub fn get_system_timing(&self, system_name: &str) -> Option<&SystemTiming> {
         self.core_tracker.get_system_timing(system_name)
     }

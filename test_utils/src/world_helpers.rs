@@ -4,6 +4,7 @@ use rand::prelude::*;
 use std::collections::HashMap;
 
 /// Create a deterministic test world with fixed seed
+#[must_use]
 pub fn spawn_test_world(seed: u64) -> World {
     let mut world = World::new();
     
@@ -42,17 +43,22 @@ impl TestRng {
     }
 }
 
+/// Type alias for complex component function type
+type ComponentFn = Box<dyn Fn(&mut EntityWorldMut)>;
+
 /// Helper to create test entities with common components
 pub struct EntityBuilder {
-    components: Vec<Box<dyn Fn(&mut EntityWorldMut)>>,
+    components: Vec<ComponentFn>,
 }
 
 #[allow(missing_docs)]
 impl EntityBuilder {
+    #[must_use]
     pub fn new() -> Self {
         Self { components: Vec::new() }
     }
     
+    #[must_use]
     pub fn with_transform(mut self, transform: Transform) -> Self {
         self.components.push(Box::new(move |entity| {
             entity.insert(transform);
@@ -60,6 +66,7 @@ impl EntityBuilder {
         self
     }
     
+    #[must_use]
     pub fn with_rigid_body(mut self, rb_type: RigidBody) -> Self {
         self.components.push(Box::new(move |entity| {
             entity.insert(rb_type);
@@ -67,6 +74,7 @@ impl EntityBuilder {
         self
     }
     
+    #[must_use]
     pub fn with_collider(mut self, collider: Collider) -> Self {
         self.components.push(Box::new(move |entity| {
             entity.insert(collider.clone());
@@ -74,6 +82,7 @@ impl EntityBuilder {
         self
     }
     
+    #[must_use]
     pub fn with_velocity(mut self, velocity: Velocity) -> Self {
         self.components.push(Box::new(move |entity| {
             entity.insert(velocity);
@@ -106,10 +115,12 @@ pub struct ScenarioBuilder {
 
 #[allow(missing_docs)]
 impl ScenarioBuilder {
+    #[must_use]
     pub fn new() -> Self {
         Self { entities: Vec::new() }
     }
     
+    #[must_use]
     pub fn add_entity(mut self, name: impl Into<String>, builder: EntityBuilder) -> Self {
         self.entities.push((name.into(), builder));
         self
@@ -134,33 +145,40 @@ impl Default for ScenarioBuilder {
 }
 
 /// Utility functions for test world validation
+/// 
+/// # Errors
+/// 
+/// Returns an error if the world state is invalid:
+/// - Too many entities (>10,000)
+/// - NaN values in transforms
+/// - Invalid physics velocities
 pub fn validate_world_state(world: &mut World) -> Result<(), String> {
     // Check for orphaned entities
     let orphaned_count = world.entities().len();
     if orphaned_count > 10000 {
-        return Err(format!("Too many entities in world: {}", orphaned_count));
+        return Err(format!("Too many entities in world: {orphaned_count}"));
     }
     
     // Check for NaN values in transforms
     for (entity, transform) in world.query::<(Entity, &Transform)>().iter(world) {
         if !transform.translation.is_finite() {
-            return Err(format!("Entity {:?} has invalid translation: {:?}", entity, transform.translation));
+            return Err(format!("Entity {entity:?} has invalid translation: {:?}", transform.translation));
         }
         if !transform.rotation.is_finite() {
-            return Err(format!("Entity {:?} has invalid rotation: {:?}", entity, transform.rotation));
+            return Err(format!("Entity {entity:?} has invalid rotation: {:?}", transform.rotation));
         }
         if !transform.scale.is_finite() {
-            return Err(format!("Entity {:?} has invalid scale: {:?}", entity, transform.scale));
+            return Err(format!("Entity {entity:?} has invalid scale: {:?}", transform.scale));
         }
     }
     
     // Check for invalid physics bodies
     for (entity, velocity) in world.query::<(Entity, &Velocity)>().iter(world) {
         if !velocity.linvel.is_finite() {
-            return Err(format!("Entity {:?} has invalid linear velocity: {:?}", entity, velocity.linvel));
+            return Err(format!("Entity {entity:?} has invalid linear velocity: {:?}", velocity.linvel));
         }
         if !velocity.angvel.is_finite() {
-            return Err(format!("Entity {:?} has invalid angular velocity: {:?}", entity, velocity.angvel));
+            return Err(format!("Entity {entity:?} has invalid angular velocity: {:?}", velocity.angvel));
         }
     }
     

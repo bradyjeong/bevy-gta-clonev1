@@ -149,7 +149,7 @@ fn update_vegetation_components(commands: &mut Commands, entity: Entity, detail_
 pub fn lod_performance_monitoring_system(
     time: Res<Time>,
     vehicles: Query<&LodLevel, With<ActiveEntity>>,
-    vegetation: Query<&VegetationLOD>,
+    _vegetation: Query<&VegetationLOD>,
     mut performance_counters: ResMut<game_core::config::performance_config::PerformanceCounters>,
 ) {
     performance_counters.update_frame(time.delta_secs());

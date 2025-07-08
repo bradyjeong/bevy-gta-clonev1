@@ -9,6 +9,7 @@ pub struct TransformSync {
     pub smoothing_speed: f32,
 }
 impl TransformSync {
+    #[allow(dead_code)]
     pub fn new(smoothing_speed: f32) -> Self {
         Self {
             target_translation: Vec3::ZERO,

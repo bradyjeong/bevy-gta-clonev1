@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::render::mesh::*;
 use image::{ImageBuffer, Rgba, GenericImageView};
 use std::path::Path;
 
@@ -12,7 +11,7 @@ impl GoldenFrameUtils {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
-        scene_config: DeterministicSceneConfig,
+        scene_config: &DeterministicSceneConfig,
     ) {
         // Fixed camera position
         commands.spawn((
@@ -80,6 +79,13 @@ impl GoldenFrameUtils {
     }
 
     /// Compare two images with tolerance
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error if:
+    /// - Images cannot be loaded
+    /// - Image dimensions don't match
+    /// - Image processing fails
     pub fn compare_images(
         reference_path: &Path,
         current_path: &Path,
@@ -100,14 +106,16 @@ impl GoldenFrameUtils {
         let total_pixels = reference_rgba.width() * reference_rgba.height();
         
         for (ref_pixel, cur_pixel) in reference_rgba.pixels().zip(current_rgba.pixels()) {
-            let diff = Self::pixel_difference(ref_pixel, cur_pixel);
+            let diff = Self::pixel_difference(*ref_pixel, *cur_pixel);
             if diff > epsilon {
                 diff_pixels += 1;
             }
             total_diff += diff;
         }
         
+        #[allow(clippy::cast_precision_loss)]
         let avg_diff = total_diff / total_pixels as f32;
+        #[allow(clippy::cast_precision_loss)]
         let diff_percentage = (diff_pixels as f32 / total_pixels as f32) * 100.0;
         
         Ok(ImageComparisonResult {
@@ -120,16 +128,22 @@ impl GoldenFrameUtils {
     }
 
     /// Calculate normalized difference between two pixels
-    fn pixel_difference(a: &Rgba<u8>, b: &Rgba<u8>) -> f32 {
-        let r_diff = (a[0] as f32 - b[0] as f32).abs() / 255.0;
-        let g_diff = (a[1] as f32 - b[1] as f32).abs() / 255.0;
-        let b_diff = (a[2] as f32 - b[2] as f32).abs() / 255.0;
-        let a_diff = (a[3] as f32 - b[3] as f32).abs() / 255.0;
+    fn pixel_difference(a: Rgba<u8>, b: Rgba<u8>) -> f32 {
+        let r_diff = (f32::from(a[0]) - f32::from(b[0])).abs() / 255.0;
+        let g_diff = (f32::from(a[1]) - f32::from(b[1])).abs() / 255.0;
+        let b_diff = (f32::from(a[2]) - f32::from(b[2])).abs() / 255.0;
+        let a_diff = (f32::from(a[3]) - f32::from(b[3])).abs() / 255.0;
         
         (r_diff + g_diff + b_diff + a_diff) / 4.0
     }
 
     /// Generate a diff image highlighting differences
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error if:
+    /// - Images cannot be loaded
+    /// - Diff image cannot be saved
     pub fn generate_diff_image(
         reference_path: &Path,
         current_path: &Path,
@@ -144,7 +158,7 @@ impl GoldenFrameUtils {
         for (x, y, pixel) in diff_image.enumerate_pixels_mut() {
             let ref_pixel = reference.get_pixel(x, y);
             let cur_pixel = current.get_pixel(x, y);
-            let diff = Self::pixel_difference(ref_pixel, cur_pixel);
+            let diff = Self::pixel_difference(*ref_pixel, *cur_pixel);
             
             if diff > epsilon {
                 // Highlight differences in red

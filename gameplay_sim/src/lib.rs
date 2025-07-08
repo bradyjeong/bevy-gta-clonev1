@@ -1,4 +1,5 @@
 //! Gameplay simulation - physics, AI, rules
+#![deny(warnings)]
 #![warn(clippy::all, clippy::pedantic)]
 #![warn(missing_docs)]
 
@@ -8,7 +9,7 @@ extern crate tracing;
 
 // Add core imports (tracing macros available via #[macro_use])
 pub(crate) use bevy::prelude::*;
-pub(crate) use bevy_rapier3d::prelude::*;
+// Note: bevy_rapier3d re-export removed - unused
 pub(crate) use game_core::prelude::*;
 
 // Re-export component tree from game_core for internal use

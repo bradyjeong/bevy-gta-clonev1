@@ -1,8 +1,9 @@
 //! Core game components, config, and shared types
+#![deny(warnings)]
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 
-use bevy::prelude::*;
+
 pub use engine_core;
 pub use engine_bevy;
 
@@ -32,6 +33,6 @@ pub mod prelude;
 // Temporary compatibility layer (will be removed when migration complete)
 #[allow(missing_docs)]
 pub mod compat;
-pub use compat::*;
+
 
 // Only expose via prelude - no direct re-exports

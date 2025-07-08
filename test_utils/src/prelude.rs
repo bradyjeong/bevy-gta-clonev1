@@ -82,6 +82,7 @@ macro_rules! physics_test {
 }
 
 /// Helper for creating deterministic test environments
+#[must_use]
 pub fn create_deterministic_test_env(seed: u64) -> MinimalBevyApp {
     let mut app = MinimalBevyApp::with_physics();
     app.app.world_mut().insert_resource(TestRng(StdRng::seed_from_u64(seed)));
@@ -106,15 +107,23 @@ pub fn create_test_light(world: &mut World, position: Vec3) -> Entity {
 
 /// Common test assertions
 pub mod assertions {
-    use super::*;
+    use super::{Component, Entity, Transform, Vec3, Velocity, World};
     
     /// Assert that an entity exists and has the expected components
+    /// 
+    /// # Panics
+    /// 
+    /// Panics if the entity doesn't exist or is missing the expected component
     pub fn assert_entity_has_component<T: Component>(world: &World, entity: Entity) {
         assert!(world.entity(entity).contains::<T>(), 
-            "Entity {:?} missing component {}", entity, std::any::type_name::<T>());
+            "Entity {entity:?} missing component {}", std::any::type_name::<T>());
     }
     
     /// Assert that a transform is within expected bounds
+    /// 
+    /// # Panics
+    /// 
+    /// Panics if any component of the transform is outside the specified bounds
     pub fn assert_transform_in_bounds(transform: &Transform, min: Vec3, max: Vec3) {
         assert!(transform.translation.x >= min.x && transform.translation.x <= max.x,
             "Transform X {} not in bounds [{}, {}]", transform.translation.x, min.x, max.x);
@@ -125,17 +134,25 @@ pub mod assertions {
     }
     
     /// Assert that a velocity is within expected bounds
+    /// 
+    /// # Panics
+    /// 
+    /// Panics if the linear or angular velocity exceeds the specified limits
     pub fn assert_velocity_in_bounds(velocity: &Velocity, max_linear: f32, max_angular: f32) {
         assert!(velocity.linvel.length() <= max_linear,
-            "Linear velocity {} exceeds maximum {}", velocity.linvel.length(), max_linear);
+            "Linear velocity {} exceeds maximum {max_linear}", velocity.linvel.length());
         assert!(velocity.angvel.length() <= max_angular,
-            "Angular velocity {} exceeds maximum {}", velocity.angvel.length(), max_angular);
+            "Angular velocity {} exceeds maximum {max_angular}", velocity.angvel.length());
     }
     
     /// Assert that two Vec3 values are approximately equal
+    /// 
+    /// # Panics
+    /// 
+    /// Panics if the difference between the vectors exceeds the tolerance
     pub fn assert_vec3_approx_eq(a: Vec3, b: Vec3, tolerance: f32) {
         let diff = (a - b).length();
         assert!(diff <= tolerance,
-            "Vec3 values not approximately equal: {:?} vs {:?} (diff: {})", a, b, diff);
+            "Vec3 values not approximately equal: {a:?} vs {b:?} (diff: {diff})");
     }
 }

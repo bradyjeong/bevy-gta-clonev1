@@ -418,6 +418,7 @@ pub struct NPCBundleSpec {
     /// Whether to include physics components for movement
     pub include_physics: bool,
     /// Whether to include AI behavior components
+    #[allow(dead_code)]
     pub include_ai: bool,
 }
 
@@ -534,10 +535,12 @@ pub struct BuildingBundleSpec {
     /// Type of building (residential, commercial, etc.)
     pub building_type: BuildingType,
     /// Primary color for the building rendering
+    #[allow(dead_code)]
     pub color: Color,
     /// Whether to include collision detection for the building
     pub include_collision: bool,
     /// Level of detail for rendering optimization
+    #[allow(dead_code)]
     pub lod_level: u8,
 }
 

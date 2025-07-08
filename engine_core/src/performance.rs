@@ -96,6 +96,7 @@ impl Default for PerformanceTracker {
 }
 
 impl PerformanceTracker {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -112,14 +113,17 @@ impl PerformanceTracker {
         let metrics = self.categories.entry(category).or_default();
         metrics.execution_time_ms = time_ms;
         metrics.frame_count += 1;
-        metrics.total_execution_time += time_ms as f64;
+        metrics.total_execution_time += f64::from(time_ms);
         
         if time_ms > metrics.peak_execution_time {
             metrics.peak_execution_time = time_ms;
         }
         
         // Calculate rolling average
-        metrics.avg_execution_time = (metrics.total_execution_time / metrics.frame_count as f64) as f32;
+        #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
+        {
+            metrics.avg_execution_time = (metrics.total_execution_time / metrics.frame_count as f64) as f32;
+        }
     }
     
     pub fn record_system_time(&mut self, system_name: &str, time_ms: f32) {
@@ -130,13 +134,16 @@ impl PerformanceTracker {
         let timing = self.system_timings.entry(system_name.to_string()).or_default();
         timing.last_execution_time = time_ms;
         timing.execution_count += 1;
-        timing.total_time += time_ms as f64;
+        timing.total_time += f64::from(time_ms);
         
         if time_ms > timing.peak_time {
             timing.peak_time = time_ms;
         }
         
-        timing.average_time = (timing.total_time / timing.execution_count as f64) as f32;
+        #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
+        {
+            timing.average_time = (timing.total_time / timing.execution_count as f64) as f32;
+        }
     }
     
     pub fn update_entity_counts(&mut self, total: usize, active: usize, culled: usize) {
@@ -172,20 +179,26 @@ impl PerformanceTracker {
         self.alerts.retain(|alert| self.current_time - alert.timestamp < 60.0);
     }
     
+    #[must_use]
     pub fn get_category_metrics(&self, category: PerformanceCategory) -> Option<&CategoryMetrics> {
         self.categories.get(&category)
     }
     
+    #[must_use]
     pub fn get_system_timing(&self, system_name: &str) -> Option<&SystemTiming> {
         self.system_timings.get(system_name)
     }
     
+    #[must_use]
     pub fn get_cache_hit_rate(&self) -> f32 {
         let total = self.cache_stats.hits + self.cache_stats.misses;
         if total == 0 {
             0.0
         } else {
-            self.cache_stats.hits as f32 / total as f32
+            #[allow(clippy::cast_precision_loss)]
+            {
+                self.cache_stats.hits as f32 / total as f32
+            }
         }
     }
     

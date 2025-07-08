@@ -14,7 +14,9 @@ pub struct BevyTimingService {
 /// Bevy component for managed timing
 #[derive(Component, Debug, Clone)]
 pub struct ManagedTiming {
+    /// Unique entity identifier
     pub entity_id: u64,
+    /// Type of timer for this entity
     pub timer_type: EntityTimerType,
 }
 
@@ -29,6 +31,7 @@ impl Default for BevyTimingService {
 }
 
 impl BevyTimingService {
+    /// Create a new Bevy timing service
     pub fn new() -> Self {
         Self::default()
     }
@@ -40,7 +43,7 @@ impl BevyTimingService {
     
     /// Check if a system should run this frame
     pub fn should_run_system(&mut self, system_type: SystemType) -> bool {
-        self.core_service.should_run_system(system_type)
+        self.core_service.should_run_system(&system_type)
     }
     
     /// Register a Bevy entity for timing management
@@ -85,6 +88,7 @@ impl BevyTimingService {
 }
 
 impl ManagedTiming {
+    /// Create a new managed timing component
     pub fn new(timer_type: EntityTimerType) -> Self {
         Self {
             entity_id: 0, // Will be set when registered

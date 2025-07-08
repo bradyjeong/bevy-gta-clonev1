@@ -128,6 +128,7 @@ fn is_in_view_frustum(
 }
 
 /// Batch rendering system with operation limits
+#[allow(dead_code)]
 pub fn batch_rendering_system(
     mut renderable_query: Query<(Entity, &mut Visibility, &Transform), With<Cullable>>,
     active_query: Query<&Transform, With<ActiveEntity>>,
@@ -199,6 +200,7 @@ pub fn batch_rendering_system(
 }
 
 /// System to manage render queue and prevent frame drops
+#[allow(dead_code)]
 pub fn render_queue_manager_system(
     pending_render_query: Query<Entity, (With<Visibility>, Changed<Transform>)>,
     _time: Res<Time>,

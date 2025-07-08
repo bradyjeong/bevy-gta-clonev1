@@ -11,6 +11,7 @@ pub struct MinimalBevyApp {
 
 impl MinimalBevyApp {
     /// Create a new minimal Bevy app for testing
+    #[must_use]
     pub fn new() -> Self {
         let mut app = App::new();
         
@@ -25,6 +26,7 @@ impl MinimalBevyApp {
     }
     
     /// Create a minimal app with physics
+    #[must_use]
     pub fn with_physics() -> Self {
         let mut minimal_app = Self::new();
         minimal_app.app.add_plugins(RapierPhysicsPlugin::<NoUserData>::default());
@@ -32,6 +34,7 @@ impl MinimalBevyApp {
     }
     
     /// Create a minimal app with rendering (for screenshot tests)
+    #[must_use]
     pub fn with_rendering() -> Self {
         let mut minimal_app = Self::new();
         minimal_app.app.add_plugins(DefaultPlugins);
@@ -39,18 +42,21 @@ impl MinimalBevyApp {
     }
     
     /// Add a system to the app
+    #[must_use]
     pub fn add_simple_system(mut self, system: impl IntoSystem<(), (), ()> + 'static) -> Self {
         self.app.add_systems(Update, system);
         self
     }
     
     /// Add plugins to the app  
+    #[must_use]
     pub fn add_plugin(mut self, plugin: impl Plugin) -> Self {
         self.app.add_plugins(plugin);
         self
     }
     
     /// Add a resource to the app
+    #[must_use]
     pub fn add_resource<R: Resource>(mut self, resource: R) -> Self {
         self.app.insert_resource(resource);
         self

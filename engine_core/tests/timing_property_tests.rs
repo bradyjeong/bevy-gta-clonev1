@@ -74,7 +74,7 @@ proptest! {
         for delta in &deltas {
             timing_service.update_time(*delta);
             
-            if timing_service.should_run_system(SystemType::VehicleLOD) {
+            if timing_service.should_run_system(&SystemType::VehicleLOD) {
                 let time_since_last = timing_service.current_time - last_run_time;
                 
                 // Should only run after interval has passed
@@ -190,7 +190,7 @@ proptest! {
         }
         
         // Verify remaining timers are actually recent
-        for (_, timer) in timing_service.get_entity_timers() {
+        for timer in timing_service.get_entity_timers().values() {
             let age = timing_service.current_time - timer.last_update;
             prop_assert!(age < max_age, "Timer not cleaned up: age {} >= max_age {}", age, max_age);
         }
@@ -205,23 +205,23 @@ proptest! {
         timing_service.vehicle_lod_interval = interval;
         timing_service.npc_lod_interval = interval;
         
-        let mut vehicle_runs = 0;
-        let mut npc_runs = 0;
+        let mut vehicle_runs: i32 = 0;
+        let mut npc_runs: i32 = 0;
         
         for delta in &deltas {
             timing_service.update_time(*delta);
             
-            if timing_service.should_run_system(SystemType::VehicleLOD) {
+            if timing_service.should_run_system(&SystemType::VehicleLOD) {
                 vehicle_runs += 1;
             }
-            if timing_service.should_run_system(SystemType::NPCLOD) {
+            if timing_service.should_run_system(&SystemType::NPCLOD) {
                 npc_runs += 1;
             }
         }
         
         // Both systems should run approximately the same number of times
         // since they have the same interval
-        let run_difference = (vehicle_runs as i32 - npc_runs as i32).abs();
+        let run_difference = (vehicle_runs - npc_runs).abs();
         prop_assert!(run_difference <= 1, 
             "System run counts too different: vehicle={}, npc={}", 
             vehicle_runs, npc_runs);
@@ -255,13 +255,12 @@ proptest! {
         zero_count in 1usize..10
     ) {
         let mut timing_service = TimingService::new();
-        let mut time_before_zeros = 0.0;
         
         // Run some normal updates
         for delta in &normal_deltas {
             timing_service.update_time(*delta);
         }
-        time_before_zeros = timing_service.current_time;
+        let time_before_zeros = timing_service.current_time;
         
         // Apply zero deltas
         for _ in 0..zero_count {
@@ -289,8 +288,8 @@ mod tests {
         
         // System throttling
         timing_service.vehicle_lod_interval = 0.1;
-        let should_run_first = timing_service.should_run_system(SystemType::VehicleLOD);
-        let should_run_second = timing_service.should_run_system(SystemType::VehicleLOD);
+        let should_run_first = timing_service.should_run_system(&SystemType::VehicleLOD);
+        let should_run_second = timing_service.should_run_system(&SystemType::VehicleLOD);
         
         assert!(should_run_first);  // First call should run
         assert!(!should_run_second); // Second call should not run (too soon)
@@ -347,10 +346,10 @@ mod tests {
         ];
         
         for system in systems {
-            match system {
-                SystemType::Custom(name) => assert_eq!(name, "test"),
-                _ => {} // Other variants are valid
+            if let SystemType::Custom(name) = system {
+                assert_eq!(name, "test");
             }
+            // Other variants are valid
         }
     }
 }

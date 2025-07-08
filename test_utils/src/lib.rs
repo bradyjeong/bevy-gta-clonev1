@@ -1,4 +1,5 @@
 //! Test utilities for the GTA game codebase
+#![deny(warnings)]
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 
