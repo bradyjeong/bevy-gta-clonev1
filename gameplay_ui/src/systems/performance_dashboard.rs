@@ -65,7 +65,6 @@ pub struct AdvancedMemoryTracker {
 }
 
 /// Frame analyzer
-#[derive(Default)]
 pub struct FrameAnalyzer {
     /// FPS history
     pub fps_history: Vec<f32>,

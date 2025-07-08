@@ -1,0 +1,848 @@
+warning: unexpected `cfg` condition value: `heavy_tests`
+ --> gameplay_render/tests/lib.rs:1:8
+  |
+1 | #![cfg(feature = "heavy_tests")]
+  |        ^^^^^^^^^^^^^^^^^^^^^^^ help: remove the condition
+  |
+  = note: no expected values for `feature`
+  = help: consider adding `heavy_tests` as a feature in `Cargo.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: unexpected `cfg` condition value: `heavy_tests`
+ --> gameplay_render/tests/simple_test.rs:1:8
+  |
+1 | #![cfg(feature = "heavy_tests")]
+  |        ^^^^^^^^^^^^^^^^^^^^^^^ help: remove the condition
+  |
+  = note: no expected values for `feature`
+  = help: consider adding `heavy_tests` as a feature in `Cargo.toml`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+  = note: `#[warn(unexpected_cfgs)]` on by default
+
+error[E0583]: file not found for module `movement`
+ --> game_bin/src/systems/mod.rs:1:1
+  |
+1 | pub mod movement;
+  | ^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `movement`, create file "game_bin/src/systems/movement.rs" or "game_bin/src/systems/movement/mod.rs"
+  = note: if there is a `mod movement` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `world`
+ --> game_bin/src/systems/mod.rs:2:1
+  |
+2 | pub mod world;
+  | ^^^^^^^^^^^^^^
+  |
+  = help: to create the module `world`, create file "game_bin/src/systems/world.rs" or "game_bin/src/systems/world/mod.rs"
+  = note: if there is a `mod world` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `interaction`
+ --> game_bin/src/systems/mod.rs:3:1
+  |
+3 | pub mod interaction;
+  | ^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `interaction`, create file "game_bin/src/systems/interaction.rs" or "game_bin/src/systems/interaction/mod.rs"
+  = note: if there is a `mod interaction` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `human_behavior`
+ --> game_bin/src/systems/mod.rs:8:1
+  |
+8 | pub mod human_behavior;
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `human_behavior`, create file "game_bin/src/systems/human_behavior.rs" or "game_bin/src/systems/human_behavior/mod.rs"
+  = note: if there is a `mod human_behavior` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `physics_utils`
+ --> game_bin/src/systems/mod.rs:9:1
+  |
+9 | pub mod physics_utils;
+  | ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `physics_utils`, create file "game_bin/src/systems/physics_utils.rs" or "game_bin/src/systems/physics_utils/mod.rs"
+  = note: if there is a `mod physics_utils` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `lod`
+  --> game_bin/src/systems/mod.rs:10:1
+   |
+10 | pub mod lod;
+   | ^^^^^^^^^^^^
+   |
+   = help: to create the module `lod`, create file "game_bin/src/systems/lod.rs" or "game_bin/src/systems/lod/mod.rs"
+   = note: if there is a `mod lod` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `vehicles`
+  --> game_bin/src/systems/mod.rs:12:1
+   |
+12 | pub mod vehicles;
+   | ^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `vehicles`, create file "game_bin/src/systems/vehicles.rs" or "game_bin/src/systems/vehicles/mod.rs"
+   = note: if there is a `mod vehicles` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `water`
+  --> game_bin/src/systems/mod.rs:14:1
+   |
+14 | pub mod water;
+   | ^^^^^^^^^^^^^^
+   |
+   = help: to create the module `water`, create file "game_bin/src/systems/water.rs" or "game_bin/src/systems/water/mod.rs"
+   = note: if there is a `mod water` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `spawn_validation`
+  --> game_bin/src/systems/mod.rs:17:1
+   |
+17 | pub mod spawn_validation;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `spawn_validation`, create file "game_bin/src/systems/spawn_validation.rs" or "game_bin/src/systems/spawn_validation/mod.rs"
+   = note: if there is a `mod spawn_validation` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `input`
+  --> game_bin/src/systems/mod.rs:18:1
+   |
+18 | pub mod input;
+   | ^^^^^^^^^^^^^^
+   |
+   = help: to create the module `input`, create file "game_bin/src/systems/input.rs" or "game_bin/src/systems/input/mod.rs"
+   = note: if there is a `mod input` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `distance_cache`
+  --> game_bin/src/systems/mod.rs:21:1
+   |
+21 | pub mod distance_cache;
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `distance_cache`, create file "game_bin/src/systems/distance_cache.rs" or "game_bin/src/systems/distance_cache/mod.rs"
+   = note: if there is a `mod distance_cache` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `unified_distance_calculator`
+  --> game_bin/src/systems/mod.rs:22:1
+   |
+22 | pub mod unified_distance_calculator;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `unified_distance_calculator`, create file "game_bin/src/systems/unified_distance_calculator.rs" or "game_bin/src/systems/unified_distance_calculator/mod.rs"
+   = note: if there is a `mod unified_distance_calculator` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `transform_sync`
+  --> game_bin/src/systems/mod.rs:23:1
+   |
+23 | pub mod transform_sync;
+   | ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `transform_sync`, create file "game_bin/src/systems/transform_sync.rs" or "game_bin/src/systems/transform_sync/mod.rs"
+   = note: if there is a `mod transform_sync` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `entity_creation_system`
+  --> game_bin/src/systems/mod.rs:27:1
+   |
+27 | pub mod entity_creation_system;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `entity_creation_system`, create file "game_bin/src/systems/entity_creation_system.rs" or "game_bin/src/systems/entity_creation_system/mod.rs"
+   = note: if there is a `mod entity_creation_system` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `player_collision_resolution`
+  --> game_bin/src/systems/mod.rs:31:1
+   |
+31 | pub mod player_collision_resolution;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `player_collision_resolution`, create file "game_bin/src/systems/player_collision_resolution.rs" or "game_bin/src/systems/player_collision_resolution/mod.rs"
+   = note: if there is a `mod player_collision_resolution` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `parallel_physics`
+  --> game_bin/src/systems/mod.rs:33:1
+   |
+33 | pub mod parallel_physics;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `parallel_physics`, create file "game_bin/src/systems/parallel_physics.rs" or "game_bin/src/systems/parallel_physics/mod.rs"
+   = note: if there is a `mod parallel_physics` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0428]: the name `time_system` is defined multiple times
+   --> gameplay_ui/src/performance/monitor.rs:656:1
+    |
+656 | macro_rules! time_system {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^ `time_system` redefined here
+    |
+   ::: gameplay_ui/src/systems/performance_monitor.rs:541:1
+    |
+541 | macro_rules! time_system {
+    | ------------------------ previous definition of the macro `time_system` here
+    |
+    = note: `time_system` must be defined only once in the macro namespace of this module
+
+error[E0583]: file not found for module `player_plugin`
+ --> game_bin/src/plugins/mod.rs:1:1
+  |
+1 | pub mod player_plugin;
+  | ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `player_plugin`, create file "game_bin/src/plugins/player_plugin.rs" or "game_bin/src/plugins/player_plugin/mod.rs"
+  = note: if there is a `mod player_plugin` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `vehicle_plugin`
+ --> game_bin/src/plugins/mod.rs:2:1
+  |
+2 | pub mod vehicle_plugin;
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `vehicle_plugin`, create file "game_bin/src/plugins/vehicle_plugin.rs" or "game_bin/src/plugins/vehicle_plugin/mod.rs"
+  = note: if there is a `mod vehicle_plugin` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `unified_world_plugin`
+ --> game_bin/src/plugins/mod.rs:3:1
+  |
+3 | pub mod unified_world_plugin;
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `unified_world_plugin`, create file "game_bin/src/plugins/unified_world_plugin.rs" or "game_bin/src/plugins/unified_world_plugin/mod.rs"
+  = note: if there is a `mod unified_world_plugin` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `water_plugin`
+ --> game_bin/src/plugins/mod.rs:5:1
+  |
+5 | pub mod water_plugin;
+  | ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `water_plugin`, create file "game_bin/src/plugins/water_plugin.rs" or "game_bin/src/plugins/water_plugin/mod.rs"
+  = note: if there is a `mod water_plugin` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `persistence_plugin`
+ --> game_bin/src/plugins/mod.rs:6:1
+  |
+6 | pub mod persistence_plugin;
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `persistence_plugin`, create file "game_bin/src/plugins/persistence_plugin.rs" or "game_bin/src/plugins/persistence_plugin/mod.rs"
+  = note: if there is a `mod persistence_plugin` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `input_plugin`
+ --> game_bin/src/plugins/mod.rs:7:1
+  |
+7 | pub mod input_plugin;
+  | ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `input_plugin`, create file "game_bin/src/plugins/input_plugin.rs" or "game_bin/src/plugins/input_plugin/mod.rs"
+  = note: if there is a `mod input_plugin` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `vegetation_lod_plugin`
+ --> game_bin/src/plugins/mod.rs:8:1
+  |
+8 | pub mod vegetation_lod_plugin;
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `vegetation_lod_plugin`, create file "game_bin/src/plugins/vegetation_lod_plugin.rs" or "game_bin/src/plugins/vegetation_lod_plugin/mod.rs"
+  = note: if there is a `mod vegetation_lod_plugin` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `setup`
+  --> game_bin/src/lib.rs:16:1
+   |
+16 | pub(crate) mod setup;
+   | ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `setup`, create file "game_bin/src/setup.rs" or "game_bin/src/setup/mod.rs"
+   = note: if there is a `mod setup` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0583]: file not found for module `ground_detection`
+ --> game_bin/src/services/mod.rs:2:1
+  |
+2 | pub mod ground_detection;
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: to create the module `ground_detection`, create file "game_bin/src/services/ground_detection.rs" or "game_bin/src/services/ground_detection/mod.rs"
+  = note: if there is a `mod ground_detection` elsewhere in the crate already, import it with `use crate::...` instead
+
+error[E0432]: unresolved import `crate::systems::input::ControlManager`
+ --> gameplay_ui/src/performance/integration.rs:4:5
+  |
+4 | use crate::systems::input::ControlManager;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `ControlManager` in `systems::input`
+  |
+help: consider importing one of these structs instead
+  |
+4 - use crate::systems::input::ControlManager;
+4 + use crate::gameplay_sim::input::ControlManager;
+  |
+4 | use crate::gameplay_sim::systems::input::ControlManager;
+  |            ++++++++++++++
+4 - use crate::systems::input::ControlManager;
+4 + use gameplay_sim::input::ControlManager;
+  |
+4 - use crate::systems::input::ControlManager;
+4 + use gameplay_sim::systems::input::ControlManager;
+  |
+
+error[E0432]: unresolved imports `crate::systems::input::InputManager`, `crate::systems::input::ControlManager`, `crate::systems::input::ControlAction`, `crate::systems::input::is_accelerating`, `crate::systems::input::is_braking`, `crate::systems::input::get_steering_input`, `crate::systems::input::is_turbo_active`, `crate::systems::input::control_action_system`, `crate::systems::input::control_validation_system`
+ --> gameplay_ui/src/examples/control_manager_integration.rs:7:5
+  |
+7 |     InputManager, ControlManager, ControlAction,
+  |     ^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^ no `ControlAction` in `systems::input`
+  |     |             |
+  |     |             no `ControlManager` in `systems::input`
+  |     no `InputManager` in `systems::input`
+8 |     is_accelerating, is_braking, get_steering_input, is_turbo_active,
+  |     ^^^^^^^^^^^^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^ no `is_turbo_active` in `systems::input`
+  |     |                |           |
+  |     |                |           no `get_steering_input` in `systems::input`
+  |     |                no `is_braking` in `systems::input`
+  |     no `is_accelerating` in `systems::input`
+9 |     control_action_system, control_validation_system
+  |     ^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^ no `control_validation_system` in `systems::input`
+  |     |
+  |     no `control_action_system` in `systems::input`
+  |
+  = help: consider importing one of these structs instead:
+          crate::gameplay_sim::input::InputManager
+          crate::gameplay_sim::systems::input::InputManager
+          gameplay_sim::input::InputManager
+          gameplay_sim::systems::input::InputManager
+  = help: consider importing one of these structs instead:
+          crate::gameplay_sim::input::ControlManager
+          crate::gameplay_sim::systems::input::ControlManager
+          gameplay_sim::input::ControlManager
+          gameplay_sim::systems::input::ControlManager
+  = help: consider importing one of these enums instead:
+          crate::gameplay_sim::input::ControlAction
+          crate::gameplay_sim::systems::input::ControlAction
+          gameplay_sim::input::ControlAction
+          gameplay_sim::systems::input::ControlAction
+
+error[E0432]: unresolved imports `crate::systems::input::vehicle_control_config`, `crate::systems::input::VehiclePhysicsConfig`
+   --> gameplay_ui/src/examples/control_manager_integration.rs:158:33
+    |
+158 |     use crate::systems::input::{vehicle_control_config::VehicleType, VehiclePhysicsConfig};
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^               ^^^^^^^^^^^^^^^^^^^^ no `VehiclePhysicsConfig` in `systems::input`
+    |                                 |
+    |                                 could not find `vehicle_control_config` in `input`
+    |
+    = help: consider importing one of these structs instead:
+            crate::gameplay_sim::input::VehiclePhysicsConfig
+            crate::gameplay_sim::systems::input::VehiclePhysicsConfig
+            crate::prelude::game_config::VehiclePhysicsConfig
+            game_core::prelude::game_config::VehiclePhysicsConfig
+            gameplay_render::prelude::game_config::VehiclePhysicsConfig
+            gameplay_sim::input::VehiclePhysicsConfig
+            gameplay_sim::prelude::game_config::VehiclePhysicsConfig
+            gameplay_sim::systems::input::VehiclePhysicsConfig
+
+error[E0432]: unresolved imports `crate::systems::input::InputConfig`, `crate::systems::input::InputAction`
+   --> gameplay_ui/src/examples/control_manager_integration.rs:204:33
+    |
+204 |     use crate::systems::input::{InputConfig, InputAction};
+    |                                 ^^^^^^^^^^^  ^^^^^^^^^^^ no `InputAction` in `systems::input`
+    |                                 |
+    |                                 no `InputConfig` in `systems::input`
+    |
+    = help: consider importing one of these structs instead:
+            crate::gameplay_sim::input::InputConfig
+            crate::gameplay_sim::systems::input::InputConfig
+            gameplay_sim::input::InputConfig
+            gameplay_sim::systems::input::InputConfig
+    = help: consider importing one of these enums instead:
+            crate::gameplay_sim::input::InputAction
+            crate::gameplay_sim::systems::input::InputAction
+            gameplay_sim::input::InputAction
+            gameplay_sim::systems::input::InputAction
+
+error[E0432]: unresolved import `crate::systems::input::vehicle_control_config`
+   --> gameplay_ui/src/examples/control_manager_integration.rs:222:36
+    |
+222 |         use crate::systems::input::vehicle_control_config::VehicleType;
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^ could not find `vehicle_control_config` in `input`
+
+error[E0433]: failed to resolve: could not find `vehicle_control_config` in `input`
+  --> gameplay_ui/src/examples/control_manager_integration.rs:93:47
+   |
+93 |     let vehicle_type = crate::systems::input::vehicle_control_config::VehicleType::SuperCar;
+   |                                               ^^^^^^^^^^^^^^^^^^^^^^ could not find `vehicle_control_config` in `input`
+   |
+help: consider importing one of these enums
+   |
+1  + use crate::gameplay_sim::input::VehicleType;
+   |
+1  + use crate::prelude::VehicleType;
+   |
+1  + use game_core::prelude::VehicleType;
+   |
+1  + use gameplay_render::prelude::VehicleType;
+   |
+     and 2 other candidates
+help: if you import `VehicleType`, refer to it directly
+   |
+93 -     let vehicle_type = crate::systems::input::vehicle_control_config::VehicleType::SuperCar;
+93 +     let vehicle_type = VehicleType::SuperCar;
+   |
+
+error: ambiguous glob re-exports
+  --> gameplay_ui/src/prelude.rs:4:9
+   |
+4  | pub use game_core::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^ the name `TimingService` in the type namespace is first re-exported here
+...
+13 | pub use crate::timing_service::*;
+   |         ------------------------ but the name `TimingService` in the type namespace is also re-exported here
+   |
+note: the lint level is defined here
+  --> gameplay_ui/src/lib.rs:2:9
+   |
+2  | #![deny(warnings)]
+   |         ^^^^^^^^
+   = note: `#[deny(ambiguous_glob_reexports)]` implied by `#[deny(warnings)]`
+
+error: ambiguous glob re-exports
+  --> gameplay_ui/src/prelude.rs:4:9
+   |
+4  | pub use game_core::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^ the name `EntityTimer` in the type namespace is first re-exported here
+...
+13 | pub use crate::timing_service::*;
+   |         ------------------------ but the name `EntityTimer` in the type namespace is also re-exported here
+
+error: ambiguous glob re-exports
+  --> gameplay_ui/src/prelude.rs:4:9
+   |
+4  | pub use game_core::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^ the name `EntityTimerType` in the type namespace is first re-exported here
+...
+13 | pub use crate::timing_service::*;
+   |         ------------------------ but the name `EntityTimerType` in the type namespace is also re-exported here
+
+error: ambiguous glob re-exports
+  --> gameplay_ui/src/prelude.rs:4:9
+   |
+4  | pub use game_core::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^ the name `SystemType` in the type namespace is first re-exported here
+...
+13 | pub use crate::timing_service::*;
+   |         ------------------------ but the name `SystemType` in the type namespace is also re-exported here
+
+error: unexpected `cfg` condition value: `debug-timing`
+   --> gameplay_ui/src/timing_service.rs:170:17
+    |
+170 |         if cfg!(feature = "debug-timing") {
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^ help: remove the condition
+    |
+    = note: no expected values for `feature`
+    = help: consider adding `debug-timing` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: `#[deny(unexpected_cfgs)]` implied by `#[deny(warnings)]`
+
+error[E0119]: conflicting implementations of trait `std::default::Default` for type `performance_dashboard::FrameAnalyzer`
+  --> gameplay_ui/src/systems/performance_dashboard.rs:68:10
+   |
+68 | #[derive(Default)]
+   |          ^^^^^^^ conflicting implementation for `performance_dashboard::FrameAnalyzer`
+...
+80 | impl Default for FrameAnalyzer {
+   | ------------------------------ first implementation here
+
+error[E0433]: failed to resolve: could not find `audio` in `bevy`
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:189:31
+    |
+189 |         sink.set_volume(bevy::audio::Volume::Linear(audio_state.engine_volume * config.audio.master_volume));
+    |                               ^^^^^ could not find `audio` in `bevy`
+
+error[E0308]: mismatched types
+  --> gameplay_ui/src/systems/performance_integration.rs:57:13
+   |
+57 |         let (max_time_us, _) = control_manager.get_performance_stats();
+   |             ^^^^^^^^^^^^^^^^   --------------------------------------- this expression has type `(u64, u64, u64)`
+   |             |
+   |             expected a tuple with 3 elements, found one with 2 elements
+   |
+   = note: expected tuple `(u64, u64, u64)`
+              found tuple `(_, _)`
+
+error[E0433]: failed to resolve: could not find `audio` in `bevy`
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:195:31
+    |
+195 |         sink.set_volume(bevy::audio::Volume::Linear(audio_state.tire_screech_volume * config.audio.master_volume));
+    |                               ^^^^^ could not find `audio` in `bevy`
+
+error[E0433]: failed to resolve: could not find `audio` in `bevy`
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:200:31
+    |
+200 |         sink.set_volume(bevy::audio::Volume::Linear(audio_state.wind_noise_volume * config.audio.master_volume));
+    |                               ^^^^^ could not find `audio` in `bevy`
+
+error[E0433]: failed to resolve: could not find `audio` in `bevy`
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:205:31
+    |
+205 |         sink.set_volume(bevy::audio::Volume::Linear(audio_state.brake_noise_volume * config.audio.master_volume));
+    |                               ^^^^^ could not find `audio` in `bevy`
+
+error[E0412]: cannot find type `AudioSink` in this scope
+  --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:60:33
+   |
+60 |     mut audio_sinks: Query<&mut AudioSink>,
+   |                                 ^^^^^^^^^ not found in this scope
+   |
+help: you might be missing a type parameter
+   |
+48 | pub fn realistic_vehicle_audio_system<AudioSink>(
+   |                                      +++++++++++
+
+error[E0412]: cannot find type `AudioSink` in this scope
+   --> game_bin/src/systems/audio/realistic_vehicle_audio.rs:184:34
+    |
+184 |     audio_sinks: &mut Query<&mut AudioSink>,
+    |                                  ^^^^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+181 | fn apply_audio_to_sources<AudioSink>(
+    |                          +++++++++++
+
+error[E0599]: no method named `len` found for struct `bevy::prelude::Res<'_, gameplay_sim::systems::distance_cache::DistanceCache>` in the current scope
+  --> gameplay_ui/src/systems/performance_integration.rs:76:57
+   |
+76 |         tracker.cache_stats.distance_cache_size = cache.len();
+   |                                                         ^^^ method not found in `Res<'_, DistanceCache>`
+
+error: unused imports: `BodyPart`, `PlayerBodyMesh`, `PlayerHead`, `PlayerLeftArm`, `PlayerLeftLeg`, `PlayerRightArm`, `PlayerRightLeg`, and `PlayerTorso`
+  --> game_bin/src/components/mod.rs:13:105
+   |
+13 | ...layerBody, PlayerHead, PlayerBodyMesh, PlayerTorso, PlayerLeftArm, PlayerRightArm, PlayerLeftLeg, PlayerRightLeg, BodyPart};
+   |               ^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^
+   |
+note: the lint level is defined here
+  --> game_bin/src/lib.rs:2:9
+   |
+2  | #![deny(warnings)]
+   |         ^^^^^^^^
+   = note: `#[deny(unused_imports)]` implied by `#[deny(warnings)]`
+
+error: unused imports: `ExhaustMode`, `LOD_CULL_DISTANCE`, `LOD_FULL_DISTANCE`, `LOD_LOW_DISTANCE`, `LOD_MEDIUM_DISTANCE`, and `VehicleRendering`
+  --> game_bin/src/components/mod.rs:16:33
+   |
+16 | ...e, ExhaustMode, Car, SuperCar, Helicopter, F16, AircraftFlight, MainRotor, TailRotor, VehicleType, VehicleLOD, VehicleState, VehicleRendering, LOD_FULL_DISTANCE, LOD_MEDIUM_DISTANCE, LOD_LOW_DISTANCE, LOD_CULL_DISTANCE};
+   |       ^^^^^^^^^^^                                                                                                               ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Buildable`, `EntityLimits`, `IntersectionEntity`, `Landmark`, `MeshCache`, `NPCBodyPart`, `NPCHead`, `NPCLeftArm`, `NPCLeftLeg`, `NPCRendering`, `NPCRightArm`, `NPCRightLeg`, `NPCTorso`, `NPC_LOD_CULL_DISTANCE`, and `PerformanceCritical`
+  --> game_bin/src/components/mod.rs:19:148
+   |
+19 | ...e, NPCRendering, NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart, NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE, NPC_LOD_CULL_DISTANCE, Cullable, RoadEntity, IntersectionEntity, DynamicTerrain, DynamicContent, ContentType, PerformanceCritical, Building, Landmark, Buildable, MainCamera, CullingSettings, PerformanceStats, MeshCache, EntityLimits};
+   |       ^^^^^^^^^^^^  ^^^^^^^  ^^^^^^^^  ^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^                                                                        ^^^^^^^^^^^^^^^^^^^^^                        ^^^^^^^^^^^^^^^^^^                                               ^^^^^^^^^^^^^^^^^^^            ^^^^^^^^  ^^^^^^^^^                                                 ^^^^^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `realistic_vehicle_audio::*`
+  --> game_bin/src/systems/audio.rs:11:9
+   |
+11 | pub use realistic_vehicle_audio::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `save_system::*`
+  --> game_bin/src/systems/persistence/mod.rs:15:9
+   |
+15 | pub use save_system::*;
+   |         ^^^^^^^^^^^^^^
+
+error: unused import: `load_system::*`
+  --> game_bin/src/systems/persistence/mod.rs:16:9
+   |
+16 | pub use load_system::*;
+   |         ^^^^^^^^^^^^^^
+
+error: unused imports: `animate_vegetation_instances_system`, `collect_vegetation_instances_system`, `mark_vegetation_instancing_dirty_system`, `update_vegetation_instancing_system`, and `vegetation_instancing_metrics_system`
+  --> game_bin/src/systems/rendering/mod.rs:16:5
+   |
+16 |     collect_vegetation_instances_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 |     update_vegetation_instancing_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |     mark_vegetation_instancing_dirty_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     animate_vegetation_instances_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |     vegetation_instancing_metrics_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `render_optimizer_simple::*`
+  --> game_bin/src/systems/rendering/mod.rs:22:9
+   |
+22 | pub use render_optimizer_simple::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `distance_cache_debug::DistanceCacheDebugPlugin`
+  --> game_bin/src/systems/mod.rs:42:9
+   |
+42 | pub use distance_cache_debug::DistanceCacheDebugPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `performance_monitor::UnifiedPerformancePlugin`
+  --> game_bin/src/systems/mod.rs:45:9
+   |
+45 | pub use performance_monitor::UnifiedPerformancePlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `performance_integration::PerformanceIntegrationPlugin`
+  --> game_bin/src/systems/mod.rs:46:9
+   |
+46 | pub use performance_integration::PerformanceIntegrationPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `service_example_config_validation`, `service_example_timing_check`, and `service_example_vehicle_creation`
+  --> game_bin/src/systems/mod.rs:50:5
+   |
+50 |     service_example_vehicle_creation,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+51 |     service_example_config_validation,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+52 |     service_example_timing_check,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `collect_vegetation_instances_system` and `update_vegetation_instancing_system`
+  --> game_bin/src/systems/mod.rs:88:5
+   |
+88 |     collect_vegetation_instances_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+89 |     update_vegetation_instancing_system,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `ui_plugin::UIPlugin`
+  --> game_bin/src/plugins/mod.rs:17:9
+   |
+17 | pub use ui_plugin::UIPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `batching_plugin::BatchingPlugin`
+  --> game_bin/src/plugins/mod.rs:24:9
+   |
+24 | pub use batching_plugin::BatchingPlugin;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `entity_factory_unified::*`
+  --> game_bin/src/factories/mod.rs:13:9
+   |
+13 | pub use entity_factory_unified::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `entity_builder_unified::*`
+  --> game_bin/src/factories/mod.rs:14:9
+   |
+14 | pub use entity_builder_unified::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `generic_bundle::*`
+  --> game_bin/src/factories/mod.rs:20:9
+   |
+20 | pub use generic_bundle::*;
+   |         ^^^^^^^^^^^^^^^^^
+
+error: unused import: `rendering_factory::*`
+  --> game_bin/src/factories/mod.rs:21:9
+   |
+21 | pub use rendering_factory::*;
+   |         ^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `ConfigService`, `EnhancedTimingService`, `PhysicsService`, `initialize_simple_services`, and `update_timing_service_system`
+ --> game_bin/src/services/mod.rs:4:27
+  |
+4 | pub use simple_services::{ConfigService, PhysicsService, EnhancedTimingService, initialize_simple_services, update_timing_service_system};
+  |                           ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+   --> gameplay_ui/src/systems/performance_monitor.rs:522:41
+    |
+522 |     if let Ok(mut text) = overlay_query.get_single_mut() {
+    |                                         ^^^^^^^^^^^^^^
+    |
+    = note: `#[deny(deprecated)]` implied by `#[deny(warnings)]`
+
+error[E0599]: no variant or associated item named `ExitVehicle` found for enum `gameplay_sim::systems::input::InputAction` in the current scope
+  --> gameplay_ui/src/systems/ui/controls_ui.rs:73:85
+   |
+73 |             if let Some(key) = input_config.get_key_for_action(&state, InputAction::ExitVehicle) {
+   |                                                                                     ^^^^^^^^^^^ variant or associated item not found in `InputAction`
+
+error[E0599]: no variant or associated item named `Throttle` found for enum `gameplay_sim::systems::input::InputAction` in the current scope
+   --> gameplay_ui/src/systems/ui/controls_ui.rs:102:85
+    |
+102 |             if let Some(key) = input_config.get_key_for_action(&state, InputAction::Throttle) {
+    |                                                                                     ^^^^^^^^ variant or associated item not found in `InputAction`
+
+error[E0599]: no variant or associated item named `BrakeThrottle` found for enum `gameplay_sim::systems::input::InputAction` in the current scope
+   --> gameplay_ui/src/systems/ui/controls_ui.rs:105:85
+    |
+105 |             if let Some(key) = input_config.get_key_for_action(&state, InputAction::BrakeThrottle) {
+    |                                                                                     ^^^^^^^^^^^^^ variant or associated item not found in `InputAction`
+
+error[E0599]: no variant or associated item named `ExitVehicle` found for enum `gameplay_sim::systems::input::InputAction` in the current scope
+   --> gameplay_ui/src/systems/ui/controls_ui.rs:108:85
+    |
+108 |             if let Some(key) = input_config.get_key_for_action(&state, InputAction::ExitVehicle) {
+    |                                                                                     ^^^^^^^^^^^ variant or associated item not found in `InputAction`
+
+error[E0609]: no field `speed` on type `&game_core::components::VehicleState`
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:229:43
+    |
+229 |             let speed_mph = vehicle_state.speed * 2.237; // Convert m/s to mph
+    |                                           ^^^^^ unknown field
+    |
+    = note: available fields are: `vehicle_type`, `color`, `max_speed`, `acceleration`, `damage` ... and 3 others
+
+error[E0609]: no field `launch_control_active` on type `&game_core::components::SuperCar`
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:241:36
+    |
+241 |             let mode = if supercar.launch_control_active { "LAUNCH" } else { "SPORT" };
+    |                                    ^^^^^^^^^^^^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+241 -             let mode = if supercar.launch_control_active { "LAUNCH" } else { "SPORT" };
+241 +             let mode = if supercar.launch_control_engaged { "LAUNCH" } else { "SPORT" };
+    |
+
+error[E0609]: no field `launch_control_ready` on type `&game_core::components::SuperCar`
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:242:38
+    |
+242 |             let launch = if supercar.launch_control_ready { "READY" } else { "WAIT" };
+    |                                      ^^^^^^^^^^^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+242 -             let launch = if supercar.launch_control_ready { "READY" } else { "WAIT" };
+242 +             let launch = if supercar.launch_control { "READY" } else { "WAIT" };
+    |
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:67:27
+   |
+67 |         if supercar_query.get_single().is_ok() {
+   |                           ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+  --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:71:55
+   |
+71 |             if let Ok(mut visibility) = overlay_query.get_single_mut() {
+   |                                                       ^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:136:8
+    |
+136 |     )).set_parent(left_panel);
+    |        ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:138:33
+    |
+138 |     commands.entity(left_panel).set_parent(dashboard_root);
+    |                                 ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:165:8
+    |
+165 |     )).set_parent(center_panel);
+    |        ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:177:8
+    |
+177 |     )).set_parent(center_panel);
+    |        ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:179:35
+    |
+179 |     commands.entity(center_panel).set_parent(dashboard_root);
+    |                                   ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:206:8
+    |
+206 |     )).set_parent(right_panel);
+    |        ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:208:34
+    |
+208 |     commands.entity(right_panel).set_parent(dashboard_root);
+    |                                  ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:226:70
+    |
+226 |     if let Ok((supercar, vehicle_state, transform)) = supercar_query.get_single() {
+    |                                                                      ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:228:55
+    |
+228 |         if let Ok(mut speed_text) = speedometer_query.get_single_mut() {
+    |                                                       ^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:234:45
+    |
+234 |         if let Ok(mut rpm_text) = rpm_query.get_single_mut() {
+    |                                             ^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:240:47
+    |
+240 |         if let Ok(mut info_text) = info_query.get_single_mut() {
+    |                                               ^^^^^^^^^^^^^^
+
+error[E0599]: no method named `length` found for type `f32` in the current scope
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:243:55
+    |
+243 |             let total_g = (vehicle_state.acceleration.length() / 9.81).abs();
+    |                                                       ^^^^^^ method not found in `f32`
+
+error[E0599]: no method named `cache_size` found for struct `bevy::prelude::Res<'_, gameplay_sim::systems::distance_cache::DistanceCache>` in the current scope
+  --> gameplay_ui/src/debug/distance_cache_debug.rs:34:23
+   |
+34 |                 cache.cache_size(),
+   |                       ^^^^^^^^^^ method not found in `Res<'_, DistanceCache>`
+
+error[E0599]: no method named `len` found for struct `bevy::prelude::Res<'_, gameplay_sim::systems::distance_cache::DistanceCache>` in the current scope
+  --> gameplay_ui/src/performance/integration.rs:76:57
+   |
+76 |         tracker.cache_stats.distance_cache_size = cache.len();
+   |                                                         ^^^ method not found in `Res<'_, DistanceCache>`
+
+error[E0308]: mismatched types
+   --> gameplay_ui/src/examples/control_manager_integration.rs:104:42
+    |
+104 |                 let acceleration_force = forward * physics_config.acceleration * effective_acceleration;
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Dir3`, found `Vec3`
+
+error[E0308]: mismatched types
+   --> gameplay_ui/src/examples/control_manager_integration.rs:104:42
+    |
+104 |                 let acceleration_force = forward * physics_config.acceleration * effective_acceleration;
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Dir3`, found `Vec3`
+
+error: unused variable: `time`
+   --> gameplay_ui/src/systems/performance_monitor.rs:458:5
+    |
+458 |     time: Res<Time>,
+    |     ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+    |
+    = note: `#[deny(unused_variables)]` implied by `#[deny(warnings)]`
+
+Some errors have detailed explanations: E0119, E0308, E0428, E0432, E0433, E0599, E0609.
+For more information about an error, try `rustc --explain E0119`.
+error: could not compile `gameplay_ui` (lib) due to 20 previous errors
+error: could not compile `gameplay_ui` (lib test) due to 42 previous errors
+error[E0609]: no field `translation` on type `&_`
+   --> game_bin/src/systems/batch_processing.rs:127:35
+    |
+127 |                         transform.translation,
+    |                                   ^^^^^^^^^^^ unknown field
+
+error[E0609]: no field `is_culled` on type `&_`
+   --> game_bin/src/systems/batch_processing.rs:129:51
+    |
+129 |                     let should_be_visible = !cull.is_culled && distance <= cull.config.cull_distance;
+    |                                                   ^^^^^^^^^ unknown field
+
+Some errors have detailed explanations: E0412, E0433, E0583, E0609.
+For more information about an error, try `rustc --explain E0412`.
+error: could not compile `gta_game` (lib) due to 33 previous errors
+error: could not compile `gta_game` (lib test) due to 53 previous errors

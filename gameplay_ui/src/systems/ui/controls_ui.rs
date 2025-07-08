@@ -70,7 +70,7 @@ fn generate_dynamic_controls_text(state: GameState, input_config: &InputConfig) 
             if let Some(key) = input_config.get_key_for_action(&state, InputAction::TurnRight) {
                 controls.push(format!("{}: Turn Right", format_key_name(key)));
             }
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::ExitVehicle) {
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Interact) {
                 controls.push(format!("{}: Exit Vehicle", format_key_name(key)));
             }
             controls.join("\n")
@@ -99,13 +99,13 @@ fn generate_dynamic_controls_text(state: GameState, input_config: &InputConfig) 
             if let Some(key) = input_config.get_key_for_action(&state, InputAction::YawRight) {
                 controls.push(format!("{}: Yaw Right", format_key_name(key)));
             }
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Throttle) {
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Forward) {
                 controls.push(format!("{}: Throttle", format_key_name(key)));
             }
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::BrakeThrottle) {
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Backward) {
                 controls.push(format!("{}: Brake", format_key_name(key)));
             }
-            if let Some(key) = input_config.get_key_for_action(&state, InputAction::ExitVehicle) {
+            if let Some(key) = input_config.get_key_for_action(&state, InputAction::Interact) {
                 controls.push(format!("{}: Exit Aircraft", format_key_name(key)));
             }
             controls.join("\n")

@@ -455,7 +455,7 @@ impl UnifiedPerformanceTracker {
 pub fn unified_performance_monitoring_system(
     mut tracker: ResMut<UnifiedPerformanceTracker>,
     diagnostics: Res<DiagnosticsStore>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     if !tracker.enabled {
         return;
@@ -519,7 +519,7 @@ pub fn update_performance_overlay_system(
     mut overlay_query: Query<&mut Text, With<PerformanceOverlay>>,
     tracker: Res<UnifiedPerformanceTracker>,
 ) {
-    if let Ok(mut text) = overlay_query.get_single_mut() {
+    if let Ok(mut text) = overlay_query.single_mut() {
         let summary = tracker.get_performance_summary();
         text.0 = format!(
             "FPS: {:.1} | Frame: {:.2}ms | Consistency: {:.1}%\nEntities: {} (Active: {}, Culled: {})\nCache Hit Rates: D:{:.1}% A:{:.1}% L:{:.1}%",

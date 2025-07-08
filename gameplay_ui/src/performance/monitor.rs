@@ -651,20 +651,7 @@ pub fn update_performance_overlay_system(
     }
 }
 
-/// Macro for easy performance timing
-#[macro_export]
-macro_rules! time_system {
-    ($tracker:expr, $category:expr, $system_name:expr, $code:block) => {
-        {
-            let start = std::time::Instant::now();
-            let result = $code;
-            let elapsed = start.elapsed().as_secs_f32() * 1000.0;
-            $tracker.record_category_time($category, elapsed);
-            $tracker.record_system_time($system_name, elapsed);
-            result
-        }
-    };
-}
+// time_system macro is defined in systems/performance_monitor.rs
 
 /// Plugin for unified performance monitoring
 pub struct UnifiedPerformancePlugin;

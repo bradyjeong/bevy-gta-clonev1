@@ -1,13 +1,8 @@
-pub mod player_plugin;
-pub mod vehicle_plugin;
-pub mod unified_world_plugin;
-pub mod ui_plugin;
-pub mod water_plugin;
-pub mod persistence_plugin;
-pub mod input_plugin;
-pub mod vegetation_lod_plugin;
-pub mod game_plugin;
+// Re-export plugins via compat layer
+pub use gameplay_sim::compat::plugins::*;
 
+// Game binary specific plugins that exist locally
+pub mod game_plugin;
 pub mod batching_plugin;
 
 // Plugin exports - these are the main API surface

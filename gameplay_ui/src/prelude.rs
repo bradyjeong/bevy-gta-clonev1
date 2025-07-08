@@ -10,7 +10,9 @@ pub use crate::ui::*;
 pub use crate::debug::*;
 pub use crate::performance::*;
 pub use crate::plugins::*;
-pub use crate::timing_service::*;
+
+// Re-export timing service (selective to avoid conflicts)
+pub use crate::timing_service::{TimingService, EntityTimer, EntityTimerType, SystemType};
 pub use crate::config_loader::*;
 
 // Main plugin

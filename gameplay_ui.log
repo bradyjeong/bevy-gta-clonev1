@@ -1,0 +1,398 @@
+error[E0428]: the name `time_system` is defined multiple times
+   --> gameplay_ui/src/performance/monitor.rs:656:1
+    |
+656 | macro_rules! time_system {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^ `time_system` redefined here
+    |
+   ::: gameplay_ui/src/systems/performance_monitor.rs:541:1
+    |
+541 | macro_rules! time_system {
+    | ------------------------ previous definition of the macro `time_system` here
+    |
+    = note: `time_system` must be defined only once in the macro namespace of this module
+
+error[E0432]: unresolved import `crate::systems::input::ControlManager`
+ --> gameplay_ui/src/performance/integration.rs:4:5
+  |
+4 | use crate::systems::input::ControlManager;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no `ControlManager` in `systems::input`
+  |
+help: consider importing one of these structs instead
+  |
+4 - use crate::systems::input::ControlManager;
+4 + use crate::gameplay_sim::input::ControlManager;
+  |
+4 | use crate::gameplay_sim::systems::input::ControlManager;
+  |            ++++++++++++++
+4 - use crate::systems::input::ControlManager;
+4 + use gameplay_sim::input::ControlManager;
+  |
+4 - use crate::systems::input::ControlManager;
+4 + use gameplay_sim::systems::input::ControlManager;
+  |
+
+error[E0432]: unresolved imports `crate::systems::input::InputManager`, `crate::systems::input::ControlManager`, `crate::systems::input::ControlAction`, `crate::systems::input::is_accelerating`, `crate::systems::input::is_braking`, `crate::systems::input::get_steering_input`, `crate::systems::input::is_turbo_active`, `crate::systems::input::control_action_system`, `crate::systems::input::control_validation_system`
+ --> gameplay_ui/src/examples/control_manager_integration.rs:7:5
+  |
+7 |     InputManager, ControlManager, ControlAction,
+  |     ^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^^^ no `ControlAction` in `systems::input`
+  |     |             |
+  |     |             no `ControlManager` in `systems::input`
+  |     no `InputManager` in `systems::input`
+8 |     is_accelerating, is_braking, get_steering_input, is_turbo_active,
+  |     ^^^^^^^^^^^^^^^  ^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^ no `is_turbo_active` in `systems::input`
+  |     |                |           |
+  |     |                |           no `get_steering_input` in `systems::input`
+  |     |                no `is_braking` in `systems::input`
+  |     no `is_accelerating` in `systems::input`
+9 |     control_action_system, control_validation_system
+  |     ^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^ no `control_validation_system` in `systems::input`
+  |     |
+  |     no `control_action_system` in `systems::input`
+  |
+  = help: consider importing one of these structs instead:
+          crate::gameplay_sim::input::InputManager
+          crate::gameplay_sim::systems::input::InputManager
+          gameplay_sim::input::InputManager
+          gameplay_sim::systems::input::InputManager
+  = help: consider importing one of these structs instead:
+          crate::gameplay_sim::input::ControlManager
+          crate::gameplay_sim::systems::input::ControlManager
+          gameplay_sim::input::ControlManager
+          gameplay_sim::systems::input::ControlManager
+  = help: consider importing one of these enums instead:
+          crate::gameplay_sim::input::ControlAction
+          crate::gameplay_sim::systems::input::ControlAction
+          gameplay_sim::input::ControlAction
+          gameplay_sim::systems::input::ControlAction
+
+error[E0432]: unresolved imports `crate::systems::input::vehicle_control_config`, `crate::systems::input::VehiclePhysicsConfig`
+   --> gameplay_ui/src/examples/control_manager_integration.rs:158:33
+    |
+158 |     use crate::systems::input::{vehicle_control_config::VehicleType, VehiclePhysicsConfig};
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^               ^^^^^^^^^^^^^^^^^^^^ no `VehiclePhysicsConfig` in `systems::input`
+    |                                 |
+    |                                 could not find `vehicle_control_config` in `input`
+    |
+    = help: consider importing one of these structs instead:
+            crate::gameplay_sim::input::VehiclePhysicsConfig
+            crate::gameplay_sim::systems::input::VehiclePhysicsConfig
+            crate::prelude::game_config::VehiclePhysicsConfig
+            game_core::prelude::game_config::VehiclePhysicsConfig
+            gameplay_render::prelude::game_config::VehiclePhysicsConfig
+            gameplay_sim::input::VehiclePhysicsConfig
+            gameplay_sim::prelude::game_config::VehiclePhysicsConfig
+            gameplay_sim::systems::input::VehiclePhysicsConfig
+
+error[E0432]: unresolved imports `crate::systems::input::InputConfig`, `crate::systems::input::InputAction`
+   --> gameplay_ui/src/examples/control_manager_integration.rs:204:33
+    |
+204 |     use crate::systems::input::{InputConfig, InputAction};
+    |                                 ^^^^^^^^^^^  ^^^^^^^^^^^ no `InputAction` in `systems::input`
+    |                                 |
+    |                                 no `InputConfig` in `systems::input`
+    |
+    = help: consider importing one of these structs instead:
+            crate::gameplay_sim::input::InputConfig
+            crate::gameplay_sim::systems::input::InputConfig
+            gameplay_sim::input::InputConfig
+            gameplay_sim::systems::input::InputConfig
+    = help: consider importing one of these enums instead:
+            crate::gameplay_sim::input::InputAction
+            crate::gameplay_sim::systems::input::InputAction
+            gameplay_sim::input::InputAction
+            gameplay_sim::systems::input::InputAction
+
+error[E0432]: unresolved import `crate::systems::input::vehicle_control_config`
+   --> gameplay_ui/src/examples/control_manager_integration.rs:222:36
+    |
+222 |         use crate::systems::input::vehicle_control_config::VehicleType;
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^ could not find `vehicle_control_config` in `input`
+
+error[E0433]: failed to resolve: could not find `vehicle_control_config` in `input`
+  --> gameplay_ui/src/examples/control_manager_integration.rs:93:47
+   |
+93 |     let vehicle_type = crate::systems::input::vehicle_control_config::VehicleType::SuperCar;
+   |                                               ^^^^^^^^^^^^^^^^^^^^^^ could not find `vehicle_control_config` in `input`
+   |
+help: consider importing one of these enums
+   |
+1  + use crate::gameplay_sim::input::VehicleType;
+   |
+1  + use crate::prelude::VehicleType;
+   |
+1  + use game_core::prelude::VehicleType;
+   |
+1  + use gameplay_render::prelude::VehicleType;
+   |
+     and 2 other candidates
+help: if you import `VehicleType`, refer to it directly
+   |
+93 -     let vehicle_type = crate::systems::input::vehicle_control_config::VehicleType::SuperCar;
+93 +     let vehicle_type = VehicleType::SuperCar;
+   |
+
+error: ambiguous glob re-exports
+  --> gameplay_ui/src/prelude.rs:4:9
+   |
+4  | pub use game_core::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^ the name `TimingService` in the type namespace is first re-exported here
+...
+13 | pub use crate::timing_service::*;
+   |         ------------------------ but the name `TimingService` in the type namespace is also re-exported here
+   |
+note: the lint level is defined here
+  --> gameplay_ui/src/lib.rs:2:9
+   |
+2  | #![deny(warnings)]
+   |         ^^^^^^^^
+   = note: `#[deny(ambiguous_glob_reexports)]` implied by `#[deny(warnings)]`
+
+error: ambiguous glob re-exports
+  --> gameplay_ui/src/prelude.rs:4:9
+   |
+4  | pub use game_core::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^ the name `EntityTimer` in the type namespace is first re-exported here
+...
+13 | pub use crate::timing_service::*;
+   |         ------------------------ but the name `EntityTimer` in the type namespace is also re-exported here
+
+error: ambiguous glob re-exports
+  --> gameplay_ui/src/prelude.rs:4:9
+   |
+4  | pub use game_core::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^ the name `EntityTimerType` in the type namespace is first re-exported here
+...
+13 | pub use crate::timing_service::*;
+   |         ------------------------ but the name `EntityTimerType` in the type namespace is also re-exported here
+
+error: ambiguous glob re-exports
+  --> gameplay_ui/src/prelude.rs:4:9
+   |
+4  | pub use game_core::prelude::*;
+   |         ^^^^^^^^^^^^^^^^^^^^^ the name `SystemType` in the type namespace is first re-exported here
+...
+13 | pub use crate::timing_service::*;
+   |         ------------------------ but the name `SystemType` in the type namespace is also re-exported here
+
+error: unexpected `cfg` condition value: `debug-timing`
+   --> gameplay_ui/src/timing_service.rs:170:17
+    |
+170 |         if cfg!(feature = "debug-timing") {
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^ help: remove the condition
+    |
+    = note: no expected values for `feature`
+    = help: consider adding `debug-timing` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: `#[deny(unexpected_cfgs)]` implied by `#[deny(warnings)]`
+
+error[E0119]: conflicting implementations of trait `std::default::Default` for type `performance_dashboard::FrameAnalyzer`
+  --> gameplay_ui/src/systems/performance_dashboard.rs:68:10
+   |
+68 | #[derive(Default)]
+   |          ^^^^^^^ conflicting implementation for `performance_dashboard::FrameAnalyzer`
+...
+80 | impl Default for FrameAnalyzer {
+   | ------------------------------ first implementation here
+
+error[E0308]: mismatched types
+  --> gameplay_ui/src/systems/performance_integration.rs:57:13
+   |
+57 |         let (max_time_us, _) = control_manager.get_performance_stats();
+   |             ^^^^^^^^^^^^^^^^   --------------------------------------- this expression has type `(u64, u64, u64)`
+   |             |
+   |             expected a tuple with 3 elements, found one with 2 elements
+   |
+   = note: expected tuple `(u64, u64, u64)`
+              found tuple `(_, _)`
+
+error[E0599]: no method named `len` found for struct `bevy::prelude::Res<'_, gameplay_sim::systems::distance_cache::DistanceCache>` in the current scope
+  --> gameplay_ui/src/systems/performance_integration.rs:76:57
+   |
+76 |         tracker.cache_stats.distance_cache_size = cache.len();
+   |                                                         ^^^ method not found in `Res<'_, DistanceCache>`
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+   --> gameplay_ui/src/systems/performance_monitor.rs:522:41
+    |
+522 |     if let Ok(mut text) = overlay_query.get_single_mut() {
+    |                                         ^^^^^^^^^^^^^^
+    |
+    = note: `#[deny(deprecated)]` implied by `#[deny(warnings)]`
+
+error[E0599]: no variant or associated item named `ExitVehicle` found for enum `gameplay_sim::systems::input::InputAction` in the current scope
+  --> gameplay_ui/src/systems/ui/controls_ui.rs:73:85
+   |
+73 |             if let Some(key) = input_config.get_key_for_action(&state, InputAction::ExitVehicle) {
+   |                                                                                     ^^^^^^^^^^^ variant or associated item not found in `InputAction`
+
+error[E0599]: no variant or associated item named `Throttle` found for enum `gameplay_sim::systems::input::InputAction` in the current scope
+   --> gameplay_ui/src/systems/ui/controls_ui.rs:102:85
+    |
+102 |             if let Some(key) = input_config.get_key_for_action(&state, InputAction::Throttle) {
+    |                                                                                     ^^^^^^^^ variant or associated item not found in `InputAction`
+
+error[E0599]: no variant or associated item named `BrakeThrottle` found for enum `gameplay_sim::systems::input::InputAction` in the current scope
+   --> gameplay_ui/src/systems/ui/controls_ui.rs:105:85
+    |
+105 |             if let Some(key) = input_config.get_key_for_action(&state, InputAction::BrakeThrottle) {
+    |                                                                                     ^^^^^^^^^^^^^ variant or associated item not found in `InputAction`
+
+error[E0599]: no variant or associated item named `ExitVehicle` found for enum `gameplay_sim::systems::input::InputAction` in the current scope
+   --> gameplay_ui/src/systems/ui/controls_ui.rs:108:85
+    |
+108 |             if let Some(key) = input_config.get_key_for_action(&state, InputAction::ExitVehicle) {
+    |                                                                                     ^^^^^^^^^^^ variant or associated item not found in `InputAction`
+
+error[E0609]: no field `speed` on type `&game_core::components::VehicleState`
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:229:43
+    |
+229 |             let speed_mph = vehicle_state.speed * 2.237; // Convert m/s to mph
+    |                                           ^^^^^ unknown field
+    |
+    = note: available fields are: `vehicle_type`, `color`, `max_speed`, `acceleration`, `damage` ... and 3 others
+
+error[E0609]: no field `launch_control_active` on type `&game_core::components::SuperCar`
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:241:36
+    |
+241 |             let mode = if supercar.launch_control_active { "LAUNCH" } else { "SPORT" };
+    |                                    ^^^^^^^^^^^^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+241 -             let mode = if supercar.launch_control_active { "LAUNCH" } else { "SPORT" };
+241 +             let mode = if supercar.launch_control_engaged { "LAUNCH" } else { "SPORT" };
+    |
+
+error[E0609]: no field `launch_control_ready` on type `&game_core::components::SuperCar`
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:242:38
+    |
+242 |             let launch = if supercar.launch_control_ready { "READY" } else { "WAIT" };
+    |                                      ^^^^^^^^^^^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+242 -             let launch = if supercar.launch_control_ready { "READY" } else { "WAIT" };
+242 +             let launch = if supercar.launch_control { "READY" } else { "WAIT" };
+    |
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+  --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:67:27
+   |
+67 |         if supercar_query.get_single().is_ok() {
+   |                           ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+  --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:71:55
+   |
+71 |             if let Ok(mut visibility) = overlay_query.get_single_mut() {
+   |                                                       ^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:136:8
+    |
+136 |     )).set_parent(left_panel);
+    |        ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:138:33
+    |
+138 |     commands.entity(left_panel).set_parent(dashboard_root);
+    |                                 ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:165:8
+    |
+165 |     )).set_parent(center_panel);
+    |        ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:177:8
+    |
+177 |     )).set_parent(center_panel);
+    |        ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:179:35
+    |
+179 |     commands.entity(center_panel).set_parent(dashboard_root);
+    |                                   ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:206:8
+    |
+206 |     )).set_parent(right_panel);
+    |        ^^^^^^^^^^
+
+error: use of deprecated method `bevy::bevy_ecs::hierarchy::<impl bevy::prelude::EntityCommands<'a>>::set_parent`: Use entity_commands.insert(ChildOf(entity))
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:208:34
+    |
+208 |     commands.entity(right_panel).set_parent(dashboard_root);
+    |                                  ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single`: Please use `single` instead
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:226:70
+    |
+226 |     if let Ok((supercar, vehicle_state, transform)) = supercar_query.get_single() {
+    |                                                                      ^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:228:55
+    |
+228 |         if let Ok(mut speed_text) = speedometer_query.get_single_mut() {
+    |                                                       ^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:234:45
+    |
+234 |         if let Ok(mut rpm_text) = rpm_query.get_single_mut() {
+    |                                             ^^^^^^^^^^^^^^
+
+error: use of deprecated method `bevy::prelude::Query::<'w, 's, D, F>::get_single_mut`: Please use `single_mut` instead
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:240:47
+    |
+240 |         if let Ok(mut info_text) = info_query.get_single_mut() {
+    |                                               ^^^^^^^^^^^^^^
+
+error[E0599]: no method named `length` found for type `f32` in the current scope
+   --> gameplay_ui/src/systems/ui/bugatti_telemetry.rs:243:55
+    |
+243 |             let total_g = (vehicle_state.acceleration.length() / 9.81).abs();
+    |                                                       ^^^^^^ method not found in `f32`
+
+error[E0599]: no method named `cache_size` found for struct `bevy::prelude::Res<'_, gameplay_sim::systems::distance_cache::DistanceCache>` in the current scope
+  --> gameplay_ui/src/debug/distance_cache_debug.rs:34:23
+   |
+34 |                 cache.cache_size(),
+   |                       ^^^^^^^^^^ method not found in `Res<'_, DistanceCache>`
+
+error[E0599]: no method named `len` found for struct `bevy::prelude::Res<'_, gameplay_sim::systems::distance_cache::DistanceCache>` in the current scope
+  --> gameplay_ui/src/performance/integration.rs:76:57
+   |
+76 |         tracker.cache_stats.distance_cache_size = cache.len();
+   |                                                         ^^^ method not found in `Res<'_, DistanceCache>`
+
+error[E0308]: mismatched types
+   --> gameplay_ui/src/examples/control_manager_integration.rs:104:42
+    |
+104 |                 let acceleration_force = forward * physics_config.acceleration * effective_acceleration;
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Dir3`, found `Vec3`
+
+error[E0308]: mismatched types
+   --> gameplay_ui/src/examples/control_manager_integration.rs:104:42
+    |
+104 |                 let acceleration_force = forward * physics_config.acceleration * effective_acceleration;
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Dir3`, found `Vec3`
+
+error: unused variable: `time`
+   --> gameplay_ui/src/systems/performance_monitor.rs:458:5
+    |
+458 |     time: Res<Time>,
+    |     ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+    |
+    = note: `#[deny(unused_variables)]` implied by `#[deny(warnings)]`
+
+Some errors have detailed explanations: E0119, E0308, E0428, E0432, E0433, E0599, E0609.
+For more information about an error, try `rustc --explain E0119`.
+error: could not compile `gameplay_ui` (lib) due to 20 previous errors
+error: could not compile `gameplay_ui` (lib test) due to 42 previous errors

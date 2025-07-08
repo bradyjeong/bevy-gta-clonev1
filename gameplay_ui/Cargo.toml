@@ -7,6 +7,7 @@ edition = "2021"
 bevy = { workspace = true }
 serde = { workspace = true }
 bevy_rapier3d = { workspace = true }
+tracing = { workspace = true }
 
 # Internal dependencies
 engine_core = { path = "../engine_core" }

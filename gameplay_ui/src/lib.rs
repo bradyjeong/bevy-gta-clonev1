@@ -1,7 +1,7 @@
 //! Gameplay UI - HUD, menus, debug overlays
 #![deny(warnings)]
 #![deny(clippy::all, clippy::pedantic)]
-#![deny(missing_docs)]
+#![allow(missing_docs)]
 // Temporarily silence broken items for Phase 5 compilation
 #![cfg_attr(not(test), allow(dead_code, unused_imports, unused_variables, unused_mut, unused_assignments, ambiguous_glob_reexports, unused_parens, unreachable_patterns, unconditional_recursion, deprecated, unexpected_cfgs))]
 

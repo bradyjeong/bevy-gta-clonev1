@@ -1,36 +1,14 @@
-pub mod movement;
-pub mod world;
-pub mod interaction;
+// Re-export all systems from gameplay_sim + compat stubs
+pub use gameplay_sim::systems::*;
+pub use gameplay_sim::compat::*;
+
+// Game binary specific systems that exist locally
 pub mod camera;
 pub mod effects;
 pub mod audio;
 pub mod config_loader;
-pub mod human_behavior;
-pub mod physics_utils;
-pub mod lod;
-
-pub mod vehicles;
-pub mod ui;
-pub mod water;
 pub mod debug;
 pub mod timing_service;
-pub mod spawn_validation;
-pub mod input;
-pub mod persistence;
-// pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
-pub mod distance_cache;
-pub mod unified_distance_calculator;
-pub mod transform_sync;
-pub mod distance_cache_debug;
-pub mod batching;
-pub mod batching_test;
-pub mod entity_creation_system;
-pub mod simple_service_example;
-pub mod rendering;
-pub mod vegetation_instancing_integration;
-pub mod player_collision_resolution;
-
-pub mod parallel_physics;
 pub mod performance_dashboard;
 pub mod performance_monitor;
 pub mod performance_integration;

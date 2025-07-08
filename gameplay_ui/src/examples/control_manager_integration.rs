@@ -1,16 +1,18 @@
+#![allow(dead_code)]
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::components::{Car, SuperCar, ActiveEntity};
 use crate::game_state::GameState;
-use crate::systems::input::{
-    InputManager, ControlManager, ControlAction,
-    is_accelerating, is_braking, get_steering_input, is_turbo_active,
-    control_action_system, control_validation_system
+use gameplay_sim::systems::input::{
+    ControlManager, ControlAction,
 };
+use gameplay_sim::prelude::VehicleType;
 
 /// Example system showing how to use the Control Manager for car movement
 /// This replaces the direct keyboard input with centralized control management
+#[allow(dead_code)]
 pub fn controlled_car_movement(
     control_manager: Res<ControlManager>,
     mut car_query: Query<(&mut Velocity, &Transform), (With<Car>, With<ActiveEntity>, Without<SuperCar>)>,
@@ -26,26 +28,26 @@ pub fn controlled_car_movement(
     let mut target_angular_velocity = Vec3::ZERO;
     
     // Use Control Manager instead of direct input
-    if is_accelerating(&control_manager) {
+    if control_manager.is_control_active(ControlAction::Accelerate) {
         let accel_value = control_manager.get_control_value(ControlAction::Accelerate);
         let forward = transform.forward();
         target_linear_velocity += forward * speed * accel_value;
     }
     
-    if is_braking(&control_manager) {
+    if control_manager.is_control_active(ControlAction::Brake) {
         let brake_value = control_manager.get_control_value(ControlAction::Brake);
         let forward = transform.forward();
         target_linear_velocity -= forward * speed * brake_value;
     }
     
     // Apply turbo boost if active
-    if is_turbo_active(&control_manager) {
+    if control_manager.is_control_active(ControlAction::Turbo) {
         target_linear_velocity *= 1.5; // 50% speed boost
     }
     
     // Steering (only when moving)
-    if is_accelerating(&control_manager) || is_braking(&control_manager) {
-        let steering = get_steering_input(&control_manager);
+    if control_manager.is_control_active(ControlAction::Accelerate) || control_manager.is_control_active(ControlAction::Brake) {
+        let steering = control_manager.get_control_value(ControlAction::Steer);
         if steering.abs() > 0.1 {
             target_angular_velocity.y = steering * rotation_speed;
         }
@@ -63,12 +65,13 @@ pub fn controlled_car_movement(
 }
 
 /// Example system showing advanced SuperCar integration with Control Manager
+#[allow(dead_code)]
 pub fn controlled_supercar_movement(
     time: Res<Time>,
     control_manager: Res<ControlManager>,
     mut supercar_query: Query<(&mut Velocity, &Transform, &mut SuperCar), (With<Car>, With<ActiveEntity>, With<SuperCar>)>,
 ) {
-    let Ok((mut velocity, transform, mut supercar)) = supercar_query.single_mut() else {
+    let Ok((mut velocity, transform, _supercar)) = supercar_query.single_mut() else {
         return;
     };
 
@@ -77,8 +80,8 @@ pub fn controlled_supercar_movement(
     // Use Control Manager values with SuperCar's advanced physics
     let acceleration_input = control_manager.get_control_value(ControlAction::Accelerate);
     let brake_input = control_manager.get_control_value(ControlAction::Brake);
-    let steering_input = get_steering_input(&control_manager);
-    let turbo_active = is_turbo_active(&control_manager);
+    let steering_input = control_manager.get_control_value(ControlAction::Steer);
+    let turbo_active = control_manager.is_control_active(ControlAction::Turbo);
     
     // Enhanced control processing with validation
     let safe_acceleration = acceleration_input.clamp(0.0, 1.0);
@@ -90,8 +93,9 @@ pub fn controlled_supercar_movement(
     let current_speed_mph = current_speed_ms * 2.237;
     
     // Use Control Manager physics config for consistency
-    let vehicle_type = crate::systems::input::vehicle_control_config::VehicleType::SuperCar;
-    if let Some(physics_config) = control_manager.get_physics_config(vehicle_type) {
+    let _vehicle_type = VehicleType::SuperCar;
+    let physics_config = control_manager.get_physics_config();
+    {
         let effective_acceleration = safe_acceleration * physics_config.acceleration_sensitivity;
         let effective_steering = safe_steering * physics_config.steering_sensitivity;
         
@@ -101,7 +105,7 @@ pub fn controlled_supercar_movement(
             
             if current_speed_ms < max_speed_ms && effective_acceleration > 0.0 {
                 let forward = transform.forward();
-                let acceleration_force = forward * physics_config.acceleration * effective_acceleration;
+                let acceleration_force = forward.as_vec3() * physics_config.acceleration * effective_acceleration;
                 velocity.linvel += acceleration_force * dt;
             }
             
@@ -143,19 +147,15 @@ pub fn setup_control_manager_example(app: &mut App) {
         
         // Add the core control systems
         .add_systems(Update, (
-            // Process input and update control state
-            control_action_system,
-            // Validate control inputs for safety
-            control_validation_system,
             // Apply controls to vehicles
             controlled_car_movement.run_if(in_state(GameState::Driving)),
             controlled_supercar_movement.run_if(in_state(GameState::Driving)),
-        ).chain());
+        ));
 }
 
 /// Example of customizing physics configuration
 pub fn customize_supercar_physics_example(mut control_manager: ResMut<ControlManager>) {
-    use crate::systems::input::{vehicle_control_config::VehicleType, VehiclePhysicsConfig};
+    use gameplay_sim::systems::input::VehiclePhysicsConfig;
     
     // Create custom physics config for SuperCar
     let custom_physics = VehiclePhysicsConfig {
@@ -172,14 +172,14 @@ pub fn customize_supercar_physics_example(mut control_manager: ResMut<ControlMan
     };
     
     // Update the configuration
-    control_manager.update_physics_config(VehicleType::SuperCar, custom_physics);
+    control_manager.update_physics_config(custom_physics);
     
     info!("SuperCar physics configuration updated for enhanced performance");
 }
 
 /// Example of monitoring control system performance
 pub fn monitor_control_performance(control_manager: Res<ControlManager>) {
-    let (max_time_us, failures) = control_manager.get_performance_stats();
+    let (max_time_us, failures, _) = control_manager.get_performance_stats();
     
     if max_time_us > 1000 { // More than 1ms
         warn!("Control system performance: {}μs max update time", max_time_us);
@@ -193,35 +193,35 @@ pub fn monitor_control_performance(control_manager: Res<ControlManager>) {
         warn!("Emergency brake system active!");
     }
     
-    if control_manager.is_stability_active() {
-        info!("Stability control intervening");
-    }
+    // Check for stability control (currently not implemented)
+    // if control_manager.is_stability_active() {
+    //     info!("Stability control intervening");
+    // }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::systems::input::{InputConfig, InputAction};
+    // Test would use InputConfig and InputAction if needed
     
     /// Test Control Manager integration with mock input
     #[test]
     fn test_control_manager_integration() {
         // This would be a more comprehensive test in a real scenario
-        let mut control_manager = ControlManager::default();
+        let control_manager = ControlManager::default();
         
         // Test basic functionality
         assert!(!control_manager.is_emergency_active());
-        assert!(!control_manager.is_stability_active());
+        // Note: is_stability_active is not implemented yet
         
         // Test performance stats
-        let (max_time, failures) = control_manager.get_performance_stats();
+        let (max_time, failures, _) = control_manager.get_performance_stats();
         assert_eq!(max_time, 0);
         assert_eq!(failures, 0);
         
         // Test physics config retrieval
-        use crate::systems::input::vehicle_control_config::VehicleType;
-        let car_config = control_manager.get_physics_config(VehicleType::Car);
-        assert!(car_config.is_some());
+        let car_config = control_manager.get_physics_config();
+        assert!(car_config.max_speed > 0.0);
         
         println!("Control Manager integration test passed");
     }

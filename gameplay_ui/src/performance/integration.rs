@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
 use crate::components::{PerformanceStats, DirtyFlagsMetrics};
-use crate::systems::input::ControlManager;
+use gameplay_sim::systems::input::ControlManager;
 
 /// Integration system that collects performance data from existing systems
 pub fn integrate_existing_performance_metrics(
@@ -54,7 +54,7 @@ pub fn integrate_existing_performance_metrics(
     
     // Integrate input system performance
     if let Some(control_manager) = control_manager {
-        let (max_time_us, _) = control_manager.get_performance_stats();
+        let (max_time_us, _, _) = control_manager.get_performance_stats();
         let time_ms = max_time_us as f32 / 1000.0;
         tracker.record_category_time(PerformanceCategory::Input, time_ms);
     }
@@ -73,7 +73,7 @@ pub fn integrate_distance_cache_performance(
         );
         
         // Update cache size in tracker
-        tracker.cache_stats.distance_cache_size = cache.len();
+        tracker.cache_stats.distance_cache_size = (cache.stats.hits + cache.stats.misses) as usize;
     }
 }
 

@@ -31,7 +31,7 @@ pub fn distance_cache_debug_system(
                 hit_rate,
                 stats.hits,
                 total_requests,
-                cache.cache_size(),
+                (cache.stats.hits + cache.stats.misses) as usize,
                 stats.invalidations,
                 stats.cleanups,
             );

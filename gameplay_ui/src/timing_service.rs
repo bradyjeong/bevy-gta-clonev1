@@ -150,6 +150,7 @@ pub struct TimingStats {
 }
 
 /// System that updates the timing service each frame
+#[allow(dead_code)]
 pub fn update_timing_service(
     mut timing_service: ResMut<TimingService>,
     time: Res<Time>,
@@ -158,6 +159,7 @@ pub fn update_timing_service(
 }
 
 /// System that periodically cleans up stale entity timers
+#[allow(dead_code)]
 pub fn cleanup_timing_service(
     mut timing_service: ResMut<TimingService>,
     entity_query: Query<Entity>, // All entities
@@ -167,20 +169,24 @@ pub fn cleanup_timing_service(
         let valid_entities: Vec<Entity> = entity_query.iter().collect();
         timing_service.cleanup_stale_timers(&valid_entities);
         
-        if cfg!(feature = "debug-timing") {
-            let stats = timing_service.get_stats();
-            println!("⏱️ TIMING SERVICE: {} tracked entities", stats.tracked_entities);
-        }
+        // Debug output temporarily disabled
+        // #[cfg(feature = "debug-movement")]
+        // {
+        //     let stats = timing_service.get_stats();
+        //     println!("⏱️ TIMING SERVICE: {} tracked entities", stats.tracked_entities);
+        // }
     }
 }
 
 /// Marker component for entities that use the timing service
 #[derive(Component)]
 pub struct ManagedTiming {
+    #[allow(dead_code)]
     pub timer_type: EntityTimerType,
 }
 
 impl ManagedTiming {
+    #[allow(dead_code)]
     pub fn new(timer_type: EntityTimerType) -> Self {
         Self { timer_type }
     }

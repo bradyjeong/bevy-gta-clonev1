@@ -2192,6 +2192,7 @@ dependencies = [
  "gameplay_render",
  "gameplay_sim",
  "serde",
+ "tracing",
 ]
 
 [[package]]
@@ -2363,6 +2364,7 @@ dependencies = [
  "rand 0.8.5",
  "ron",
  "serde",
+ "tracing",
 ]
 
 [[package]]

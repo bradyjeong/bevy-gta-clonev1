@@ -1,4 +1,5 @@
 #![cfg(feature = "heavy_tests")]
+#![allow(unexpected_cfgs)]
 //! Simple test to verify gameplay_render compiles and basic functionality works
 
 use bevy::prelude::*;

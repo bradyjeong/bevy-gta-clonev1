@@ -1,5 +1,8 @@
 // TEMP_PHASE_6_BRIDGE - Temporary compatibility layer for Phase 6a
 
+#[cfg(feature = "legacy_api")]
+pub use crate::{config, factories, services, plugins};
+
 // Re-export Bevy types that are missing
 pub use bevy::prelude::{
     // Bundle types that exist in Bevy 0.16
@@ -216,6 +219,62 @@ pub fn load_game_system() {}
 pub fn water_wave_system() {}
 pub fn yacht_buoyancy_system() {}
 pub fn yacht_water_constraint_system() {}
+
+// Empty system stubs that satisfy `add_systems` (Oracle's guidance)
+#[cfg(feature = "legacy_api")]
+pub fn new_unified_distance_culling_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn static_instance_batching_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn dynamic_instance_batching_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn mark_transform_dirty_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn mark_visibility_dirty_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn mark_physics_dirty_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn batch_transform_processing_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn batch_physics_processing_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn batch_lod_processing_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn batch_culling_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn dirty_flag_cleanup_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn dirty_flags_metrics_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn batching_test_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn batching_stress_test_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn batching_performance_comparison_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn cleanup_test_entities_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn bevy_resource_entity_creation_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn bevy_resource_config_update_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn bevy_asset_cleanup_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn bevy_resource_factory_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn collect_vegetation_instances_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn update_vegetation_instancing_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn player_collision_resolution_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn player_movement_validation_system() {}
+#[cfg(feature = "legacy_api")]
+pub fn service_example_vehicle_creation() {}
+#[cfg(feature = "legacy_api")]
+pub fn service_example_config_validation() {}
+#[cfg(feature = "legacy_api")]
+pub fn service_example_timing_check() {}
 
 // Re-export Vec3 for convenience
 pub use bevy::prelude::Vec3;

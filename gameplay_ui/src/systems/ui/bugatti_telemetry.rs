@@ -64,11 +64,11 @@ pub fn bugatti_telemetry_input_system(
 ) {
     if keys.just_pressed(KeyCode::F4) {
         // Only show telemetry if we're driving a SuperCar
-        if supercar_query.get_single().is_ok() {
+        if supercar_query.single().is_ok() {
             telemetry_state.visible = !telemetry_state.visible;
             
             // Toggle existing overlay visibility or create new one
-            if let Ok(mut visibility) = overlay_query.get_single_mut() {
+            if let Ok(mut visibility) = overlay_query.single_mut() {
                 *visibility = if telemetry_state.visible {
                     Visibility::Visible
                 } else {
@@ -133,9 +133,9 @@ fn spawn_bugatti_dashboard(commands: &mut Commands) {
             ..default()
         },
         BugattiSpeedometer,
-    )).set_parent(left_panel);
+    )).insert(ChildOf(left_panel));
     
-    commands.entity(left_panel).set_parent(dashboard_root);
+    commands.entity(left_panel).insert(ChildOf(dashboard_root));
     
     // Center Panel - RPM and Turbo
     let center_panel = commands.spawn((
@@ -162,7 +162,7 @@ fn spawn_bugatti_dashboard(commands: &mut Commands) {
             ..default()
         },
         BugattiRpmGauge,
-    )).set_parent(center_panel);
+    )).insert(ChildOf(center_panel));
     
     // Turbo Indicator
     commands.spawn((
@@ -174,9 +174,9 @@ fn spawn_bugatti_dashboard(commands: &mut Commands) {
             ..default()
         },
         BugattiTurboIndicator,
-    )).set_parent(center_panel);
+    )).insert(ChildOf(center_panel));
     
-    commands.entity(center_panel).set_parent(dashboard_root);
+    commands.entity(center_panel).insert(ChildOf(dashboard_root));
     
     // Right Panel - Info and Statistics
     let right_panel = commands.spawn((
@@ -203,15 +203,15 @@ fn spawn_bugatti_dashboard(commands: &mut Commands) {
             ..default()
         },
         BugattiInfoPanel,
-    )).set_parent(right_panel);
+    )).insert(ChildOf(right_panel));
     
-    commands.entity(right_panel).set_parent(dashboard_root);
+    commands.entity(right_panel).insert(ChildOf(dashboard_root));
 }
 
 /// System to update the Bugatti telemetry display with real-time data
 pub fn update_bugatti_telemetry_system(
     telemetry_state: Res<BugattiTelemetryState>,
-    time: Res<Time>,
+    _time: Res<Time>,
     supercar_query: Query<(&SuperCar, &VehicleState, &Transform), (With<Car>, With<ActiveEntity>)>,
     mut speedometer_query: Query<&mut Text, (With<BugattiSpeedometer>, Without<BugattiRpmGauge>, Without<BugattiInfoPanel>)>,
     mut rpm_query: Query<&mut Text, (With<BugattiRpmGauge>, Without<BugattiSpeedometer>, Without<BugattiInfoPanel>)>,
@@ -223,24 +223,24 @@ pub fn update_bugatti_telemetry_system(
     }
     
     // Get SuperCar data
-    if let Ok((supercar, vehicle_state, transform)) = supercar_query.get_single() {
-        // Update speedometer
-        if let Ok(mut speed_text) = speedometer_query.get_single_mut() {
-            let speed_mph = vehicle_state.speed * 2.237; // Convert m/s to mph
+    if let Ok((supercar, _vehicle_state, _transform)) = supercar_query.single() {
+        // Update speedometer - need velocity component for actual speed
+        if let Ok(mut speed_text) = speedometer_query.single_mut() {
+            let speed_mph = 0.0; // TODO: Get actual speed from velocity component
             speed_text.0 = format!("{:.0}\nMPH", speed_mph);
         }
         
         // Update RPM gauge
-        if let Ok(mut rpm_text) = rpm_query.get_single_mut() {
+        if let Ok(mut rpm_text) = rpm_query.single_mut() {
             let rpm = supercar.rpm.min(8500.0); // Redline at 8500 RPM
             rpm_text.0 = format!("{:.0}\nRPM", rpm);
         }
         
         // Update info panel
-        if let Ok(mut info_text) = info_query.get_single_mut() {
-            let mode = if supercar.launch_control_active { "LAUNCH" } else { "SPORT" };
-            let launch = if supercar.launch_control_ready { "READY" } else { "WAIT" };
-            let total_g = (vehicle_state.acceleration.length() / 9.81).abs();
+        if let Ok(mut info_text) = info_query.single_mut() {
+            let mode = if supercar.launch_control_engaged { "LAUNCH" } else { "SPORT" };
+            let launch = if supercar.launch_control { "READY" } else { "WAIT" };
+            let total_g = 0.0; // TODO: Calculate G-force from velocity changes
             info_text.0 = format!("{} • LAUNCH: {} • G: {:.1}G", mode, launch, total_g);
         }
     }

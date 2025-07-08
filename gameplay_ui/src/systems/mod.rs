@@ -15,9 +15,9 @@ pub mod distance_cache {
 }
 
 pub mod input {
-    /// Temporary re-export for compatibility
-    pub use gameplay_sim::input::*;
-    pub use gameplay_sim::systems::input::*;
+    // Temporary re-export for compatibility - temporarily disabled for Phase 5
+    // pub use gameplay_sim::input::*;
+    // pub use gameplay_sim::systems::input::*;
 }
 
 /// Temporary re-export for compatibility

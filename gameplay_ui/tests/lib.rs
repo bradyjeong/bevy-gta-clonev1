@@ -29,7 +29,10 @@ mod tests {
         assert!(app.world().contains_resource::<gameplay_ui::systems::ui::bugatti_telemetry::BugattiTelemetryState>());
         assert!(app.world().contains_resource::<gameplay_ui::systems::performance_monitor::UnifiedPerformanceTracker>());
         assert!(app.world().contains_resource::<gameplay_ui::systems::performance_dashboard::PerformanceDashboard>());
+    }
+    
     /// Test headless UI rendering capability
+    #[test]
     fn test_headless_ui_rendering() {
         let mut app = create_ui_test_app();
         // Run several update cycles to ensure UI systems work headlessly
@@ -38,4 +41,5 @@ mod tests {
         }
         // Verify no panics occurred and systems are functioning
         assert!(app.world().entities().len() > 0);
+    }
 }
