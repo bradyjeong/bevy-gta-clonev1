@@ -30,7 +30,7 @@ pub(crate) mod spawn_validation;
 pub(crate) mod transform_sync;
 pub(crate) mod water;
 pub(crate) mod bevy16_compat;
-pub(crate) mod systems;
+pub mod systems;
 pub(crate) mod factories;
 pub mod prelude;
 pub(crate) mod config;

@@ -703,7 +703,7 @@ impl GenericBundleFactory {
         UnifiedChunkBundle {
             chunk_entity: UnifiedChunkEntity { 
                 coord: game_core::components::ChunkCoord::new(chunk_coord.0, chunk_coord.1), 
-                layer 
+                layer: layer as u32 
             },
             dynamic_content: DynamicContent { content_type },
             transform: Transform::from_translation(position),

@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::text::Text;
 use bevy_rapier3d::prelude::*;
 use game_core::components::{ExhaustFlame, VehicleBeacon, F16};
 use game_core::components::Player;
@@ -124,7 +123,7 @@ pub fn update_waypoint_system(
                     direction.z * 100.0
                 ));
             }
-            text.sections[0].value = waypoint_info;
+            text.0 = waypoint_info;
         }
     }
 }

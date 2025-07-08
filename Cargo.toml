@@ -38,7 +38,7 @@ default-members = [
 
 
 [workspace.dependencies]
-bevy = { version = "0.16.1", default-features = false, features = ["bevy_winit", "x11", "serialize", "shader_format_glsl", "bevy_state"] }
+bevy = { version = "0.16.1", default-features = false, features = ["bevy_winit", "x11", "serialize", "shader_format_glsl", "bevy_state", "bevy_ui", "bevy_text"] }
 bevy_rapier3d = "0.30"
 leafwing_input_manager = "0.13"
 bytemuck = { version = "1.18", features = ["derive"] }

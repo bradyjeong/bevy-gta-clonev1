@@ -12,7 +12,7 @@ pub(crate) mod utils;
 #[allow(missing_docs)]
 pub(crate) mod timing;
 #[allow(missing_docs)]
-pub(crate) mod performance;
+pub mod performance;
 pub mod prelude;
 
 // Only expose via prelude - no direct re-exports
