@@ -28,28 +28,18 @@ pub mod distance;
 pub(crate) mod lod;
 pub(crate) mod vehicles;
 pub(crate) mod setup;
-#[cfg(feature = "legacy_api")]
 pub mod plugins;
-#[cfg(not(feature = "legacy_api"))]
-pub(crate) mod plugins;
 pub(crate) mod entity_creation;
 pub(crate) mod spawn_validation;
 pub(crate) mod transform_sync;
 pub(crate) mod water;
 pub(crate) mod bevy16_compat;
 pub mod systems;
-#[cfg(feature = "legacy_api")]
 pub mod factories;
-#[cfg(not(feature = "legacy_api"))]
-pub(crate) mod factories;
 pub mod prelude;
-#[cfg(feature = "legacy_api")]
 pub mod config;
-#[cfg(not(feature = "legacy_api"))]
-pub(crate) mod config;
 pub(crate) mod constants;
-#[cfg(feature = "legacy_api")]
-pub mod compat;
+
 
 // Removed compatibility layer - using direct imports
 pub use engine_core;

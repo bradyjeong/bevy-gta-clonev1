@@ -5,7 +5,7 @@ edition = "2021"
 
 [features]
 default = []
-legacy_api = []
+
 ci_fast = []
 
 [dependencies]

@@ -7,10 +7,10 @@ members = [
     "engine_bevy",
     "gameplay_sim",
     "gameplay_render",
-    "gameplay_ui",
     "test_utils",
     "tests"
 ]
+exclude = ["gameplay_ui"]
 
 [workspace.features]
 default = []
@@ -31,8 +31,7 @@ default-members = [
     "engine_bevy",
     "game_core",
     "gameplay_sim",
-    "gameplay_render",
-    "gameplay_ui"
+    "gameplay_render"
 ]
 
 

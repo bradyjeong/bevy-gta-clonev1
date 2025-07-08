@@ -9,7 +9,7 @@
 
 use bevy::prelude::*;
 use game_core::prelude::*;
-use crate::compat::{TransformBundle, VisibilityBundle};
+use game_core::bundles::VisibleBundle;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum NPCLOD {
@@ -136,8 +136,8 @@ pub fn spawn_npc_with_lod(
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
     commands.spawn((
-        TransformBundle::from_transform(Transform::from_translation(position)),
-        VisibilityBundle::default(),
+        Transform::from_translation(position),
+        VisibleBundle::default(),
         NPC {
             target_position: Vec3::ZERO,
             speed: 1.0,

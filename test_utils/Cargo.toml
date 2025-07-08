@@ -18,7 +18,7 @@ engine_core = { path = "../engine_core", optional = true }
 engine_bevy = { path = "../engine_bevy", optional = true }
 gameplay_sim = { path = "../gameplay_sim", optional = true }
 gameplay_render = { path = "../gameplay_render", optional = true }
-gameplay_ui = { path = "../gameplay_ui", optional = true }
+
 
 [features]
 default = []

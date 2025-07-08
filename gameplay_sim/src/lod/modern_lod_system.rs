@@ -13,7 +13,7 @@
 
 use bevy::prelude::*;
 use game_core::prelude::*;
-use crate::compat::PerformanceCounters;
+use game_core::prelude::performance_config::PerformanceCounters;
 use crate::config::GameConfig;
 
 /// Modern LOD system that uses component-based approach

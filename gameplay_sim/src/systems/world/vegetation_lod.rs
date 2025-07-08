@@ -10,7 +10,7 @@
 use bevy::prelude::*;
 use std::cell::RefCell;
 use game_core::prelude::*;
-use crate::compat::{TransformBundle, VisibilityBundle};
+use game_core::bundles::VisibleBundle;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum VegetationDetailLevel {
@@ -172,8 +172,8 @@ pub fn spawn_vegetation_with_lod(
     };
     
     commands.spawn((
-        TransformBundle::from_transform(Transform::from_translation(position)),
-        VisibilityBundle::default(),
+        Transform::from_translation(position),
+        VisibleBundle::default(),
         DynamicContent {
             content_type: vegetation_type,
         },

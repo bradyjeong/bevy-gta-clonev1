@@ -1,5 +1,5 @@
 // Re-export plugins via compat layer
-pub use gameplay_sim::compat::plugins::*;
+pub use gameplay_sim::plugins::*;
 
 // Game binary specific plugins that exist locally
 pub mod game_plugin;

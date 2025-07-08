@@ -23,6 +23,7 @@ impl Default for RenderTestConfig {
             frame_budget_ms: 16.67,        // 60 FPS frame budget
         }
     }
+}
 /// Create a headless test app for rendering tests
 pub fn create_render_test_app() -> App {
     let mut app = App::new();
@@ -44,6 +45,7 @@ pub fn create_render_test_app() -> App {
     // Initialize performance counters
     app.init_resource::<game_core::config::performance_config::PerformanceCounters>();
     app
+}
 /// Create test game configuration with oracle-specified distances
 pub fn create_test_game_config() -> GameConfig {
     let mut config = GameConfig::default();
@@ -53,6 +55,7 @@ pub fn create_test_game_config() -> GameConfig {
     config.npc.update_intervals.close_distance = 100.0; // NPC close distance
     config.npc.update_intervals.far_distance = 200.0; // NPC far distance
     config
+}
 /// Create a test camera entity
 pub fn create_test_camera(app: &mut App) -> Entity {
     let mut world = app.world_mut();
@@ -62,9 +65,11 @@ pub fn create_test_camera(app: &mut App) -> Entity {
             .looking_at(Vec3::ZERO, Vec3::Y),
         GlobalTransform::default(),
     )).id()
+}
 /// Create a test vehicle at a specific distance from camera
 pub fn create_test_vehicle_at_distance(app: &mut App, distance: f32) -> Entity {
     let position = Vec3::new(distance, 0.0, 0.0);
+    app.world_mut().spawn((
         Car::default(),
         ActiveEntity,
         LodLevel::High,
@@ -74,32 +79,58 @@ pub fn create_test_vehicle_at_distance(app: &mut App, distance: f32) -> Entity {
         RigidBody::Dynamic,
         Collider::cuboid(2.0, 1.0, 4.0),
         Velocity::default(),
+    )).id()
+}
 /// Create a test NPC at a specific distance from camera
 pub fn create_test_npc_at_distance(app: &mut App, distance: f32) -> Entity {
     let position = Vec3::new(0.0, 0.0, distance);
+    app.world_mut().spawn((
         NPC::default(),
+        Transform::from_translation(position),
         Collider::capsule_y(0.5, 0.5),
+        ActiveEntity,
+        LodLevel::High,
+        Visibility::Visible,
+    )).id()
+}
 /// Create a test building at a specific distance from camera
 pub fn create_test_building_at_distance(app: &mut App, distance: f32) -> Entity {
     let position = Vec3::new(distance * 0.7, 0.0, distance * 0.7);
+    app.world_mut().spawn((
         Building::default(),
+        Transform::from_translation(position),
         RigidBody::Fixed,
         Collider::cuboid(5.0, 10.0, 5.0),
+        ActiveEntity,
+        LodLevel::High,
+        Visibility::Visible,
+    )).id()
+}
 /// Create test vegetation at a specific distance from camera
 pub fn create_test_vegetation_at_distance(app: &mut App, distance: f32) -> Entity {
+    let position = Vec3::new(distance * 0.5, 0.0, distance * 0.5);
+    app.world_mut().spawn((
         VegetationBatchable::default(),
+        Transform::from_translation(position),
         VegetationLOD {
             detail_level: VegetationDetailLevel::Full,
             distance_to_player: distance,
         },
+        ActiveEntity,
+        Visibility::Visible,
+    )).id()
+}
 /// Run rendering simulation for a fixed number of frames
 pub fn run_render_simulation_frames(app: &mut App, frames: u32) {
     for _ in 0..frames {
         app.update();
+    }
+}
 /// Run rendering simulation for a fixed duration
 pub fn run_render_simulation_duration(app: &mut App, duration: f32) {
     let frames = (duration / (1.0 / 60.0)) as u32;
     run_render_simulation_frames(app, frames);
+}
 /// Test scene builder for consistent test scenarios
 pub struct TestSceneBuilder {
     pub camera_entity: Option<Entity>,
@@ -107,28 +138,41 @@ pub struct TestSceneBuilder {
     pub npc_entities: Vec<Entity>,
     pub building_entities: Vec<Entity>,
     pub vegetation_entities: Vec<Entity>,
+}
 impl TestSceneBuilder {
     pub fn new() -> Self {
+        Self {
             camera_entity: None,
             vehicle_entities: Vec::new(),
             npc_entities: Vec::new(),
             building_entities: Vec::new(),
             vegetation_entities: Vec::new(),
+        }
+    }
     pub fn with_camera(mut self, app: &mut App) -> Self {
         self.camera_entity = Some(create_test_camera(app));
         self
+    }
     pub fn with_vehicle_at_distance(mut self, app: &mut App, distance: f32) -> Self {
         let entity = create_test_vehicle_at_distance(app, distance);
         self.vehicle_entities.push(entity);
+        self
+    }
     pub fn with_npc_at_distance(mut self, app: &mut App, distance: f32) -> Self {
         let entity = create_test_npc_at_distance(app, distance);
         self.npc_entities.push(entity);
+        self
+    }
     pub fn with_building_at_distance(mut self, app: &mut App, distance: f32) -> Self {
         let entity = create_test_building_at_distance(app, distance);
         self.building_entities.push(entity);
+        self
+    }
     pub fn with_vegetation_at_distance(mut self, app: &mut App, distance: f32) -> Self {
         let entity = create_test_vegetation_at_distance(app, distance);
         self.vegetation_entities.push(entity);
+        self
+    }
     pub fn build(self) -> TestScene {
         TestScene {
             camera_entity: self.camera_entity,
@@ -136,8 +180,17 @@ impl TestSceneBuilder {
             npc_entities: self.npc_entities,
             building_entities: self.building_entities,
             vegetation_entities: self.vegetation_entities,
+        }
+    }
+}
 /// Test scene with entities at known distances
 pub struct TestScene {
+    pub camera_entity: Option<Entity>,
+    pub vehicle_entities: Vec<Entity>,
+    pub npc_entities: Vec<Entity>,
+    pub building_entities: Vec<Entity>,
+    pub vegetation_entities: Vec<Entity>,
+}
 /// Performance measurement utilities
 pub struct PerformanceMeasurement {
     pub frame_time_ms: f32,
@@ -145,15 +198,20 @@ pub struct PerformanceMeasurement {
     pub entities_processed: u32,
     pub culled_entities: u32,
     pub render_operations: u32,
+}
 impl PerformanceMeasurement {
     pub fn capture(app: &App) -> Self {
         let counters = app.world().resource::<game_core::config::performance_config::PerformanceCounters>();
         
+        Self {
             frame_time_ms: counters.frame_time_ms,
             lod_updates: counters.lod_updates,
             entities_processed: counters.entity_count,
             culled_entities: counters.culled_entities,
             render_operations: counters.render_operations,
+        }
+    }
+}
 /// Assertions for LOD levels
 pub fn assert_lod_level(app: &App, entity: Entity, expected_level: LodLevel) {
     let world = app.world();
@@ -162,41 +220,57 @@ pub fn assert_lod_level(app: &App, entity: Entity, expected_level: LodLevel) {
     assert_eq!(*lod_level, expected_level, 
         "Entity {:?} should have LOD level {:?}, but has {:?}", 
         entity, expected_level, lod_level);
+}
 /// Assertions for vegetation LOD levels
 pub fn assert_vegetation_lod_level(app: &App, entity: Entity, expected_level: VegetationDetailLevel) {
+    let world = app.world();
     let veg_lod = world.get::<VegetationLOD>(entity)
         .expect("Entity should have VegetationLOD component");
     assert_eq!(veg_lod.detail_level, expected_level,
         "Entity {:?} should have vegetation LOD level {:?}, but has {:?}",
         entity, expected_level, veg_lod.detail_level);
+}
 /// Assertions for visibility
 pub fn assert_visibility(app: &App, entity: Entity, expected_visibility: Visibility) {
+    let world = app.world();
     let visibility = world.get::<Visibility>(entity)
         .expect("Entity should have Visibility component");
     assert_eq!(*visibility, expected_visibility,
         "Entity {:?} should have visibility {:?}, but has {:?}",
         entity, expected_visibility, visibility);
+}
 /// Assertions for component presence
 pub fn assert_has_component<T: Component>(app: &App, entity: Entity, component_name: &str) {
+    let world = app.world();
     assert!(world.get::<T>(entity).is_some(),
         "Entity {:?} should have {} component", entity, component_name);
+}
 /// Assertions for component absence
 pub fn assert_lacks_component<T: Component>(app: &App, entity: Entity, component_name: &str) {
+    let world = app.world();
     assert!(world.get::<T>(entity).is_none(),
         "Entity {:?} should not have {} component", entity, component_name);
+}
 /// Distance calculation helper
 pub fn calculate_distance_to_camera(app: &App, entity: Entity, camera_entity: Entity) -> f32 {
+    let world = app.world();
     let entity_transform = world.get::<Transform>(entity)
         .expect("Entity should have Transform");
     let camera_transform = world.get::<Transform>(camera_entity)
         .expect("Camera should have Transform");
     entity_transform.translation.distance(camera_transform.translation)
+}
 /// Float comparison with epsilon
 pub fn f32_equals(a: f32, b: f32, epsilon: f32) -> bool {
     (a - b).abs() < epsilon
+}
 /// Vec3 comparison with epsilon
 pub fn vec3_equals(a: Vec3, b: Vec3, epsilon: f32) -> bool {
     (a - b).length() < epsilon
+}
 /// Default implementation for TestSceneBuilder
 impl Default for TestSceneBuilder {
+    fn default() -> Self {
         Self::new()
+    }
+}

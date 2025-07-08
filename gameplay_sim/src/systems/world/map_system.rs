@@ -12,7 +12,7 @@ use crate::bevy16_compat::EntityCommandsExt;
 use bevy::render::mesh::Mesh;
 use bevy::render::render_asset::RenderAssetUsages;
 use std::collections::HashMap;
-use crate::compat::{TransformBundle, VisibilityBundle};
+use game_core::bundles::VisibleBundle;
 use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
 use game_core::prelude::*;
@@ -214,8 +214,8 @@ fn generate_chunk(
     
     // Create chunk parent entity
     let chunk_entity = commands.spawn((
-        TransformBundle::from_transform(Transform::from_translation(chunk_center)),
-        VisibilityBundle::default(),
+        Transform::from_translation(chunk_center),
+        VisibleBundle::default(),
         Chunk {
             x: chunk_x,
             z: chunk_z,

@@ -11,7 +11,7 @@ use bevy::prelude::*;
 use std::collections::HashSet;
 use game_core::prelude::*;
 use crate::systems::world::unified_world::{WorldManager, ChunkCoord, UNIFIED_CHUNK_SIZE};
-use crate::compat::{TransformBundle, VisibilityBundle};
+use game_core::bundles::VisibleBundle;
 
 // Re-export canonical types from game_core
 pub use game_core::world::ContentLayer;
@@ -119,8 +119,8 @@ fn generate_roads_for_chunk(
     
     // Simple road generation - just create a basic road entity
     let road_entity = commands.spawn((
-        TransformBundle::from_transform(Transform::from_translation(chunk_center)),
-        VisibilityBundle::default(),
+        Transform::from_translation(chunk_center),
+        VisibleBundle::default(),
         RoadEntity { road_id: coord.x as u32 * 1000 + coord.z as u32 },
         DynamicContent {
             content_type: ContentType::Road,
@@ -169,8 +169,8 @@ fn generate_buildings_for_chunk(
     
     // Simple building generation
     let building_entity = commands.spawn((
-        TransformBundle::from_transform(Transform::from_translation(chunk_center + Vec3::new(10.0, 0.0, 10.0))),
-        VisibilityBundle::default(),
+        Transform::from_translation(chunk_center + Vec3::new(10.0, 0.0, 10.0)),
+        VisibleBundle::default(),
         DynamicContent {
             content_type: ContentType::Building,
         },
@@ -229,8 +229,8 @@ fn generate_vegetation_for_chunk(
         );
         
         let tree_entity = commands.spawn((
-            TransformBundle::from_transform(Transform::from_translation(chunk_center + offset)),
-            VisibilityBundle::default(),
+            Transform::from_translation(chunk_center + offset),
+            VisibleBundle::default(),
             DynamicContent {
                 content_type: ContentType::Tree,
             },

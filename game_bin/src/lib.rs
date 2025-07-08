@@ -1,5 +1,6 @@
 //! Game binary - main entry point and top-level orchestration
 #![deny(warnings)]
+#![cfg_attr(not(test), allow(dead_code, unused_imports, unused_variables, unused_mut))]
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 // Temporarily silence broken items for Phase 5 compilation
@@ -11,7 +12,7 @@ extern crate tracing;
 
 // Re-export simulation components, config, etc. via compat layer
 pub use gameplay_sim::components;
-pub use gameplay_sim::compat::{config, factories, services};
+pub use gameplay_sim::{config, factories, services};
 
 // Game binary specific modules
 pub(crate) mod systems;

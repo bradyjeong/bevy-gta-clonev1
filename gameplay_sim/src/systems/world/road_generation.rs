@@ -13,7 +13,7 @@ use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
 use game_core::prelude::*;
 use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType};
-use crate::compat::{TransformBundle, VisibilityBundle};
+use game_core::bundles::VisibleBundle;
 
 const CHUNK_SIZE: f32 = 200.0;
 
@@ -258,8 +258,8 @@ fn spawn_road_entity(commands: &mut Commands, road_id: u32, start: Vec3, end: Ve
     
     commands.spawn((
         RoadEntity { road_id },
-        TransformBundle::from_transform(Transform::from_translation(center)),
-        VisibilityBundle::default(),
+        Transform::from_translation(center),
+        VisibleBundle::default(),
     ));
 }
 

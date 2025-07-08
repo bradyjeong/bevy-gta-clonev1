@@ -1,6 +1,5 @@
 // Re-export all systems from gameplay_sim + compat stubs
 pub use gameplay_sim::systems::*;
-pub use gameplay_sim::compat::*;
 
 // Game binary specific systems that exist locally
 pub mod camera;
