@@ -179,7 +179,7 @@ pub fn lod_performance_monitoring_system(
     mut performance_counters: ResMut<PerformanceCounters>,
     time: Res<Time>,
     vehicles: Query<&LodLevel, With<ActiveEntity>>,
-    vegetation: Query<&VegetationLOD>,
+    _vegetation: Query<&VegetationLOD>,
 ) {
     performance_counters.update_frame(time.delta_secs());
     

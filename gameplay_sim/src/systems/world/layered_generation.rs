@@ -45,7 +45,7 @@ impl Default for LayeredChunkData {
 }
 
 pub fn layered_generation_system(
-    commands: Commands,
+    _commands: Commands,
     active_query: Query<&Transform, With<ActiveEntity>>,
     mut world_manager: ResMut<WorldManager>,
     time: Res<Time>,
@@ -102,7 +102,7 @@ pub fn road_layer_system(
     }
 }
 
-fn has_roads_generated(coord: ChunkCoord) -> bool {
+fn has_roads_generated(_coord: ChunkCoord) -> bool {
     // For now, assume no roads are generated
     // In a real implementation, this would check the chunk state
     false
@@ -112,8 +112,8 @@ fn generate_roads_for_chunk(
     commands: &mut Commands,
     world_manager: &mut WorldManager,
     coord: ChunkCoord,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    _meshes: &mut ResMut<Assets<Mesh>>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
     let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     
@@ -153,7 +153,7 @@ pub fn building_layer_system(
     }
 }
 
-fn has_buildings_generated(coord: ChunkCoord) -> bool {
+fn has_buildings_generated(_coord: ChunkCoord) -> bool {
     // For now, assume no buildings are generated
     false
 }

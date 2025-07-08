@@ -29,7 +29,7 @@ impl RoadNetworkExtensions for ResMut<'_, RoadNetwork> {
         // TODO: Implement cache clearing
     }
     
-    fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32> {
+    fn generate_chunk_roads(&mut self, _chunk_x: i32, _chunk_z: i32) -> Vec<u32> {
         // TODO: Implement chunk road generation
         Vec::new()
     }

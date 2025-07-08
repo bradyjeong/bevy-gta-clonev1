@@ -45,7 +45,7 @@ pub fn human_player_movement(
     };
     let dt = time.delta_secs();
     // Velocity-based movement system (unified approach)
-    let mut target_linear_velocity = Vec3::ZERO;
+    let target_linear_velocity;
     let mut target_angular_velocity = Vec3::ZERO;
     
     let is_running = control_manager.is_control_active(ControlAction::Turbo);

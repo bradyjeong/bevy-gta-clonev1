@@ -274,7 +274,7 @@ fn generate_dashed_center_line_mesh(road: &RoadSpline) -> Mesh {
     let mut uvs = Vec::new();
     let mut indices = Vec::new();
     
-    let road_length = road.length();
+    let _road_length = road.length();
     let mut current_distance = 0.0;
     let mut vertex_index = 0;
     

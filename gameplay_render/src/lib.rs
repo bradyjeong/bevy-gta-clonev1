@@ -131,7 +131,7 @@
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 // Temporarily silence broken items for Phase 5 compilation
-#![cfg_attr(not(test), allow(unexpected_cfgs))]
+
 
 #[macro_use]
 extern crate tracing;

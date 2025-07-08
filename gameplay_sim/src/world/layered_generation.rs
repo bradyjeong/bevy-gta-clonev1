@@ -17,7 +17,7 @@ use game_core::bundles::VisibleChildBundle;
 use crate::systems::world::unified_world::{
     UnifiedWorldManager, ContentLayer, UNIFIED_CHUNK_SIZE,
 };
-use crate::systems::world::road_generation::RoadNetworkExtensions;
+
 use game_core::prelude::{UnifiedChunkEntity, ChunkState};
 use game_core::components::spatial::ChunkCoord;
 use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType};

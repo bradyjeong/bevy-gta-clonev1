@@ -20,7 +20,7 @@ pub fn player_interaction_system(
 
     match **current_state {
         GameState::Walking => {
-            if let Ok((player_entity, player_transform)) = player_query.single() {
+            if let Ok((_player_entity, player_transform)) = player_query.single() {
                 // Check for nearby vehicles to enter
                 
                 // Check cars

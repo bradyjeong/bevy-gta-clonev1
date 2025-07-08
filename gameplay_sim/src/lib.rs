@@ -3,8 +3,7 @@
 #![warn(clippy::all, clippy::pedantic)]
 #![cfg_attr(feature = "strict_docs", deny(missing_docs))]
 #![cfg_attr(not(feature = "strict_docs"), allow(missing_docs))]
-// Temporarily silence unused items until they are wired up in Phase 6.
-#![cfg_attr(not(test), allow(dead_code, unused_imports, unused_variables, unused_mut, unused_assignments, ambiguous_glob_reexports, unused_parens, unreachable_patterns, unconditional_recursion, deprecated, unexpected_cfgs))]
+
 
 // Macro imports
 #[macro_use]

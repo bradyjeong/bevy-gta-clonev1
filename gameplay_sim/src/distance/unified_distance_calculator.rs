@@ -174,7 +174,7 @@ pub fn unified_distance_processing_system(
 
 /// Utility functions for easy distance calculations
 pub mod distance_utils {
-    use super::{CurveExt, Entity, IntoSystem, RelationshipTarget, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
+    use super::{Entity, ResMut, UnifiedDistanceCalculator, Vec, Vec3};
     
     /// Calculate distance immediately (for critical path)
     pub fn calculate_distance_immediate(

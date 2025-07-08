@@ -1,10 +1,7 @@
 //! Game binary - main entry point and top-level orchestration
 #![deny(warnings)]
-#![cfg_attr(not(test), allow(dead_code, unused_imports, unused_variables, unused_mut))]
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
-// Temporarily silence broken items for Phase 5 compilation
-#![cfg_attr(not(test), allow(dead_code, unused_imports, unused_variables, unused_mut, unused_assignments, ambiguous_glob_reexports, unused_parens, unreachable_patterns, unconditional_recursion, deprecated, unexpected_cfgs))]
 
 // Macro imports
 #[macro_use]

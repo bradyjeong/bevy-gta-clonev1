@@ -18,5 +18,5 @@ pub mod control_manager_ext;
 pub use input_config::*;
 pub use input_manager::*;
 pub use vehicle_control_config::*;
-pub use control_manager::*;
-pub use control_manager_ext::*;
+pub use control_manager::ControlManager;
+pub use control_manager_ext::{is_accelerating, is_braking};

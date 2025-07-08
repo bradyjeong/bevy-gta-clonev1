@@ -390,7 +390,7 @@ pub fn npc_ai_decision_system(
     npc_query: Query<(Entity, &Transform), With<NPCState>>,
     time: Res<Time>,
 ) {
-    for (entity, transform) in npc_query.iter() {
+    for (entity, _transform) in npc_query.iter() {
         // Simple wander behavior
         let time_offset = entity.index() as f32 * 0.1;
         let wander_angle = (time.elapsed_secs() + time_offset).sin() * 0.5;
