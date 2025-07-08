@@ -13,7 +13,37 @@ pub struct EntityBuilder<'a> {
 }
 
 impl<'a> EntityBuilder<'a> {
-    /// Create new entity builder
+    /// Creates a new entity builder with access to the unified factory system.
+    ///
+    /// This function initializes the builder with references to all required
+    /// resources for entity creation, including the factory configuration,
+    /// ECS commands, and asset storage systems.
+    ///
+    /// # Arguments
+    /// * `factory` - Reference to the unified entity factory with configuration
+    /// * `commands` - Mutable reference to Bevy's ECS command system
+    /// * `meshes` - Mutable reference to mesh asset storage
+    /// * `materials` - Mutable reference to material asset storage
+    ///
+    /// # Returns
+    /// A new [`EntityBuilder`] instance ready for fluent entity construction
+    ///
+    /// # Examples
+    /// ```rust
+    /// use bevy::prelude::*;
+    /// use gameplay_render::factories::entity_builder_unified::EntityBuilder;
+    /// use gameplay_render::factories::entity_factory_unified::UnifiedEntityFactory;
+    ///
+    /// fn spawn_entities(
+    ///     mut commands: Commands,
+    ///     mut meshes: ResMut<Assets<Mesh>>,
+    ///     mut materials: ResMut<Assets<StandardMaterial>>,
+    ///     factory: Res<UnifiedEntityFactory>,
+    /// ) {
+    ///     let builder = EntityBuilder::new(&factory, &mut commands, &mut meshes, &mut materials);
+    ///     // Use builder to create entities with fluent API
+    /// }
+    /// ```
     pub fn new(
         factory: &'a UnifiedEntityFactory,
         commands: &'a mut Commands<'a, 'a>,
@@ -89,6 +119,18 @@ pub struct VehicleBuilder<'a> {
 }
 
 impl<'a> VehicleBuilder<'a> {
+    /// Creates a new vehicle builder with the specified vehicle type.
+    ///
+    /// This function initializes the builder with the given vehicle type and
+    /// default configuration. The builder can then be customized using the
+    /// fluent API methods before spawning the final entity.
+    ///
+    /// # Arguments
+    /// * `builder` - The base entity builder with factory and resource access
+    /// * `vehicle_type` - The type of vehicle to create
+    ///
+    /// # Returns
+    /// A new [`VehicleBuilder`] instance ready for customization
     fn new(builder: EntityBuilder<'a>, vehicle_type: VehicleType) -> Self {
         Self {
             builder,
@@ -706,6 +748,44 @@ pub struct BatchBuilder<'a> {
 }
 
 impl<'a> BatchBuilder<'a> {
+    /// Creates a new batch builder for efficient multi-entity creation.
+    ///
+    /// This function initializes a batch builder that can create multiple
+    /// entities of the same type efficiently using batch processing techniques.
+    /// Batch creation reduces individual entity spawn overhead and improves
+    /// performance when creating large numbers of entities.
+    ///
+    /// # Arguments
+    /// * `builder` - The base entity builder with factory and resource access
+    ///
+    /// # Returns
+    /// A new [`BatchBuilder`] instance ready for batch entity creation
+    ///
+    /// # Examples
+    /// ```rust
+    /// use bevy::prelude::*;
+    /// use gameplay_render::factories::entity_builder_unified::EntityBuilder;
+    /// use gameplay_render::factories::entity_factory_unified::UnifiedEntityFactory;
+    /// use game_core::components::VehicleType;
+    ///
+    /// fn spawn_vehicle_fleet(
+    ///     mut commands: Commands,
+    ///     mut meshes: ResMut<Assets<Mesh>>,
+    ///     mut materials: ResMut<Assets<StandardMaterial>>,
+    ///     factory: Res<UnifiedEntityFactory>,
+    /// ) {
+    ///     let vehicle_specs = vec![
+    ///         (VehicleType::BasicCar, Vec3::new(0.0, 0.0, 0.0), Color::RED),
+    ///         (VehicleType::BasicCar, Vec3::new(10.0, 0.0, 0.0), Color::BLUE),
+    ///         (VehicleType::BasicCar, Vec3::new(20.0, 0.0, 0.0), Color::GREEN),
+    ///     ];
+    ///     
+    ///     let entities = factory.entity_builder(&mut commands, &mut meshes, &mut materials)
+    ///         .batch()
+    ///         .spawn_vehicles(vehicle_specs)
+    ///         .expect("Failed to spawn vehicle fleet");
+    /// }
+    /// ```
     pub fn new(builder: EntityBuilder<'a>) -> Self {
         Self { builder }
     }
@@ -752,6 +832,40 @@ impl<'a> BatchBuilder<'a> {
 
 /// Convenience trait for easy factory access
 pub trait EntityBuilderExt {
+    /// Creates an entity builder instance using this factory as the configuration source.
+    ///
+    /// This method provides convenient access to the [`EntityBuilder`] fluent API
+    /// directly from a [`UnifiedEntityFactory`] instance. It automatically passes
+    /// the factory configuration to the builder for consistent entity creation.
+    ///
+    /// # Arguments
+    /// * `commands` - Mutable reference to Bevy's ECS command system
+    /// * `meshes` - Mutable reference to mesh asset storage
+    /// * `materials` - Mutable reference to material asset storage
+    ///
+    /// # Returns
+    /// A new [`EntityBuilder`] instance configured with this factory's settings
+    ///
+    /// # Examples
+    /// ```rust
+    /// use bevy::prelude::*;
+    /// use gameplay_render::factories::entity_builder_unified::EntityBuilderExt;
+    /// use gameplay_render::factories::entity_factory_unified::UnifiedEntityFactory;
+    ///
+    /// fn spawn_car(
+    ///     mut commands: Commands,
+    ///     mut meshes: ResMut<Assets<Mesh>>,
+    ///     mut materials: ResMut<Assets<StandardMaterial>>,
+    ///     factory: Res<UnifiedEntityFactory>,
+    /// ) {
+    ///     let car_entity = factory.entity_builder(&mut commands, &mut meshes, &mut materials)
+    ///         .vehicle(VehicleType::BasicCar)
+    ///         .at_position(Vec3::new(100.0, 0.0, 200.0))
+    ///         .with_color(Color::RED)
+    ///         .spawn()
+    ///         .expect("Failed to spawn car");
+    /// }
+    /// ```
     fn entity_builder<'a>(
         &'a self,
         commands: &'a mut Commands<'a, 'a>,

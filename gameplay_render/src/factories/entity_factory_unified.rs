@@ -21,6 +21,7 @@ use game_core::config::GameConfig;
 /// Phase 2.1: Enhanced with centralized spawn logic and entity limit management
 #[derive(Resource)]
 pub struct UnifiedEntityFactory {
+    /// Game configuration settings that control entity creation behavior and limits.
     pub config: GameConfig,
     /// Entity limit management with configurable thresholds
     pub entity_limits: EntityLimitManager,
@@ -31,17 +32,27 @@ pub struct UnifiedEntityFactory {
 /// Entity limit manager with configurable thresholds and automatic cleanup
 #[derive(Debug, Clone)]
 pub struct EntityLimitManager {
+    /// Maximum number of building entities that can exist simultaneously.
     pub max_buildings: usize,
+    /// Maximum number of vehicle entities that can exist simultaneously.
     pub max_vehicles: usize,
+    /// Maximum number of NPC entities that can exist simultaneously.
     pub max_npcs: usize,
+    /// Maximum number of tree entities that can exist simultaneously.
     pub max_trees: usize,
+    /// Maximum number of particle effect entities that can exist simultaneously.
     pub max_particles: usize,
     
     // Entity tracking with timestamps for FIFO cleanup
+    /// Active building entities with their spawn timestamps for FIFO cleanup.
     pub building_entities: Vec<(Entity, f32)>,
+    /// Active vehicle entities with their spawn timestamps for FIFO cleanup.
     pub vehicle_entities: Vec<(Entity, f32)>,
+    /// Active NPC entities with their spawn timestamps for FIFO cleanup.
     pub npc_entities: Vec<(Entity, f32)>,
+    /// Active tree entities with their spawn timestamps for FIFO cleanup.
     pub tree_entities: Vec<(Entity, f32)>,
+    /// Active particle effect entities with their spawn timestamps for FIFO cleanup.
     pub particle_entities: Vec<(Entity, f32)>,
 }
 

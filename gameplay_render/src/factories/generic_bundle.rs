@@ -1,3 +1,40 @@
+//! Generic bundle factory system for creating game entities with type safety.
+//!
+//! # Overview
+//! This module provides a unified, trait-based approach to creating entity bundles for
+//! the Bevy ECS system. It eliminates code duplication by centralizing bundle creation
+//! logic and enforces configuration-based validation for all entity types.
+//!
+//! The system supports vehicles, NPCs, buildings, physics objects, and various dynamic
+//! content types. All bundles are created through validated specifications that ensure
+//! proper physics bounds, component composition, and configuration compliance.
+//!
+//! ## Typical usage
+//! ```rust
+//! use bevy::prelude::*;
+//! use game_core::config::GameConfig;
+//! use gameplay_render::factories::generic_bundle::*;
+//!
+//! fn spawn_vehicle(
+//!     mut commands: Commands,
+//!     config: Res<GameConfig>,
+//! ) {
+//!     let vehicle_bundle = GenericBundleFactory::vehicle(
+//!         VehicleType::BasicCar,
+//!         Vec3::new(0.0, 0.0, 0.0),
+//!         Color::RED,
+//!         &config,
+//!     ).expect("Valid vehicle configuration");
+//!     
+//!     commands.spawn(vehicle_bundle);
+//! }
+//! ```
+//!
+//! # Implementation notes
+//! The factory system uses the [`BundleSpec`] trait to define creation and validation
+//! behavior for each bundle type. This ensures consistent parameter validation and
+//! configuration integration across all entity types.
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use game_core::config::*;
@@ -7,43 +44,159 @@ use game_core::bundles::*;
 use game_core::components::UnifiedChunkEntity;
 use game_core::components::UnifiedCullable;
 
-/// Type alias for old NPCBehavior to maintain compatibility
+/// Type alias for backwards compatibility with legacy NPC behavior systems.
+///
+/// This alias maps the old [`NPCBehavior`] name to the new [`NPCBehaviorComponent`]
+/// struct, allowing existing code to continue working while the codebase migrates
+/// to the unified component naming conventions.
 pub type NPCBehavior = NPCBehaviorComponent;
 
-/// Particle effect types for the unified system
+/// Particle effect types for the unified visual effects system.
+///
+/// This enum defines the different particle effects that can be spawned and managed
+/// by the game's particle system. Each variant represents a distinct visual effect
+/// with specific rendering properties and behavioral characteristics.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParticleEffectType {
+    /// Vehicle exhaust emission particles
     Exhaust,
+    /// General smoke particles for various effects
     Smoke,
+    /// Fire particles for combustion effects
     Fire,
+    /// Water particles for liquid effects
     Water,
+    /// Dust particles for environmental effects
     Dust,
+    /// Explosion particles for destructive effects
     Explosion,
+    /// Electrical spark particles
     Spark,
 }
 
-/// CRITICAL: Generic Bundle System - Trait-based bundle creation with type safety
-/// Eliminates 200+ duplicate bundle patterns with compile-time validation
-
-/// Core trait for bundle specifications
+/// Core trait for bundle specifications with type safety and validation.
+///
+/// This trait defines the interface for all bundle specifications in the generic
+/// bundle system. It provides compile-time type safety and runtime validation
+/// for entity creation, eliminating over 200 duplicate bundle patterns.
+///
+/// # Examples
+/// ```rust
+/// use bevy::prelude::*;
+/// use game_core::config::GameConfig;
+/// use gameplay_render::factories::generic_bundle::*;
+///
+/// # fn example() -> Result<(), BundleError> {
+/// let config = GameConfig::default();
+/// let spec = VehicleBundleSpec {
+///     vehicle_type: VehicleType::BasicCar,
+///     position: Vec3::ZERO,
+///     color: Color::RED,
+///     max_speed_override: None,
+///     mass_override: None,
+///     include_physics: true,
+///     include_collision: true,
+///     include_visibility: true,
+/// };
+///
+/// spec.validate(&config)?;
+/// let bundle = spec.create_bundle(&config);
+/// # Ok(())
+/// # }
+/// ```
 pub trait BundleSpec: Send + Sync + 'static {
+    /// The Bevy [`Bundle`] type that this specification creates
     type Bundle: Bundle;
     
-    /// Create bundle with configuration validation
+    /// Creates a bundle from this specification using the provided configuration.
+    ///
+    /// This method assumes the specification has been validated and will clamp
+    /// values to safe ranges as defined by the configuration.
+    ///
+    /// # Arguments
+    /// * `config` - Game configuration containing validation bounds and defaults
+    ///
+    /// # Returns
+    /// A fully initialized bundle ready for spawning
     fn create_bundle(self, config: &GameConfig) -> Self::Bundle;
     
-    /// Validate specification parameters
+    /// Validates the specification parameters against configuration bounds.
+    ///
+    /// This method should be called before [`create_bundle`] to ensure all
+    /// parameters are within valid ranges and meet safety requirements.
+    ///
+    /// # Arguments
+    /// * `config` - Game configuration containing validation bounds
+    ///
+    /// # Returns
+    /// `Ok(())` if validation passes, or a descriptive [`BundleError`] if not
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use bevy::prelude::*;
+    /// # use game_core::config::GameConfig;
+    /// # use gameplay_render::factories::generic_bundle::*;
+    /// let config = GameConfig::default();
+    /// let spec = VehicleBundleSpec {
+    ///     vehicle_type: VehicleType::BasicCar,
+    ///     position: Vec3::new(0.0, 0.0, 0.0),
+    ///     color: Color::RED,
+    ///     max_speed_override: None,
+    ///     mass_override: None,
+    ///     include_physics: true,
+    ///     include_collision: true,
+    ///     include_visibility: true,
+    /// };
+    ///
+    /// assert!(spec.validate(&config).is_ok());
+    /// ```
     fn validate(&self, config: &GameConfig) -> Result<(), BundleError>;
 }
 
-/// Bundle creation errors with detailed context
+/// Bundle creation errors with detailed context information.
+///
+/// This enum represents all possible validation errors that can occur during
+/// bundle creation. Each variant contains specific details about what went
+/// wrong, making debugging and error handling more effective.
 #[derive(Debug)]
 pub enum BundleError {
-    PositionOutOfBounds { position: Vec3, max_coord: f32 },
-    InvalidSize { size: Vec3, min_size: f32, max_size: f32 },
-    InvalidMass { mass: f32, min_mass: f32, max_mass: f32 },
-    InvalidVelocity { velocity: f32, max_velocity: f32 },
-    InvalidEntityType { entity_type: String },
+    /// Position coordinates exceed world bounds
+    PositionOutOfBounds { 
+        /// The invalid position that was provided
+        position: Vec3, 
+        /// Maximum allowed coordinate value
+        max_coord: f32 
+    },
+    /// Entity size is outside valid range
+    InvalidSize { 
+        /// The invalid size that was provided
+        size: Vec3, 
+        /// Minimum allowed size value
+        min_size: f32, 
+        /// Maximum allowed size value
+        max_size: f32 
+    },
+    /// Entity mass is outside valid range for physics simulation
+    InvalidMass { 
+        /// The invalid mass that was provided
+        mass: f32, 
+        /// Minimum allowed mass value
+        min_mass: f32, 
+        /// Maximum allowed mass value
+        max_mass: f32 
+    },
+    /// Velocity exceeds maximum allowed value
+    InvalidVelocity { 
+        /// The invalid velocity that was provided
+        velocity: f32, 
+        /// Maximum allowed velocity value
+        max_velocity: f32 
+    },
+    /// Unknown or unsupported entity type
+    InvalidEntityType { 
+        /// The invalid entity type string
+        entity_type: String 
+    },
 }
 
 impl std::fmt::Display for BundleError {
@@ -70,16 +223,53 @@ impl std::fmt::Display for BundleError {
 
 impl std::error::Error for BundleError {}
 
-/// Vehicle Bundle Specification
+/// A specification for creating vehicle bundles with configurable parameters.
+///
+/// This struct defines all the parameters needed to create a complete vehicle
+/// entity with physics, rendering, and behavioral components. It supports
+/// various vehicle types from cars to aircraft, with optional parameter
+/// overrides for customization.
+///
+/// # Examples
+/// ```rust
+/// use bevy::prelude::*;
+/// use game_core::config::GameConfig;
+/// use gameplay_render::factories::generic_bundle::*;
+///
+/// # fn example() -> Result<(), BundleError> {
+/// let config = GameConfig::default();
+/// let spec = VehicleBundleSpec {
+///     vehicle_type: VehicleType::BasicCar,
+///     position: Vec3::new(100.0, 0.0, 200.0),
+///     color: Color::BLUE,
+///     max_speed_override: Some(120.0),
+///     mass_override: None,
+///     include_physics: true,
+///     include_collision: true,
+///     include_visibility: true,
+/// };
+///
+/// let bundle = GenericBundleFactory::create(spec, &config)?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone)]
 pub struct VehicleBundleSpec {
+    /// The type of vehicle to create (car, helicopter, etc.)
     pub vehicle_type: VehicleType,
+    /// World position where the vehicle will be spawned
     pub position: Vec3,
+    /// Primary color for the vehicle rendering
     pub color: Color,
+    /// Optional override for maximum speed (uses config default if None)
     pub max_speed_override: Option<f32>,
+    /// Optional override for vehicle mass (uses config default if None)
     pub mass_override: Option<f32>,
+    /// Whether to include physics components for movement
     pub include_physics: bool,
+    /// Whether to include collision detection
     pub include_collision: bool,
+    /// Whether to include visibility and culling components
     pub include_visibility: bool,
 }
 
@@ -185,15 +375,49 @@ impl BundleSpec for VehicleBundleSpec {
     }
 }
 
-/// NPC Bundle Specification
+/// A specification for creating NPC (Non-Player Character) bundles.
+///
+/// This struct defines the parameters needed to create a complete NPC entity
+/// with physics, AI behavior, and appearance components. NPCs can be civilian
+/// pedestrians, traffic participants, or other autonomous characters.
+///
+/// # Examples
+/// ```rust
+/// use bevy::prelude::*;
+/// use game_core::config::GameConfig;
+/// use gameplay_render::factories::generic_bundle::*;
+///
+/// # fn example() -> Result<(), BundleError> {
+/// let config = GameConfig::default();
+/// let spec = NPCBundleSpec {
+///     position: Vec3::new(50.0, 0.0, 100.0),
+///     height: 1.75,
+///     build: 1.0,
+///     appearance: NPCAppearance::default(),
+///     behavior: None,
+///     include_physics: true,
+///     include_ai: true,
+/// };
+///
+/// let bundle = GenericBundleFactory::create(spec, &config)?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone)]
 pub struct NPCBundleSpec {
+    /// World position where the NPC will be spawned
     pub position: Vec3,
+    /// Height of the NPC in meters (affects collision capsule)
     pub height: f32,
+    /// Build factor affecting mass and collision size
     pub build: f32,
+    /// Visual appearance configuration for the NPC
     pub appearance: NPCAppearance,
+    /// Optional custom behavior component (uses default if None)
     pub behavior: Option<NPCBehavior>,
+    /// Whether to include physics components for movement
     pub include_physics: bool,
+    /// Whether to include AI behavior components
     pub include_ai: bool,
 }
 
@@ -274,14 +498,46 @@ impl BundleSpec for NPCBundleSpec {
     }
 }
 
-/// Building Bundle Specification
+/// A specification for creating building bundles in the game world.
+///
+/// This struct defines the parameters needed to create static building entities
+/// with collision, rendering, and occupancy tracking components. Buildings are
+/// immobile structures that form the urban environment.
+///
+/// # Examples
+/// ```rust
+/// use bevy::prelude::*;
+/// use game_core::config::GameConfig;
+/// use gameplay_render::factories::generic_bundle::*;
+///
+/// # fn example() -> Result<(), BundleError> {
+/// let config = GameConfig::default();
+/// let spec = BuildingBundleSpec {
+///     position: Vec3::new(0.0, 0.0, 0.0),
+///     size: Vec3::new(20.0, 50.0, 15.0),
+///     building_type: BuildingType::Residential,
+///     color: Color::GRAY,
+///     include_collision: true,
+///     lod_level: 0,
+/// };
+///
+/// let bundle = GenericBundleFactory::create(spec, &config)?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone)]
 pub struct BuildingBundleSpec {
+    /// World position where the building will be placed
     pub position: Vec3,
+    /// Dimensions of the building (width, height, depth)
     pub size: Vec3,
+    /// Type of building (residential, commercial, etc.)
     pub building_type: BuildingType,
+    /// Primary color for the building rendering
     pub color: Color,
+    /// Whether to include collision detection for the building
     pub include_collision: bool,
+    /// Level of detail for rendering optimization
     pub lod_level: u8,
 }
 
@@ -348,24 +604,78 @@ impl BundleSpec for BuildingBundleSpec {
     }
 }
 
-/// Physics Bundle Specification - For standalone physics objects
+/// A specification for creating standalone physics objects.
+///
+/// This struct defines parameters for creating entities that primarily serve
+/// as physics objects, such as debris, props, or interactive items. These
+/// objects focus on physical simulation rather than gameplay logic.
+///
+/// # Examples
+/// ```rust
+/// use bevy::prelude::*;
+/// use bevy_rapier3d::prelude::*;
+/// use game_core::config::GameConfig;
+/// use gameplay_render::factories::generic_bundle::*;
+///
+/// # fn example() -> Result<(), BundleError> {
+/// let config = GameConfig::default();
+/// let spec = PhysicsBundleSpec {
+///     position: Vec3::new(10.0, 5.0, 0.0),
+///     collider_shape: ColliderShape::Box(Vec3::new(2.0, 2.0, 2.0)),
+///     mass: 50.0,
+///     friction: 0.7,
+///     restitution: 0.3,
+///     collision_group: Group::GROUP_1,
+///     is_dynamic: true,
+/// };
+///
+/// let bundle = GenericBundleFactory::create(spec, &config)?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone)]
 pub struct PhysicsBundleSpec {
+    /// World position where the physics object will be spawned
     pub position: Vec3,
+    /// Shape of the collision geometry
     pub collider_shape: ColliderShape,
+    /// Mass of the object for physics simulation
     pub mass: f32,
+    /// Friction coefficient for surface interactions
     pub friction: f32,
+    /// Restitution (bounciness) coefficient for collisions
     pub restitution: f32,
+    /// Collision group for filtering physics interactions
     pub collision_group: Group,
+    /// Whether the object can move dynamically or is static
     pub is_dynamic: bool,
 }
 
+/// Collision shape definitions for physics objects.
+///
+/// This enum defines the available collision shapes that can be used
+/// for physics simulation. Each shape has different performance
+/// characteristics and use cases.
 #[derive(Debug, Clone)]
 pub enum ColliderShape {
+    /// Box-shaped collider with dimensions (width, height, depth)
     Box(Vec3),
+    /// Spherical collider with radius
     Sphere(f32),
-    Capsule { radius: f32, height: f32 },
-    Cylinder { radius: f32, height: f32 },
+    /// Capsule-shaped collider with radius and height
+    Capsule { 
+        /// Radius of the capsule
+        radius: f32, 
+        /// Height of the cylindrical portion
+        height: f32 
+    },
+    /// Cylindrical collider with radius and height
+    Cylinder { 
+        /// Radius of the cylinder
+        radius: f32, 
+        /// Height of the cylinder
+        height: f32 
+    },
 }
 
 impl BundleSpec for PhysicsBundleSpec {
@@ -484,11 +794,79 @@ impl BundleSpec for PhysicsBundleSpec {
     }
 }
 
-/// Generic Bundle Factory - Unified creation interface
+/// A unified factory for creating validated entity bundles from specifications.
+///
+/// This factory provides a type-safe interface for creating various entity bundles
+/// with automatic validation and configuration integration. It supports both single
+/// bundle creation and batch processing for performance-critical scenarios.
+///
+/// # Examples
+/// ```rust
+/// use bevy::prelude::*;
+/// use game_core::config::GameConfig;
+/// use gameplay_render::factories::generic_bundle::*;
+///
+/// # fn example() -> Result<(), BundleError> {
+/// let config = GameConfig::default();
+/// 
+/// // Single bundle creation
+/// let vehicle_spec = VehicleBundleSpec {
+///     vehicle_type: VehicleType::BasicCar,
+///     position: Vec3::ZERO,
+///     color: Color::RED,
+///     max_speed_override: None,
+///     mass_override: None,
+///     include_physics: true,
+///     include_collision: true,
+///     include_visibility: true,
+/// };
+/// 
+/// let bundle = GenericBundleFactory::create(vehicle_spec, &config)?;
+/// 
+/// // Batch creation
+/// let specs = vec![
+///     VehicleBundleSpec { /* ... */ },
+///     VehicleBundleSpec { /* ... */ },
+/// ];
+/// let bundles = GenericBundleFactory::create_batch(specs, &config)?;
+/// # Ok(())
+/// # }
+/// ```
 pub struct GenericBundleFactory;
 
 impl GenericBundleFactory {
-    /// Create bundle with validation and configuration
+    /// Creates a bundle from a specification with validation.
+    ///
+    /// This method validates the specification against the game configuration
+    /// and creates the corresponding bundle if validation passes.
+    ///
+    /// # Arguments
+    /// * `spec` - The bundle specification to create from
+    /// * `config` - Game configuration for validation and defaults
+    ///
+    /// # Returns
+    /// The created bundle if validation succeeds, or a [`BundleError`] if not
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use bevy::prelude::*;
+    /// # use game_core::config::GameConfig;
+    /// # use gameplay_render::factories::generic_bundle::*;
+    /// let config = GameConfig::default();
+    /// let spec = VehicleBundleSpec {
+    ///     vehicle_type: VehicleType::BasicCar,
+    ///     position: Vec3::ZERO,
+    ///     color: Color::RED,
+    ///     max_speed_override: None,
+    ///     mass_override: None,
+    ///     include_physics: true,
+    ///     include_collision: true,
+    ///     include_visibility: true,
+    /// };
+    /// 
+    /// let bundle = GenericBundleFactory::create(spec, &config)?;
+    /// # Ok::<(), BundleError>(())
+    /// ```
     pub fn create<T: BundleSpec>(
         spec: T,
         config: &GameConfig,
@@ -500,7 +878,51 @@ impl GenericBundleFactory {
         Ok(spec.create_bundle(config))
     }
     
-    /// Create multiple bundles with batch validation
+    /// Creates multiple bundles from specifications with batch validation.
+    ///
+    /// This method validates all specifications before creating any bundles,
+    /// ensuring either all succeed or all fail. This is more efficient than
+    /// individual creation for large numbers of entities.
+    ///
+    /// # Arguments
+    /// * `specs` - Vector of bundle specifications to create from
+    /// * `config` - Game configuration for validation and defaults
+    ///
+    /// # Returns
+    /// Vector of created bundles if all validations succeed, or first error
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use bevy::prelude::*;
+    /// # use game_core::config::GameConfig;
+    /// # use gameplay_render::factories::generic_bundle::*;
+    /// let config = GameConfig::default();
+    /// let specs = vec![
+    ///     VehicleBundleSpec {
+    ///         vehicle_type: VehicleType::BasicCar,
+    ///         position: Vec3::new(0.0, 0.0, 0.0),
+    ///         color: Color::RED,
+    ///         max_speed_override: None,
+    ///         mass_override: None,
+    ///         include_physics: true,
+    ///         include_collision: true,
+    ///         include_visibility: true,
+    ///     },
+    ///     VehicleBundleSpec {
+    ///         vehicle_type: VehicleType::SuperCar,
+    ///         position: Vec3::new(10.0, 0.0, 0.0),
+    ///         color: Color::BLUE,
+    ///         max_speed_override: None,
+    ///         mass_override: None,
+    ///         include_physics: true,
+    ///         include_collision: true,
+    ///         include_visibility: true,
+    ///     },
+    /// ];
+    /// 
+    /// let bundles = GenericBundleFactory::create_batch(specs, &config)?;
+    /// # Ok::<(), BundleError>(())
+    /// ```
     pub fn create_batch<T: BundleSpec>(
         specs: Vec<T>,
         config: &GameConfig,
@@ -515,9 +937,39 @@ impl GenericBundleFactory {
     }
 }
 
-/// Convenience builder functions for common bundle types
+/// Convenience builder functions for common bundle types.
+///
+/// These functions provide simplified interfaces for creating the most common
+/// entity bundles without needing to manually construct specification structs.
 impl GenericBundleFactory {
-    /// Create vehicle bundle with validation
+    /// Creates a vehicle bundle with default configuration settings.
+    ///
+    /// This is a convenience function for creating vehicles with standard
+    /// physics, collision, and visibility settings enabled.
+    ///
+    /// # Arguments
+    /// * `vehicle_type` - The type of vehicle to create
+    /// * `position` - World position for the vehicle
+    /// * `color` - Primary color for the vehicle
+    /// * `config` - Game configuration for validation and defaults
+    ///
+    /// # Returns
+    /// A complete vehicle bundle ready for spawning
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use bevy::prelude::*;
+    /// # use game_core::config::GameConfig;
+    /// # use gameplay_render::factories::generic_bundle::*;
+    /// let config = GameConfig::default();
+    /// let vehicle = GenericBundleFactory::vehicle(
+    ///     VehicleType::BasicCar,
+    ///     Vec3::new(0.0, 0.0, 0.0),
+    ///     Color::RED,
+    ///     &config,
+    /// )?;
+    /// # Ok::<(), BundleError>(())
+    /// ```
     pub fn vehicle(
         vehicle_type: VehicleType,
         position: Vec3,
@@ -537,7 +989,36 @@ impl GenericBundleFactory {
         Self::create(spec, config)
     }
     
-    /// Create NPC bundle with validation
+    /// Creates an NPC bundle with default AI and physics settings.
+    ///
+    /// This is a convenience function for creating NPCs with standard
+    /// behavior, physics, and AI components enabled.
+    ///
+    /// # Arguments
+    /// * `position` - World position for the NPC
+    /// * `height` - Height of the NPC in meters
+    /// * `build` - Build factor affecting size and mass
+    /// * `appearance` - Visual appearance configuration
+    /// * `config` - Game configuration for validation and defaults
+    ///
+    /// # Returns
+    /// A complete NPC bundle ready for spawning
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use bevy::prelude::*;
+    /// # use game_core::config::GameConfig;
+    /// # use gameplay_render::factories::generic_bundle::*;
+    /// let config = GameConfig::default();
+    /// let npc = GenericBundleFactory::npc(
+    ///     Vec3::new(5.0, 0.0, 10.0),
+    ///     1.75,
+    ///     1.0,
+    ///     NPCAppearance::default(),
+    ///     &config,
+    /// )?;
+    /// # Ok::<(), BundleError>(())
+    /// ```
     pub fn npc(
         position: Vec3,
         height: f32,
@@ -557,7 +1038,36 @@ impl GenericBundleFactory {
         Self::create(spec, config)
     }
     
-    /// Create building bundle with validation
+    /// Creates a building bundle with default collision and LOD settings.
+    ///
+    /// This is a convenience function for creating buildings with standard
+    /// collision detection and base LOD level.
+    ///
+    /// # Arguments
+    /// * `position` - World position for the building
+    /// * `size` - Dimensions of the building (width, height, depth)
+    /// * `building_type` - Type of building to create
+    /// * `color` - Primary color for the building
+    /// * `config` - Game configuration for validation and defaults
+    ///
+    /// # Returns
+    /// A complete building bundle ready for spawning
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use bevy::prelude::*;
+    /// # use game_core::config::GameConfig;
+    /// # use gameplay_render::factories::generic_bundle::*;
+    /// let config = GameConfig::default();
+    /// let building = GenericBundleFactory::building(
+    ///     Vec3::new(100.0, 0.0, 200.0),
+    ///     Vec3::new(20.0, 50.0, 15.0),
+    ///     BuildingType::Residential,
+    ///     Color::GRAY,
+    ///     &config,
+    /// )?;
+    /// # Ok::<(), BundleError>(())
+    /// ```
     pub fn building(
         position: Vec3,
         size: Vec3,
@@ -576,7 +1086,39 @@ impl GenericBundleFactory {
         Self::create(spec, config)
     }
     
-    /// Create physics object bundle with validation
+    /// Creates a physics object bundle with default friction and restitution.
+    ///
+    /// This is a convenience function for creating physics objects with standard
+    /// surface properties derived from the game configuration.
+    ///
+    /// # Arguments
+    /// * `position` - World position for the physics object
+    /// * `collider_shape` - Shape of the collision geometry
+    /// * `mass` - Mass of the object for physics simulation
+    /// * `collision_group` - Collision group for physics filtering
+    /// * `is_dynamic` - Whether the object can move or is static
+    /// * `config` - Game configuration for validation and defaults
+    ///
+    /// # Returns
+    /// A complete physics bundle ready for spawning
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use bevy::prelude::*;
+    /// # use bevy_rapier3d::prelude::*;
+    /// # use game_core::config::GameConfig;
+    /// # use gameplay_render::factories::generic_bundle::*;
+    /// let config = GameConfig::default();
+    /// let physics_obj = GenericBundleFactory::physics_object(
+    ///     Vec3::new(10.0, 5.0, 0.0),
+    ///     ColliderShape::Box(Vec3::new(2.0, 2.0, 2.0)),
+    ///     50.0,
+    ///     Group::GROUP_1,
+    ///     true,
+    ///     &config,
+    /// )?;
+    /// # Ok::<(), BundleError>(())
+    /// ```
     pub fn physics_object(
         position: Vec3,
         collider_shape: ColliderShape,
@@ -598,9 +1140,34 @@ impl GenericBundleFactory {
     }
 }
 
-/// Bundle utility functions for common entity patterns
+/// Bundle utility functions for common entity patterns.
+///
+/// These functions create specialized bundles for specific use cases in the
+/// game world, such as dynamic content, vegetation, and chunk-based entities.
 impl GenericBundleFactory {
-    /// Create dynamic content bundle for world entities
+    /// Creates a dynamic content bundle for world entities.
+    ///
+    /// Dynamic content entities are used for world objects that can be
+    /// spawned and despawned based on distance or other criteria.
+    ///
+    /// # Arguments
+    /// * `content_type` - Type of content to create
+    /// * `position` - World position for the entity
+    /// * `_max_distance` - Maximum distance for culling (currently unused)
+    ///
+    /// # Returns
+    /// A dynamic content bundle with visibility and culling components
+    ///
+    /// # Examples
+    /// ```rust
+    /// # use bevy::prelude::*;
+    /// # use gameplay_render::factories::generic_bundle::*;
+    /// let bundle = GenericBundleFactory::dynamic_content(
+    ///     ContentType::Tree,
+    ///     Vec3::new(50.0, 0.0, 100.0),
+    ///     200.0,
+    /// );
+    /// ```
     pub fn dynamic_content(
         content_type: ContentType,
         position: Vec3,
@@ -616,7 +1183,17 @@ impl GenericBundleFactory {
         }
     }
     
-    /// Create dynamic physics bundle for moving objects
+    /// Creates a dynamic physics bundle for moving objects with collision.
+    ///
+    /// # Arguments
+    /// * `content_type` - Type of content to create
+    /// * `position` - World position for the entity
+    /// * `collider` - Collision shape for physics
+    /// * `collision_groups` - Collision group configuration
+    /// * `_max_distance` - Maximum distance for culling (currently unused)
+    ///
+    /// # Returns
+    /// A dynamic physics bundle with movement and collision components
     pub fn dynamic_physics(
         content_type: ContentType,
         position: Vec3,
@@ -638,7 +1215,15 @@ impl GenericBundleFactory {
         }
     }
     
-    /// Create vehicle bundle for cars
+    /// Creates a dynamic vehicle bundle for cars with physics.
+    ///
+    /// # Arguments
+    /// * `position` - World position for the vehicle
+    /// * `collision_groups` - Collision group configuration
+    /// * `damping` - Physics damping settings
+    ///
+    /// # Returns
+    /// A dynamic vehicle bundle with car components
     pub fn dynamic_vehicle(
         position: Vec3,
         collision_groups: CollisionGroups,
@@ -661,7 +1246,14 @@ impl GenericBundleFactory {
         }
     }
     
-    /// Create vegetation bundle for trees
+    /// Creates a vegetation bundle for trees and plants.
+    ///
+    /// # Arguments
+    /// * `position` - World position for the vegetation
+    /// * `_max_distance` - Maximum distance for culling (currently unused)
+    ///
+    /// # Returns
+    /// A vegetation bundle with tree content type
     pub fn vegetation(
         position: Vec3,
         _max_distance: f32,
@@ -676,7 +1268,15 @@ impl GenericBundleFactory {
         }
     }
     
-    /// Create static physics bundle for immobile objects
+    /// Creates a static physics bundle for immobile objects.
+    ///
+    /// # Arguments
+    /// * `position` - World position for the static object
+    /// * `collider` - Collision shape for physics
+    /// * `collision_groups` - Collision group configuration
+    ///
+    /// # Returns
+    /// A static physics bundle with fixed rigid body
     pub fn static_physics(
         position: Vec3,
         collider: Collider,
@@ -692,7 +1292,17 @@ impl GenericBundleFactory {
         }
     }
     
-    /// Create unified chunk bundle
+    /// Creates a unified chunk bundle for world streaming.
+    ///
+    /// # Arguments
+    /// * `chunk_coord` - Chunk coordinates in the world grid
+    /// * `layer` - Content layer for the chunk
+    /// * `content_type` - Type of content in the chunk
+    /// * `position` - World position for the chunk
+    /// * `_max_distance` - Maximum distance for culling (currently unused)
+    ///
+    /// # Returns
+    /// A unified chunk bundle with chunk entity tracking
     pub fn unified_chunk(
         chunk_coord: (i32, i32),
         layer: gameplay_sim::world::unified_world::ContentLayer,
