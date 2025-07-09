@@ -68,6 +68,16 @@ jobs:
       - name: Generate coverage
         run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
       
+      - name: Check minimum coverage threshold
+        run: |
+          COVERAGE=$(cargo llvm-cov --workspace --all-features --summary-only | grep "TOTAL" | awk '{print $4}' | sed 's/%//')
+          echo "Current coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 65" | bc -l) )); then
+            echo "Error: Coverage ${COVERAGE}% is below minimum threshold of 65%"
+            exit 1
+          fi
+          echo "Coverage check passed: ${COVERAGE}% >= 65%"
+      
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:

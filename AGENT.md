@@ -4,6 +4,7 @@
 - Build: `cargo build --workspace` | Check: `cargo check --workspace` | Test: `cargo test --workspace`
 - Lint: `cargo clippy --workspace --all-targets --all-features` | Format: `cargo fmt --all`
 - Rustdoc: `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features` (lint-enabled)
+- Coverage: `cargo llvm-cov --workspace --all-features` | Coverage Gate: Minimum 65% (will increase to 70%)
 - Run Example: `cargo run --bin minimal`
 - Dev Tools: `cargo xtask ci` (full CI pipeline), `cargo xtask fmt`, `cargo xtask test`
 - Documentation: `cargo xtask doc` (generate), `cargo xtask doc-validate` (validate)
@@ -97,6 +98,13 @@
 - CI/CD pipeline operational
 - Example application runs successfully
 - Oracle's Week 1 success criteria met
+
+🚀 **WEEK 2 - DAY 1 IN PROGRESS** - CI Quality Gates & Hygiene
+- ✅ Coverage gate added (65% minimum, 82.11% current)
+- ✅ Rustdoc linting enabled (no warnings found)
+- ✅ Publishing hygiene fixed (categories/keywords added)
+- ✅ CI workflow updated with quality gates
+- Following Oracle's strict Week 2 strategy
 
 ## Oracle Guidance
 - **Strategic Decisions**: Documented in [Oracle Consultations](docs/oracle-consultations.md)
