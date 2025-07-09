@@ -38,6 +38,32 @@ jobs:
       run: |
         RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features
         
+    - name: Create index.html
+      run: |
+        cat > target/doc/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>AMP Game Engine Documentation</title>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=amp_core/index.html">
+        </head>
+        <body>
+            <h1>AMP Game Engine Documentation</h1>
+            <p>Redirecting to <a href="amp_core/index.html">amp_core documentation</a>...</p>
+            <h2>Available Crates:</h2>
+            <ul>
+                <li><a href="amp_core/index.html">amp_core</a> - Core error handling and utilities</li>
+                <li><a href="amp_math/index.html">amp_math</a> - Spatial mathematics and Morton encoding</li>
+                <li><a href="amp_spatial/index.html">amp_spatial</a> - Hierarchical spatial partitioning</li>
+                <li><a href="amp_gpu/index.html">amp_gpu</a> - GPU abstraction over wgpu</li>
+                <li><a href="amp_world/index.html">amp_world</a> - ECS world management</li>
+                <li><a href="config_core/index.html">config_core</a> - Configuration system</li>
+            </ul>
+        </body>
+        </html>
+        EOF
+        
     - name: Setup Pages
       if: github.ref == 'refs/heads/main'
       uses: actions/configure-pages@v4
