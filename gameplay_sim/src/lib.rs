@@ -36,7 +36,7 @@ pub(crate) mod physics;
 pub mod world;
 pub mod input;
 pub mod distance;
-pub(crate) mod lod;
+pub mod lod;
 pub(crate) mod vehicles;
 pub(crate) mod setup;
 pub mod plugins;
@@ -56,7 +56,14 @@ pub struct SimulationPlugin;
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {
         // Initialize resources
-        app.insert_resource(systems::distance_cache::DistanceCache::new());
+        app.insert_resource(systems::distance_cache::DistanceCache::new())
+            .insert_resource(world::unified_lod::MasterLODCoordinator::default())
+            .insert_resource(systems::world::unified_world::WorldManager::default())
+            .insert_resource(game_core::components::world::CullingSettings::default())
+            .insert_resource(game_core::components::world::PerformanceStats::default());
+        
+        // Add world plugins
+        app.add_plugins(world::unified_distance_culling::UnifiedDistanceCullingPlugin);
         
         // Core simulation systems  
         app.add_systems(Update, (

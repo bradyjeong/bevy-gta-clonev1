@@ -338,7 +338,7 @@ impl UnifiedEntityFactory {
         
         // Create building entity using enhanced bundle system
         let building_entity = commands.spawn((
-            // Use dynamic content bundle for compatibility
+            // Use dynamic content bundle
             DynamicContentBundle {
                 dynamic_content: DynamicContent { content_type: ContentType::Building },
                 transform: Transform::from_translation(final_position),
@@ -392,7 +392,7 @@ impl UnifiedEntityFactory {
         
         // Create vehicle entity using consolidated bundle approach
         let vehicle_entity = commands.spawn((
-            // Dynamic content bundle for compatibility
+            // Dynamic content bundle
             DynamicPhysicsBundle {
                 dynamic_content: DynamicContent { content_type: ContentType::Vehicle },
                 transform: Transform::from_translation(final_position),

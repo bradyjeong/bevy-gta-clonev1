@@ -48,8 +48,12 @@ pub fn jet_flame_effects_system(
 /// System to update flame colors based on intensity
 pub fn update_flame_colors(
     flame_query: Query<(Entity, &FlameEffect), With<F16>>,
-    mut _material_assets: ResMut<Assets<StandardMaterial>>,
+    mut _material_assets: Option<ResMut<Assets<StandardMaterial>>>,
 ) {
+    // Early return if material assets are not available (e.g., in headless mode)
+    if _material_assets.is_none() {
+        return;
+    }
     for (_entity, flame_effect) in flame_query.iter() {
         // Color flame based on temperature and intensity
         let base_color = Color::srgb(

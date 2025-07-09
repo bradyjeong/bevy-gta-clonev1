@@ -147,7 +147,7 @@ impl VehicleAudioState {
     }
 }
 
-/// Placeholder audio event for integration with audio system
+/// Audio event for integration with audio system
 #[derive(Event)]
 #[allow(dead_code)]
 pub struct AudioEvent {

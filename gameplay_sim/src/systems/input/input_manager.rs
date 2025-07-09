@@ -2,8 +2,8 @@
 //! System:   Input Manager
 //! Purpose:  Processes user input and control mapping
 //! Schedule: Update
-//! Reads:    `InputCompatLayer`, `InputConfig`, `InputManager`
-//! Writes:   `InputCompatLayer`, `InputManager`
+//! Reads:    `InputConfig`, `InputManager`
+//! Writes:   `InputManager`
 //! Invariants:
 //!   * Only active entities can be controlled
 //! Owner:    @simulation-team
@@ -61,10 +61,7 @@ impl InputManager {
             }
         }
         
-        // Fallback mode: if config fails, use hardcoded bindings
-        if config.is_fallback_enabled() || new_active_actions.is_empty() {
-            self.process_fallback_input(input, current_state, &mut new_active_actions);
-        }
+
         
         self.active_actions = new_active_actions;
         
@@ -79,53 +76,7 @@ impl InputManager {
             warn!("Input processing took {}μs (>1ms limit)", process_time);
         }
     }
-    /// Fallback input processing using hardcoded bindings
-    fn process_fallback_input(
-        &mut self,
-        input: &ButtonInput<KeyCode>,
-        current_state: &GameState,
-        active_actions: &mut HashSet<InputAction>,
-    ) {
-        match current_state {
-            GameState::Walking => {
-                if input.pressed(KeyCode::ArrowUp) { active_actions.insert(InputAction::Forward); }
-                if input.pressed(KeyCode::ArrowDown) { active_actions.insert(InputAction::Backward); }
-                if input.pressed(KeyCode::ArrowLeft) { active_actions.insert(InputAction::TurnLeft); }
-                if input.pressed(KeyCode::ArrowRight) { active_actions.insert(InputAction::TurnRight); }
-                if input.pressed(KeyCode::ShiftLeft) { active_actions.insert(InputAction::Run); }
-                if input.just_pressed(KeyCode::KeyF) { 
-                    active_actions.insert(InputAction::Interact);
-                    self.just_pressed_actions.insert(InputAction::Interact);
-                }
-            }
-            GameState::Driving => {
-                if input.pressed(KeyCode::Space) { active_actions.insert(InputAction::Turbo); }
-            }
-            GameState::Flying => {
-                if input.pressed(KeyCode::ShiftLeft) { active_actions.insert(InputAction::VerticalUp); }
-                if input.pressed(KeyCode::ControlLeft) { active_actions.insert(InputAction::VerticalDown); }
-            }
-            GameState::Jetting => {
-                if input.pressed(KeyCode::KeyW) || input.pressed(KeyCode::ArrowUp) { active_actions.insert(InputAction::PitchUp); }
-                if input.pressed(KeyCode::KeyS) || input.pressed(KeyCode::ArrowDown) { active_actions.insert(InputAction::PitchDown); }
-                if input.pressed(KeyCode::KeyA) || input.pressed(KeyCode::ArrowLeft) { active_actions.insert(InputAction::RollLeft); }
-                if input.pressed(KeyCode::KeyD) || input.pressed(KeyCode::ArrowRight) { active_actions.insert(InputAction::RollRight); }
-                if input.pressed(KeyCode::KeyQ) { active_actions.insert(InputAction::YawLeft); }
-                if input.pressed(KeyCode::KeyE) { active_actions.insert(InputAction::YawRight); }
-                if input.pressed(KeyCode::Space) { active_actions.insert(InputAction::Afterburner); }
-            }
-        }
-        
-        // Common debug actions
-        if input.just_pressed(KeyCode::F1) { 
-            active_actions.insert(InputAction::DebugInfo);
-            self.just_pressed_actions.insert(InputAction::DebugInfo);
-        }
-        if input.just_pressed(KeyCode::F2) { 
-            active_actions.insert(InputAction::EmergencyReset);
-            self.just_pressed_actions.insert(InputAction::EmergencyReset);
-        }
-    }
+
     /// Check if an action is currently pressed
     #[must_use] pub fn is_action_pressed(&self, action: InputAction) -> bool {
         self.active_actions.contains(&action)

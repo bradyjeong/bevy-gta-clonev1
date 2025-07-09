@@ -105,11 +105,12 @@ pub fn batching_stress_test_system(
     mut commands: Commands,
     entities_query: Query<Entity, With<Transform>>,
     frame_counter: Res<FrameCounter>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+    keyboard_input: Option<Res<ButtonInput<KeyCode>>>,
     time: Res<Time>,
     mut stress_timer: Local<f32>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::F10) {
+    if let Some(input) = keyboard_input {
+        if input.just_pressed(KeyCode::F10) {
         info!("Starting batching stress test...");
         
         // Mark all entities as dirty with high priority
@@ -147,7 +148,8 @@ pub fn batching_stress_test_system(
             }
         }
         
-        info!("Marked {} entities as dirty for stress test", entities.len());
+            info!("Marked {} entities as dirty for stress test", entities.len());
+        }
     }
     
     *stress_timer += time.delta_secs();
@@ -205,13 +207,18 @@ pub fn batching_stress_test_system(
 
 /// Performance comparison system
 pub fn batching_performance_comparison_system(
-    dirty_metrics: Res<DirtyFlagsMetrics>,
-    performance_stats: Res<PerformanceStats>,
+    dirty_metrics: Option<Res<DirtyFlagsMetrics>>,
+    performance_stats: Option<Res<PerformanceStats>>,
     time: Res<Time>,
     mut comparison_timer: Local<f32>,
     mut baseline_frame_time: Local<f32>,
     mut samples: Local<Vec<f32>>,
 ) {
+    // Early return if resources are not available (e.g., in headless mode)
+    let (Some(dirty_metrics), Some(performance_stats)) = (dirty_metrics, performance_stats) else {
+        return;
+    };
+    
     *comparison_timer += time.delta_secs();
     
     // Collect frame time samples
@@ -308,15 +315,17 @@ pub enum DirtyMarkType {
 pub fn cleanup_test_entities_system(
     mut commands: Commands,
     test_entities: Query<Entity, With<Transform>>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+    keyboard_input: Option<Res<ButtonInput<KeyCode>>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::F11) {
+    if let Some(input) = keyboard_input {
+        if input.just_pressed(KeyCode::F11) {
         let entity_count = test_entities.iter().count();
         
-        for entity in test_entities.iter() {
-            commands.entity(entity).despawn();
+            for entity in test_entities.iter() {
+                commands.entity(entity).despawn();
+            }
+            
+            info!("Cleaned up {} test entities", entity_count);
         }
-        
-        info!("Cleaned up {} test entities", entity_count);
     }
 }

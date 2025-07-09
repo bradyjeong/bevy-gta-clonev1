@@ -12,15 +12,22 @@
 //! ───────────────────────────────────────────────
 
 use bevy::prelude::*;
+use bevy::ecs::system::ParamSet;
 use game_core::prelude::*;
 use game_core::prelude::performance_config::PerformanceCounters;
 use crate::config::GameConfig;
 
+/// System set for organizing LOD systems
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub struct LodSystemSet;
+
 /// Modern LOD system that uses component-based approach
 pub fn modern_lod_system(
     mut commands: Commands,
-    mut vehicle_query: Query<(Entity, &mut LodLevel, &GlobalTransform), (With<ActiveEntity>, Or<(With<Car>, With<SuperCar>, With<Helicopter>, With<F16>)>)>,
-    mut npc_query: Query<(Entity, &mut LodLevel, &GlobalTransform), (With<ActiveEntity>, With<NPC>)>,
+    mut lod_param_set: ParamSet<(
+        Query<(Entity, &mut LodLevel, &GlobalTransform), (With<ActiveEntity>, Or<(With<Car>, With<SuperCar>, With<Helicopter>, With<F16>)>)>,
+        Query<(Entity, &mut LodLevel, &GlobalTransform), (With<ActiveEntity>, With<NPC>)>,
+    )>,
     mut vegetation_query: Query<(Entity, &mut VegetationLOD, &GlobalTransform), (With<ActiveEntity>, With<VegetationBatchable>)>,
     camera_query: Query<&GlobalTransform, (With<Camera>, Without<ActiveEntity>)>,
     config: Res<GameConfig>,
@@ -33,7 +40,7 @@ pub fn modern_lod_system(
     let camera_pos = camera_transform.translation();
     
     // Update vehicle LOD levels
-    for (entity, mut lod_level, transform) in &mut vehicle_query {
+    for (entity, mut lod_level, transform) in &mut lod_param_set.p0() {
         let distance = camera_pos.distance(transform.translation());
         let new_level = calculate_vehicle_lod(distance, &config);
         
@@ -47,7 +54,7 @@ pub fn modern_lod_system(
     }
     
     // Update NPC LOD levels
-    for (entity, mut lod_level, transform) in &mut npc_query {
+    for (entity, mut lod_level, transform) in &mut lod_param_set.p1() {
         let distance = camera_pos.distance(transform.translation());
         let new_level = calculate_npc_lod(distance, &config);
         
@@ -233,8 +240,8 @@ impl Plugin for ModernLODPlugin {
                 Update,
                 (
                     modern_lod_system,
-                    lod_performance_monitoring_system,
-                ).into_configs().in_set(LodSystemSet)
+                    lod_performance_monitoring_system.after(modern_lod_system),
+                ).in_set(LodSystemSet)
             );
     }
 }

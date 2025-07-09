@@ -7,10 +7,10 @@ pub mod performance_monitor;
 pub mod ui;
 
 // ----------------------------------------------------------------
-//  Compatibility forwarders to gameplay_sim (Phase-3 shim)
+//  Forwarders to gameplay_sim
 // ----------------------------------------------------------------
 pub mod distance_cache {
-    /// Temporary re-export for compatibility
+    /// Re-export
     pub use gameplay_sim::systems::distance_cache::*;
 }
 

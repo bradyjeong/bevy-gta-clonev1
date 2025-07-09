@@ -8,7 +8,7 @@
 #[macro_use]
 extern crate tracing;
 
-// Re-export simulation components, config, etc. via compat layer
+// Re-export simulation components, config, etc.
 pub use gameplay_sim::components;
 pub use gameplay_sim::{config, factories, services};
 

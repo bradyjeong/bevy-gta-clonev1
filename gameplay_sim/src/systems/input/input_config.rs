@@ -45,15 +45,13 @@ pub enum InputAction {
 pub struct InputConfig {
     // State-specific bindings
     bindings: HashMap<GameState, HashMap<InputAction, KeyCode>>,
-    // Fallback to default bindings if custom fails
-    use_fallback: bool,
+
 }
 
 impl Default for InputConfig {
     fn default() -> Self {
         let mut config = InputConfig {
             bindings: HashMap::new(),
-            use_fallback: true, // Start with fallback enabled for safety
         };
         
         // Walking state bindings
@@ -141,17 +139,7 @@ impl InputConfig {
         *self = InputConfig::default();
     }
 
-    pub fn enable_fallback(&mut self) {
-        self.use_fallback = true;
-    }
 
-    pub fn disable_fallback(&mut self) {
-        self.use_fallback = false;
-    }
-
-    #[must_use] pub fn is_fallback_enabled(&self) -> bool {
-        self.use_fallback
-    }
     /// Get all bindings for a specific state
     #[must_use] pub fn get_state_bindings(&self, state: &GameState) -> Option<&HashMap<InputAction, KeyCode>> {
         self.bindings.get(state)

@@ -1,7 +1,7 @@
 pub mod player;
 pub mod vehicles;
 pub mod world;
-pub mod placeholders;
+
 pub mod spatial;
 pub mod effects;
 pub mod water;

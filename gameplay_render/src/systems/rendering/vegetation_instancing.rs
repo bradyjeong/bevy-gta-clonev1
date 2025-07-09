@@ -346,10 +346,15 @@ pub fn update_vegetation_instancing_system(
     mut leaf_cluster_query: Query<(Entity, &mut InstancedLeafCluster), With<DirtyVegetationInstancing>>,
     mut tree_trunk_query: Query<(Entity, &mut InstancedTreeTrunk), With<DirtyVegetationInstancing>>,
     mut bush_query: Query<(Entity, &mut InstancedBush), With<DirtyVegetationInstancing>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    meshes: Option<ResMut<Assets<Mesh>>>,
+    materials: Option<ResMut<Assets<StandardMaterial>>>,
     _config: Res<VegetationInstancingConfig>,
 ) {
+    // Early return if resources are not available (e.g., in headless mode)
+    let (Some(mut meshes), Some(mut materials)) = (meshes, materials) else {
+        return;
+    };
+    
     let start_time = Instant::now();
     
     // Process palm fronds

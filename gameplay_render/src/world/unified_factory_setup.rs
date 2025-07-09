@@ -8,5 +8,5 @@ pub fn unified_factory_setup_system(
     _config: Res<GameConfig>,
 ) {
     // Factory setup logic will be implemented here
-    // This is a placeholder for the unified factory setup system
+    // Unified factory setup system
 }

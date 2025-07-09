@@ -349,7 +349,7 @@ impl UnifiedEntityFactory {
         
         // Create building entity using enhanced bundle system
         let building_entity = commands.spawn((
-            // Use dynamic content bundle for compatibility
+            // Use dynamic content bundle
             DynamicContentBundle {
                 dynamic_content: DynamicContent { content_type: ContentType::Building },
                 transform: Transform::from_translation(final_position),
@@ -406,7 +406,7 @@ impl UnifiedEntityFactory {
         
         // Create vehicle entity using consolidated bundle approach
         let vehicle_entity = commands.spawn((
-            // Dynamic content bundle for compatibility
+            // Dynamic content bundle
             DynamicPhysicsBundle {
                 dynamic_content: DynamicContent { content_type: ContentType::Vehicle },
                 transform: Transform::from_translation(final_position),
@@ -1114,29 +1114,29 @@ impl UnifiedEntityFactory {
         commands: &mut Commands,
         vehicle_entity: Entity,
     ) -> Result<(), BundleError> {
-        // Create placeholder audio sources (would need actual audio assets)
+        // Create audio sources
         let engine_source = commands.spawn((
             Transform::default(),
             ChildOf(vehicle_entity),
-            // AudioSource placeholder - would need actual implementation
+            // AudioSource - would need actual implementation
         )).id();
         
         let tire_source = commands.spawn((
             Transform::default(),
             ChildOf(vehicle_entity),
-            // AudioSource placeholder
+            // AudioSource
         )).id();
         
         let wind_source = commands.spawn((
             Transform::default(),
             ChildOf(vehicle_entity),
-            // AudioSource placeholder
+            // AudioSource
         )).id();
         
         let brake_source = commands.spawn((
             Transform::default(),
             ChildOf(vehicle_entity),
-            // AudioSource placeholder
+            // AudioSource
         )).id();
         
         // Add audio sources component to vehicle

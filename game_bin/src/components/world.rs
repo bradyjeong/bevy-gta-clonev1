@@ -28,7 +28,7 @@ pub enum BuildingType {
     Generic,
 }
 
-// Legacy NPC component (kept for compatibility during migration)
+// Legacy NPC component
 #[derive(Component)]
 pub struct NPC {
     pub target_position: Vec3,

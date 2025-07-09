@@ -16,7 +16,7 @@ pub enum ExhaustMode {
     Track,      // Maximum exhaust intensity
 }
 
-// Legacy marker components (kept for compatibility)
+// Legacy marker components
 #[derive(Component)]
 pub struct Car;
 

@@ -30,9 +30,7 @@ pub mod services;
 pub mod schedule;
 pub mod prelude;
 
-// Temporary compatibility layer (will be removed when migration complete)
-#[allow(missing_docs)]
-pub mod compat;
+
 
 
 // Only expose via prelude - no direct re-exports

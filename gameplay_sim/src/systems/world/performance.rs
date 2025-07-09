@@ -18,17 +18,19 @@ pub fn performance_monitoring_system(
     mut stats: ResMut<PerformanceStats>,
     entity_query: Query<Entity>,
     cullable_query: Query<&Cullable>,
-    diagnostics: Res<DiagnosticsStore>,
+    diagnostics: Option<Res<DiagnosticsStore>>,
 ) {
     let current_time = time.elapsed_secs();
     
     // Update stats
     stats.entity_count = entity_query.iter().count();
     stats.culled_entities = cullable_query.iter().filter(|c| c.is_culled).count();
-    // Get frame time from diagnostics
-    if let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
-        if let Some(fps_avg) = fps_diag.smoothed() {
-            stats.frame_time = (1000.0 / fps_avg) as f32; // Convert to milliseconds
+    // Get frame time from diagnostics (if available)
+    if let Some(diagnostics) = diagnostics {
+        if let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
+            if let Some(fps_avg) = fps_diag.smoothed() {
+                stats.frame_time = (1000.0 / fps_avg) as f32; // Convert to milliseconds
+            }
         }
     }
     // Report every 5 seconds

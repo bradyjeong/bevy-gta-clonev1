@@ -38,7 +38,7 @@ pub fn debug_game_state(
         // Input system performance stats
         let (max_time_us, frame_count) = input_manager.get_performance_stats();
         info!("Input system - Max processing time: {}μs, Frames: {}", max_time_us, frame_count);
-        info!("Input fallback enabled: {}", input_config.is_fallback_enabled());
+
         // List all active entities
         for entity in active_any_query.iter() {
             info!("Active entity: {:?}", entity);
@@ -73,8 +73,8 @@ pub fn debug_game_state(
         // Reset input system
         input_manager.clear_all_input();
         input_config.reset_to_defaults();
-        input_config.enable_fallback(); // Enable fallback mode for safety
+
         input_manager.reset_performance_stats();
-        info!("Reset input system to defaults with fallback enabled");
+        info!("Reset input system to defaults");
     }
 }

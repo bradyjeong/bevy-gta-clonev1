@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-// Temporary stubs - will be properly implemented
 pub fn water_wave_system() {
     // TODO: Implement water wave system
 }

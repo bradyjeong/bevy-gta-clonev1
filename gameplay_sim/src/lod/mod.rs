@@ -11,3 +11,10 @@
 
 pub mod modern_lod_system;
 
+pub use modern_lod_system::{
+    modern_lod_system, 
+    lod_performance_monitoring_system,
+    ModernLODPlugin,
+    LodSystemSet,
+};
+

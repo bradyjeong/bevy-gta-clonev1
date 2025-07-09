@@ -8,6 +8,9 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
+        // Add essential Bevy plugins first (includes Time resource)
+        app.add_plugins(DefaultPlugins);
+        
         // Initialize game configuration
         app.insert_resource(GameConfig::default());
         

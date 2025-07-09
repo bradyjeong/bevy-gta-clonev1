@@ -161,6 +161,9 @@ impl Plugin for RenderPlugin {
             .init_resource::<game_core::components::dirty_flags::FrameCounter>()
             .init_resource::<game_core::components::instanced_vegetation::VegetationInstancingConfig>();
         
+        // Register events
+        app.add_event::<systems::audio::realistic_vehicle_audio::AudioEvent>();
+        
         // Add the batching plugin
         app.add_plugins(plugins::BatchingPlugin);
         
@@ -171,9 +174,9 @@ impl Plugin for RenderPlugin {
                 // Camera systems
                 camera::camera_follow_system,
                 
-                // LOD systems
-                lod::modern_lod_system,
-                lod::lod_performance_monitoring_system,
+                // LOD systems from gameplay_sim
+                gameplay_sim::lod::modern_lod_system,
+                gameplay_sim::lod::lod_performance_monitoring_system,
                 // Audio systems
                 audio::realistic_vehicle_audio_system,
                 // Audio systems temporarily disabled - functions not available  

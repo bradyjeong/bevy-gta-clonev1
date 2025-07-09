@@ -35,7 +35,7 @@ pub struct NPC {
     pub speed: f32,
     pub last_update: f32,
     pub update_interval: f32,
-    // Compatibility fields for spawners
+    // Fields for spawners
     pub health: Option<f32>,
     pub max_health: Option<f32>,
     pub behavior_state: Option<NPCBehaviorState>,
@@ -577,7 +577,7 @@ pub struct Building {
     pub building_type: BuildingType,
     pub height: f32,
     pub scale: Vec3,
-    // Compatibility fields for spawners
+    // Fields for spawners
     pub max_occupants: Option<u32>,
     pub current_occupants: Option<u32>,
     pub spawn_time: Option<f32>,

@@ -7,7 +7,7 @@ use crate::bundles::*;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
-/// Type alias for old NPCBehavior to maintain compatibility
+/// Type alias for old NPCBehavior
 pub type NPCBehavior = NPCBehaviorComponent;
 
 /// Particle effect types for the unified system

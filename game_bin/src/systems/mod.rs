@@ -1,4 +1,4 @@
-// Re-export all systems from gameplay_sim + compat stubs
+// Re-export all systems from gameplay_sim
 pub use gameplay_sim::systems::*;
 
 // Game binary specific systems that exist locally
