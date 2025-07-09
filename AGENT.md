@@ -97,6 +97,12 @@
 - Example application runs successfully
 - Oracle's Week 1 success criteria met
 
+## Oracle Guidance
+- **Strategic Decisions**: Documented in [Oracle Consultations](docs/oracle-consultations.md)
+- **Architecture Decisions**: Captured in [ADR system](docs/adr/README.md)
+- **Key Principle**: Follow Oracle's 8-week extraction plan strictly
+- **Weekly Verification**: Consult Oracle for milestone checkpoints
+
 ## Next Steps (Week 2)
 - Port RON configuration system → config_core crate
 - Extract unified entity factory → gameplay_factory crate
