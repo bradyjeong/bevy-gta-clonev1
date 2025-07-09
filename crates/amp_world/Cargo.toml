@@ -2,10 +2,13 @@
 name = "amp_world"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-publish = false
+description = "ECS world management and entity lifecycle for the AMP Game Engine"
+categories = ["game-engines", "data-structures"]
+keywords = ["ecs", "world", "entity", "game-engine", "bevy"]
 
 [dependencies]
 amp_core = { path = "../amp_core" }

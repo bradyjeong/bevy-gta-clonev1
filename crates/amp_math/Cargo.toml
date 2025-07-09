@@ -1,11 +1,14 @@
 [package]
 name = "amp_math"
-version = "0.1.0"
-edition = "2021"
-authors = ["amp-team"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 description = "High-performance math library for spatial calculations and Morton encoding"
-repository = "https://github.com/bradyjeong/bevy-gta-clone"
-license = "MIT"
+categories = ["mathematics", "game-engines", "algorithms"]
+keywords = ["math", "morton", "spatial", "3d", "game-engine"]
 
 [dependencies]
 glam = { version = "0.28", features = ["mint", "serde", "fast-math"] }

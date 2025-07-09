@@ -1,7 +1,14 @@
 [package]
 name = "amp_spatial"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Hierarchical spatial partitioning and streaming for the AMP Game Engine"
+categories = ["algorithms", "data-structures", "game-engines"]
+keywords = ["spatial", "partitioning", "streaming", "clipmap", "game-engine"]
 
 [dependencies]
 amp_core = { path = "../amp_core" }

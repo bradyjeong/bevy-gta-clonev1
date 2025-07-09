@@ -2,10 +2,13 @@
 name = "amp_gpu"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-publish = false
+description = "GPU abstraction layer built on wgpu for the AMP Game Engine"
+categories = ["rendering", "graphics", "game-engines"]
+keywords = ["gpu", "wgpu", "graphics", "rendering", "game-engine"]
 
 [dependencies]
 amp_core = { path = "../amp_core" }

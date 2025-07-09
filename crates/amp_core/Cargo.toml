@@ -7,6 +7,8 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "Core error handling and utilities for the AMP Game Engine"
+categories = ["development-tools", "game-engines"]
+keywords = ["error", "core", "utilities", "game-engine"]
 
 [dependencies]
 thiserror = { workspace = true }

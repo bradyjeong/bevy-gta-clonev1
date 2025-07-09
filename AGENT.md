@@ -3,6 +3,7 @@
 ## Commands
 - Build: `cargo build --workspace` | Check: `cargo check --workspace` | Test: `cargo test --workspace`
 - Lint: `cargo clippy --workspace --all-targets --all-features` | Format: `cargo fmt --all`
+- Rustdoc: `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features` (lint-enabled)
 - Run Example: `cargo run --bin minimal`
 - Dev Tools: `cargo xtask ci` (full CI pipeline), `cargo xtask fmt`, `cargo xtask test`
 - Documentation: `cargo xtask doc` (generate), `cargo xtask doc-validate` (validate)
