@@ -59,10 +59,12 @@ impl ConfigLoader {
     pub fn load<T: Config>(&self) -> Result<T> {
         for dir in &self.search_paths {
             let path = dir.join(T::default_path());
-            if !path.exists() { continue; }
+            if !path.exists() {
+                continue;
+            }
 
-            let data = std::fs::read_to_string(&path)
-                .map_err(|e| Error::from(ConfigError::IoError(e)))?;
+            let data =
+                std::fs::read_to_string(&path).map_err(|e| Error::from(ConfigError::IoError(e)))?;
 
             let cfg = ron::from_str(&data)
                 .map_err(|e| Error::from(ConfigError::parse_error(e.to_string())))?;
@@ -225,7 +227,8 @@ mod tests {
             // With hot-reload feature, this should panic until implemented
             std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 loader.watch::<TestConfig, _>(|_| {});
-            })).expect_err("Should panic when hot-reload is enabled but not implemented");
+            }))
+            .expect_err("Should panic when hot-reload is enabled but not implemented");
         }
     }
 
@@ -236,7 +239,7 @@ mod tests {
 
     impl Config for CustomPathConfig {
         const FILE_NAME: &'static str = "custom.ron";
-        
+
         fn default_path() -> PathBuf {
             PathBuf::from("custom/path/custom.ron")
         }
@@ -248,7 +251,7 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let custom_dir = temp_dir.path().join("custom/path");
         std::fs::create_dir_all(&custom_dir).unwrap();
-        
+
         let config_path = custom_dir.join("custom.ron");
         std::fs::write(&config_path, "(enabled: true)").unwrap();
 
@@ -268,7 +271,7 @@ mod tests {
 
         let result: Result<TestConfig> = loader.load();
         assert!(result.is_err());
-        
+
         let err = result.unwrap_err();
         // Should be wrapped in ConfigError, not generic configuration error
         assert!(matches!(err, amp_core::Error::Config(_)));
@@ -280,14 +283,14 @@ mod tests {
         // Test that dedup() removes duplicate search paths
         let temp_dir = TempDir::new().unwrap();
         let duplicate_path = temp_dir.path().to_path_buf();
-        
+
         let mut loader = ConfigLoader {
             search_paths: vec![duplicate_path.clone(), duplicate_path.clone()],
         };
-        
+
         // Manually dedup to test the behavior
         loader.search_paths.dedup();
-        
+
         assert_eq!(loader.search_paths.len(), 1);
         assert_eq!(loader.search_paths[0], duplicate_path);
     }
@@ -297,28 +300,31 @@ mod tests {
         // Test that source errors are preserved with #[from] instead of stringifying
         let temp_dir = TempDir::new().unwrap();
         let config_path = temp_dir.path().join("test.ron");
-        
+
         // Create a file with restricted permissions to trigger IO error
         std::fs::write(&config_path, "(value: 42, name: \"test\")").unwrap();
-        
+
         let loader = ConfigLoader {
             search_paths: vec![temp_dir.path().to_path_buf()],
         };
 
         let result: Result<TestConfig> = loader.load();
-        
+
         // Should succeed normally, but this tests the error path structure
         assert!(result.is_ok());
-        
+
         // Test with non-existent file to get proper error
         let loader_bad = ConfigLoader {
             search_paths: vec![PathBuf::from("/nonexistent")],
         };
-        
+
         let result_bad: Result<TestConfig> = loader_bad.load();
         assert!(result_bad.is_err());
-        
+
         let err = result_bad.unwrap_err();
-        assert!(matches!(err, amp_core::Error::Config(amp_core::ConfigError::FileNotFound { .. })));
+        assert!(matches!(
+            err,
+            amp_core::Error::Config(amp_core::ConfigError::FileNotFound { .. })
+        ));
     }
 }
