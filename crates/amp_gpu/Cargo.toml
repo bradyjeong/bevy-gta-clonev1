@@ -13,7 +13,7 @@ keywords = ["gpu", "wgpu", "graphics", "rendering", "game-engine"]
 [dependencies]
 amp_core = { path = "../amp_core" }
 wgpu.workspace = true
-winit = "0.29"
+winit.workspace = true
 pollster = "0.3"
 thiserror.workspace = true
 anyhow.workspace = true
