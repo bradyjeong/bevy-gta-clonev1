@@ -1,0 +1,25 @@
+[package]
+name = "config_core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Configuration loading and management for the AMP Game Engine"
+categories = ["config", "development-tools", "game-engines"]
+keywords = ["config", "ron", "game-engine", "configuration"]
+
+[features]
+default = []
+hot-reload = []
+
+[dependencies]
+amp_core = { path = "../amp_core" }
+ron = "0.8"
+serde = { workspace = true, features = ["derive"] }
+dirs = "5.0"
+
+[dev-dependencies]
+rstest = { workspace = true }
+tempfile = "3.0"

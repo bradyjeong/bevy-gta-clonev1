@@ -27,6 +27,11 @@ thiserror = "1.0"
 bitset-fixed = "0.1"
 pollster = "0.3"
 
+# Configuration
+ron = "0.8"
+dirs = "5.0"
+
 # Dev tools
 rstest = "0.18"
 criterion = "0.5"
+tempfile = "3.0"

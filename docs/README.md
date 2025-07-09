@@ -12,6 +12,7 @@ This directory contains all project documentation organized by topic.
 ## Quick Links
 
 - [Architecture Overview](architecture/README.md)
+- [Configuration System](architecture/config.md)
 - [Development Guide](guides/development.md)
 - [Contributing Guidelines](../CONTRIBUTING.md)
 - [Agent Configuration](../AGENT.md)

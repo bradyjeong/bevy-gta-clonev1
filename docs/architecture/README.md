@@ -124,6 +124,13 @@ Hierarchical spatial partitioning system with async streaming capabilities for l
 ### amp_gpu
 Low-level GPU abstraction providing a clean interface over wgpu with support for modern rendering techniques.
 
+### config_core
+Configuration loading and management system with hierarchical file search and RON deserialization.
+
+## Architecture Documentation
+
+- **[Configuration System](config.md)**: Hierarchical configuration loading with RON format support
+
 ## Success Metrics
 
 - **Build Time**: < 5 minutes for full workspace
