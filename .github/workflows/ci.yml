@@ -71,11 +71,7 @@ jobs:
                          --lcov --output-path lcov.info \
                          --fail-under-lines 65
       
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: lcov.info
-          fail_ci_if_error: true
+
 
   build-release:
     needs: check
