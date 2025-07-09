@@ -102,7 +102,7 @@ pub fn road_layer_system(
     }
 }
 
-fn has_roads_generated(_coord: ChunkCoord) -> bool {
+fn has_roads_generated(__coord: ChunkCoord) -> bool {
     // For now, assume no roads are generated
     // In a real implementation, this would check the chunk state
     false
@@ -112,8 +112,8 @@ fn generate_roads_for_chunk(
     commands: &mut Commands,
     world_manager: &mut WorldManager,
     coord: ChunkCoord,
-    _meshes: &mut ResMut<Assets<Mesh>>,
-    _materials: &mut ResMut<Assets<StandardMaterial>>,
+    __meshes: &mut ResMut<Assets<Mesh>>,
+    __materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
     let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     
@@ -153,7 +153,7 @@ pub fn building_layer_system(
     }
 }
 
-fn has_buildings_generated(_coord: ChunkCoord) -> bool {
+fn has_buildings_generated(__coord: ChunkCoord) -> bool {
     // For now, assume no buildings are generated
     false
 }
@@ -162,8 +162,8 @@ fn generate_buildings_for_chunk(
     commands: &mut Commands,
     world_manager: &mut WorldManager,
     coord: ChunkCoord,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    _meshes: &mut ResMut<Assets<Mesh>>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
     let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     
@@ -206,7 +206,7 @@ pub fn vegetation_layer_system(
     }
 }
 
-fn has_vegetation_generated(coord: ChunkCoord) -> bool {
+fn has_vegetation_generated(_coord: ChunkCoord) -> bool {
     // For now, assume no vegetation is generated
     false
 }
@@ -215,8 +215,8 @@ fn generate_vegetation_for_chunk(
     commands: &mut Commands,
     world_manager: &mut WorldManager,
     coord: ChunkCoord,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    _meshes: &mut ResMut<Assets<Mesh>>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
     let chunk_center = coord.to_world_pos(UNIFIED_CHUNK_SIZE);
     

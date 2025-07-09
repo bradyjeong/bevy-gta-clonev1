@@ -11,7 +11,7 @@
 
 use bevy::prelude::*;
 use crate::components::ControlsText;
-use crate::game_state::GameState;
+use gameplay_sim::prelude::GameState;
 use crate::systems::input::input_config::{InputConfig, InputAction};
 
 pub fn controls_ui_system(

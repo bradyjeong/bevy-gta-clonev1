@@ -126,7 +126,7 @@ pub fn batch_culling_system_enhanced(
                         *entity,
                         transform.translation,
                     ).unwrap_or_else(|| active_pos.distance(transform.translation));
-                    let should_be_visible = !cull.is_culled && distance <= cull.config.cull_distance;
+                    let should_be_visible = !cull.is_culled && distance <= cull.max_distance;
                     
                     let new_visibility = if should_be_visible {
                         Visibility::Visible
@@ -381,7 +381,7 @@ fn determine_visibility_state(
     cullable: Option<&UnifiedCullable>,
 ) -> VisibilityState {
     if let Some(cull) = cullable {
-        let should_be_visible = distance <= cull.config.cull_distance && !cull.is_culled;
+        let should_be_visible = distance <= cull.max_distance && !cull.is_culled;
         let is_currently_visible = matches!(current_visibility, Visibility::Visible);
         
         match (should_be_visible, is_currently_visible) {
@@ -402,7 +402,7 @@ fn process_visibility_state_batch(
 ) {
     for (entity, _visibility, _transform, cullable, distance) in batch {
         if let Some(cull) = cullable {
-            let _should_be_visible = *distance <= cull.config.cull_distance && !cull.is_culled;
+            let _should_be_visible = *distance <= cull.max_distance && !cull.is_culled;
             
             let new_visibility = match state {
                 VisibilityState::NeedsToShow => Visibility::Visible,

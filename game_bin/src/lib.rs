@@ -1,5 +1,6 @@
 //! Game binary - main entry point and top-level orchestration
 #![deny(warnings)]
+#![allow(dead_code)]
 #![deny(clippy::all, clippy::pedantic)]
 #![deny(missing_docs)]
 

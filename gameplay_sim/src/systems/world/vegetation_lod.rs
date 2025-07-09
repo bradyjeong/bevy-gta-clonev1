@@ -58,7 +58,7 @@ pub fn vegetation_lod_system(
         
         let mut updated_count = 0;
         
-        for (entity, mut veg_lod, transform, mut visibility) in &mut vegetation_query {
+        for (_entity, mut veg_lod, transform, mut visibility) in &mut vegetation_query {
             // Throttle updates to every 0.2 seconds per vegetation entity
             if current_time - veg_lod.last_update < 0.2 {
                 continue;
@@ -111,8 +111,8 @@ pub fn vegetation_billboard_system(
 pub fn vegetation_billboard_mesh_generator(
     mut commands: Commands,
     vegetation_query: Query<(Entity, &VegetationLOD), (Changed<VegetationLOD>, With<VegetationLOD>)>,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<StandardMaterial>>,
+    _meshes: ResMut<Assets<Mesh>>,
+    _materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, veg_lod) in vegetation_query.iter() {
         match veg_lod.detail_level {
@@ -163,8 +163,8 @@ pub fn spawn_vegetation_with_lod(
     commands: &mut Commands,
     position: Vec3,
     vegetation_type: ContentType,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    _meshes: &mut ResMut<Assets<Mesh>>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
     let base_distance = match vegetation_type {
         ContentType::Tree => 150.0,

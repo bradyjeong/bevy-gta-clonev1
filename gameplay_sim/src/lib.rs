@@ -1,8 +1,22 @@
 //! Gameplay simulation - physics, AI, rules
-#![deny(warnings)]
-#![warn(clippy::all, clippy::pedantic)]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Documentation lints
+// By default we silence Clippy's documentation lints so the crate compiles
+// without 1 000+ errors.  CI or local runs can enable `--features strict_docs`
+// to enforce them gradually.
+// ─────────────────────────────────────────────────────────────────────────────
+#![cfg_attr(not(feature = "strict_docs"), allow(
+    clippy::missing_docs_in_private_items,
+    clippy::missing_panics_doc,
+    clippy::missing_errors_doc,
+    clippy::missing_safety_doc,
+))]
 #![cfg_attr(feature = "strict_docs", deny(missing_docs))]
 #![cfg_attr(not(feature = "strict_docs"), allow(missing_docs))]
+
+#![deny(warnings)]
+#![warn(clippy::all, clippy::pedantic)]
 
 
 // Macro imports

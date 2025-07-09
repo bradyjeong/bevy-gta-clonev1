@@ -86,11 +86,11 @@ impl DistanceCache {
 }
 
 pub fn unified_lod_system(
-    commands: Commands,
+    _commands: Commands,
     active_query: Query<(Entity, &Transform), With<ActiveEntity>>,
     mut cullable_query: Query<(Entity, &Transform, &mut Cullable)>,
     mut lod_coordinator: ResMut<LODCoordinator>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     if let Ok((active_entity, active_transform)) = active_query.single() {
         let active_pos = active_transform.translation;

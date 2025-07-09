@@ -9,6 +9,7 @@ ci_fast = []
 strict_docs = []
 debug-movement = []
 debug-ui = []
+heavy_tests = []
 
 [dependencies]
 bevy = { workspace = true }

@@ -43,7 +43,7 @@ pub fn npc_lod_system(
         let active_pos = active_transform.translation;
         let current_time = time.elapsed_secs();
         
-        for (entity, mut npc_state, transform, mut visibility) in &mut npc_query {
+        for (_entity, mut npc_state, transform, mut visibility) in &mut npc_query {
             // Throttle LOD updates to every 0.1 seconds per NPC
             if current_time - npc_state.last_lod_update < 0.1 {
                 continue;
@@ -132,8 +132,8 @@ pub fn npc_mesh_lod_system(
 pub fn spawn_npc_with_lod(
     commands: &mut Commands,
     position: Vec3,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    _meshes: &mut ResMut<Assets<Mesh>>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
     commands.spawn((
         Transform::from_translation(position),

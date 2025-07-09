@@ -110,7 +110,7 @@ pub fn unified_distance_culling_system(
     active_query: Query<&Transform, With<ActiveEntity>>,
     mut cullable_query: Query<(Entity, &mut UnifiedCullable, &Transform, &mut Visibility)>,
     mut stats: ResMut<DistanceCullingStats>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     if let Ok(active_transform) = active_query.single() {
         let active_pos = active_transform.translation;
@@ -161,9 +161,9 @@ pub fn unified_distance_culling_system(
 pub fn unified_vehicle_lod_system(
     vehicle_query: Query<(Entity, &UnifiedCullable, &VehicleState), (With<DirtyLOD>, Changed<UnifiedCullable>)>,
 ) {
-    for (entity, cullable, vehicle_state) in vehicle_query.iter() {
+    for (_entity, cullable, _vehicle_state) in vehicle_query.iter() {
         // Determine appropriate LOD level based on distance and vehicle state
-        let target_lod = if cullable.last_distance < 100.0 {
+        let _target_lod = if cullable.last_distance < 100.0 {
             0 // High detail
         } else if cullable.last_distance < 300.0 {
             1 // Medium detail
@@ -179,9 +179,9 @@ pub fn unified_vehicle_lod_system(
 pub fn unified_building_lod_system(
     building_query: Query<(Entity, &UnifiedCullable), (With<Building>, Changed<UnifiedCullable>)>,
 ) {
-    for (entity, cullable) in building_query.iter() {
+    for (_entity, cullable) in building_query.iter() {
         // Determine building LOD based on distance
-        let target_lod = calculate_building_lod(cullable.last_distance);
+        let _target_lod = calculate_building_lod(cullable.last_distance);
         
         // In a real implementation, you'd update building detail here
     }
@@ -190,9 +190,9 @@ pub fn unified_building_lod_system(
 pub fn unified_npc_lod_system(
     npc_query: Query<(Entity, &UnifiedCullable), (With<NPC>, Changed<UnifiedCullable>)>,
 ) {
-    for (entity, cullable) in npc_query.iter() {
+    for (_entity, cullable) in npc_query.iter() {
         // Determine NPC LOD based on distance
-        let target_lod = if cullable.last_distance < 50.0 {
+        let _target_lod = if cullable.last_distance < 50.0 {
             0 // Full detail
         } else if cullable.last_distance < 150.0 {
             1 // Reduced detail
@@ -261,15 +261,15 @@ pub fn mark_entity_for_lod_update(commands: &mut Commands, entity: Entity) {
 }
 
 pub fn cleanup_culled_entities_system(
-    commands: Commands,
+    _commands: Commands,
     cullable_query: Query<Entity, (With<UnifiedCullable>, With<DynamicContent>)>,
     active_query: Query<&Transform, With<ActiveEntity>>,
 ) {
     if let Ok(active_transform) = active_query.single() {
-        let active_pos = active_transform.translation;
-        let cleanup_distance = 2000.0; // Very conservative cleanup distance
+        let _active_pos = active_transform.translation;
+        let _cleanup_distance = 2000.0; // Very conservative cleanup distance
         
-        for entity in cullable_query.iter() {
+        for _entity in cullable_query.iter() {
             // In a real implementation, you'd check the entity's position
             // and despawn it if it's too far away
             // This is just a placeholder for the structure

@@ -20,7 +20,7 @@ pub fn npc_spawn_system(
     time: Res<Time>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    game_config: Res<GameConfig>,
+    _game_config: Res<GameConfig>,
 ) {
     if let Ok(active_transform) = active_query.single() {
         let active_pos = active_transform.translation;

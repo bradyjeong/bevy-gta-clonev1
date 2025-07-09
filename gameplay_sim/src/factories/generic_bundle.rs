@@ -103,7 +103,7 @@ impl GenericBundleFactory {
         Cullable,
         (Mesh3d, MeshMaterial3d<StandardMaterial>),
     ), BundleError> {
-        let safe_position = self.validate_position(position)?;
+        let _safe_position = self.validate_position(position)?;
         
         let vehicle = game_core::components::vehicles::Vehicle {
             max_speed: 60.0,
@@ -135,7 +135,7 @@ impl GenericBundleFactory {
         Cullable,
         (Mesh3d, MeshMaterial3d<StandardMaterial>),
     ), BundleError> {
-        let safe_position = self.validate_position(position)?;
+        let _safe_position = self.validate_position(position)?;
         
         let building = Building {
             building_type: BuildingType::Residential,
@@ -167,7 +167,7 @@ impl GenericBundleFactory {
         Cullable,
         (Mesh3d, MeshMaterial3d<StandardMaterial>),
     ), BundleError> {
-        let safe_position = self.validate_position(position)?;
+        let _safe_position = self.validate_position(position)?;
         
         let npc = NPC {
             health: Some(100.0),

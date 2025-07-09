@@ -8,7 +8,6 @@ thread_local! {
 }
 
 pub mod realistic_vehicle_audio;
-pub use realistic_vehicle_audio::*;
 
 #[derive(Component)]
 pub struct FootstepTimer {

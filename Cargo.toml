@@ -12,19 +12,8 @@ members = [
 ]
 exclude = ["gameplay_ui"]
 
-[workspace.features]
-default = []
-# Development and debugging features
-debug-movement = []
-debug-audio = []
-debug-ui = []
-# Experimental features for AI development
-experimental = []
-# Testing and golden frame features
-golden-frames = []
-heavy_tests = []
-# GPU compute features
-gpu-culling = []
+
+
 default-members = [
     "game_bin",
     "engine_core", 

@@ -1,7 +1,12 @@
 use bevy::prelude::*;
 use crate::components::*;
-use crate::systems::*;
 use crate::config::GameConfig;
+use gameplay_render::prelude::*;
+
+// Specific imports to avoid ambiguity
+use crate::systems::{
+    frame_counter_system,
+};
 
 /// Plugin that adds optimized batching systems with dirty flags
 pub struct BatchingPlugin;
@@ -44,7 +49,7 @@ impl Plugin for BatchingPlugin {
 
         // Optimized LOD systems - run in Update after batch processing
         app.add_systems(Update, crate::systems::world::master_unified_lod_system)
-            .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
+            .add_systems(Update, crate::systems::world::unified_distance_culling_system);
 
         // Cleanup and monitoring systems - run in PostUpdate
         app.add_systems(PostUpdate, (
@@ -56,12 +61,15 @@ impl Plugin for BatchingPlugin {
 
         // Add test systems for development/debugging
         #[cfg(debug_assertions)]
-        app.add_systems(Update, (
-            crate::systems::batching_test_system,
-            crate::systems::batching_stress_test_system,
-            crate::systems::batching_performance_comparison_system,
-            crate::systems::cleanup_test_entities_system,
-        ));
+        {
+            // Test systems commented out - re-enable as needed
+            // app.add_systems(Update, (
+            //     crate::systems::batching_test_system,
+            //     crate::systems::batching_stress_test_system,
+            //     crate::systems::batching_performance_comparison_system,
+            //     crate::systems::cleanup_test_entities_system,
+            // ));
+        }
     }
 }
 
@@ -142,7 +150,7 @@ impl Plugin for EnhancedBatchingPlugin {
             app.add_systems(PreUpdate, mark_visibility_dirty_system);
             
             app.add_systems(Update, batch_culling_system)
-                .add_systems(Update, crate::systems::world::new_unified_distance_culling_system);
+                .add_systems(Update, crate::systems::world::unified_distance_culling_system);
         }
 
         if self.enable_physics_batching {

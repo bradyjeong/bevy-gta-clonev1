@@ -153,6 +153,16 @@ impl DistanceCache {
     pub fn reset_stats(&mut self) {
         self.stats = DistanceCacheStats::default();
     }
+    
+    /// Get the current cache size
+    #[must_use] pub fn len(&self) -> usize {
+        self.cache.len()
+    }
+    
+    /// Get the current cache size (alias for len)
+    #[must_use] pub fn cache_size(&self) -> usize {
+        self.cache.len()
+    }
 }
 
 // Import MovementTracker from game_core prelude

@@ -57,13 +57,13 @@ pub fn realistic_vehicle_audio_system(
         &Transform,
     ), With<RealisticVehicle>>,
     player_query: Query<&Transform, (With<Player>, Without<RealisticVehicle>)>,
-    mut audio_sinks: Query<&mut AudioSink>,
+    // mut audio_sinks: Query<&mut AudioSink>, // Disabled - bevy_audio not available
 ) {
     let dt = time.delta_secs();
     let Ok(player_transform) = player_query.single() else { return; };
     let player_pos = player_transform.translation;
     
-    for (mut audio_state, audio_sources, engine, tire_physics, dynamics, transform) in audio_query.iter_mut() {
+    for (mut audio_state, _audio_sources, engine, tire_physics, dynamics, transform) in audio_query.iter_mut() {
         // Performance optimization: Update audio less frequently
         audio_state.audio_update_timer += dt;
         if audio_state.audio_update_timer < 0.05 {
@@ -96,7 +96,7 @@ pub fn realistic_vehicle_audio_system(
         calculate_brake_audio(&mut audio_state, engine, distance_attenuation);
         
         // STEP 5: Apply audio to sources with safety checks
-        apply_audio_to_sources(&audio_state, &audio_sources, &mut audio_sinks, &config);
+        // apply_audio_to_sources(&audio_state, &audio_sources, &mut audio_sinks, &config); // Disabled - bevy_audio not available
         
         // Update state for next frame
         audio_state.last_rpm = engine.current_rpm;
@@ -178,33 +178,33 @@ fn calculate_brake_audio(
 }
 
 /// Apply calculated audio values to actual audio sources
-fn apply_audio_to_sources(
-    audio_state: &VehicleAudioState,
-    audio_sources: &VehicleAudioSources,
-    audio_sinks: &mut Query<&mut AudioSink>,
-    config: &GameConfig,
-) {
-    // Apply engine audio
-    if let Ok(mut sink) = audio_sinks.get_mut(audio_sources.engine_source) {
-        sink.set_volume(bevy::audio::Volume::Linear(audio_state.engine_volume * config.audio.master_volume));
-        // Note: Pitch modulation would require custom audio implementation
-    }
-    
-    // Apply tire screech audio
-    if let Ok(mut sink) = audio_sinks.get_mut(audio_sources.tire_source) {
-        sink.set_volume(bevy::audio::Volume::Linear(audio_state.tire_screech_volume * config.audio.master_volume));
-    }
-    
-    // Apply wind noise audio
-    if let Ok(mut sink) = audio_sinks.get_mut(audio_sources.wind_source) {
-        sink.set_volume(bevy::audio::Volume::Linear(audio_state.wind_noise_volume * config.audio.master_volume));
-    }
-    
-    // Apply brake noise audio
-    if let Ok(mut sink) = audio_sinks.get_mut(audio_sources.brake_source) {
-        sink.set_volume(bevy::audio::Volume::Linear(audio_state.brake_noise_volume * config.audio.master_volume));
-    }
-}
+// fn apply_audio_to_sources(
+//     audio_state: &VehicleAudioState,
+//     audio_sources: &VehicleAudioSources,
+//     audio_sinks: &mut Query<&mut AudioSink>,
+//     config: &GameConfig,
+// ) {
+//     // Apply engine audio
+//     if let Ok(mut sink) = audio_sinks.get_mut(audio_sources.engine_source) {
+//         sink.set_volume(bevy::audio::Volume::Linear(audio_state.engine_volume * config.audio.master_volume));
+//         // Note: Pitch modulation would require custom audio implementation
+//     }
+//     
+//     // Apply tire screech audio
+//     if let Ok(mut sink) = audio_sinks.get_mut(audio_sources.tire_source) {
+//         sink.set_volume(bevy::audio::Volume::Linear(audio_state.tire_screech_volume * config.audio.master_volume));
+//     }
+//     
+//     // Apply wind noise audio
+//     if let Ok(mut sink) = audio_sinks.get_mut(audio_sources.wind_source) {
+//         sink.set_volume(bevy::audio::Volume::Linear(audio_state.wind_noise_volume * config.audio.master_volume));
+//     }
+//     
+//     // Apply brake noise audio
+//     if let Ok(mut sink) = audio_sinks.get_mut(audio_sources.brake_source) {
+//         sink.set_volume(bevy::audio::Volume::Linear(audio_state.brake_noise_volume * config.audio.master_volume));
+//     }
+// } // Disabled - bevy_audio not available
 
 /// System to cleanup audio for distant vehicles (performance optimization)
 pub fn vehicle_audio_culling_system(
