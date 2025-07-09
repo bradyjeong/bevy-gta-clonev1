@@ -2,210 +2,93 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "phase2-system-migration" ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main, develop ]
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-Dwarnings"
 
 jobs:
   check:
-    name: Check
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: ["stable", "nightly"]
     steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Install Bevy dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libx11-dev \
-          libasound2-dev \
-          libudev-dev
-    - name: Run cargo check
-      run: cargo check --workspace --all-targets
-
-  test:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Install Bevy dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libx11-dev \
-          libasound2-dev \
-          libudev-dev
-    - name: Run tests
-      run: cargo test --workspace
-
-  test-release:
-    name: Test Suite (Release)
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Install Bevy dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libx11-dev \
-          libasound2-dev \
-          libudev-dev
-    - name: Run tests in release mode
-      run: cargo test --release --verbose
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-      with:
-        components: clippy
-    - uses: Swatinem/rust-cache@v2
-    - name: Install Bevy dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libx11-dev \
-          libasound2-dev \
-          libudev-dev
-    - name: Run clippy
-      run: cargo clippy --workspace --all-targets -- -D warnings
-
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-      with:
-        components: rustfmt
-    - name: Run rustfmt
-      run: cargo fmt --all -- --check
-
-  docs:
-    name: Documentation
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Install Bevy dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libx11-dev \
-          libasound2-dev \
-          libudev-dev
-    - name: Generate documentation
-      run: cargo doc --workspace --no-deps --document-private-items
-
-  engine-core-no-std:
-    name: Engine Core No-Std Check
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Check engine_core without default features
-      run: cargo check -p engine_core --no-default-features
-    - name: Verify no Bevy dependency in engine_core
-      run: |
-        if grep -q "bevy" engine_core/Cargo.toml; then
-          echo "ERROR: engine_core should not depend on Bevy"
-          exit 1
-        fi
-        echo "✅ engine_core is Bevy-free"
-
-  property-tests:
-    name: Property Tests
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Install Bevy dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libx11-dev \
-          libasound2-dev \
-          libudev-dev
-    - name: Run property tests
-      run: |
-        cd engine_core
-        cargo test math_property_tests --verbose
-        cargo test timing_property_tests --verbose
-
-  save-load-tests:
-    name: Save-Load Round-trip Tests
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Install Bevy dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libx11-dev \
-          libasound2-dev \
-          libudev-dev
-    - name: Run save-load tests
-      run: cargo test save_load_tests --verbose
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: rustfmt, clippy
+          override: true
+      
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.toolchain }}
+      
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      
+      - name: Run clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      
+      - name: Run tests
+        run: cargo test --workspace --all-features
+      
+      - name: Check documentation
+        run: cargo doc --workspace --no-deps --all-features
 
   coverage:
-    name: Code Coverage
+    needs: check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Install Bevy dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libx11-dev \
-          libasound2-dev \
-          libudev-dev
-    - name: Install cargo-tarpaulin
-      run: cargo install cargo-tarpaulin
-    - name: Generate code coverage
-      run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
-    - name: Check coverage threshold
-      run: |
-        COVERAGE=$(grep -o 'line-rate="[^"]*"' cobertura.xml | head -1 | grep -o '[0-9.]*')
-        echo "Coverage: ${COVERAGE}%"
-        if (( $(echo "$COVERAGE < 0.60" | bc -l) )); then
-          echo "ERROR: Coverage ${COVERAGE}% is below 60% threshold"
-          exit 1
-        fi
-        echo "✅ Coverage ${COVERAGE}% meets 60% threshold"
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+          override: true
+      
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      
+      - name: Generate coverage
+        run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: lcov.info
+          fail_ci_if_error: true
 
-  windows-check:
-    name: Windows Check
-    runs-on: windows-latest
+  build-release:
+    needs: check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
-    - uses: Swatinem/rust-cache@v2
-    - name: Run cargo check on Windows
-      run: cargo check --workspace --all-targets
-    - name: Run basic tests on Windows
-      run: cargo test --lib --verbose
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Build release
+        run: cargo build --release --workspace
+      
+      - name: Test release build
+        run: cargo test --release --workspace --all-features

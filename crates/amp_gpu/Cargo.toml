@@ -1,0 +1,22 @@
+[package]
+name = "amp_gpu"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+amp_core = { path = "../amp_core" }
+wgpu.workspace = true
+winit = "0.29"
+pollster = "0.3"
+thiserror.workspace = true
+anyhow.workspace = true
+
+[features]
+default = []
+
+[dev-dependencies]
+rstest.workspace = true

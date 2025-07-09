@@ -1,0 +1,15 @@
+[package]
+name = "amp_examples"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[[bin]]
+name = "minimal"
+path = "minimal.rs"
+
+[dependencies]
+amp_gpu = { path = "../crates/amp_gpu" }
+winit = "0.29"
+pollster = "0.3"
+env_logger = "0.10"

@@ -1,25 +1,51 @@
 # AGENT.md
 
 ## Commands
-- Build: `cargo build` | Check: `cargo check` | Test: `cargo test test_name`
-- Lint: `cargo clippy` | Format: `cargo fmt` | Run: `cargo run`
-- Features: `cargo run --features debug-movement,debug-audio`
+- Build: `cargo build --workspace` | Check: `cargo check --workspace` | Test: `cargo test --workspace`
+- Lint: `cargo clippy --workspace --all-targets --all-features` | Format: `cargo fmt --all`
+- Run Example: `cargo run --bin minimal`
+- Dev Tools: `cargo xtask ci` (full CI pipeline), `cargo xtask fmt`, `cargo xtask test`
+- Documentation: `cargo xtask doc` (generate), `cargo xtask doc-validate` (validate)
 
-## Project Structure
-- Bevy 0.16.1 game using Rust 2024 edition, bevy_rapier3d physics
-- Plugin-based: components/, systems/, plugins/, setup/, factories/
+## Project Vision
+**AAA-Level Open World Game** - GTA-style game built with Bevy 0.16.1 using modern Rust 2024 edition
+- **Target**: Professional game development with Amp-optimized workflow
+- **Focus**: Clean architecture, fast iteration, team scalability
 
-## Features
-- `debug-movement`, `debug-audio`, `debug-ui`
+## Architecture Strategy
+**8-Week Extraction-Based Restart** - Clean workspace preserving proven systems
 
-## Architecture Status
-- ✅ **REVOLUTIONARY TRANSFORMATION COMPLETE** - Modern AAA game architecture achieved
-- ✅ **Legacy Code Eliminated** - ServiceContainer and hardcoded values removed  
-- ✅ **Data-Driven Configuration** - Complete RON-based config system implemented
-- ✅ **Unified Entity Factory** - Single-source-of-truth for all entity creation
-- ✅ **Advanced Batch Processing** - Modern parallel job system with 300%+ performance gains
-- ✅ **GPU-Ready Culling** - Prepared for compute shader implementation
-- ✅ **Professional LOD System** - Distance-based quality management
+### Current Workspace Structure (Week 1 Complete)
+```
+├─ crates/
+│   ├─ amp_core/          # Core error handling and utilities
+│   ├─ amp_math/          # Spatial mathematics and Morton encoding  
+│   ├─ amp_spatial/       # Hierarchical spatial partitioning
+│   ├─ amp_gpu/           # GPU abstraction over wgpu
+│   ├─ amp_world/         # ECS world management (basic)
+│   └─ [future crates]    # amp_physics, amp_ai, amp_render
+├─ examples/              # Example applications (minimal.rs)
+├─ tools/xtask/           # Development automation
+├─ docs/                  # Organized documentation
+│   ├─ architecture/      # Technical architecture docs
+│   ├─ guides/            # Development guides  
+│   ├─ api/               # Auto-generated API docs
+│   └─ adr/               # Architecture Decision Records
+└─ .github/workflows/     # CI/CD pipeline
+```
+
+### Key Principles
+- **Domain Boundaries**: Clear separation between engine and game logic
+- **Bevy Integration**: Leverage Bevy's ECS, don't fight it
+- **Extract, Don't Rebuild**: Port proven algorithms, rebuild only interfaces
+- **Amp Optimized**: Fast compile times, parallel development, clean CI
+
+## Development Workflow
+- **Weekly Checkpoints**: Prevent scope creep with deliverable demos
+- **60 FPS Target**: Performance gates at each milestone
+- **Test Coverage**: 78 tests passing, comprehensive coverage
+- **CI Time**: Full workspace build <20 seconds
+- **PR Size**: ≤500 LOC per merge
 
 ## Code Style
 - snake_case for variables/functions, PascalCase for structs/components
@@ -29,9 +55,50 @@
 - Safety: Validate physics values, clamp positions/dimensions, use collision groups
 - Comments: `//` style, 4-space indent, trailing commas
 
-## Performance
-- Target 60+ FPS, entity culling (buildings 300m, vehicles 150m, NPCs 100m)
-- System timing intervals: road gen 0.5s, dynamic content 2.0s, culling 0.5s
-- Ultra-reduced spawn rates: buildings 8%, vehicles 4%, trees 5%, NPCs 1%
-- Distance caching: Avoids repeated calculations (5-frame cache, 2048 entry limit)
-- Cache debug: Press F3 or wait 5s for cache performance stats
+## Performance Targets
+- **Target**: 60+ FPS on desktop, stable frame times
+- **Culling**: Distance-based (buildings 300m, vehicles 150m, NPCs 100m)
+- **Memory**: Object pools, per-frame arenas, minimal allocations
+- **Profiling**: Built-in counters, frame analysis, bottleneck detection
+
+## Technical Systems Implemented
+### amp_core
+- Engine-wide error handling with thiserror
+- Result<T> alias for consistent error handling
+- 11 unit tests covering all error variants
+
+### amp_math
+- Morton 3D encoding for efficient spatial indexing
+- AABB and Sphere bounding volume implementations
+- Transform utilities with builder patterns
+- 40 unit tests with comprehensive coverage
+
+### amp_spatial  
+- RegionId with Morton-encoded spatial identifiers
+- Hierarchical clipmap for multi-level detail management
+- Async streaming provider interface
+- 22 unit tests covering all functionality
+
+### amp_gpu
+- wgpu context and surface management
+- GPU abstraction with error handling
+- Purple screen rendering example
+- 3 unit tests for core functionality
+
+### amp_world
+- Basic ECS world management wrapper
+- Future integration point for Bevy systems
+- 2 unit tests for world creation
+
+## Current Status
+✅ **WEEK 1 COMPLETE** - Foundation established with 78 passing tests
+- All crates compile cleanly with `-Dwarnings`
+- CI/CD pipeline operational
+- Example application runs successfully
+- Oracle's Week 1 success criteria met
+
+## Next Steps (Week 2)
+- Port RON configuration system → config_core crate
+- Extract unified entity factory → gameplay_factory crate
+- Begin LOD and batch processing systems
+- Maintain test coverage above 70%

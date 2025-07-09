@@ -1,33 +1,32 @@
-# CODEOWNERS file for the GTA game project
-# This file defines ownership for different parts of the codebase
+# CODEOWNERS for Amp Game Engine
 
-# Global fallback
-* @simulation-team
-
-# Engine layer
-/engine_core/          @core-team
-/engine_bevy/          @bevy-integration
-
-# Gameplay layer  
-/gameplay_sim/         @simulation-team
-/gameplay_render/      @render-team
-/gameplay_ui/          @ui-team
-
-# Game layer
-/game_core/            @core-team
-/game_bin/             @simulation-team
-
-# Testing and utilities
-/tests/                @qa-team
-/test_utils/           @qa-team
+# Global owners - require approval for all changes
+* @bradyjeong
 
 # Documentation
-/docs/                 @documentation-team
-*.md                   @documentation-team
+README.md @bradyjeong
+CONTRIBUTING.md @bradyjeong
+AGENT.md @bradyjeong
+docs/ @bradyjeong
 
-# Configuration
-Cargo.toml             @core-team
-.github/               @devops-team
+# Core architecture
+docs/architecture/ @bradyjeong
+docs/adr/ @bradyjeong
 
-# Assets
-/assets/               @content-team
+# Development guides
+docs/guides/ @bradyjeong
+
+# Core engine crates
+crates/amp_core/ @bradyjeong
+crates/amp_math/ @bradyjeong
+crates/amp_spatial/ @bradyjeong
+crates/amp_gpu/ @bradyjeong
+crates/amp_world/ @bradyjeong
+
+# Build and CI
+Cargo.toml @bradyjeong
+.github/ @bradyjeong
+tools/xtask/ @bradyjeong
+
+# Examples
+examples/ @bradyjeong

@@ -1,9 +1,0 @@
-[package]
-name = "simple_test"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-bevy = { workspace = true }
-gta_game = { path = "../game_bin" }
-game_core = { path = "../game_core" }

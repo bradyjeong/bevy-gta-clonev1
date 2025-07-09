@@ -1,0 +1,16 @@
+[package]
+name = "amp_math"
+version = "0.1.0"
+edition = "2021"
+authors = ["amp-team"]
+description = "High-performance math library for spatial calculations and Morton encoding"
+repository = "https://github.com/bradyjeong/bevy-gta-clone"
+license = "MIT"
+
+[dependencies]
+glam = { version = "0.28", features = ["mint", "serde", "fast-math"] }
+bitset-fixed = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+criterion = "0.5"

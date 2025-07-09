@@ -1,43 +1,32 @@
 [workspace]
-resolver = "2"
 members = [
-    "game_core",
-    "game_bin",
-    "engine_core", 
-    "engine_bevy",
-    "gameplay_sim",
-    "gameplay_render",
-    "test_utils",
-    "tests"
+    "crates/*",
+    "examples",
+    "tools/xtask",
 ]
-exclude = ["gameplay_ui"]
+resolver = "2"
 
-
-
-default-members = [
-    "game_bin",
-    "engine_core", 
-    "engine_bevy",
-    "game_core",
-    "gameplay_sim",
-    "gameplay_render"
-]
-
-
+[workspace.package]
+edition = "2021"
+rust-version = "1.77"
+version = "0.1.0"
+authors = ["Brady Jeong <bradyjeong@Mac.attlocal.net>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/bradyjeong/bevy-gta-clone"
 
 [workspace.dependencies]
-bevy = { version = "0.16.1", default-features = false, features = ["bevy_winit", "x11", "serialize", "shader_format_glsl", "bevy_state", "bevy_ui", "bevy_text"] }
-bevy_rapier3d = "0.30"
-leafwing_input_manager = "0.13"
-bytemuck = { version = "1.18", features = ["derive"] }
-rand = "0.8"
-serde = { version = "1.0", features = ["derive"] }
-ron = "0.8"
-chrono = { version = "0.4", features = ["serde"] }
-image = "0.24"
-tracing = "0.1"
+# Core dependencies
+anyhow = { version = "1.0", default-features = false }
+glam = { version = "0.25", features = ["fast-math"] }
+wgpu = { version = "0.19" }
+winit = "0.29"
+rapier3d = "0.18"
+bevy_ecs = "0.13"
+serde = { version = "1", features = ["derive"] }
+thiserror = "1.0"
+bitset-fixed = "0.1"
+pollster = "0.3"
 
-
-
-[workspace.metadata.docs.rs]
-all-features = true
+# Dev tools
+rstest = "0.18"
+criterion = "0.5"
