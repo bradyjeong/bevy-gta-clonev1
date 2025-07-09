@@ -9,6 +9,12 @@
 - Dev Tools: `cargo xtask ci` (full CI pipeline), `cargo xtask fmt`, `cargo xtask test`
 - Documentation: `cargo xtask doc` (generate), `cargo xtask doc-validate` (validate)
 
+## Development Workflow (CI Failure Prevention)
+- **During Development**: `./scripts/quick-check.sh` (format + compile + test)
+- **Before Committing**: `./scripts/pre-commit-check.sh` (full CI simulation)
+- **Auto-format**: `cargo fmt --all` (run frequently)
+- **Golden Rule**: Never commit without running pre-commit checks
+
 ## Project Vision
 **AAA-Level Open World Game** - GTA-style game built with Bevy 0.16.1 using modern Rust 2024 edition
 - **Target**: Professional game development with Amp-optimized workflow
