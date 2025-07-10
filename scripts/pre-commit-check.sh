@@ -31,7 +31,15 @@ if [ ! -f "Cargo.toml" ]; then
     exit 1
 fi
 
-print_status "info" "Step 1/5: Checking formatting..."
+print_status "info" "Step 1/6: Checking version consistency..."
+if ./scripts/check-version-consistency.sh; then
+    print_status "ok" "Version consistency check passed"
+else
+    print_status "error" "Version consistency check failed"
+    exit 1
+fi
+
+print_status "info" "Step 2/6: Checking formatting..."
 if RUSTFLAGS="-Dwarnings" cargo fmt --all -- --check; then
     print_status "ok" "Formatting check passed"
 else
@@ -40,7 +48,7 @@ else
     exit 1
 fi
 
-print_status "info" "Step 2/5: Running clippy..."
+print_status "info" "Step 3/6: Running clippy..."
 if RUSTFLAGS="-Dwarnings" cargo clippy --workspace --all-targets --all-features -- -D warnings; then
     print_status "ok" "Clippy check passed"
 else
@@ -48,7 +56,7 @@ else
     exit 1
 fi
 
-print_status "info" "Step 3/5: Running tests..."
+print_status "info" "Step 4/6: Running tests..."
 if RUSTFLAGS="-Dwarnings" cargo test --workspace --all-features; then
     print_status "ok" "Tests passed"
 else
@@ -56,7 +64,7 @@ else
     exit 1
 fi
 
-print_status "info" "Step 4/5: Checking documentation..."
+print_status "info" "Step 5/6: Checking documentation..."
 if RUSTFLAGS="-Dwarnings" cargo doc --workspace --no-deps --all-features; then
     print_status "ok" "Documentation build passed"
 else
@@ -64,7 +72,7 @@ else
     exit 1
 fi
 
-print_status "info" "Step 5/5: Checking rustdoc warnings..."
+print_status "info" "Step 6/6: Checking rustdoc warnings..."
 if RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features; then
     print_status "ok" "Rustdoc warnings check passed"
 else

@@ -13,6 +13,25 @@ Each consultation should include:
 
 ## Consultations
 
+### 2025-01-10: Version Consistency Strategy
+**Context**: Need for consistent versioning strategy across all dependencies with Rust 2024 edition and Bevy 0.16.1 migration
+
+**Key Insights**:
+- Engine nucleus (Bevy) requires patch-locking (`bevy = "=0.16.1"`)
+- Ecosystem sidekicks need patch-locking (`bevy_rapier3d = "=0.26.0"`)
+- Rendering dependencies managed via [patch.crates-io] for exact wgpu/winit versions
+- Mature crates use caret-semver (`serde = "^1"`, `anyhow = "^1.0"`)
+- Single source of truth in [workspace.dependencies] with workspace inheritance
+- Zero duplicate major versions in final cargo tree
+
+**Actions Taken**:
+- Updated Cargo.toml with Oracle's version-consistency strategy
+- Added [patch.crates-io] section for wgpu/winit version control
+- Updated Agent.md with version lock-in rules and bump playbook
+- Established CI guards for version consistency
+
+**ADR Reference**: Version strategy integrated into ADR-0007
+
 ### 2025-01-10: Strategic Shift to Bevy 0.16.1 Meta-Crate
 **Context**: Current bevy_ecs 0.13 + micro-crate architecture creating ecosystem misalignment, test failures, development overhead
 

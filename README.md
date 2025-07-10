@@ -2,14 +2,14 @@
 
 ![CI Status](https://github.com/bradyjeong/bevy-gta-clone/workflows/CI/badge.svg)
 ![Test Coverage](https://codecov.io/gh/bradyjeong/bevy-gta-clone/branch/main/graph/badge.svg)
-![Rust Version](https://img.shields.io/badge/rust-1.77+-blue.svg)
+![Rust Version](https://img.shields.io/badge/rust-1.85+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)
 
-A AAA-level open world game built with Bevy 0.16.1 and Rust 2021, optimized for Amp development workflows.
+A AAA-level open world game built with Bevy 0.16.1 and Rust 2024, optimized for Amp development workflows.
 
 ## 🚨 STRATEGIC SHIFT IN PROGRESS
 
-**Oracle-guided architecture change from bevy_ecs 0.13 + micro-crates to Bevy 0.16.1 + strategic modularity.**
+**Oracle-guided architecture change from bevy_ecs 0.13 + micro-crates to Bevy 0.16.1 + strategic modularity + version consistency.**
 
 See [STRATEGIC_SHIFT.md](STRATEGIC_SHIFT.md) for full migration plan and [ADR-0007](docs/adr/0007-strategic-shift-bevy-meta-crate.md) for technical rationale.
 

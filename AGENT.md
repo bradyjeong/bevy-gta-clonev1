@@ -15,12 +15,12 @@
 - **Golden Rule**: Never commit without running pre-commit checks
 
 ## Project Vision
-**AAA-Level Open World Game** - GTA-style game built with Bevy 0.16.1 using Rust 2021 edition
+**AAA-Level Open World Game** - GTA-style game built with Bevy 0.16.1 using Rust 2024 edition
 - **Target**: Professional game development with Amp-optimized workflow
 - **Focus**: Ecosystem alignment, fast iteration, clear boundaries
 
 ## Architecture Strategy
-**Oracle-Guided Strategic Shift** - Bevy 0.16.1 + Strategic 4-5 Crate Structure
+**Oracle-Guided Strategic Shift** - Bevy 0.16.1 + Strategic 4-5 Crate Structure + Version Consistency
 
 ### Oracle's Strategic Workspace Structure
 ```
@@ -38,6 +38,7 @@
 ### Key Principles
 - **Ecosystem Alignment**: Use full Bevy 0.16.1, don't fight the ecosystem
 - **Strategic Modularity**: 4-5 crates max, clear domain boundaries
+- **Version Consistency**: Single source of truth for all versions in [workspace.dependencies]
 - **Amp Optimized**: Focused surfaces for parallel agent development
 - **Compile Speed**: Incremental builds, minimal cross-crate dependencies
 
@@ -103,7 +104,25 @@
 - **Strategic Decisions**: Documented in [Oracle Consultations](docs/oracle-consultations.md)
 - **Architecture Decisions**: Captured in [ADR system](docs/adr/README.md)
 - **Key Principle**: Follow Oracle's strategic shift to Bevy 0.16.1 strictly
+- **Version Consistency**: Follow Oracle's version-consistency strategy exactly
 - **Weekly Verification**: Consult Oracle for milestone checkpoints
+
+## Version Consistency Strategy
+**Oracle's Lock-in Rules:**
+- **Engine nucleus**: `bevy = "=0.16.1"` (patch-locked)
+- **Ecosystem sidekicks**: `bevy_rapier3d = "=0.26.0"` (patch-locked)
+- **Rendering**: `wgpu = "=0.21.0"`, `winit = "=0.30.0"` (via [patch.crates-io])
+- **Mature crates**: `serde = "^1"`, `anyhow = "^1.0"` (caret-semver)
+- **Single source**: All versions in [workspace.dependencies]
+- **Workspace inheritance**: Individual crates use `workspace = true`
+
+**Version-Bump Playbook:**
+1. Wait for new Bevy release announcement
+2. Branch `upgrade/bevy-X.Y.Z`
+3. Update only `[workspace.dependencies].bevy = "=X.Y.Z"`
+4. Run `cargo update -p bevy --precise X.Y.Z`
+5. Update `[patch.crates-io]` with exact wgpu/winit versions
+6. Run full CI, address breaking changes, merge
 
 ## Maintenance & Live Documentation
 
