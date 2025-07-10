@@ -35,3 +35,24 @@ dirs = "5.0"
 rstest = "0.18"
 criterion = "0.5"
 tempfile = "3.0"
+
+[package]
+name = "gta_game"
+edition = "2021"
+version = "0.1.0"
+authors = ["Brady Jeong <bradyjeong@Mac.attlocal.net>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/bradyjeong/bevy-gta-clone"
+
+[dependencies]
+gameplay_factory = { path = "crates/gameplay_factory" }
+config_core = { path = "crates/config_core" }
+env_logger = "0.11"
+
+[[bin]]
+name = "prefab-ls"
+path = "src/bin/prefab-ls.rs"
+
+[[bin]]
+name = "collision_test"
+path = "collision_test.rs"

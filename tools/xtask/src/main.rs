@@ -27,6 +27,8 @@ enum Commands {
     DocValidate,
     /// Check all crates
     Check,
+    /// Run coverage analysis
+    Coverage,
     /// Bump version
     BumpVersion {
         /// Version type to bump
@@ -53,6 +55,7 @@ fn main() -> Result<()> {
         Commands::Doc => run_doc(),
         Commands::DocValidate => run_doc_validate(),
         Commands::Check => run_check(),
+        Commands::Coverage => run_coverage(),
         Commands::BumpVersion { version_type } => bump_version(version_type),
     }
 }
@@ -63,6 +66,7 @@ fn run_ci() -> Result<()> {
     run_fmt()?;
     run_lint()?;
     run_test()?;
+    run_coverage()?;
     run_doc()?;
     run_doc_validate()?;
 
@@ -191,6 +195,40 @@ fn run_check() -> Result<()> {
     }
 
     println!("✅ All crates check passed");
+    Ok(())
+}
+
+fn run_coverage() -> Result<()> {
+    println!("Running coverage analysis...");
+
+    // Install cargo-llvm-cov if not available
+    let install_status = Command::new("cargo")
+        .args(["install", "cargo-llvm-cov"])
+        .status()?;
+
+    if !install_status.success() {
+        println!("cargo-llvm-cov already installed or installation failed");
+    }
+
+    // Run coverage with 70% threshold
+    let status = Command::new("cargo")
+        .args([
+            "llvm-cov",
+            "--workspace",
+            "--all-features",
+            "--lcov",
+            "--output-path",
+            "lcov.info",
+            "--fail-under-lines",
+            "70",
+        ])
+        .status()?;
+
+    if !status.success() {
+        anyhow::bail!("Coverage below 70% threshold");
+    }
+
+    println!("✅ Coverage analysis passed (≥70%)");
     Ok(())
 }
 

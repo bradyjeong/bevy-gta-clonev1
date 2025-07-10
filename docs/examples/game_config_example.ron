@@ -1,0 +1,6 @@
+(
+    factory: (
+        prefab_path: "~/.config/my_game/prefabs/*.ron",
+        hot_reload: true,
+    )
+)

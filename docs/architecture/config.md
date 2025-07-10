@@ -10,11 +10,19 @@ The configuration system provides a hierarchical, type-safe approach to loading 
 
 #### Config Trait
 ```rust
-pub trait Config: DeserializeOwned + Send + Sync + 'static {
+pub trait Config: DeserializeOwned + Send + Sync + 'static + Default {
     const FILE_NAME: &'static str;
     
     fn default_path() -> PathBuf {
         PathBuf::from(Self::FILE_NAME)
+    }
+    
+    fn embedded_defaults() -> Self {
+        Self::default()
+    }
+    
+    fn merge(self, other: Self) -> Self {
+        other
     }
 }
 ```
@@ -24,6 +32,8 @@ The `Config` trait defines the interface for configuration types:
 - **Thread Safety**: `Send + Sync` bounds enable safe concurrent access
 - **Metadata**: `FILE_NAME` constant specifies the configuration file name
 - **Path Resolution**: `default_path()` provides customizable file path logic
+- **Embedded Defaults**: `embedded_defaults()` provides compile-time fallback values
+- **Hierarchical Merging**: `merge()` enables custom merge behavior for configuration values
 
 #### ConfigLoader
 ```rust
@@ -83,7 +93,7 @@ impl Config for GraphicsConfig {
 
 // Load configuration
 let loader = ConfigLoader::new();
-let config: GraphicsConfig = loader.load()?;
+let config: GraphicsConfig = loader.load_with_merge()?;
 ```
 
 ### Custom Configuration Paths
@@ -129,7 +139,7 @@ use amp_core::Result;
 fn load_with_fallback() -> Result<GraphicsConfig> {
     let loader = ConfigLoader::new();
     
-    match loader.load::<GraphicsConfig>() {
+    match loader.load_with_merge::<GraphicsConfig>() {
         Ok(config) => Ok(config),
         Err(e) => {
             log::warn!("Failed to load graphics config: {}", e);
@@ -217,9 +227,9 @@ impl GameEngine {
         let loader = ConfigLoader::new();
         
         Ok(Self {
-            graphics_config: loader.load()?,
-            audio_config: loader.load()?,
-            input_config: loader.load()?,
+            graphics_config: loader.load_with_merge()?,
+            audio_config: loader.load_with_merge()?,
+            input_config: loader.load_with_merge()?,
         })
     }
 }
@@ -234,7 +244,7 @@ use config_core::ConfigLoader;
 fn setup_graphics_system(mut commands: Commands) {
     let loader = ConfigLoader::new();
     
-    match loader.load::<GraphicsConfig>() {
+    match loader.load_with_merge::<GraphicsConfig>() {
         Ok(config) => {
             commands.insert_resource(config);
         }
@@ -253,8 +263,8 @@ fn setup_graphics_system(mut commands: Commands) {
 - Automatic reload and notification system
 - Development-only feature for fast iteration
 
-### Embedded Defaults (Planned)
-- Compile-time embedded configuration files
+### Embedded Defaults (Implemented)
+- Compile-time embedded configuration files via `Config::embedded_defaults()`
 - Fallback when no user configuration exists
 - Ensures the application always has valid settings
 
@@ -263,8 +273,8 @@ fn setup_graphics_system(mut commands: Commands) {
 - Schema-based validation for complex configurations
 - Better error messages with suggestions
 
-### Environment Variable Support (Planned)
-- Override configuration values with environment variables
+### Environment Variable Support (Implemented)
+- Override configuration values with `AMP_CONFIG` environment variable
 - Support for containerized deployments
 - Development and CI/CD integration
 

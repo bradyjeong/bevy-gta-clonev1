@@ -69,7 +69,7 @@ jobs:
         run: |
           cargo llvm-cov --workspace --all-features \
                          --lcov --output-path lcov.info \
-                         --fail-under-lines 65
+                         --fail-under-lines 70
       
 
 

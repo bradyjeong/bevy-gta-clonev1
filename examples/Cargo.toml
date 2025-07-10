@@ -4,12 +4,24 @@ version.workspace = true
 edition.workspace = true
 publish = false
 
+[features]
+default = ["ron"]
+ron = ["gameplay_factory/ron"]
+
 [[bin]]
 name = "minimal"
 path = "minimal.rs"
 
+[[bin]]
+name = "gameplay_factory_example"
+path = "gameplay_factory_example.rs"
+
 [dependencies]
+amp_core = { path = "../crates/amp_core" }
 amp_gpu = { path = "../crates/amp_gpu" }
+config_core = { path = "../crates/config_core" }
+gameplay_factory = { path = "../crates/gameplay_factory", features = ["ron"] }
+bevy_ecs = "0.13"
 winit.workspace = true
 pollster = "0.3"
 env_logger = "0.10"
