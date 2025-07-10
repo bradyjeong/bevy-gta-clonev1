@@ -26,8 +26,8 @@ bevy = "=0.16.1"                          # Full engine, patch-locked
 bevy_rapier3d = "=0.26.0"                 # Compiled against Bevy 0.16.1
 # ---------- Rendering ----------
 # Bevy re-exports wgpu/winit; keep them in sync for crates that still need them
-wgpu = { version = "=0.21.0", optional = true }   # Bevy's internal version (patch exactly)
-winit = { version = "=0.30.0", optional = true }  # Bevy's internal version (patch exactly)
+wgpu = "26.0.0"   # Updated to current version
+winit = "0.30.0"  # Current version
 # ---------- Math / util ----------
 glam = { version = "^0.28", features = ["fast-math"] }
 serde = { version = "^1", features = ["derive"] }
@@ -50,9 +50,7 @@ bevy_ecs = "0.13"
 rapier3d = "0.18"
 
 # Ensure all crates use the exact wgpu/winit Bevy expects
-[patch.crates-io]
-wgpu = { version = "=0.21.0", package = "wgpu" }
-winit = { version = "=0.30.0", package = "winit" }
+# Note: Patches removed temporarily for baseline capture
 
 [package]
 name = "gta_game"
