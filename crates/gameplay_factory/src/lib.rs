@@ -3,10 +3,10 @@
 //! This crate provides a factory pattern for creating game entities from prefab definitions.
 //! It supports loading prefabs from various sources and spawning them into the ECS world.
 
-use std::collections::HashMap;
 use bevy_ecs::system::Commands;
 use dashmap::DashSet;
 use once_cell::sync::Lazy;
+use std::collections::HashMap;
 
 pub use amp_core::Error;
 
@@ -30,7 +30,7 @@ mod hot_reload;
 pub use hot_reload::*;
 
 /// Unique identifier for prefab definitions
-/// 
+///
 /// This is a hardened type that prevents silent narrowing and uses a global
 /// collision detection system to ensure uniqueness across all Factory instances.
 #[repr(transparent)]
@@ -42,7 +42,7 @@ impl PrefabId {
     pub fn new(id: u64) -> Self {
         Self(id)
     }
-    
+
     /// Get the raw u64 value
     pub fn raw(&self) -> u64 {
         self.0
@@ -61,8 +61,6 @@ impl From<u32> for PrefabId {
     }
 }
 
-
-
 impl std::fmt::Display for PrefabId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "PrefabId({})", self.0)
@@ -70,7 +68,7 @@ impl std::fmt::Display for PrefabId {
 }
 
 /// Global collision detection registry
-/// 
+///
 /// This singleton tracks all registered PrefabIds across all Factory instances
 /// to prevent ID collisions even when using multiple factories.
 static GLOBAL_PREFAB_IDS: Lazy<DashSet<PrefabId>> = Lazy::new(|| DashSet::new());
@@ -123,7 +121,7 @@ impl Factory {
         if GLOBAL_PREFAB_IDS.contains(&id) {
             return Err(Error::validation(format!("Duplicate PrefabId {id:?}")));
         }
-        
+
         // Check for local collision detection
         if self.registry.contains_key(&id) {
             log::warn!(
@@ -131,7 +129,7 @@ impl Factory {
                 id
             );
         }
-        
+
         // Register globally and locally
         GLOBAL_PREFAB_IDS.insert(id);
         self.registry.insert(id, prefab);
@@ -144,7 +142,8 @@ impl Factory {
         id: PrefabId,
         source: &dyn PrefabSource,
     ) -> Result<(), Error> {
-        let prefab = Prefab::new();source.load()?;
+        let prefab = Prefab::new();
+        source.load()?;
         self.register(id, prefab)?;
         Ok(())
     }
@@ -155,7 +154,8 @@ impl Factory {
         cmd: &mut Commands,
         id: PrefabId,
     ) -> Result<bevy_ecs::entity::Entity, Error> {
-        let prefab = Prefab::new();self.registry.get(&id).ok_or_else(|| {
+        let prefab = Prefab::new();
+        self.registry.get(&id).ok_or_else(|| {
             Error::resource_load(format!("Prefab {id:?}"), "not found in registry")
         })?;
 
@@ -212,17 +212,23 @@ impl Factory {
 
                     // Load the prefab file
                     match self.load_prefab_file(&path) {
-                        Ok(prefab) => {
-                            match self.register(prefab_id, prefab) {
-                                Ok(()) => {
-                                    loaded_count += 1;
-                                    log::debug!("Loaded prefab {:?} from {}", prefab_id, path.display());
-                                }
-                                Err(e) => {
-                                    errors.push(format!("Failed to register prefab from {}: {}", path.display(), e));
-                                }
+                        Ok(prefab) => match self.register(prefab_id, prefab) {
+                            Ok(()) => {
+                                loaded_count += 1;
+                                log::debug!(
+                                    "Loaded prefab {:?} from {}",
+                                    prefab_id,
+                                    path.display()
+                                );
                             }
-                        }
+                            Err(e) => {
+                                errors.push(format!(
+                                    "Failed to register prefab from {}: {}",
+                                    path.display(),
+                                    e
+                                ));
+                            }
+                        },
                         Err(e) => {
                             errors.push(format!("Failed to load {}: {}", path.display(), e));
                         }
@@ -315,10 +321,10 @@ impl Factory {
         {
             // Create channel for hot-reload events
             let (tx, _rx) = create_reload_channel();
-            
+
             // Store the sender for later use
             self.hot_reload_sender = Some(tx.clone());
-            
+
             // Start the watcher
             let pattern = _path.to_string();
             let watcher_handle = tokio::task::spawn(async move {
@@ -326,9 +332,9 @@ impl Factory {
                     log::error!("Hot-reload watcher error: {}", e);
                 }
             });
-            
+
             self.watcher_handle = Some(WatcherHandle::new(watcher_handle));
-            
+
             log::info!("Hot-reload file watcher set up for path: {}", _path);
             Ok(())
         }
@@ -338,7 +344,7 @@ impl Factory {
             Ok(())
         }
     }
-    
+
     /// Get the hot-reload receiver if hot-reload is enabled
     #[cfg(feature = "hot-reload")]
     pub fn take_hot_reload_receiver(&mut self) -> Option<HotReloadReceiver> {
@@ -350,7 +356,7 @@ impl Factory {
             None
         }
     }
-    
+
     /// Stub method when hot-reload is disabled
     #[cfg(not(feature = "hot-reload"))]
     pub fn take_hot_reload_receiver(&mut self) -> Option<HotReloadReceiver> {
@@ -368,88 +374,88 @@ impl Default for Factory {
 mod tests {
     use super::*;
     use std::collections::HashSet;
-    
+
     #[test]
     fn test_prefab_id_collision_detection() {
         // Clear global registry before test
         clear_all_prefab_ids();
-        
+
         let mut factory = Factory::new();
-        
+
         // Test successful registration
         let id1 = PrefabId::new(12345);
         assert!(factory.register(id1, Prefab::new()).is_ok());
-        
+
         // Test collision detection
         let id2 = PrefabId::new(12345); // Same ID
         assert!(factory.register(id2, Prefab::new()).is_err());
-        
+
         // Test different factory instances share global registry
         let mut factory2 = Factory::new();
         let id3 = PrefabId::new(12345); // Same ID as id1
         assert!(factory2.register(id3, Prefab::new()).is_err());
-        
+
         // Test different ID works
         let id4 = PrefabId::new(54321);
         assert!(factory2.register(id4, Prefab::new()).is_ok());
-        
+
         // Clean up
         clear_all_prefab_ids();
     }
-    
+
     #[test]
     fn test_prefab_id_from_u32() {
         // Test successful conversion
         let id = PrefabId::from(12345u32);
         assert_eq!(id.raw(), 12345u64);
-        
+
         // Test maximum u32 value
         let id = PrefabId::from(u32::MAX);
         assert_eq!(id.raw(), u32::MAX as u64);
     }
-    
+
     #[test]
     fn test_global_registry_functions() {
         clear_all_prefab_ids();
-        
+
         let id1 = PrefabId::new(111);
         let id2 = PrefabId::new(222);
-        
+
         // Initially empty
         assert!(!is_prefab_id_registered(id1));
         assert!(!is_prefab_id_registered(id2));
         assert!(get_all_prefab_ids().is_empty());
-        
+
         // Register through factory
         let mut factory = Factory::new();
         factory.register(id1, Prefab::new()).unwrap();
-        
+
         // Check registration
         assert!(is_prefab_id_registered(id1));
         assert!(!is_prefab_id_registered(id2));
         assert_eq!(get_all_prefab_ids().len(), 1);
-        
+
         // Register another
         factory.register(id2, Prefab::new()).unwrap();
         assert!(is_prefab_id_registered(id2));
         assert_eq!(get_all_prefab_ids().len(), 2);
-        
+
         // Clean up
         clear_all_prefab_ids();
         assert!(get_all_prefab_ids().is_empty());
     }
-    
+
     #[test]
     fn test_prefab_id_fuzzer() {
         clear_all_prefab_ids();
-        
+
         let mut registered_ids = HashSet::new();
         let mut factory = Factory::new();
-        
+
         // Generate a large number of random paths and ensure no duplicates slip through
         let test_paths = [
             "/path/to/prefab1.ron",
-            "/path/to/prefab2.ron", 
+            "/path/to/prefab2.ron",
             "/different/path/prefab1.ron",
             "/assets/characters/player.ron",
             "/assets/vehicles/car.ron",
@@ -462,41 +468,51 @@ mod tests {
             "/a/very/long/path/that/might/cause/issues.ron",
             "/another/very/long/path/that/might/cause/issues.ron",
         ];
-        
+
         for path in &test_paths {
-            let path_obj = std::path::Path::new(path);
-            
+            let _path_obj = std::path::Path::new(path);
+
             // Generate ID using the same logic as generate_prefab_id_from_path
             use std::collections::hash_map::DefaultHasher;
             use std::hash::{Hash, Hasher};
-            
+
             let mut hasher = DefaultHasher::new();
             path.hash(&mut hasher);
             let hash = hasher.finish();
             let id = PrefabId::new(hash);
-            
+
             // Try to register
             match factory.register(id, Prefab::new()) {
                 Ok(()) => {
                     // Should not be a duplicate
-                    assert!(registered_ids.insert(id), "Duplicate ID {:?} for path {}", id, path);
+                    assert!(
+                        registered_ids.insert(id),
+                        "Duplicate ID {:?} for path {}",
+                        id,
+                        path
+                    );
                     assert!(is_prefab_id_registered(id));
                 }
                 Err(_) => {
                     // Should be a duplicate
-                    assert!(registered_ids.contains(&id), "ID {:?} for path {} was not previously registered", id, path);
+                    assert!(
+                        registered_ids.contains(&id),
+                        "ID {:?} for path {} was not previously registered",
+                        id,
+                        path
+                    );
                 }
             }
         }
-        
+
         // Verify all registered IDs are in global registry
         for id in &registered_ids {
             assert!(is_prefab_id_registered(*id));
         }
-        
+
         // Verify counts match
         assert_eq!(get_all_prefab_ids().len(), registered_ids.len());
-        
+
         clear_all_prefab_ids();
     }
 }

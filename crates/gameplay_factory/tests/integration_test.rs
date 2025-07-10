@@ -1,9 +1,9 @@
+use bevy_core::Name;
 use bevy_ecs::prelude::*;
 use bevy_ecs::system::{CommandQueue, Commands};
 use bevy_ecs::world::World;
-use bevy_core::Name;
-use bevy_transform::components::Transform;
 use bevy_render::view::Visibility;
+use bevy_transform::components::Transform;
 use gameplay_factory::*;
 
 // Simple test components for testing
@@ -167,14 +167,17 @@ fn test_custom_component_registration() {
     struct Health(f32);
 
     // Register a custom component
-    let _ = register_component("Health", Box::new(|value, cmd, entity| {
-        let health = match value {
-            ron::Value::Number(n) => Health(n.into_f64() as f32),
-            _ => Health(0.0),
-        };
-        cmd.entity(entity).insert(health);
-        Ok(())
-    }));
+    let _ = register_component(
+        "Health",
+        Box::new(|value, cmd, entity| {
+            let health = match value {
+                ron::Value::Number(n) => Health(n.into_f64() as f32),
+                _ => Health(0.0),
+            };
+            cmd.entity(entity).insert(health);
+            Ok(())
+        }),
+    );
 
     let ron_content = r#"
     RonPrefab(

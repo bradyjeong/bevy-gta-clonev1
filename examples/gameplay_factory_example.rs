@@ -75,7 +75,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }));
 
     // Register the prefab
-    factory.register(PrefabId::from(1u32), player_prefab);
+    let _ = factory.register(PrefabId::from(1u32), player_prefab);
 
     // Create another prefab with different components
     let enemy_prefab = Prefab::new()
@@ -89,7 +89,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             max: 50,
         }));
 
-    factory.register(PrefabId::from(2u32), enemy_prefab);
+    let _ = factory.register(PrefabId::from(2u32), enemy_prefab);
 
     // Example using RON loader
     #[cfg(feature = "ron")]

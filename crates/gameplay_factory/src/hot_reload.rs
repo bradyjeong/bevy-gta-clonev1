@@ -30,7 +30,7 @@ impl HotReloadEvent {
             HotReloadEvent::Deleted(path) => path,
         }
     }
-    
+
     /// Check if this event represents a file deletion
     pub fn is_deletion(&self) -> bool {
         matches!(self, HotReloadEvent::Deleted(_))
@@ -51,7 +51,7 @@ impl WatcherHandle {
     pub fn new(handle: tokio::task::JoinHandle<()>) -> Self {
         Self { _handle: handle }
     }
-    
+
     /// Create a stub handle when hot-reload is disabled
     #[cfg(not(feature = "hot-reload"))]
     pub fn stub() -> Self {
@@ -74,12 +74,12 @@ impl HotReloadReceiver {
     pub fn new(receiver: tokio::sync::mpsc::UnboundedReceiver<HotReloadEvent>) -> Self {
         Self { receiver }
     }
-    
+
     /// Try to receive a hot-reload event
     pub fn try_recv(&mut self) -> Result<HotReloadEvent, tokio::sync::mpsc::error::TryRecvError> {
         self.receiver.try_recv()
     }
-    
+
     /// Receive a hot-reload event (async)
     pub async fn recv(&mut self) -> Option<HotReloadEvent> {
         self.receiver.recv().await
@@ -136,26 +136,23 @@ pub mod watcher {
     use tokio::time::{sleep, Duration};
 
     /// Run a file watcher that monitors files matching a glob pattern
-    pub async fn run_watcher(
-        glob_pattern: &str,
-        reload_tx: HotReloadSender,
-    ) -> Result<(), Error> {
+    pub async fn run_watcher(glob_pattern: &str, reload_tx: HotReloadSender) -> Result<(), Error> {
         let pattern = glob_pattern.to_string();
-        
+
         // Expand the glob pattern to get parent directories to watch
         let watch_dirs = expand_glob_to_watch_dirs(&pattern)?;
-        
+
         // Run the watcher directly
         run_watcher_loop(watch_dirs, pattern, reload_tx).await
     }
-    
+
     /// Get the parent directories that need to be watched for a glob pattern
     fn expand_glob_to_watch_dirs(pattern: &str) -> Result<Vec<PathBuf>, Error> {
         // For patterns like "/assets/**/*.ron", we need to watch "/assets"
         // For patterns like "assets/prefabs/*.ron", we need to watch "assets/prefabs"
         let path = Path::new(pattern);
         let mut dirs = Vec::new();
-        
+
         // Walk up the path until we find the first component with wildcards
         let mut current = path;
         while let Some(parent) = current.parent() {
@@ -170,15 +167,15 @@ pub mod watcher {
                 break;
             }
         }
-        
+
         // If we didn't find any concrete directories, watch the current directory
         if dirs.is_empty() {
             dirs.push(PathBuf::from("."));
         }
-        
+
         Ok(dirs)
     }
-    
+
     /// Main watcher loop
     async fn run_watcher_loop(
         watch_dirs: Vec<PathBuf>,
@@ -186,14 +183,14 @@ pub mod watcher {
         reload_tx: HotReloadSender,
     ) -> Result<(), Error> {
         let (tx, rx) = mpsc::channel();
-        
+
         // Configure the watcher with a 500ms debounce
         let mut watcher = RecommendedWatcher::new(
             tx,
             Config::default().with_poll_interval(Duration::from_millis(500)),
         )
         .map_err(|e| Error::resource_load("file watcher", &e.to_string()))?;
-        
+
         // Start watching the directories
         for dir in &watch_dirs {
             watcher
@@ -201,11 +198,11 @@ pub mod watcher {
                 .map_err(|e| Error::resource_load("file watcher", &e.to_string()))?;
             log::info!("Watching directory: {}", dir.display());
         }
-        
+
         // Process events
         let mut debounce_map = std::collections::HashMap::new();
         let debounce_delay = Duration::from_millis(250);
-        
+
         loop {
             // Handle notify events
             while let Ok(event) = rx.try_recv() {
@@ -213,7 +210,7 @@ pub mod watcher {
                     process_notify_event(&event, &pattern, &mut debounce_map).await;
                 }
             }
-            
+
             // Process debounced events
             let now = std::time::Instant::now();
             let mut to_send = Vec::new();
@@ -225,7 +222,7 @@ pub mod watcher {
                     true
                 }
             });
-            
+
             // Send debounced events
             for path in to_send {
                 if path.exists() {
@@ -242,12 +239,12 @@ pub mod watcher {
                     }
                 }
             }
-            
+
             // Small delay to prevent busy waiting
             sleep(Duration::from_millis(50)).await;
         }
     }
-    
+
     /// Process a notify event and update debounce map
     async fn process_notify_event(
         event: &Event,
@@ -259,7 +256,7 @@ pub mod watcher {
             if !path_matches_pattern(path, pattern) {
                 continue;
             }
-            
+
             match event.kind {
                 EventKind::Create(_) => {
                     // Debounce create events
@@ -277,7 +274,7 @@ pub mod watcher {
             }
         }
     }
-    
+
     /// Check if a path matches the glob pattern
     fn path_matches_pattern(path: &Path, pattern: &str) -> bool {
         // Use glob matching to check if the path matches the pattern
@@ -298,7 +295,7 @@ pub mod watcher {
 #[cfg(not(feature = "hot-reload"))]
 pub mod watcher {
     use super::*;
-    
+
     /// Stub implementation that returns immediately
     pub async fn run_watcher(
         _glob_pattern: &str,

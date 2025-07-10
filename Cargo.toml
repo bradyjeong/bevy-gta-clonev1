@@ -44,6 +44,10 @@ authors = ["Brady Jeong <bradyjeong@Mac.attlocal.net>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/bradyjeong/bevy-gta-clone"
 
+[features]
+default = []
+ron = ["gameplay_factory/ron"]
+
 [dependencies]
 gameplay_factory = { path = "crates/gameplay_factory" }
 config_core = { path = "crates/config_core" }

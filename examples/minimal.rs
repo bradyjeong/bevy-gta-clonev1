@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Demonstrate factory pattern by creating a simple prefab
     println!("Demonstrating Factory pattern for entity spawning...");
-    let player_prefab_id = PrefabId(1);
+    let player_prefab_id = PrefabId::new(1);
 
     // Create a simple prefab with a mock component
     #[derive(Debug, Clone)]
@@ -62,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     prefab.add_component(Box::new(MockComponent {
         name: "Player".to_string(),
     }));
-    factory.register(player_prefab_id, prefab);
+    let _ = factory.register(player_prefab_id, prefab);
 
     // Now spawn the entity - this should succeed
     match factory.spawn(&mut commands, player_prefab_id) {
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Demonstrate failure case with unregistered prefab
-    let unknown_prefab_id = PrefabId(999);
+    let unknown_prefab_id = PrefabId::new(999);
     match factory.spawn(&mut commands, unknown_prefab_id) {
         Ok(_) => println!("❌ Unexpected success for unknown prefab"),
         Err(e) => println!("✅ Expected failure for unknown prefab: {e}"),
