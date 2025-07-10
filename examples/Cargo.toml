@@ -1,3 +1,9 @@
+# STRATEGIC SHIFT: Will be updated during migration to:
+# - Replace bevy_ecs 0.13 with bevy 0.16.1  
+# - Update dependencies to match Oracle's structure
+# - Replace bins with [[example]] entries for city_demo
+# See STRATEGIC_SHIFT.md for migration plan
+
 [package]
 name = "amp_examples"
 version.workspace = true

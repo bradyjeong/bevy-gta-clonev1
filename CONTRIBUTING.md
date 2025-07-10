@@ -1,8 +1,10 @@
 # Contributing to Amp Game Engine
 
+🚨 **STRATEGIC SHIFT IN PROGRESS**: Moving to Bevy 0.16.1 + strategic modularity. See [STRATEGIC_SHIFT.md](STRATEGIC_SHIFT.md).
+
 ## Development Setup
 
-1. **Install Rust**: Use rustup to install Rust 1.77 or later
+1. **Install Rust**: Use rustup to install Rust 1.77+ (Rust 2024 edition)
 2. **Clone Repository**: `git clone <repository-url>`
 3. **Build**: `cargo build --workspace`
 4. **Test**: `cargo test --workspace`
@@ -24,7 +26,7 @@ use glam::{Vec3, Mat4};
 // Standard library
 use std::collections::HashMap;
 
-// Bevy (when applicable)
+// Bevy 0.16.1 prelude
 use bevy::prelude::*;
 
 // Local crate
@@ -111,8 +113,8 @@ Longer description if needed, explaining the why behind the change.
 ### Scopes
 - `core`: amp_core crate
 - `math`: amp_math crate
-- `spatial`: amp_spatial crate
-- `gpu`: amp_gpu crate
+- `engine`: amp_engine crate
+- `gameplay`: amp_gameplay crate
 - `ci`: CI/CD changes
 - `docs`: Documentation
 

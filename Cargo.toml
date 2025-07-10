@@ -4,12 +4,15 @@ members = [
     "tools/xtask",
 ]
 exclude = [
-    "examples",  # Excluded until P1 dependency issues are resolved
+    "examples",  # Will re-enable during migration per Oracle's plan
 ]
 resolver = "2"
 
+# STRATEGIC SHIFT: Will upgrade to edition = "2024" during migration
+# Current: bevy_ecs 0.13 + micro-crates  
+# Target: Bevy 0.16.1 + strategic modularity
 [workspace.package]
-edition = "2021"
+edition = "2021" 
 rust-version = "1.77"
 version = "0.1.0"
 authors = ["Brady Jeong <bradyjeong@Mac.attlocal.net>"]
@@ -17,6 +20,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/bradyjeong/bevy-gta-clone"
 
 [workspace.dependencies]
+# STRATEGIC SHIFT: Will replace bevy_ecs with full bevy = "0.16.1" during migration
 # Core dependencies
 anyhow = { version = "1.0", default-features = false }
 glam = { version = "0.25", features = ["fast-math"] }

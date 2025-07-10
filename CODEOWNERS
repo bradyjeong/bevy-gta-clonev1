@@ -16,12 +16,12 @@ docs/adr/ @bradyjeong
 # Development guides
 docs/guides/ @bradyjeong
 
-# Core engine crates
+# Core engine crates (Oracle's strategic structure)
 crates/amp_core/ @bradyjeong
 crates/amp_math/ @bradyjeong
-crates/amp_spatial/ @bradyjeong
-crates/amp_gpu/ @bradyjeong
-crates/amp_world/ @bradyjeong
+crates/amp_engine/ @bradyjeong
+crates/amp_gameplay/ @bradyjeong
+crates/amp_tools/ @bradyjeong
 
 # Build and CI
 Cargo.toml @bradyjeong
