@@ -15,7 +15,7 @@
 - **Golden Rule**: Never commit without running pre-commit checks
 
 ## Project Vision
-**AAA-Level Open World Game** - GTA-style game built with Bevy 0.16.1 using Rust 2024 edition
+**AAA-Level Open World Game** - GTA-style game built with Bevy 0.16.1 using Rust 2021 edition
 - **Target**: Professional game development with Amp-optimized workflow
 - **Focus**: Ecosystem alignment, fast iteration, clear boundaries
 
@@ -105,8 +105,49 @@
 - **Key Principle**: Follow Oracle's strategic shift to Bevy 0.16.1 strictly
 - **Weekly Verification**: Consult Oracle for milestone checkpoints
 
-## Next Steps (Week 2)
-- Port RON configuration system → config_core crate
-- Extract unified entity factory → gameplay_factory crate
-- Begin LOD and batch processing systems
-- Maintain test coverage above 70%
+## Maintenance & Live Documentation
+
+### Files Requiring Regular Updates
+These files must be kept current and reviewed during every strategic change:
+
+**Core Documentation:**
+- `Agent.md` - Commands, architecture, status (THIS FILE)
+- `README.md` - Public face, quick start, features  
+- `STRATEGIC_SHIFT.md` - Current migration status and roadmap
+- `CONTRIBUTING.md` - Development workflow, code style, commit guidelines
+
+**Architecture Records:**
+- `docs/adr/README.md` - Index of all architectural decisions
+- `docs/oracle-consultations.md` - Oracle guidance and strategic decisions
+- Latest ADR (currently ADR-0007) - Active architectural strategy
+
+**Configuration Files:**
+- `Cargo.toml` - Workspace dependencies, edition, version
+- `examples/Cargo.toml` - Example dependencies and structure  
+- `CODEOWNERS` - Ownership aligned with current crate structure
+- `.github/workflows/ci.yml` - CI pipeline matching current architecture
+
+**Status Tracking:**
+- `IMPLEMENTATION_SUMMARY.md` - Current implementation status
+- Test counts and coverage metrics in CI
+- Performance benchmarks and targets
+
+### Dead Weight Prevention
+**Red Flags for Cleanup:**
+- Documentation referencing removed crates (amp_spatial, amp_gpu, amp_world)
+- Cargo.toml dependencies not used by any crate
+- Examples that don't compile or run
+- CI workflows testing non-existent targets
+- README features that don't exist
+- ADRs marked "Superseded" without clear replacement
+
+**Maintenance Schedule:**
+- **Every commit**: Verify Agent.md status reflects reality
+- **Every architectural change**: Update all docs in this list
+- **Every Oracle consultation**: Update oracle-consultations.md + create ADR if needed
+- **Every milestone**: Verify README.md features match implementation
+
+## Next Steps (Migration Implementation)
+- Follow Oracle's 10-14 day migration plan in STRATEGIC_SHIFT.md
+- Update all maintenance files during each migration phase
+- Verify no dead weight accumulates during restructuring

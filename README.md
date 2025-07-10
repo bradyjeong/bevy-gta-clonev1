@@ -5,7 +5,7 @@
 ![Rust Version](https://img.shields.io/badge/rust-1.77+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)
 
-A AAA-level open world game built with Bevy 0.16.1 and Rust 2024, optimized for Amp development workflows.
+A AAA-level open world game built with Bevy 0.16.1 and Rust 2021, optimized for Amp development workflows.
 
 ## 🚨 STRATEGIC SHIFT IN PROGRESS
 
@@ -61,7 +61,7 @@ Oracle's strategic 4-5 crate structure for ecosystem alignment:
 
 ### Prerequisites
 
-- Rust 1.77+ (Rust 2024 edition)
+- Rust 1.77+ (Rust 2021 edition)
 - Git
 
 ### Building

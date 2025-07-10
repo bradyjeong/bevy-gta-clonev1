@@ -8,7 +8,7 @@ exclude = [
 ]
 resolver = "2"
 
-# STRATEGIC SHIFT: Will upgrade to edition = "2024" during migration
+# STRATEGIC SHIFT: Already on current stable edition = "2021"
 # Current: bevy_ecs 0.13 + micro-crates  
 # Target: Bevy 0.16.1 + strategic modularity
 [workspace.package]
