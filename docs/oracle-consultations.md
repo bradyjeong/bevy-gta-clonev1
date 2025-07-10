@@ -13,6 +13,24 @@ Each consultation should include:
 
 ## Consultations
 
+### 2025-01-10: Strategic Shift to Bevy 0.16.1 Meta-Crate
+**Context**: Current bevy_ecs 0.13 + micro-crate architecture creating ecosystem misalignment, test failures, development overhead
+
+**Key Insights**:
+- Current approach fights Bevy ecosystem, wastes time on solved problems (RON loaders, wgpu wrappers)
+- Amp productivity comes from clear boundaries, not excessive crate count
+- Cross-crate compilation overhead dominates CI time (40%+)
+- Strategic 4-5 crate structure better than 6+ micro-crates
+- Full Bevy 0.16.1 provides ecosystem leverage + future-proofing
+
+**Actions Taken**:
+- Created ADR-007 documenting strategic shift
+- Updated Agent.md with Oracle's recommended structure
+- Planned 10-14 day migration roadmap
+- Target: amp_core + amp_math + amp_engine + amp_gameplay + amp_tools
+
+**ADR Reference**: [ADR-0007](adr/0007-strategic-shift-bevy-meta-crate.md)
+
 ### 2025-01-07: Architecture Strategy Decision
 **Context**: Choosing between clean restart, continued refactoring, or hybrid approach
 

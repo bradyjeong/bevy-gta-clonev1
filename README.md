@@ -5,7 +5,13 @@
 ![Rust Version](https://img.shields.io/badge/rust-1.77+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)
 
-A AAA-level open world game engine built with Rust and Bevy, optimized for Amp development workflows.
+A AAA-level open world game built with Bevy 0.16.1 and Rust 2024, optimized for Amp development workflows.
+
+## 🚨 STRATEGIC SHIFT IN PROGRESS
+
+**Oracle-guided architecture change from bevy_ecs 0.13 + micro-crates to Bevy 0.16.1 + strategic modularity.**
+
+See [STRATEGIC_SHIFT.md](STRATEGIC_SHIFT.md) for full migration plan and [ADR-0007](docs/adr/0007-strategic-shift-bevy-meta-crate.md) for technical rationale.
 
 ## Quick Start
 
@@ -17,49 +23,45 @@ cd bevy-gta-clone
 # Build the workspace
 cargo build --workspace
 
-# Run the minimal example
-cargo run --bin minimal
+# Run the city demo (post-migration)
+cargo run --example city_demo
 
 # Run tests
 cargo test --workspace
 
 # Run full CI pipeline locally
-cargo xtask ci
+./scripts/pre-commit-check.sh
+```
+
+## Target Architecture (Post-Migration)
+
+Oracle's strategic 4-5 crate structure for ecosystem alignment:
+
+```
+├─ crates/
+│   ├─ amp_core/          # Pure Rust utilities, error handling (no Bevy deps)
+│   ├─ amp_math/          # glam re-exports, Morton, AABB (no Bevy deps)  
+│   ├─ amp_engine/        # Bevy 0.16.1 dependency, engine plugins
+│   ├─ amp_gameplay/      # Game systems, components, prefabs
+│   └─ amp_tools/         # xtask, build pipeline helpers (optional)
+├─ examples/              # city_demo.rs
+└─ docs/adr/              # Architecture Decision Records
 ```
 
 ## Features
 
-- 🌍 **Hierarchical Spatial Partitioning** - Efficient world streaming with Morton encoding
-- 🎮 **GPU-Driven Rendering** - Modern wgpu-based rendering pipeline
-- ⚡ **High Performance** - 60+ FPS target with object pooling and minimal allocations
-- 🧪 **Comprehensive Testing** - 78+ unit tests with property-based testing
-- 🔧 **Developer Experience** - Fast compilation, hot reloading, integrated tooling
-- 📊 **Performance Monitoring** - Built-in profiling and frame analysis
-
-## Architecture
-
-The engine is built with a clean multi-crate architecture:
-
-```
-├─ crates/
-│   ├─ amp_core/          # Core error handling and utilities
-│   ├─ amp_math/          # Spatial mathematics and Morton encoding  
-│   ├─ amp_spatial/       # Hierarchical spatial partitioning
-│   ├─ amp_gpu/           # GPU abstraction over wgpu
-│   ├─ amp_world/         # ECS world management
-│   └─ [future crates]    # amp_physics, amp_ai, amp_render
-├─ examples/              # Example applications
-├─ tools/xtask/           # Development automation
-└─ docs/                  # Documentation
-```
-
-See [Architecture Overview](docs/architecture/README.md) for detailed technical information.
+- 🌍 **Full Bevy 0.16.1 Stack** - Complete ecosystem integration
+- 🎮 **Modular Architecture** - Strategic crate boundaries for Amp productivity  
+- ⚡ **High Performance** - 60+ FPS target with Bevy's optimized ECS
+- 🧪 **Integrated Testing** - App-based testing with Bevy plugins
+- 🔧 **Developer Experience** - Fast compilation, ecosystem tooling
+- 📊 **Asset Pipeline** - Bevy's integrated RON/GLTF loaders
 
 ## Development
 
 ### Prerequisites
 
-- Rust 1.77+ (install via [rustup](https://rustup.rs/))
+- Rust 1.77+ (Rust 2024 edition)
 - Git
 
 ### Building
@@ -71,8 +73,8 @@ cargo check --workspace
 # Build with optimizations
 cargo build --release --workspace
 
-# Run linting
-cargo clippy --workspace --all-targets --all-features
+# Run linting (strict)
+cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 # Format code
 cargo fmt --all
@@ -85,44 +87,27 @@ cargo fmt --all
 cargo test --workspace
 
 # Run with coverage
-cargo llvm-cov --workspace --lcov --output-path lcov.info
+cargo llvm-cov --workspace --all-features
 
 # Run specific crate tests
 cargo test -p amp_math
 ```
 
-### Development Tools
+## Migration Status
 
-```bash
-# Run full CI pipeline locally
-cargo xtask ci
+- ✅ Oracle consultation complete
+- ✅ ADR-007 created  
+- ✅ Documentation aligned
+- 🔄 Implementation pending (10-14 days)
 
-# Format all code
-cargo xtask fmt
+See [STRATEGIC_SHIFT.md](STRATEGIC_SHIFT.md) for detailed migration plan.
 
-# Run tests only
-cargo xtask test
-
-# Generate documentation
-cargo xtask doc
-```
-
-## Documentation
-
-- **[Development Guide](docs/guides/development.md)** - Setup and workflow
-- **[Architecture Overview](docs/architecture/README.md)** - Technical design
-- **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute
-- **[API Documentation](https://docs.rs/amp-game-engine)** - Generated API docs
-
-## Performance
-
-The engine targets AAA-level performance:
+## Performance Targets
 
 - **60+ FPS** on desktop platforms
-- **Distance-based culling** (buildings 300m, vehicles 150m, NPCs 100m)
-- **Object pooling** and per-frame arenas
-- **Parallel execution** with Bevy's ECS scheduler
-- **GPU-driven rendering** with indirect draw calls
+- **Distance-based culling** for open world streaming
+- **Object pooling** and memory efficiency
+- **Bevy's parallel ECS** for system execution
 
 ## License
 

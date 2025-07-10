@@ -3,50 +3,43 @@
 ## Commands
 - Build: `cargo build --workspace` | Check: `cargo check --workspace` | Test: `cargo test --workspace`
 - Lint: `cargo clippy --workspace --all-targets --all-features` | Format: `cargo fmt --all`
-- Rustdoc: `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features` (lint-enabled)
+- Rustdoc: `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features`
 - Coverage: `cargo llvm-cov --workspace --all-features` | Coverage Gate: Minimum 70%
-- Run Example: `cargo run --bin minimal`
-- Dev Tools: `cargo xtask ci` (full CI pipeline), `cargo xtask fmt`, `cargo xtask test`
-- Documentation: `cargo xtask doc` (generate), `cargo xtask doc-validate` (validate)
+- Run Example: `cargo run --example city_demo`
+- Dev Tools: `cargo xtask ci` (full CI pipeline), `./scripts/pre-commit-check.sh` (before commits)
 
-## Development Workflow (CI Failure Prevention)
-- **During Development**: `./scripts/quick-check.sh` (format + compile + test)
+## Development Workflow
+- **During Development**: `cargo watch -c` (continuous compilation)
 - **Before Committing**: `./scripts/pre-commit-check.sh` (full CI simulation)
 - **Auto-format**: `cargo fmt --all` (run frequently)
 - **Golden Rule**: Never commit without running pre-commit checks
 
 ## Project Vision
-**AAA-Level Open World Game** - GTA-style game built with Bevy 0.16.1 using modern Rust 2024 edition
+**AAA-Level Open World Game** - GTA-style game built with Bevy 0.16.1 using Rust 2024 edition
 - **Target**: Professional game development with Amp-optimized workflow
-- **Focus**: Clean architecture, fast iteration, team scalability
+- **Focus**: Ecosystem alignment, fast iteration, clear boundaries
 
 ## Architecture Strategy
-**8-Week Extraction-Based Restart** - Clean workspace preserving proven systems
+**Oracle-Guided Strategic Shift** - Bevy 0.16.1 + Strategic 4-5 Crate Structure
 
-### Current Workspace Structure (Week 1 Complete)
+### Oracle's Strategic Workspace Structure
 ```
 ├─ crates/
-│   ├─ amp_core/          # Core error handling and utilities
-│   ├─ amp_math/          # Spatial mathematics and Morton encoding  
-│   ├─ amp_spatial/       # Hierarchical spatial partitioning
-│   ├─ amp_gpu/           # GPU abstraction over wgpu
-│   ├─ amp_world/         # ECS world management (basic)
-│   └─ [future crates]    # amp_physics, amp_ai, amp_render
-├─ examples/              # Example applications (minimal.rs)
-├─ tools/xtask/           # Development automation
-├─ docs/                  # Organized documentation
-│   ├─ architecture/      # Technical architecture docs
-│   ├─ guides/            # Development guides  
-│   ├─ api/               # Auto-generated API docs
-│   └─ adr/               # Architecture Decision Records
+│   ├─ amp_core/          # Pure Rust utilities, error handling (no Bevy deps)
+│   ├─ amp_math/          # glam re-exports, Morton, AABB (no Bevy deps)  
+│   ├─ amp_engine/        # Bevy 0.16.1 dependency, engine plugins
+│   ├─ amp_gameplay/      # Game systems, components, prefabs
+│   └─ amp_tools/         # xtask, build pipeline helpers (optional)
+├─ examples/              # Example applications (city_demo.rs)
+├─ docs/adr/              # Architecture Decision Records
 └─ .github/workflows/     # CI/CD pipeline
 ```
 
 ### Key Principles
-- **Domain Boundaries**: Clear separation between engine and game logic
-- **Bevy Integration**: Leverage Bevy's ECS, don't fight it
-- **Extract, Don't Rebuild**: Port proven algorithms, rebuild only interfaces
-- **Amp Optimized**: Fast compile times, parallel development, clean CI
+- **Ecosystem Alignment**: Use full Bevy 0.16.1, don't fight the ecosystem
+- **Strategic Modularity**: 4-5 crates max, clear domain boundaries
+- **Amp Optimized**: Focused surfaces for parallel agent development
+- **Compile Speed**: Incremental builds, minimal cross-crate dependencies
 
 ## Development Workflow
 - **Weekly Checkpoints**: Prevent scope creep with deliverable demos
@@ -99,29 +92,17 @@
 - 2 unit tests for world creation
 
 ## Current Status
-✅ **WEEK 1 COMPLETE** - Foundation established with 78 passing tests
-- All crates compile cleanly with `-Dwarnings`
-- CI/CD pipeline operational
-- Example application runs successfully
-- Oracle's Week 1 success criteria met
-
-✅ **WEEK 2 - DAY 1-4 COMPLETE** - CI Quality Gates & Gameplay Factory
-- ✅ Coverage gate raised to 70% (80.43% current)
-- ✅ Rustdoc linting enabled (no warnings found)
-- ✅ Publishing hygiene fixed (categories/keywords added)
-- ✅ CI workflow updated with quality gates
-- ✅ config_core crate extended with factory settings
-- ✅ gameplay_factory crate implemented with Oracle's API
-- ✅ RON loader with feature-gated support
-- ✅ Documentation and ADR-006 entity factory created
-- ✅ minimal example updated with Factory pattern
-- ✅ 137 tests passing, all quality gates green
-- Following Oracle's strict Week 2 strategy
+🔄 **STRATEGIC SHIFT IN PROGRESS** - Oracle-Guided Architecture Change
+- **Decision**: Moving from bevy_ecs 0.13 + micro-crates to Bevy 0.16.1 + strategic modularity
+- **Reason**: Current setup fights Bevy ecosystem, creates unnecessary complexity
+- **Target**: 4-5 crate structure with full Bevy 0.16.1 for ecosystem alignment
+- **Timeline**: 10-14 day migration following Oracle's roadmap
+- **Status**: Documentation updated, migration planning complete
 
 ## Oracle Guidance
 - **Strategic Decisions**: Documented in [Oracle Consultations](docs/oracle-consultations.md)
 - **Architecture Decisions**: Captured in [ADR system](docs/adr/README.md)
-- **Key Principle**: Follow Oracle's 8-week extraction plan strictly
+- **Key Principle**: Follow Oracle's strategic shift to Bevy 0.16.1 strictly
 - **Weekly Verification**: Consult Oracle for milestone checkpoints
 
 ## Next Steps (Week 2)

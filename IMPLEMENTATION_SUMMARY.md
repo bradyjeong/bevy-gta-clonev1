@@ -1,100 +1,89 @@
-# Oracle's PrefabId Collision Detection Implementation
+# STRATEGIC SHIFT: Bevy 0.16.1 Migration Plan
 
 ## Summary
 
-Successfully implemented Oracle's comprehensive PrefabId collision detection system per Fix-2 requirements. The implementation provides global collision detection across all Factory instances and prevents silent narrowing bugs.
+Oracle-guided strategic shift from bevy_ecs 0.13 + micro-crates to Bevy 0.16.1 + strategic modularity. Current architecture fights ecosystem, creates unnecessary complexity.
 
-## Key Features Implemented
+## Problems with Current Architecture
 
-### 1. Hardened PrefabId Type
-- **`#[repr(transparent)]`** with `u64` backing for memory efficiency
-- **Private field** prevents direct construction, forces use of safe methods
-- **`TryFrom<u32>`** replaces `From<u32>` to prevent silent narrowing
-- **Full 64-bit hash** values, no truncation
-- **Serde support** for serialization/deserialization
+### 1. Ecosystem Misalignment
+- **bevy_ecs 0.13** instead of full Bevy 0.16.1 stack
+- **Custom RON loaders** instead of Bevy asset pipeline
+- **wgpu abstractions** instead of Bevy rendering
+- **Missing integration** with Bevy plugins, examples, community
 
-### 2. Global Collision Detection
-- **`DashSet<PrefabId>`** using `dashmap` crate for thread-safe global registry
-- **`GLOBAL_PREFAB_IDS`** static singleton tracks all registered IDs
-- **Cross-factory collision detection** - duplicates fail even across different Factory instances
-- **Global registry functions**: `is_prefab_id_registered()`, `get_all_prefab_ids()`, `clear_all_prefab_ids()`
+### 2. Development Overhead
+- **Cross-crate compilation** dominates CI time (40%+)
+- **6+ micro-crates** create coordination tax
+- **Version conflicts** between workspace members
+- **Test complexity** from mocked ECS vs integrated App
 
-### 3. Updated Factory API
-- **`Factory::register()`** now returns `Result<(), Error>` instead of `()` 
-- **Immediate failure** on duplicate registration across ANY factory instance
-- **Path-based ID generation** uses full 64-bit hash values
-- **All registration paths** go through global collision detection
+### 3. Future Risk
+- **Bevy 0.17+ upgrades** require multi-month re-integration
+- **Ecosystem drift** as community moves forward
+- **Maintenance burden** for custom solutions
 
-### 4. CLI Tool: `prefab-ls`
-- **`cargo run --bin prefab-ls`** lists all registered prefab IDs
-- **Collision detection** shows duplicate IDs with their paths
-- **Directory scanning** support with `--path` flag
-- **Verbose output** with `--verbose` flag
-- **Config integration** loads from GameConfig automatically
+## Oracle's Target Architecture
 
-### 5. Comprehensive Testing
-- **Unit tests** for all PrefabId operations
-- **Fuzzer test** with diverse path patterns
-- **Integration tests** updated for new API
-- **Cross-factory collision tests** verify global detection
-- **Live demonstration** with `collision_test` binary
-
-## Oracle's Requirements Met
-
-✅ **Hardened PrefabId type**: `#[repr(transparent)]` with `u64` backing  
-✅ **Prevent silent narrowing**: `TryFrom<u32>` replaces `From<u32>`  
-✅ **Global collision detection**: `DashSet<PrefabId>` singleton registry  
-✅ **Factory integration**: `Factory::register()` detects global duplicates  
-✅ **CLI helper**: `cargo run --bin prefab-ls` lists/detects collisions  
-✅ **Full 64-bit hash**: No truncation in `generate_prefab_id_from_path()`  
-✅ **Comprehensive testing**: Fuzzer + integration tests verify behavior  
-✅ **Cross-factory safety**: Duplicate detection works across all instances  
-
-## Breaking Changes
-
-- **`Factory::register()`** now returns `Result<(), Error>`
-- **`PrefabId::from(u32)`** replaced with `PrefabId::try_from(u32)`
-- **Direct field access** `PrefabId.0` replaced with `PrefabId.raw()`
-- **Global collision detection** may fail previously successful registrations
-
-## Usage Examples
-
-```rust
-// Safe registration with error handling
-match factory.register(id, prefab) {
-    Ok(()) => println!("Registration successful"),
-    Err(e) => println!("Registration failed: {}", e),
-}
-
-// Safe u32 conversion
-let id = PrefabId::try_from(42u32)?;
-
-// Global registry inspection
-if is_prefab_id_registered(id) {
-    println!("ID already registered globally");
-}
-
-// CLI tool usage
-cargo run --bin prefab-ls                    # List all IDs
-cargo run --bin prefab-ls --collisions       # Show only collisions
-cargo run --bin prefab-ls --path assets      # Scan specific directory
+```
+├─ crates/
+│   ├─ amp_core/          # Pure Rust utilities, error handling (no Bevy deps)
+│   ├─ amp_math/          # glam re-exports, Morton, AABB (no Bevy deps)  
+│   ├─ amp_engine/        # Bevy 0.16.1 dependency, engine plugins
+│   ├─ amp_gameplay/      # Game systems, components, prefabs
+│   └─ amp_tools/         # xtask, build pipeline helpers (optional)
+├─ examples/              # city_demo.rs
+└─ docs/adr/              # Architecture Decision Records
 ```
 
-## Technical Details
+## Migration Roadmap (10-14 Days)
 
-- **Thread-safe**: Uses `dashmap::DashSet` for concurrent access
-- **Memory efficient**: `#[repr(transparent)]` ensures zero-cost abstraction
-- **Hash quality**: Full 64-bit `DefaultHasher` values for collision resistance
-- **Error handling**: Comprehensive error messages for debugging
-- **Performance**: O(1) collision detection via hash set lookup
+### Days 1-2: Branch & Lock Versions
+- `cargo add bevy@0.16.1 --features bevy_winit,bevy_gltf` in amp_engine
+- Freeze current branch for rollback safety
+- Update to Rust 2024 edition
 
-## Success Verification
+### Days 3-4: Crate Consolidation  
+- Move amp_spatial, amp_gpu, amp_world → amp_engine modules
+- Delete empty crates, fix mod paths
+- Preserve git history with `git mv`
 
-The implementation successfully prevents all forms of PrefabId collisions:
-- ✅ Same factory, duplicate IDs → Error
-- ✅ Different factories, same IDs → Error  
-- ✅ Path-based hash collisions → Error
-- ✅ Silent narrowing from u32 → Prevented
-- ✅ Global registry tracking → Working
+### Days 5-6: Asset Pipeline Integration
+- Delete custom RON loader
+- Register AssetLoader plugin using Bevy's RON support
+- Update asset loading to use Bevy Handle<T> system
 
-Oracle's collision detection requirements are fully implemented and verified.
+### Days 7-9: Test Modernization
+- Rewrite integration tests: `App::new().add_plugins(DefaultPlugins)`
+- Update coverage thresholds for reduced LOC
+- Re-enable examples/ in workspace
+
+### Days 10-14: Stabilization
+- Create ADR-007 documenting shift
+- Update all documentation
+- 30-minute playtest validation
+- Tag v0.2.0-alpha
+
+## Expected Benefits
+
+### Immediate
+- ✅ **30-40% faster builds** from reduced cross-crate overhead
+- ✅ **Ecosystem access** to Bevy plugins, examples, community
+- ✅ **Test reliability** from integrated App instances
+- ✅ **Development velocity** from standard patterns
+
+### Long-term  
+- ✅ **Future-proofing** for Bevy 0.17+ upgrades
+- ✅ **Amp productivity** with clear boundaries, no coordination tax
+- ✅ **Community alignment** with standard Bevy patterns
+- ✅ **Reduced maintenance** burden from custom solutions
+
+## Status
+
+- ✅ Oracle consultation complete
+- ✅ ADR-007 created
+- ✅ Agent.md updated  
+- ✅ Documentation aligned
+- 🔄 Ready for implementation
+
+**This strategic shift addresses architectural debt and aligns with ecosystem best practices for sustainable development.**
