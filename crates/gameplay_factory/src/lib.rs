@@ -71,7 +71,7 @@ impl std::fmt::Display for PrefabId {
 ///
 /// This singleton tracks all registered PrefabIds across all Factory instances
 /// to prevent ID collisions even when using multiple factories.
-static GLOBAL_PREFAB_IDS: Lazy<DashSet<PrefabId>> = Lazy::new(|| DashSet::new());
+static GLOBAL_PREFAB_IDS: Lazy<DashSet<PrefabId>> = Lazy::new(DashSet::new);
 
 /// Check if a PrefabId has been registered globally
 pub fn is_prefab_id_registered(id: PrefabId) -> bool {
@@ -125,8 +125,7 @@ impl Factory {
         // Check for local collision detection
         if self.registry.contains_key(&id) {
             log::warn!(
-                "Prefab ID {:?} already exists in local registry, replacing existing prefab",
-                id
+                "Prefab ID {id:?} already exists in local registry, replacing existing prefab"
             );
         }
 
@@ -197,7 +196,7 @@ impl Factory {
         let paths = glob::glob(&expanded_path).map_err(|e| {
             Error::resource_load(
                 "glob pattern",
-                &format!("Invalid glob pattern '{}': {}", expanded_path, e),
+                format!("Invalid glob pattern '{expanded_path}': {e}"),
             )
         })?;
 
@@ -235,7 +234,7 @@ impl Factory {
                     }
                 }
                 Err(e) => {
-                    errors.push(format!("Glob error: {}", e));
+                    errors.push(format!("Glob error: {e}"));
                 }
             }
         }
@@ -243,7 +242,7 @@ impl Factory {
         // If we have errors but also loaded some files, log warnings
         if !errors.is_empty() && loaded_count > 0 {
             for error in &errors {
-                log::warn!("{}", error);
+                log::warn!("{error}");
             }
         }
 
@@ -261,12 +260,12 @@ impl Factory {
             if !parent_dir.exists() {
                 return Err(Error::resource_load(
                     "prefab directory",
-                    &format!("Directory {} does not exist", parent_dir.display()),
+                    format!("Directory {} does not exist", parent_dir.display()),
                 ));
             }
 
             // Directory exists but no matching files
-            log::info!("No .ron files found matching pattern: {}", expanded_path);
+            log::info!("No .ron files found matching pattern: {expanded_path}");
         }
 
         Ok(loaded_count)
@@ -292,8 +291,7 @@ impl Factory {
         let id = PrefabId(hash);
         if GLOBAL_PREFAB_IDS.contains(&id) {
             return Err(Error::validation(format!(
-                "Hash collision detected for path {}: ID {:?} already exists globally",
-                full_path, id
+                "Hash collision detected for path {full_path}: ID {id:?} already exists globally"
             )));
         }
 
@@ -305,8 +303,8 @@ impl Factory {
     fn load_prefab_file(&self, path: &std::path::Path) -> Result<Prefab, Error> {
         let content = std::fs::read_to_string(path).map_err(|e| {
             Error::resource_load(
-                &format!("prefab file {}", path.display()),
-                &format!("IO error: {}", e),
+                format!("prefab file {}", path.display()),
+                format!("IO error: {e}"),
             )
         })?;
 
@@ -329,13 +327,13 @@ impl Factory {
             let pattern = _path.to_string();
             let watcher_handle = tokio::task::spawn(async move {
                 if let Err(e) = watcher::run_watcher(&pattern, tx).await {
-                    log::error!("Hot-reload watcher error: {}", e);
+                    log::error!("Hot-reload watcher error: {e}");
                 }
             });
 
             self.watcher_handle = Some(WatcherHandle::new(watcher_handle));
 
-            log::info!("Hot-reload file watcher set up for path: {}", _path);
+            log::info!("Hot-reload file watcher set up for path: {_path}");
             Ok(())
         }
         #[cfg(not(feature = "hot-reload"))]
@@ -490,9 +488,7 @@ mod tests {
                     // Should not be a duplicate
                     assert!(
                         registered_ids.insert(id),
-                        "Duplicate ID {:?} for path {}",
-                        id,
-                        path
+                        "Duplicate ID {id:?} for path {path}"
                     );
                     assert!(is_prefab_id_registered(id));
                 }
@@ -500,9 +496,7 @@ mod tests {
                     // Should be a duplicate
                     assert!(
                         registered_ids.contains(&id),
-                        "ID {:?} for path {} was not previously registered",
-                        id,
-                        path
+                        "ID {id:?} for path {path} was not previously registered"
                     );
                 }
             }

@@ -257,7 +257,7 @@ fn test_64bit_prefab_id() {
     assert!(factory.contains(large_id));
 
     // Test backwards compatibility with u32
-    let u32_id = PrefabId::try_from(42u32).unwrap();
+    let u32_id = PrefabId::from(42u32);
     let prefab2 = Prefab::new();
     factory.register(u32_id, prefab2).unwrap();
 

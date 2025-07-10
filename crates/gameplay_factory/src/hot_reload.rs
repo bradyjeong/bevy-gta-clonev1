@@ -189,13 +189,13 @@ pub mod watcher {
             tx,
             Config::default().with_poll_interval(Duration::from_millis(500)),
         )
-        .map_err(|e| Error::resource_load("file watcher", &e.to_string()))?;
+        .map_err(|e| Error::resource_load("file watcher", e.to_string()))?;
 
         // Start watching the directories
         for dir in &watch_dirs {
             watcher
                 .watch(dir, RecursiveMode::Recursive)
-                .map_err(|e| Error::resource_load("file watcher", &e.to_string()))?;
+                .map_err(|e| Error::resource_load("file watcher", e.to_string()))?;
             log::info!("Watching directory: {}", dir.display());
         }
 
@@ -227,13 +227,13 @@ pub mod watcher {
             for path in to_send {
                 if path.exists() {
                     let event = HotReloadEvent::Modified(path.clone());
-                    if let Err(_) = reload_tx.send(event) {
+                    if reload_tx.send(event).is_err() {
                         log::warn!("Hot-reload channel closed, stopping watcher");
                         break;
                     }
                 } else {
                     let event = HotReloadEvent::Deleted(path.clone());
-                    if let Err(_) = reload_tx.send(event) {
+                    if reload_tx.send(event).is_err() {
                         log::warn!("Hot-reload channel closed, stopping watcher");
                         break;
                     }

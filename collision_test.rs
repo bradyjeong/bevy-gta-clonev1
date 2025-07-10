@@ -13,12 +13,12 @@ fn main() {
 
     match factory1.register(id1, Prefab::new()) {
         Ok(()) => println!("   ✅ First registration succeeded"),
-        Err(e) => println!("   ❌ First registration failed: {}", e),
+        Err(e) => println!("   ❌ First registration failed: {e}"),
     }
 
     match factory1.register(id1, Prefab::new()) {
         Ok(()) => println!("   ❌ Second registration succeeded (BAD!)"),
-        Err(e) => println!("   ✅ Second registration failed: {}", e),
+        Err(e) => println!("   ✅ Second registration failed: {e}"),
     }
 
     // Test 2: Different factories, same IDs (global collision detection)
@@ -27,22 +27,20 @@ fn main() {
 
     match factory2.register(id1, Prefab::new()) {
         Ok(()) => println!("   ❌ Cross-factory registration succeeded (BAD!)"),
-        Err(e) => println!("   ✅ Cross-factory registration failed: {}", e),
+        Err(e) => println!("   ✅ Cross-factory registration failed: {e}"),
     }
 
     // Test 3: TryFrom<u32> prevents silent narrowing
     println!("\n3. Testing TryFrom<u32> conversion:");
-    match PrefabId::try_from(42u32) {
-        Ok(id) => println!("   ✅ u32 conversion succeeded: {:?}", id),
-        Err(e) => println!("   ❌ u32 conversion failed: {}", e),
-    }
+    let id = PrefabId::from(42u32);
+    println!("   ✅ u32 conversion succeeded: {id:?}");
 
     // Test 4: Global registry functions
     println!("\n4. Testing global registry functions:");
     let all_ids = get_all_prefab_ids();
     println!("   Total registered IDs: {}", all_ids.len());
     for id in all_ids {
-        println!("   - {:?}", id);
+        println!("   - {id:?}");
     }
 
     // Test 5: Path-based ID generation
@@ -64,9 +62,9 @@ fn main() {
         let id = PrefabId::new(hash);
 
         if is_prefab_id_registered(id) {
-            println!("   ⚠️  Path {} would generate duplicate ID: {:?}", path, id);
+            println!("   ⚠️  Path {path} would generate duplicate ID: {id:?}");
         } else {
-            println!("   ✅ Path {} generates unique ID: {:?}", path, id);
+            println!("   ✅ Path {path} generates unique ID: {id:?}");
         }
     }
 

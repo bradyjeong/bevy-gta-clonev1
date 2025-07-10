@@ -51,13 +51,12 @@ pub fn register_component(
 
     if registry.contains_key(name) {
         return Err(Error::validation(format!(
-            "Component '{}' already registered",
-            name
+            "Component '{name}' already registered"
         )));
     }
 
     registry.insert(name, deserializer);
-    log::debug!("Registered component deserializer for '{}'", name);
+    log::debug!("Registered component deserializer for '{name}'");
     Ok(())
 }
 
@@ -92,8 +91,7 @@ pub fn call_component_deserializer(
         deserializer(value, cmd, entity)
     } else {
         Err(Error::validation(format!(
-            "Component type '{}' not found in registry",
-            name
+            "Component type '{name}' not found in registry"
         )))
     }
 }
@@ -239,8 +237,7 @@ fn deserialize_visibility(value: &ron::Value) -> Result<bevy_render::view::Visib
             "Hidden" => Ok(Visibility::Hidden),
             "Visible" => Ok(Visibility::Visible),
             _ => Err(Error::validation(format!(
-                "Invalid visibility value: '{}'. Must be 'Inherited', 'Hidden', or 'Visible'",
-                s
+                "Invalid visibility value: '{s}'. Must be 'Inherited', 'Hidden', or 'Visible'"
             ))),
         },
         _ => Err(Error::validation("Visibility component must be a string")),
@@ -290,16 +287,14 @@ fn extract_number(map: &ron::Map, key: &str) -> Result<f32, Error> {
                     return Ok(num.into_f64() as f32);
                 } else {
                     return Err(Error::validation(format!(
-                        "Field '{}' must be a number",
-                        key
+                        "Field '{key}' must be a number"
                     )));
                 }
             }
         }
     }
     Err(Error::validation(format!(
-        "Missing required field '{}'",
-        key
+        "Missing required field '{key}'"
     )))
 }
 
@@ -416,7 +411,7 @@ mod tests {
                 let error_count = Arc::clone(&error_count);
 
                 s.spawn(move |_| {
-                    let component_name = format!("Component{}", i);
+                    let component_name = format!("Component{i}");
                     // We need to leak the string to get a 'static str
                     let static_name: &'static str = Box::leak(component_name.into_boxed_str());
 
@@ -512,7 +507,7 @@ mod tests {
             for i in 0..3 {
                 let write_count = Arc::clone(&write_count);
                 s.spawn(move |_| {
-                    let component_name = format!("WriterComponent{}", i);
+                    let component_name = format!("WriterComponent{i}");
                     let static_name: &'static str = Box::leak(component_name.into_boxed_str());
 
                     let result = register_component(static_name, Box::new(|_, _, _| Ok(())));

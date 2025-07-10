@@ -25,7 +25,7 @@ async fn test_file_creation_triggers_reload() {
     let (tx, mut rx) = create_reload_channel();
 
     // Start the watcher
-    let _handle = watcher::run_watcher(&pattern, tx)
+    watcher::run_watcher(&pattern, tx)
         .await
         .expect("Failed to start watcher");
 
@@ -86,7 +86,7 @@ async fn test_file_modification_triggers_reload() {
     let (tx, mut rx) = create_reload_channel();
 
     // Start the watcher
-    let _handle = watcher::run_watcher(&pattern, tx)
+    watcher::run_watcher(&pattern, tx)
         .await
         .expect("Failed to start watcher");
 
@@ -146,7 +146,7 @@ async fn test_file_deletion_triggers_reload() {
     let (tx, mut rx) = create_reload_channel();
 
     // Start the watcher
-    let _handle = watcher::run_watcher(&pattern, tx)
+    watcher::run_watcher(&pattern, tx)
         .await
         .expect("Failed to start watcher");
 
@@ -182,7 +182,7 @@ async fn test_non_matching_files_ignored() {
     let (tx, mut rx) = create_reload_channel();
 
     // Start the watcher
-    let _handle = watcher::run_watcher(&pattern, tx)
+    watcher::run_watcher(&pattern, tx)
         .await
         .expect("Failed to start watcher");
 
@@ -228,7 +228,6 @@ async fn test_factory_hot_reload_integration() {
     let settings = config_core::FactorySettings {
         prefab_path: pattern,
         hot_reload: true,
-        ..Default::default()
     };
 
     // Create factory and load directory
@@ -279,7 +278,6 @@ async fn test_hot_reload_disabled_gracefully() {
     let settings = config_core::FactorySettings {
         prefab_path: pattern,
         hot_reload: true,
-        ..Default::default()
     };
 
     // Create factory and load directory
@@ -315,7 +313,7 @@ async fn test_debouncing_rapid_changes() {
     let (tx, mut rx) = create_reload_channel();
 
     // Start the watcher
-    let _handle = watcher::run_watcher(&pattern, tx)
+    watcher::run_watcher(&pattern, tx)
         .await
         .expect("Failed to start watcher");
 
@@ -324,7 +322,7 @@ async fn test_debouncing_rapid_changes() {
 
     // Rapidly modify the file multiple times
     for i in 0..5 {
-        fs::write(&test_file, format!("content {}", i)).expect("Failed to write test file");
+        fs::write(&test_file, format!("content {i}")).expect("Failed to write test file");
         sleep(Duration::from_millis(50)).await;
     }
 

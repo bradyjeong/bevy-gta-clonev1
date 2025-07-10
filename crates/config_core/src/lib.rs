@@ -339,6 +339,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_config_loader_search_order() {
         let temp_dir1 = TempDir::new().unwrap();
         let temp_dir2 = TempDir::new().unwrap();

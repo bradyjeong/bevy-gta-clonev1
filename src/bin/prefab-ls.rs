@@ -69,7 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match load_from_config() {
             Ok(infos) => prefab_infos.extend(infos),
             Err(e) => {
-                eprintln!("Warning: Could not load from config: {}", e);
+                eprintln!("Warning: Could not load from config: {e}");
                 eprintln!("Use --path to specify directories to scan");
             }
         }
@@ -78,7 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for path in &scan_paths {
             match scan_directory(path) {
                 Ok(infos) => prefab_infos.extend(infos),
-                Err(e) => eprintln!("Error scanning {}: {}", path, e),
+                Err(e) => eprintln!("Error scanning {path}: {e}"),
             }
         }
     }
@@ -87,7 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut hash_map: HashMap<u64, Vec<PrefabInfo>> = HashMap::new();
     for info in prefab_infos {
         let hash = info.id.raw();
-        hash_map.entry(hash).or_insert_with(Vec::new).push(info);
+        hash_map.entry(hash).or_default().push(info);
     }
 
     // Report results
@@ -114,7 +114,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if collision_count == 0 {
             println!("✅ No collisions detected!");
         } else {
-            println!("❌ {} collision(s) detected!", collision_count);
+            println!("❌ {collision_count} collision(s) detected!");
         }
     } else {
         println!("=== PREFAB ID REGISTRY ===");
@@ -143,8 +143,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         println!("\n=== SUMMARY ===");
-        println!("Total prefabs: {}", total_prefabs);
-        println!("Unique hashes: {}", hash_map_len);
+        println!("Total prefabs: {total_prefabs}");
+        println!("Unique hashes: {hash_map_len}");
         if total_prefabs != hash_map_len {
             println!(
                 "⚠️  {} hash collision(s) detected!",
@@ -195,7 +195,7 @@ fn load_from_config() -> Result<Vec<PrefabInfo>, Box<dyn std::error::Error>> {
         });
     }
 
-    println!("Loaded {} prefabs from config", loaded_count);
+    println!("Loaded {loaded_count} prefabs from config");
     Ok(infos)
 }
 
