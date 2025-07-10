@@ -5,6 +5,7 @@ use bevy_ecs::world::World;
 use bevy_render::view::Visibility;
 use bevy_transform::components::Transform;
 use gameplay_factory::*;
+use serial_test::serial;
 
 // Simple test components for testing
 #[derive(Component, Debug, PartialEq)]
@@ -34,6 +35,7 @@ fn test_component_registry_initialization() {
 }
 
 #[test]
+#[serial]
 fn test_real_component_spawning() {
     // Initialize the component registry
     register_default_components();
@@ -118,6 +120,7 @@ fn test_real_component_spawning() {
 }
 
 #[test]
+#[serial]
 fn test_unknown_component_type_error() {
     // Initialize the component registry
     register_default_components();
@@ -157,6 +160,7 @@ fn test_unknown_component_type_error() {
 }
 
 #[test]
+#[serial]
 fn test_custom_component_registration() {
     // Initialize the component registry
     register_default_components();
@@ -285,6 +289,7 @@ fn test_path_based_id_generation_full_path() {
 
 #[cfg(all(feature = "ron", feature = "hot-reload"))]
 #[test]
+#[serial]
 fn test_hot_reload_feature_enabled() {
     use config_core::FactorySettings;
 

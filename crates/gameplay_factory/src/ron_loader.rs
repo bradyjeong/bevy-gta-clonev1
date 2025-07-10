@@ -95,6 +95,7 @@ impl ComponentInit for RonComponent {
 mod tests {
     use super::*;
     use rstest::*;
+    use serial_test::serial;
 
     #[rstest]
     fn test_ron_loader_basic() {
@@ -231,7 +232,9 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_ron_component_init() {
+        crate::component_registry::clear_registry();
         // Register a test component
         let _ = crate::register_component(
             "TestComponent",

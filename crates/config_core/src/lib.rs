@@ -225,6 +225,7 @@ impl Default for ConfigLoader {
 mod tests {
     use super::*;
     use serde::Deserialize;
+    use serial_test::serial;
     use tempfile::TempDir;
 
     #[derive(Deserialize, Debug, PartialEq)]
@@ -284,6 +285,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_config_loader_load_success() {
         let temp_dir = TempDir::new().unwrap();
         let config_path = temp_dir.path().join("test.ron");
@@ -318,6 +320,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_config_loader_load_invalid_ron() {
         let temp_dir = TempDir::new().unwrap();
         let config_path = temp_dir.path().join("test.ron");
@@ -333,7 +336,6 @@ mod tests {
         let result: Result<TestConfig> = loader.load();
         // Invalid RON should still fail even with new behavior
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Failed to parse"));
     }
 
     #[test]

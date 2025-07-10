@@ -4,7 +4,9 @@
 //! that the hot-reload system works correctly.
 
 use std::fs;
+use std::time::Duration;
 use tempfile::TempDir;
+use tokio::time::sleep;
 
 use gameplay_factory::*;
 

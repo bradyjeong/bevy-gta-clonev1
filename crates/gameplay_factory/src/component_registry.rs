@@ -310,10 +310,12 @@ mod tests {
     use bevy_ecs::world::World;
     use crossbeam_utils::thread;
     use rstest::*;
+    use serial_test::serial;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
 
     #[rstest]
+    #[serial]
     fn test_register_component_success() {
         clear_registry();
 
@@ -333,6 +335,7 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_register_component_duplicate() {
         clear_registry();
 
@@ -363,6 +366,7 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_registered_components() {
         clear_registry();
 
@@ -376,6 +380,7 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_clear_registry() {
         clear_registry();
 
@@ -398,6 +403,7 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_thread_safety_concurrent_registration() {
         clear_registry();
 
@@ -432,6 +438,7 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_thread_safety_duplicate_registration() {
         clear_registry();
 
@@ -464,6 +471,7 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_thread_safety_concurrent_read_write() {
         clear_registry();
 
@@ -523,6 +531,7 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_register_default_components() {
         clear_registry();
 
@@ -604,6 +613,7 @@ mod tests {
     }
 
     #[rstest]
+    #[serial]
     fn test_component_deserializer_execution() {
         clear_registry();
         register_default_components();

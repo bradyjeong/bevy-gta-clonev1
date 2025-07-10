@@ -373,6 +373,7 @@ impl Default for Factory {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
     use std::collections::HashSet;
 
     #[test]
@@ -415,6 +416,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_global_registry_functions() {
         clear_all_prefab_ids();
 
@@ -446,6 +448,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_prefab_id_fuzzer() {
         clear_all_prefab_ids();
 

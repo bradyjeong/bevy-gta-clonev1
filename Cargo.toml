@@ -1,8 +1,10 @@
 [workspace]
 members = [
     "crates/*",
-    "examples",
     "tools/xtask",
+]
+exclude = [
+    "examples",  # Excluded until P1 dependency issues are resolved
 ]
 resolver = "2"
 
@@ -43,6 +45,9 @@ version = "0.1.0"
 authors = ["Brady Jeong <bradyjeong@Mac.attlocal.net>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/bradyjeong/bevy-gta-clone"
+
+# Disable automatic example discovery
+autoexamples = false
 
 [features]
 default = []

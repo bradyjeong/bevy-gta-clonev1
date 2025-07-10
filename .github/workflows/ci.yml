@@ -11,11 +11,19 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
+  # Multi-OS build matrix with fail-fast disabled for complete coverage
   check:
-    runs-on: ubuntu-latest
+    name: Check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        toolchain: ["stable", "nightly"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: ["stable"]
+        include:
+          # Test nightly only on Ubuntu to reduce CI time
+          - os: ubuntu-latest
+            toolchain: nightly
     steps:
       - uses: actions/checkout@v4
       
@@ -29,7 +37,10 @@ jobs:
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.toolchain }}
+          key: ${{ matrix.os }}-${{ matrix.toolchain }}
+          # Cache cargo registry, git deps, and build artifacts
+          cache-targets: true
+          cache-all-crates: true
       
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -47,6 +58,7 @@ jobs:
         run: RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features
 
   coverage:
+    name: Coverage
     needs: check
     runs-on: ubuntu-latest
     steps:
@@ -61,6 +73,9 @@ jobs:
       
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
+        with:
+          key: coverage-stable
+          cache-targets: true
       
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
@@ -69,14 +84,34 @@ jobs:
         run: |
           cargo llvm-cov --workspace --all-features \
                          --lcov --output-path lcov.info \
-                         --fail-under-lines 70
+                         --fail-under-lines 80
       
-
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: lcov.info
+          retention-days: 7
 
   build-release:
+    name: Release Build (${{ matrix.os }})
     needs: check
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     if: github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       
@@ -88,9 +123,46 @@ jobs:
       
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.os }}
+          cache-targets: true
       
       - name: Build release
         run: cargo build --release --workspace
       
       - name: Test release build
         run: cargo test --release --workspace --all-features
+      
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            target/release/gta_game*
+            target/release/prefab-ls*
+            target/release/collision_test*
+          retention-days: 30
+
+  # Job summary report
+  ci-summary:
+    name: CI Summary
+    needs: [check, coverage, build-release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Multi-OS Check | ${{ needs.check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage | ${{ needs.coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release Build | ${{ needs.build-release.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.check.result }}" != "success" ] || [ "${{ needs.coverage.result }}" != "success" ]; then
+            echo "❌ **CI Failed**: Please check the failed jobs above" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ **CI Passed**: All checks successful" >> $GITHUB_STEP_SUMMARY
+          fi
