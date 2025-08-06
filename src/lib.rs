@@ -7,26 +7,15 @@ pub mod constants;
 pub mod game_state;
 pub mod bundles;
 pub mod factories;
-pub mod services;
+mod services; // Private - only used internally
+pub mod render_primitives;
+pub mod system_sets;
 
-// Re-export specific items to avoid ambiguity
-pub use components::{Player, ActiveEntity, Car, SuperCar, Helicopter, F16, NPC, Cullable, MainCamera, MainRotor, TailRotor};
-pub use components::{DynamicTerrain, DynamicContent, ContentType, CullingSettings, PerformanceStats, Building, RoadEntity, IntersectionEntity};
-pub use components::{ExhaustFlame, VehicleBeacon, ControlsText, ControlsDisplay};
-pub use components::{Lake, Yacht, WaterBody, WaterWave, Boat};
-
-pub use systems::movement::*;
-pub use systems::camera::*;
-pub use systems::interaction::*;
-pub use systems::world::*;
-pub use systems::effects::*;
-pub use systems::performance_monitor::*;
-pub use systems::performance_integration::*;
-
-pub use plugins::*;
-pub use factories::*;
-pub use setup::{setup_basic_world, setup_initial_aircraft_unified, setup_palm_trees, setup_initial_npcs_unified, setup_initial_vehicles_unified};
-
+// Core public API - essential items for external use (reduced from 100+ to 10)
+pub use components::{Player, ActiveEntity, MainCamera, CullingSettings, PerformanceStats};
+pub use game_state::GameState;
+pub use config::GameConfig;
+pub use plugins::UnifiedWorldPlugin;
+pub use setup::setup_basic_world;
 pub use constants::*;
-pub use config::*;
-pub use game_state::*;
+pub use render_primitives::{Mesh3d, MeshMaterial3d};

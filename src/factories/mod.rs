@@ -1,3 +1,60 @@
+//! # Entity Creation Factories
+//!
+//! This module provides factory patterns for creating game entities consistently.
+//! Factories encapsulate entity creation logic and ensure proper component setup.
+//!
+//! ## Factory Design Principles
+//!
+//! - **Stateless**: Factories are pure functions, no internal state
+//! - **Consistent**: Same inputs always produce same entity configurations
+//! - **Composable**: Small factories can be combined for complex entities
+//! - **Validation**: Factories validate inputs and provide sensible defaults
+//!
+//! ## Factory Types
+//!
+//! ### Unified Factories (Recommended)
+//! - `entity_factory_unified`: Main entity creation with consistent patterns
+//! - `entity_builder_unified`: Fluent builder pattern for complex entities
+//!
+//! ### Specialized Factories
+//! - `material_factory`: Material and texture creation
+//! - `mesh_factory`: Mesh generation and caching  
+//! - `transform_factory`: Transform and positioning utilities
+//! - `rendering_factory`: Rendering component setup
+//! - `generic_bundle`: Reusable component bundles
+//!
+//! ## Usage Patterns
+//!
+//! ```rust
+//! // Simple entity creation
+//! let vehicle_entity = UnifiedEntityFactory::create_vehicle(
+//!     &mut commands,
+//!     VehicleType::Car,
+//!     Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+//! );
+//!
+//! // Builder pattern for complex entities
+//! let npc_entity = UnifiedEntityBuilder::new()
+//!     .with_position(Vec3::new(10.0, 0.0, 5.0))
+//!     .with_movement_speed(2.5)
+//!     .with_ai_behavior(AIBehavior::Wandering)
+//!     .spawn(&mut commands);
+//! ```
+//!
+//! ## Factory Benefits
+//!
+//! - **Consistency**: All entities of the same type have identical component setup
+//! - **Maintainability**: Entity creation logic is centralized
+//! - **Testing**: Factory functions are easy to unit test
+//! - **Performance**: Factories can optimize component allocation
+//!
+//! ## Adding New Factories
+//!
+//! 1. Identify common entity creation patterns
+//! 2. Create stateless factory functions
+//! 3. Include validation and default values
+//! 4. Export from this module
+
 // Unified factory system - replaces all duplicate factories
 pub mod entity_factory_unified;
 pub mod entity_builder_unified;

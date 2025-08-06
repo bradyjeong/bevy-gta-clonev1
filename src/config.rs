@@ -30,9 +30,6 @@ pub struct GameConfig {
     
     // UI Configuration
     pub ui: UIConfig,
-    
-    // Batching Configuration
-    pub batching: BatchingConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -236,28 +233,6 @@ pub struct UIConfig {
     pub border_radius: f32,      // 5.0 - Default border radius
 }
 
-#[derive(Debug, Clone)]
-pub struct BatchingConfig {
-    // Batch sizes for different processing types
-    pub transform_batch_size: usize,        // 75 - Transform updates per frame
-    pub visibility_batch_size: usize,       // 100 - Visibility checks per frame
-    pub physics_batch_size: usize,          // 50 - Physics updates per frame
-    pub lod_batch_size: usize,              // 80 - LOD calculations per frame
-    
-    // Performance thresholds
-    pub max_processing_time_ms: f32,        // 8.0 - Max processing time per system
-    pub priority_boost_frames: u64,         // 10 - Frames before priority boost
-    pub cleanup_interval: f32,              // 5.0 - Dirty flag cleanup interval
-    
-    // Distance thresholds for LOD changes
-    pub lod_distance_threshold: f32,        // 25.0 - Min distance change for LOD update
-    pub transform_change_threshold: f32,    // 0.1 - Min transform change for marking dirty
-    
-    // Stale entity handling
-    pub max_stale_frames: u64,              // 60 - Max frames before forced processing
-    pub cleanup_stale_flags: bool,          // true - Clean up stale flags automatically
-}
-
 impl Default for GameConfig {
     fn default() -> Self {
         Self {
@@ -270,7 +245,6 @@ impl Default for GameConfig {
             
             camera: CameraConfig::default(),
             ui: UIConfig::default(),
-            batching: BatchingConfig::default(),
         }
     }
 }
@@ -488,7 +462,6 @@ impl GameConfig {
         
         self.camera.validate_and_clamp();
         self.ui.validate_and_clamp();
-        self.batching.validate_and_clamp();
     }
 }
 
@@ -689,42 +662,6 @@ impl UIConfig {
     }
 }
 
-impl Default for BatchingConfig {
-    fn default() -> Self {
-        Self {
-            transform_batch_size: 75,
-            visibility_batch_size: 100,
-            physics_batch_size: 50,
-            lod_batch_size: 80,
-            max_processing_time_ms: 8.0,
-            priority_boost_frames: 10,
-            cleanup_interval: 5.0,
-            lod_distance_threshold: 25.0,
-            transform_change_threshold: 0.1,
-            max_stale_frames: 60,
-            cleanup_stale_flags: true,
-        }
-    }
-}
 
-impl BatchingConfig {
-    pub fn validate_and_clamp(&mut self) {
-        // Clamp batch sizes to reasonable ranges
-        self.transform_batch_size = self.transform_batch_size.clamp(10, 500);
-        self.visibility_batch_size = self.visibility_batch_size.clamp(10, 500);
-        self.physics_batch_size = self.physics_batch_size.clamp(5, 200);
-        self.lod_batch_size = self.lod_batch_size.clamp(10, 300);
-        
-        // Clamp performance parameters
-        self.max_processing_time_ms = self.max_processing_time_ms.clamp(1.0, 50.0);
-        self.priority_boost_frames = self.priority_boost_frames.clamp(1, 300);
-        self.cleanup_interval = self.cleanup_interval.clamp(1.0, 60.0);
-        
-        // Clamp distance thresholds
-        self.lod_distance_threshold = self.lod_distance_threshold.clamp(5.0, 100.0);
-        self.transform_change_threshold = self.transform_change_threshold.clamp(0.01, 10.0);
-        
-        // Clamp stale handling
-        self.max_stale_frames = self.max_stale_frames.clamp(10, 1000);
-    }
-}
+
+

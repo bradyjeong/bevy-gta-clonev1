@@ -21,10 +21,11 @@ pub fn integrate_vegetation_with_instancing_system(
         });
         
         // Mark for instancing update
-        commands.entity(entity).insert(DirtyVegetationInstancing::new(
-            DirtyPriority::Normal,
-            frame_counter.frame,
-        ));
+        // Batching system disabled
+        // commands.entity(entity).insert(DirtyVegetationInstancing::new(
+        //     DirtyPriority::Normal,
+        //     frame_counter.frame,
+        // ));
     }
 }
 

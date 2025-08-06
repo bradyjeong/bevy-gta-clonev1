@@ -39,7 +39,7 @@ Each dirty flag includes:
 
 ### 3. Configuration
 
-Batch processing is configurable via `BatchingConfig` in `config.rs`:
+**NOTE: The batching subsystem and BatchingConfig have been removed.** The batch processing configuration is no longer available:
 
 ```rust
 pub struct BatchingConfig {

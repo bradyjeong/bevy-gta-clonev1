@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use crate::systems::movement::{human_player_movement, human_player_animation};
+use crate::systems::movement::{
+    read_input_system, stamina_system, velocity_apply_system, 
+    animation_flag_system, human_player_animation, PlayerInputData
+};
 use crate::systems::camera::camera_follow_system;
 use crate::systems::interaction::interaction_system;
 use crate::systems::audio::{footstep_system, cleanup_footstep_sounds};
@@ -12,17 +15,21 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            human_player_movement.run_if(in_state(GameState::Walking)),
-            human_player_animation.run_if(in_state(GameState::Walking)),
-            human_emotional_state_system.run_if(in_state(GameState::Walking)),
-            human_fidget_system.run_if(in_state(GameState::Walking)),
-            footstep_system.run_if(in_state(GameState::Walking)),
-            cleanup_footstep_sounds,
-            camera_follow_system,
-            interaction_system,
-            debug_game_state,
-            (player_collision_resolution_system, player_movement_validation_system).run_if(in_state(GameState::Walking)),
-        ));
+        app.init_resource::<PlayerInputData>()
+           .add_systems(Update, (
+               read_input_system.run_if(in_state(GameState::Walking)),
+               stamina_system.after(read_input_system).run_if(in_state(GameState::Walking)),
+               velocity_apply_system.after(stamina_system).run_if(in_state(GameState::Walking)),
+               animation_flag_system.after(velocity_apply_system).run_if(in_state(GameState::Walking)),
+               human_player_animation.after(animation_flag_system).run_if(in_state(GameState::Walking)),
+               human_emotional_state_system.run_if(in_state(GameState::Walking)),
+               human_fidget_system.run_if(in_state(GameState::Walking)),
+               footstep_system.run_if(in_state(GameState::Walking)),
+               cleanup_footstep_sounds,
+               camera_follow_system,
+               interaction_system,
+               debug_game_state,
+               (player_collision_resolution_system, player_movement_validation_system).run_if(in_state(GameState::Walking)),
+           ));
     }
 }

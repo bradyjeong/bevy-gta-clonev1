@@ -8,7 +8,7 @@ use crate::bundles::{
 };
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};
-use crate::systems::audio::realistic_vehicle_audio::{VehicleAudioState, VehicleAudioSources};
+
 use crate::systems::distance_cache::MovementTracker;
 use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
@@ -713,7 +713,7 @@ impl UnifiedEntityFactory {
             vehicle_config.engine.clone(),
             vehicle_config.suspension.clone(),
             vehicle_config.tire_physics.clone(),
-            VehicleAudioState::default(),
+
             Car,
             Cullable::new(200.0),
             MovementTracker::new(safe_position, 10.0), // Track vehicle movement with 10m threshold
@@ -1085,38 +1085,9 @@ impl UnifiedEntityFactory {
         commands: &mut Commands,
         vehicle_entity: Entity,
     ) -> Result<(), BundleError> {
-        // Create placeholder audio sources (would need actual audio assets)
-        let engine_source = commands.spawn((
-            Transform::default(),
-            ChildOf(vehicle_entity),
-            // AudioSource placeholder - would need actual implementation
-        )).id();
+
         
-        let tire_source = commands.spawn((
-            Transform::default(),
-            ChildOf(vehicle_entity),
-            // AudioSource placeholder
-        )).id();
-        
-        let wind_source = commands.spawn((
-            Transform::default(),
-            ChildOf(vehicle_entity),
-            // AudioSource placeholder
-        )).id();
-        
-        let brake_source = commands.spawn((
-            Transform::default(),
-            ChildOf(vehicle_entity),
-            // AudioSource placeholder
-        )).id();
-        
-        // Add audio sources component to vehicle
-        commands.entity(vehicle_entity).insert(VehicleAudioSources {
-            engine_source,
-            tire_source,
-            wind_source,
-            brake_source,
-        });
+
         
         Ok(())
     }

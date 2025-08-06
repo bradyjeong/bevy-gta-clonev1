@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::systems::movement::{car_movement, supercar_movement, helicopter_movement, f16_movement, rotate_helicopter_rotors};
+use crate::systems::movement::{car_movement, helicopter_movement, f16_movement, rotate_helicopter_rotors};
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames, update_flame_colors};
 use crate::systems::vehicles::vehicle_lod_system;
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
@@ -22,7 +22,7 @@ impl Plugin for VehiclePlugin {
             
             // Movement systems (force-based for vehicles)
             car_movement.run_if(in_state(GameState::Driving)),
-            supercar_movement.run_if(in_state(GameState::Driving)),
+            // Removed: supercar_movement system (used deleted SuperCar struct)
             helicopter_movement.run_if(in_state(GameState::Flying)),
             f16_movement.run_if(in_state(GameState::Jetting)),
             rotate_helicopter_rotors,

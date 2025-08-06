@@ -1,78 +1,88 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use std::cell::RefCell;
 use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation, HumanBehavior};
 use crate::systems::input::{ControlManager, ControlAction};
 
-thread_local! {
-    static MOVEMENT_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
+#[derive(Resource)]
+pub struct PlayerInputData {
+    pub input_direction: Vec3,
+    pub rotation_input: f32,
+    pub is_running: bool,
 }
 
-pub fn human_player_movement(
-    time: Res<Time>,
-    control_manager: Res<ControlManager>,
-    mut player_query: Query<
-        (
-            &mut Velocity,
-            &Transform,
-            &mut HumanMovement,
-            &mut HumanAnimation,
-            &mut HumanBehavior,
-        ),
-        (With<Player>, With<ActiveEntity>),
-    >,
-) {
-    let Ok((mut velocity, transform, mut movement, mut animation, behavior)) = 
-        player_query.single_mut() else {
-        // Debug: Check if player exists but doesn't have ActiveEntity
-        let all_players = player_query.iter().count();
-        if all_players == 0 {
-            warn!("No player entity found with ActiveEntity component!");
+impl Default for PlayerInputData {
+    fn default() -> Self {
+        Self {
+            input_direction: Vec3::ZERO,
+            rotation_input: 0.0,
+            is_running: false,
         }
+    }
+}
+
+pub fn read_input_system(
+    control_manager: Res<ControlManager>,
+    mut input_data: ResMut<PlayerInputData>,
+    player_query: Query<&Transform, (With<Player>, With<ActiveEntity>)>,
+) {
+    let Ok(transform) = player_query.single() else {
+        return;
+    };
+
+    input_data.input_direction = Vec3::ZERO;
+    if control_manager.is_control_active(ControlAction::Accelerate) {
+        input_data.input_direction += *transform.forward();
+    }
+    if control_manager.is_control_active(ControlAction::Brake) {
+        input_data.input_direction -= *transform.forward();
+    }
+    
+    input_data.rotation_input = control_manager.get_control_value(ControlAction::Steer);
+    input_data.is_running = control_manager.is_control_active(ControlAction::Turbo);
+}
+
+pub fn stamina_system(
+    time: Res<Time>,
+    input_data: Res<PlayerInputData>,
+    mut player_query: Query<&mut HumanMovement, (With<Player>, With<ActiveEntity>)>,
+) {
+    let Ok(mut movement) = player_query.single_mut() else {
         return;
     };
 
     let dt = time.delta_secs();
-
-    // Velocity-based movement system (unified approach)
-    let mut target_linear_velocity = Vec3::ZERO;
-    let mut target_angular_velocity = Vec3::ZERO;
+    let is_moving = input_data.input_direction.length() > 0.0;
     
-    let is_running = control_manager.is_control_active(ControlAction::Turbo);
-    
-    // Process input direction using UNIFIED control system
-    let mut input_direction = Vec3::ZERO;
-    if control_manager.is_control_active(ControlAction::Accelerate) {
-        input_direction += *transform.forward();
-    }
-    if control_manager.is_control_active(ControlAction::Brake) {
-        input_direction -= *transform.forward();
-    }
-    
-    // Rotation using unified ControlManager
-    let rotation_input = control_manager.get_control_value(ControlAction::Steer);
-
-    // Handle stamina system
-    let is_moving = input_direction.length() > 0.0;
-    if is_moving && is_running {
+    if is_moving && input_data.is_running {
         movement.stamina -= movement.stamina_drain_rate * dt;
         movement.stamina = movement.stamina.max(0.0);
-    } else if !is_moving || !is_running {
+    } else if !is_moving || !input_data.is_running {
         movement.stamina += movement.stamina_recovery_rate * dt;
         movement.stamina = movement.stamina.min(movement.max_stamina);
     }
+}
 
-    // Determine effective speed based on stamina and personality
+pub fn velocity_apply_system(
+    input_data: Res<PlayerInputData>,
+    mut player_query: Query<
+        (&mut Velocity, &mut HumanMovement, &HumanBehavior),
+        (With<Player>, With<ActiveEntity>),
+    >,
+) {
+    let Ok((mut velocity, mut movement, behavior)) = player_query.single_mut() else {
+        return;
+    };
+
     let stamina_factor = if movement.stamina < 20.0 {
         movement.tired_speed_modifier
     } else {
         1.0
     };
 
-    let base_speed = if is_running && movement.stamina > 10.0 {
+    let base_speed = if input_data.is_running && movement.stamina > 10.0 {
         movement.max_speed * 1.8
-        } else {
+    } else {
         movement.max_speed
     };
 
@@ -80,32 +90,39 @@ pub fn human_player_movement(
                              behavior.personality_speed_modifier * 
                              behavior.movement_variation;
 
-    // Calculate target linear velocity based on input (velocity-based system)
-    if input_direction.length() > 0.0 {
-        input_direction = input_direction.normalize();
-        target_linear_velocity = input_direction * effective_max_speed;
-        
-        // Update movement tracking for animation
-        movement.target_velocity = target_linear_velocity;
-        movement.current_speed = target_linear_velocity.length();
+    let target_linear_velocity = if input_data.input_direction.length() > 0.0 {
+        let normalized_input = input_data.input_direction.normalize();
+        normalized_input * effective_max_speed
     } else {
-        target_linear_velocity = Vec3::ZERO;
-        movement.target_velocity = Vec3::ZERO;
-        movement.current_speed = 0.0;
-    }
+        Vec3::ZERO
+    };
 
-    // Calculate target angular velocity (velocity-based system)
-    if rotation_input != 0.0 {
-        target_angular_velocity.y = rotation_input * 1.8; // Human rotation speed
-    }
-    
-    // Apply velocity directly (unified physics approach)
+    let target_angular_velocity = if input_data.rotation_input != 0.0 {
+        Vec3::new(0.0, input_data.rotation_input * 1.8, 0.0)
+    } else {
+        Vec3::ZERO
+    };
+
+    movement.target_velocity = target_linear_velocity;
+    movement.current_speed = target_linear_velocity.length();
+
     velocity.linvel = target_linear_velocity;
     velocity.angvel = target_angular_velocity;
-    
-    // Update animation state only
+}
+
+pub fn animation_flag_system(
+    input_data: Res<PlayerInputData>,
+    mut player_query: Query<
+        (&mut HumanAnimation, &HumanMovement),
+        (With<Player>, With<ActiveEntity>),
+    >,
+) {
+    let Ok((mut animation, movement)) = player_query.single_mut() else {
+        return;
+    };
+
     animation.is_walking = movement.current_speed > 0.3;
-    animation.is_running = is_running && movement.current_speed > movement.max_speed * 1.0;
+    animation.is_running = input_data.is_running && movement.current_speed > movement.max_speed * 1.0;
 }
 
 pub fn human_player_animation(

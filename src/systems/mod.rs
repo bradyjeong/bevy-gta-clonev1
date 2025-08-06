@@ -1,3 +1,55 @@
+//! # System Organization
+//!
+//! This module contains all game systems organized by functional domain.
+//! Systems are pure functions that operate on components and resources.
+//!
+//! ## System Design Principles
+//!
+//! - **Pure Functions**: Systems take components/resources as input, produce side effects
+//! - **Single Responsibility**: Each system handles one specific concern
+//! - **No Direct Calls**: Systems communicate via events and shared resources
+//! - **Deterministic**: Same inputs always produce same outputs
+//!
+//! ## System Categories
+//!
+//! ### Core Gameplay
+//! - `movement`: Player and entity movement mechanics
+//! - `physics_utils`: Physics simulation and collision handling  
+//! - `interaction`: Object interaction and pickup systems
+//! - `vehicles`: Vehicle physics, spawning, and AI
+//!
+//! ### World Management
+//! - `world`: Terrain generation and world structure
+//! - `water`: Water simulation and rendering
+//! - `vegetation_instancing_integration`: Plant and tree systems
+//! - `spawn_validation`: Entity spawning rules and limits
+//!
+//! ### Services
+//! - `distance_cache`: Optimized distance calculations
+//! - `timing_service`: Frame timing and performance tracking
+//! - `performance_monitor`: System performance analysis
+//! - `unified_distance_calculator`: Centralized distance management
+//!
+//! ### Interface & Feedback
+//! - `ui`: User interface systems
+//! - `camera`: Camera control and positioning
+//! - `input`: Input processing and mapping
+//! - `audio`: Sound effects and music
+//! - `effects`: Visual effects and particles
+//!
+//! ### Utility Systems
+//! - `debug`: Development and debugging tools
+//! - `persistence`: Save/load functionality
+//! - `transform_sync`: Transform synchronization
+//! - `rendering`: Render pipeline customization
+//!
+//! ## System Execution Order
+//!
+//! Systems use the sets defined in `crate::system_sets`:
+//! - ServiceInit → WorldSetup → SecondarySetup → ServiceUpdates
+//!
+//! Use `.in_set()` to control when your system runs relative to others.
+
 pub mod movement;
 pub mod world;
 pub mod interaction;
@@ -20,26 +72,24 @@ pub mod distance_cache;
 pub mod unified_distance_calculator;
 pub mod transform_sync;
 pub mod distance_cache_debug;
-pub mod batching;
-pub mod batching_test;
-pub mod entity_creation_system;
+// pub mod batching; // Missing file
+// pub mod batching_test; // Missing file
+
 pub mod simple_service_example;
 pub mod rendering;
 pub mod vegetation_instancing_integration;
 pub mod player_collision_resolution;
 
 pub mod parallel_physics;
-pub mod performance_dashboard;
-pub mod performance_monitor;
-pub mod performance_integration;
-pub mod batch_processing;
 
+pub mod performance_monitor;
+// pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
+pub mod batching;
 pub use movement::*;
 pub use parallel_physics::*;
-pub use performance_dashboard::*;
+
 pub use performance_monitor::*;
-pub use performance_integration::*;
-pub use batch_processing::*;
+// pub use performance_integration::*; // Temporarily disabled - depends on deleted batching system
 pub use world::*;
 pub use interaction::*;
 pub use camera::*;
@@ -62,22 +112,8 @@ pub use distance_cache::*;
 pub use unified_distance_calculator::*;
 pub use distance_cache_debug::*;
 pub use transform_sync::*;
-// Essential batching systems (non-conflicting with batch_processing.rs)
-pub use batching::{
-    frame_counter_system,
-    mark_transform_dirty_system,
-    mark_visibility_dirty_system,
-    mark_physics_dirty_system,
-    batch_transform_processing_system,
-    batch_physics_processing_system,
-    batch_lod_processing_system,
-    batch_culling_system,
-    dirty_flag_cleanup_system,
-    dirty_flags_metrics_system,
-    // NOTE: batch_mark_vegetation_instancing_dirty_system renamed to avoid conflict
-};
-pub use batching_test::*;
-pub use entity_creation_system::*;
+pub use batching::frame_counter_system;
+
 pub use simple_service_example::*;
 pub use rendering::*;
 pub use vegetation_instancing_integration::*;

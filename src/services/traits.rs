@@ -19,7 +19,6 @@ pub trait ConfigService: Service {
     
     fn get_camera_config(&self) -> &crate::config::CameraConfig;
     fn get_ui_config(&self) -> &crate::config::UIConfig;
-    fn get_batching_config(&self) -> &crate::config::BatchingConfig;
     
     fn update_config(&mut self, config: crate::config::GameConfig);
     fn validate_and_clamp(&mut self);
@@ -37,24 +36,7 @@ pub trait TimingService: Service {
     fn update_time(&mut self, time: &Time);
 }
 
-/// Audio service for audio system management
-pub trait AudioService: Service {
-    fn play_sound(&mut self, sound_id: &str, position: Option<Vec3>, volume: f32);
-    fn stop_sound(&mut self, sound_id: &str);
-    fn set_master_volume(&mut self, volume: f32);
-    fn get_master_volume(&self) -> f32;
-    fn cleanup_old_sounds(&mut self);
-    fn update_spatial_audio(&mut self, listener_position: Vec3);
-}
 
-/// Asset service for managing meshes, materials, and other assets
-pub trait AssetService: Service {
-    fn get_mesh(&self, mesh_id: &str) -> Option<Handle<Mesh>>;
-    fn get_material(&self, material_id: &str) -> Option<Handle<StandardMaterial>>;
-    fn register_mesh(&mut self, mesh_id: String, handle: Handle<Mesh>);
-    fn register_material(&mut self, material_id: String, handle: Handle<StandardMaterial>);
-    fn cleanup_unused_assets(&mut self);
-}
 
 /// Physics service for physics world interface
 pub trait PhysicsService: Service {
@@ -65,19 +47,4 @@ pub trait PhysicsService: Service {
     fn get_collision_groups(&self) -> (Group, Group, Group); // static, vehicle, character
 }
 
-/// Logging service for centralized logging
-pub trait LoggingService: Service {
-    fn log_info(&self, message: &str);
-    fn log_warning(&self, message: &str);
-    fn log_error(&self, message: &str);
-    fn log_debug(&self, message: &str);
-    fn set_log_level(&mut self, level: LogLevel);
-}
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum LogLevel {
-    Debug,
-    Info,
-    Warning,
-    Error,
-}

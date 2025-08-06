@@ -1,17 +1,19 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum DrivingMode {
     Comfort,    // Reduced power, softer suspension
+    #[default]
     Sport,      // Enhanced response, firmer suspension
     Track,      // Maximum performance, no limits
     Custom,     // User-defined settings
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ExhaustMode {
     Quiet,      // Minimal exhaust noise
     Normal,     // Standard exhaust note
+    #[default]
     Sport,      // Enhanced exhaust sounds
     Track,      // Maximum exhaust intensity
 }
@@ -20,164 +22,291 @@ pub enum ExhaustMode {
 #[derive(Component)]
 pub struct Car;
 
+// SuperCar base specs - core performance characteristics
 #[derive(Component, Clone)]
-pub struct SuperCar {
+pub struct SuperCarSpecs {
     pub max_speed: f32,
     pub acceleration: f32,
-    pub turbo_boost: bool,
+    pub weight: f32,
+    pub power: f32,
+    pub torque: f32,
+    pub drag_coefficient: f32,
     pub exhaust_timer: f32,
-    
-    // Advanced hypercar physics
-    pub weight: f32,              // kg - affects acceleration and handling
-    pub power: f32,               // hp - determines acceleration capability
-    pub torque: f32,              // nm - low-end acceleration power
-    pub drag_coefficient: f32,    // aerodynamic efficiency
-    
-    // Suspension and handling
-    pub suspension_stiffness: f32,
-    pub suspension_damping: f32,
-    pub front_weight_bias: f32,   // 0.0-1.0, affects handling balance
-    
-    // Traction control system
+}
+
+// Suspension and handling dynamics
+#[derive(Component, Clone)]
+pub struct SuperCarSuspension {
+    pub stiffness: f32,
+    pub damping: f32,
+    pub front_weight_bias: f32,
     pub traction_control: bool,
     pub stability_control: bool,
     pub wheel_spin_threshold: f32,
-    pub current_traction: f32,    // 0.0-1.0, current grip level
-    
-    // Turbo system (quad-turbo W16)
-    pub turbo_pressure: f32,      // 0.0-1.0, builds up over time
-    pub turbo_lag: f32,           // seconds to full boost
-    pub turbo_cooldown: f32,      // prevents overheating
-    pub max_turbo_time: f32,      // maximum continuous boost
-    pub current_turbo_time: f32,  // current boost duration
-    pub turbo_stage: u8,          // 0-4 turbos active
-    pub turbo_pressure_buildup: f32, // Dynamic pressure buildup rate
-    
-    // Engine characteristics
-    pub rpm: f32,                 // current engine RPM
-    pub max_rpm: f32,             // redline RPM
-    pub idle_rpm: f32,            // idle RPM
-    pub power_band_start: f32,    // RPM where peak power begins
-    pub power_band_end: f32,      // RPM where peak power ends
-    pub gear: u8,                 // current gear (1-7)
-    pub gear_ratios: Vec<f32>,    // gear ratios for each gear
-    pub shift_rpm: f32,           // RPM to shift up
-    pub downshift_rpm: f32,       // RPM to shift down
-    
-    // Hypercar driving modes
-    pub driving_mode: DrivingMode,
+    pub current_traction: f32,
+}
+
+// Turbo system state
+#[derive(Component, Clone)]
+pub struct TurboSystem {
+    pub turbo_boost: bool,
+    pub pressure: f32,
+    pub lag: f32,
+    pub cooldown: f32,
+    pub max_time: f32,
+    pub current_time: f32,
+    pub stage: u8,
+    pub pressure_buildup: f32,
+}
+
+// Engine state and characteristics
+#[derive(Component, Clone)]
+pub struct EngineState {
+    pub rpm: f32,
+    pub max_rpm: f32,
+    pub idle_rpm: f32,
+    pub power_band_start: f32,
+    pub power_band_end: f32,
+    pub temperature: f32,
+    pub oil_pressure: f32,
+    pub fuel_consumption_rate: f32,
+    pub rev_limiter_active: bool,
+}
+
+// Transmission and gear management
+#[derive(Component, Clone)]
+pub struct Transmission {
+    pub gear: u8,
+    pub gear_ratios: Vec<f32>,
+    pub shift_rpm: f32,
+    pub downshift_rpm: f32,
+}
+
+// Driving modes and launch control
+#[derive(Component, Clone)]
+pub struct DrivingModes {
+    pub mode: DrivingMode,
     pub launch_control: bool,
     pub launch_control_engaged: bool,
     pub launch_rpm_limit: f32,
     pub sport_mode_active: bool,
     pub track_mode_active: bool,
-    
-    // Advanced aerodynamics
-    pub downforce: f32,           // Current downforce in N
-    pub active_aero: bool,        // Active aerodynamics system
-    pub rear_wing_angle: f32,     // 0.0-1.0 wing angle
-    pub front_splitter_level: f32, // 0.0-1.0 splitter extension
-    
-    // Performance metrics
-    pub g_force_lateral: f32,     // Current lateral G-force
-    pub g_force_longitudinal: f32, // Current longitudinal G-force
-    pub performance_timer: f32,   // Timer for performance calculations
-    pub zero_to_sixty_time: f32,  // Tracked 0-60 time
-    pub is_timing_launch: bool,   // Whether we're timing acceleration
-    
-    // Enhanced engine simulation
-    pub engine_temperature: f32,  // Engine temperature (0.0-1.0)
-    pub oil_pressure: f32,        // Oil pressure (0.0-1.0)
-    pub fuel_consumption_rate: f32, // L/100km equivalent
-    pub rev_limiter_active: bool, // Rev limiter cutting ignition
-    
-    // Sound system integration
-    pub exhaust_note_mode: ExhaustMode,
+}
+
+// Aerodynamics system
+#[derive(Component, Clone)]
+pub struct AerodynamicsSystem {
+    pub downforce: f32,
+    pub active_aero: bool,
+    pub rear_wing_angle: f32,
+    pub front_splitter_level: f32,
+}
+
+// Performance metrics and telemetry
+#[derive(Component, Clone)]
+pub struct PerformanceMetrics {
+    pub g_force_lateral: f32,
+    pub g_force_longitudinal: f32,
+    pub performance_timer: f32,
+    pub zero_to_sixty_time: f32,
+    pub is_timing_launch: bool,
+}
+
+// Audio and exhaust system
+#[derive(Component, Clone)]
+pub struct ExhaustSystem {
+    pub note_mode: ExhaustMode,
     pub engine_note_intensity: f32,
     pub turbo_whistle_intensity: f32,
     pub backfire_timer: f32,
     pub pops_and_bangs: bool,
 }
 
-impl Default for SuperCar {
+// Legacy SuperCar - DEPRECATED: Use SuperCarBundle for new entities
+#[deprecated(note = "Use SuperCarBundle and individual component queries instead")]
+#[derive(Component, Clone, Default)]
+pub(crate) struct SuperCar {
+    // Temporary compatibility fields - will be removed after migration
+    pub max_speed: f32,
+    pub acceleration: f32,
+    pub turbo_boost: bool,
+    pub exhaust_timer: f32,
+    pub weight: f32,
+    pub power: f32,
+    pub turbo_pressure: f32,
+    pub rpm: f32,
+    pub max_rpm: f32,
+    pub idle_rpm: f32,
+    pub power_band_start: f32,
+    pub power_band_end: f32,
+    pub torque: f32,
+    pub drag_coefficient: f32,
+    pub suspension_stiffness: f32,
+    pub suspension_damping: f32,
+    pub front_weight_bias: f32,
+    pub traction_control: bool,
+    pub stability_control: bool,
+    pub wheel_spin_threshold: f32,
+    pub current_traction: f32,
+    pub turbo_lag: f32,
+    pub turbo_cooldown: f32,
+    pub max_turbo_time: f32,
+    pub current_turbo_time: f32,
+    pub turbo_stage: u8,
+    pub driving_mode: DrivingMode,
+    pub launch_control_engaged: bool,
+    pub launch_control: bool,
+    pub g_force_lateral: f32,
+    pub g_force_longitudinal: f32,
+}
+
+// Bundle for creating SuperCar entities with all components
+#[derive(Bundle)]
+pub struct SuperCarBundle {
+    pub specs: SuperCarSpecs,
+    pub suspension: SuperCarSuspension,
+    pub turbo: TurboSystem,
+    pub engine: EngineState,
+    pub transmission: Transmission,
+    pub driving_modes: DrivingModes,
+    pub aerodynamics: AerodynamicsSystem,
+    pub performance: PerformanceMetrics,
+    pub exhaust: ExhaustSystem,
+}
+
+impl Default for SuperCarBundle {
     fn default() -> Self {
         Self {
-            // Bugatti Chiron specifications
-            max_speed: 261.0,            // mph - actual Chiron top speed
-            acceleration: 180.0,         // enhanced for hypercar feel (0-60 in 2.4s)
-            turbo_boost: false,
+            specs: SuperCarSpecs::default(),
+            suspension: SuperCarSuspension::default(),
+            turbo: TurboSystem::default(),
+            engine: EngineState::default(),
+            transmission: Transmission::default(),
+            driving_modes: DrivingModes::default(),
+            aerodynamics: AerodynamicsSystem::default(),
+            performance: PerformanceMetrics::default(),
+            exhaust: ExhaustSystem::default(),
+        }
+    }
+}
+
+// Removed: Default implementation moved to #[derive(Default)] for marker struct
+
+// Component-specific Default implementations
+impl Default for SuperCarSpecs {
+    fn default() -> Self {
+        Self {
+            max_speed: 261.0,
+            acceleration: 180.0,
+            weight: 1995.0,
+            power: 1500.0,
+            torque: 1180.0,
+            drag_coefficient: 0.35,
             exhaust_timer: 0.0,
-            
-            // Advanced hypercar physics (Chiron specs)
-            weight: 1995.0,              // kg - actual Chiron weight
-            power: 1500.0,               // hp - quad-turbo W16 engine
-            torque: 1180.0,              // lb-ft converted to approximate scale
-            drag_coefficient: 0.35,      // excellent aerodynamics
-            
-            // Premium suspension and handling
-            suspension_stiffness: 9.2,   // adaptive suspension - stiffer for hypercar
-            suspension_damping: 4.8,     // excellent damping control
-            front_weight_bias: 0.43,     // rear-mid engine layout
-            
-            // Advanced traction systems
+        }
+    }
+}
+
+impl Default for SuperCarSuspension {
+    fn default() -> Self {
+        Self {
+            stiffness: 9.2,
+            damping: 4.8,
+            front_weight_bias: 0.43,
             traction_control: true,
             stability_control: true,
-            wheel_spin_threshold: 0.12,  // very low for maximum grip
-            current_traction: 1.0,       // start with perfect grip
-            
-            // Quad-turbo system
-            turbo_pressure: 0.0,
-            turbo_lag: 0.6,              // minimal lag for modern turbos
-            turbo_cooldown: 0.0,
-            max_turbo_time: 18.0,        // 18 seconds of boost before cooldown
-            current_turbo_time: 0.0,
-            turbo_stage: 0,              // start with no turbos active
-            turbo_pressure_buildup: 1.2, // aggressive buildup rate
-            
-            // W16 engine characteristics
-            rpm: 800.0,                  // idle RPM
-            max_rpm: 6700.0,             // actual Chiron redline
+            wheel_spin_threshold: 0.12,
+            current_traction: 1.0,
+        }
+    }
+}
+
+impl Default for TurboSystem {
+    fn default() -> Self {
+        Self {
+            turbo_boost: false,
+            pressure: 0.0,
+            lag: 0.6,
+            cooldown: 0.0,
+            max_time: 18.0,
+            current_time: 0.0,
+            stage: 0,
+            pressure_buildup: 1.2,
+        }
+    }
+}
+
+impl Default for EngineState {
+    fn default() -> Self {
+        Self {
+            rpm: 800.0,
+            max_rpm: 6700.0,
             idle_rpm: 800.0,
-            power_band_start: 2000.0,    // turbos kick in early
-            power_band_end: 6000.0,      // peak power range
-            gear: 1,                     // start in first gear
-            gear_ratios: vec![3.6, 2.4, 1.8, 1.4, 1.1, 0.9, 0.75], // 7-speed dual-clutch
-            shift_rpm: 6200.0,           // shift up RPM
-            downshift_rpm: 3500.0,       // shift down RPM
-            
-            // Hypercar driving modes
-            driving_mode: DrivingMode::Sport, // default to sport mode
+            power_band_start: 2000.0,
+            power_band_end: 6000.0,
+            temperature: 0.7,
+            oil_pressure: 0.8,
+            fuel_consumption_rate: 22.5,
+            rev_limiter_active: false,
+        }
+    }
+}
+
+impl Default for Transmission {
+    fn default() -> Self {
+        Self {
+            gear: 1,
+            gear_ratios: vec![3.6, 2.4, 1.8, 1.4, 1.1, 0.9, 0.75],
+            shift_rpm: 6200.0,
+            downshift_rpm: 3500.0,
+        }
+    }
+}
+
+impl Default for DrivingModes {
+    fn default() -> Self {
+        Self {
+            mode: DrivingMode::Sport,
             launch_control: true,
             launch_control_engaged: false,
-            launch_rpm_limit: 3500.0,    // launch control RPM limit
+            launch_rpm_limit: 3500.0,
             sport_mode_active: true,
             track_mode_active: false,
-            
-            // Advanced aerodynamics
-            downforce: 0.0,              // calculated dynamically
-            active_aero: true,           // Chiron has active aerodynamics
-            rear_wing_angle: 0.0,        // start in low-drag position
-            front_splitter_level: 0.0,   // start retracted
-            
-            // Performance metrics
+        }
+    }
+}
+
+impl Default for AerodynamicsSystem {
+    fn default() -> Self {
+        Self {
+            downforce: 0.0,
+            active_aero: true,
+            rear_wing_angle: 0.0,
+            front_splitter_level: 0.0,
+        }
+    }
+}
+
+impl Default for PerformanceMetrics {
+    fn default() -> Self {
+        Self {
             g_force_lateral: 0.0,
             g_force_longitudinal: 0.0,
             performance_timer: 0.0,
             zero_to_sixty_time: 0.0,
             is_timing_launch: false,
-            
-            // Enhanced engine simulation
-            engine_temperature: 0.7,     // normal operating temperature
-            oil_pressure: 0.8,           // good oil pressure
-            fuel_consumption_rate: 22.5, // L/100km - realistic for hypercar
-            rev_limiter_active: false,
-            
-            // Sound system integration
-            exhaust_note_mode: ExhaustMode::Sport,
+        }
+    }
+}
+
+impl Default for ExhaustSystem {
+    fn default() -> Self {
+        Self {
+            note_mode: ExhaustMode::Sport,
             engine_note_intensity: 0.8,
             turbo_whistle_intensity: 0.6,
             backfire_timer: 0.0,
-            pops_and_bangs: true,        // aggressive exhaust tuning
+            pops_and_bangs: true,
         }
     }
 }

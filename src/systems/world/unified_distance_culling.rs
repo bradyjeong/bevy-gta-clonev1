@@ -218,17 +218,18 @@ pub fn new_unified_distance_culling_system(
                 };
                 
                 // Mark entity as dirty for other systems to respond to LOD changes
-                commands.entity(entity).insert(DirtyLOD::new(
-                    if distance < 100.0 { DirtyPriority::High } else { DirtyPriority::Normal },
-                    current_frame,
-                    distance,
-                ));
+                // Batching system disabled
+                // commands.entity(entity).insert(DirtyLOD::new(
+                //     if distance < 100.0 { DirtyPriority::High } else { DirtyPriority::Normal },
+                //     current_frame,
+                // ));
                 
                 // Mark visibility as dirty if changed
-                commands.entity(entity).insert(DirtyVisibility::new(
-                    DirtyPriority::Normal,
-                    current_frame,
-                ));
+                // Batching system disabled
+                // commands.entity(entity).insert(DirtyVisibility::new(
+                //     DirtyPriority::Normal,
+                //     current_frame,
+                // ));
             }
             
             processed += 1;
@@ -440,11 +441,11 @@ pub fn unified_culling_movement_tracker(
                 DirtyPriority::Normal
             };
             
-            commands.entity(entity).insert(DirtyLOD::new(
-                priority,
-                current_frame,
-                cullable.last_distance,
-            ));
+            // Batching system disabled  
+            // commands.entity(entity).insert(DirtyLOD::new(
+            //     priority,
+            //     current_frame,
+            // ));
         }
     }
 }

@@ -7,8 +7,7 @@ thread_local! {
     static AUDIO_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
 }
 
-pub mod realistic_vehicle_audio;
-pub use realistic_vehicle_audio::*;
+
 
 #[derive(Component)]
 pub struct FootstepTimer {
