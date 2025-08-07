@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::components::{Cullable, ActiveEntity, CullingSettings};
-use crate::systems::distance_cache::{DistanceCache, get_cached_distance_squared};
+use crate::services::distance_cache::{DistanceCache, get_cached_distance_squared};
 
 #[derive(Default)]
 pub struct CullingTimer {

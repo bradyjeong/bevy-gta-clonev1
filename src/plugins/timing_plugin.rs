@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::systems::timing_service::{TimingService, update_timing_service, cleanup_timing_service};
+use crate::services::timing_service::{TimingService, update_timing_service, cleanup_timing_service};
 use crate::systems::batching::frame_counter_system;
 
 /// Plugin responsible for timing services and frame management

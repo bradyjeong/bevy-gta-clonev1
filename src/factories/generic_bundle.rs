@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::config::*;
 use crate::components::*;
-use crate::systems::distance_cache::MovementTracker;
+use crate::services::distance_cache::MovementTracker;
 use crate::bundles::*;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
 use crate::systems::world::unified_distance_culling::UnifiedCullable;

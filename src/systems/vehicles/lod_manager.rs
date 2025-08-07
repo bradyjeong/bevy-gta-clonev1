@@ -5,7 +5,7 @@ use crate::components::{
 };
 use crate::bundles::VisibleChildBundle;
 // Simplified without timing service
-use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
+use crate::services::distance_cache::{DistanceCache, get_cached_distance};
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 
 pub fn vehicle_lod_system(

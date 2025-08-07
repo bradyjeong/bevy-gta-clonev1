@@ -63,12 +63,12 @@ pub mod vehicles;
 pub mod ui;
 pub mod water;
 pub mod debug;
-pub mod timing_service;
+// pub mod timing_service; // Moved to services/
 pub mod spawn_validation;
 pub mod input;
 pub mod persistence;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
-pub mod distance_cache;
+// pub mod distance_cache; // Moved to services/
 pub mod unified_distance_calculator;
 pub mod transform_sync;
 pub mod distance_cache_debug;
@@ -85,32 +85,34 @@ pub mod parallel_physics;
 pub mod performance_monitor;
 // pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
 pub mod batching;
-// Keep existing exports for now but remove some problematic star imports
-pub use movement::*;
-pub use parallel_physics::*;
-pub use performance_monitor::*;
-pub use world::*;
-pub use interaction::*;
-pub use camera::*;
-pub use effects::*;
-pub use audio::*;
-pub use human_behavior::*;
-pub use physics_utils::*;
-pub use vehicles::*;
-pub use ui::*;
-pub use water::*;
-pub use debug::*;
-pub use timing_service::*;
-pub use spawn_validation::*;
-pub use input::*;
-pub use persistence::*;
-pub use distance_cache::*;
-pub use unified_distance_calculator::*;
-pub use distance_cache_debug::*;
-pub use transform_sync::*;
+// Explicit exports following simplicity guidelines - only export what's needed
+// Core systems that are commonly used across plugins
+pub use crate::services::{DistanceCache, get_cached_distance, get_cached_distance_squared, MovementTracker, DistanceCachePlugin};
+pub use crate::services::{TimingService, SystemType, EntityTimerType, ManagedTiming, TimingStats};
+pub use spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType, SpawnValidationPlugin};
 pub use batching::frame_counter_system;
-pub use simple_service_example::*;
-pub use rendering::*;
-pub use vegetation_instancing_integration::*;
-pub use player_collision_resolution::*;
+pub use performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory, UnifiedPerformancePlugin};
+pub use distance_cache_debug::DistanceCacheDebugPlugin;
+pub use transform_sync::TransformSyncPlugin;
+pub use unified_distance_calculator::UnifiedDistanceCalculatorPlugin;
+
+// World systems (frequently used together)
+pub use world::{
+    unified_world::{UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState},
+    road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType},
+    road_generation::is_on_road_spline,
+    unified_distance_culling::UnifiedCullable,
+};
+
+// Input system types
+pub use input::{ControlManager, ControlAction, InputManager, InputConfig, InputAction};
+
+// Physics utilities
+pub use physics_utils::PhysicsUtilities;
+
+// Simple service examples
+pub use simple_service_example::{
+    service_example_vehicle_creation, service_example_config_validation, 
+    service_example_timing_check
+};
 

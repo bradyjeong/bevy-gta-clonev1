@@ -6,7 +6,7 @@ use crate::bundles::VisibleChildBundle;
 use crate::systems::audio::FootstepTimer;
 use crate::systems::human_behavior::HumanEmotions;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
-use crate::systems::distance_cache::MovementTracker;
+use crate::services::distance_cache::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
 
 pub fn setup_basic_world(

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::components::*;
-use crate::systems::distance_cache::{DistanceCache, get_cached_distance_squared};
+use crate::services::distance_cache::{DistanceCache, get_cached_distance_squared};
 use crate::systems::world::map_system::MapChunk;
 
 /// Configuration for distance-based culling and LOD for different entity types

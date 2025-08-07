@@ -6,7 +6,7 @@ use crate::components::{
 };
 
 use crate::config::GameConfig;
-use crate::systems::timing_service::{TimingService, EntityTimerType, ManagedTiming};
+use crate::services::timing_service::{TimingService, EntityTimerType, ManagedTiming};
 use crate::services::ground_detection::GroundDetectionService;
 use rand::prelude::*;
 

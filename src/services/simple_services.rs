@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::config::GameConfig;
-use crate::systems::timing_service::TimingService as BaseTimingService;
+use crate::services::timing_service::TimingService as BaseTimingService;
 
 /// Simplified service injection using direct Bevy resources
 /// This provides the service pattern while avoiding complex trait objects
@@ -95,7 +95,7 @@ impl EnhancedTimingService {
         self.base_service.update(time);
     }
     
-    pub fn should_run_system(&mut self, system_type: crate::systems::timing_service::SystemType) -> bool {
+    pub fn should_run_system(&mut self, system_type: crate::services::timing_service::SystemType) -> bool {
         self.base_service.should_run_system(system_type)
     }
     

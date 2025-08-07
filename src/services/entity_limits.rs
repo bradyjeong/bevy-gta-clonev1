@@ -1,3 +1,5 @@
+#![allow(dead_code)] // Service implementation ready for future use
+
 use bevy::prelude::*;
 use crate::components::ContentType;
 

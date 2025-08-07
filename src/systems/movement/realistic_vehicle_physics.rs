@@ -437,15 +437,13 @@ pub fn vehicle_wheel_update_system(
 pub fn realistic_vehicle_performance_system(
     time: Res<Time>,
     query: Query<&RealisticVehicle, With<ActiveEntity>>,
+    mut last_report: Local<f32>,
 ) {
     let current_time = time.elapsed_secs();
-    static mut LAST_REPORT: f32 = 0.0;
     
-    unsafe {
-        if current_time - LAST_REPORT > 10.0 {
-            LAST_REPORT = current_time;
-            let active_vehicles = query.iter().filter(|v| v.physics_enabled).count();
-            info!("REALISTIC PHYSICS: {} active vehicles with full physics", active_vehicles);
-        }
+    if current_time - *last_report > 10.0 {
+        *last_report = current_time;
+        let active_vehicles = query.iter().filter(|v| v.physics_enabled).count();
+        info!("REALISTIC PHYSICS: {} active vehicles with full physics", active_vehicles);
     }
 }

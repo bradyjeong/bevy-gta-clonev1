@@ -5,8 +5,8 @@ use crate::components::{
     NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE
 };
 use crate::factories::{RenderingFactory, StandardRenderingPattern};
-use crate::systems::timing_service::{TimingService, SystemType, EntityTimerType, ManagedTiming};
-use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
+use crate::services::timing_service::{TimingService, SystemType, EntityTimerType, ManagedTiming};
+use crate::services::distance_cache::{DistanceCache, get_cached_distance};
 
 /// NPC LOD system that follows the vehicle LOD architecture
 /// Manages rendering complexity based on distance from active entity

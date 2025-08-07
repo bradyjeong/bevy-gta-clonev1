@@ -4,7 +4,8 @@ use crate::system_sets::GameSystemSets;
 use crate::services::{initialize_simple_services, update_timing_service_system};
 use crate::systems::{
     service_example_vehicle_creation, service_example_config_validation, 
-    service_example_timing_check, setup_unified_entity_factory
+    service_example_timing_check
+    // setup_unified_entity_factory // Function doesn't exist
 };
 use crate::setup::{
     setup_basic_world, setup_initial_aircraft_unified, 
@@ -33,7 +34,7 @@ impl Plugin for GameSetupPlugin {
             
             // Core world setup
             .add_systems(Startup, (
-                setup_unified_entity_factory,
+                // setup_unified_entity_factory, // Function doesn't exist
                 setup_basic_world,
                 setup_dubai_noon_lighting,
                 setup_initial_aircraft_unified,

@@ -4,7 +4,7 @@ use crate::components::*;
 use crate::systems::world::unified_world::{
     UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkState, UNIFIED_STREAMING_RADIUS,
 };
-use crate::systems::distance_cache::{DistanceCache, get_cached_distance};
+use crate::services::distance_cache::{DistanceCache, get_cached_distance};
 
 // MASTER UNIFIED LOD AND CULLING SYSTEM
 // Consolidates all LOD systems into a single, efficient pipeline

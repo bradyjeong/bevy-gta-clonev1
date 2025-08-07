@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::Group;
-use crate::systems::timing_service::{EntityTimerType, SystemType, TimingStats};
+use crate::services::timing_service::{EntityTimerType, SystemType, TimingStats};
 
 /// Core service trait for all services
 #[allow(dead_code)]

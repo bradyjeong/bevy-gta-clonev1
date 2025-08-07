@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
-use crate::systems::distance_cache::DistanceCache;
+use crate::services::distance_cache::DistanceCache;
 use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
 
 /// Unified distance calculator that batches calculations and leverages caching
@@ -216,7 +216,7 @@ impl Plugin for UnifiedDistanceCalculatorPlugin {
         app.insert_resource(UnifiedDistanceCalculator::default())
             .add_systems(
                 Update,
-                unified_distance_processing_system.before(crate::systems::distance_cache::distance_cache_management_system)
+                unified_distance_processing_system.before(crate::services::distance_cache::distance_cache_management_system)
             );
     }
 }

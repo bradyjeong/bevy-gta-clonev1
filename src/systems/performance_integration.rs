@@ -63,7 +63,7 @@ pub fn integrate_existing_performance_metrics(
 /// System to record distance cache performance
 pub fn integrate_distance_cache_performance(
     mut tracker: ResMut<UnifiedPerformanceTracker>,
-    distance_cache: Option<Res<crate::systems::distance_cache::DistanceCache>>,
+    distance_cache: Option<Res<crate::services::distance_cache::DistanceCache>>,
 ) {
     if let Some(cache) = distance_cache {
         tracker.update_cache_stats(

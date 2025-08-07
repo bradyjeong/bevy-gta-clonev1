@@ -31,6 +31,7 @@ pub struct TimingService {
 pub struct EntityTimer {
     pub last_update: f32,
     pub interval: f32,
+    #[allow(dead_code)]
     pub timer_type: EntityTimerType,
 }
 

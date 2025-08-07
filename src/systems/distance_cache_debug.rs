@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::systems::distance_cache::DistanceCache;
+use crate::services::distance_cache::DistanceCache;
 
 /// Debug system to display distance cache performance statistics
 pub fn distance_cache_debug_system(

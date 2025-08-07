@@ -65,9 +65,16 @@
 pub mod entity_factory_unified;
 
 // Focused factory modules (following AGENT.md simplicity principles)
-pub mod entity_limits;
+// pub mod entity_limits; // Moved to services/
 pub mod position_validator;
 pub mod collision_detector;
+
+// Domain-specific factories (following simplicity guidelines)
+pub mod building_factory;
+pub mod vehicle_factory;
+pub mod npc_factory;
+pub mod tree_factory;
+pub mod entity_limit;
 
 // Specialized factories
 pub mod material_factory;
@@ -82,7 +89,13 @@ pub use entity_factory_unified::*;
 // Focused module exports (AGENT.md compliant architecture)
 pub use position_validator::*;
 pub use collision_detector::*;
-// Note: EntityLimitManager already exported by entity_factory_unified
+
+// Domain-specific factory exports
+pub use building_factory::*;
+pub use vehicle_factory::*;
+pub use npc_factory::*;
+pub use tree_factory::*;
+pub use entity_limit::{EntityLimitManager, EntityType, EntityLimit}; // Avoid conflict with unified factory
 
 // Specialized factory exports
 pub use material_factory::*;

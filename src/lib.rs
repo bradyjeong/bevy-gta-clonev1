@@ -1,3 +1,5 @@
+#![deny(dead_code, unused_imports, unused_mut)]
+
 pub mod components;
 pub mod config;
 pub mod systems;

@@ -1448,16 +1448,14 @@ pub fn convert_legacy_vehicles_system(
 pub fn unified_entity_factory_performance_system(
     time: Res<Time>,
     realistic_vehicles: Query<&RealisticVehicle>,
+    mut last_report: Local<f32>,
 ) {
     let current_time = time.elapsed_secs();
-    static mut LAST_REPORT: f32 = 0.0;
     
-    unsafe {
-        if current_time - LAST_REPORT > 20.0 {
-            LAST_REPORT = current_time;
-            let total_realistic = realistic_vehicles.iter().count();
-            let physics_enabled = realistic_vehicles.iter().filter(|v| v.physics_enabled).count();
-            info!("UNIFIED FACTORY: {}/{} realistic vehicles with physics enabled", physics_enabled, total_realistic);
-        }
+    if current_time - *last_report > 20.0 {
+        *last_report = current_time;
+        let total_realistic = realistic_vehicles.iter().count();
+        let physics_enabled = realistic_vehicles.iter().filter(|v| v.physics_enabled).count();
+        info!("UNIFIED FACTORY: {}/{} realistic vehicles with physics enabled", physics_enabled, total_realistic);
     }
 }
