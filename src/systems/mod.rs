@@ -85,11 +85,10 @@ pub mod parallel_physics;
 pub mod performance_monitor;
 // pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
 pub mod batching;
+// Keep existing exports for now but remove some problematic star imports
 pub use movement::*;
 pub use parallel_physics::*;
-
 pub use performance_monitor::*;
-// pub use performance_integration::*; // Temporarily disabled - depends on deleted batching system
 pub use world::*;
 pub use interaction::*;
 pub use camera::*;
@@ -97,8 +96,6 @@ pub use effects::*;
 pub use audio::*;
 pub use human_behavior::*;
 pub use physics_utils::*;
-
-
 pub use vehicles::*;
 pub use ui::*;
 pub use water::*;
@@ -107,13 +104,11 @@ pub use timing_service::*;
 pub use spawn_validation::*;
 pub use input::*;
 pub use persistence::*;
-// pub use realistic_physics_safeguards::*; // DISABLED - conflicts with Rapier
 pub use distance_cache::*;
 pub use unified_distance_calculator::*;
 pub use distance_cache_debug::*;
 pub use transform_sync::*;
 pub use batching::frame_counter_system;
-
 pub use simple_service_example::*;
 pub use rendering::*;
 pub use vegetation_instancing_integration::*;

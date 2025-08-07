@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::*;
+use crate::components::{Lake, WaterBody, Yacht, Boat, Cullable};
 use crate::factories::{MaterialFactory, RenderingFactory, StandardRenderingPattern, RenderingBundleType};
 
 pub fn setup_lake(

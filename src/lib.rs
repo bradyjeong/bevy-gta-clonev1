@@ -10,6 +10,7 @@ pub mod factories;
 mod services; // Private - only used internally
 pub mod render_primitives;
 pub mod system_sets;
+pub mod shared; // Shared types to break circular dependencies
 
 // Core public API - essential items for external use (reduced from 100+ to 10)
 pub use components::{Player, ActiveEntity, MainCamera, CullingSettings, PerformanceStats};

@@ -9,10 +9,7 @@ use crate::bundles::{
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
 use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};
 
-use crate::systems::distance_cache::MovementTracker;
-use crate::systems::world::road_network::RoadNetwork;
-use crate::systems::world::road_generation::is_on_road_spline;
-use crate::systems::world::unified_distance_culling::UnifiedCullable;
+use crate::systems::{RoadNetwork, is_on_road_spline, UnifiedCullable, MovementTracker};
 
 use crate::GameConfig;
 

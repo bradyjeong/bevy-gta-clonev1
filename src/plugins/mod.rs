@@ -59,6 +59,14 @@ pub mod persistence_plugin;
 pub mod input_plugin;
 pub mod vegetation_lod_plugin;
 
+// New focused world plugins
+pub mod world_streaming_plugin;
+pub mod world_content_plugin;
+pub mod world_lod_plugin;
+pub mod world_npc_plugin;
+pub mod world_debug_plugin;
+pub mod timing_plugin;
+
 pub use game_core::*;
 pub use game_setup::*;
 pub use player_plugin::*;
@@ -69,4 +77,12 @@ pub use water_plugin::*;
 pub use persistence_plugin::*;
 pub use input_plugin::*;
 pub use vegetation_lod_plugin::*;
+
+// New focused world plugins
+pub use world_streaming_plugin::*;
+pub use world_content_plugin::*;
+pub use world_lod_plugin::*;
+pub use world_npc_plugin::*;
+pub use world_debug_plugin::*;
+pub use timing_plugin::*;
 
