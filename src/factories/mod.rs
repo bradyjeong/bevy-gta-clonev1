@@ -14,7 +14,10 @@
 //!
 //! ### Unified Factories (Recommended)
 //! - `entity_factory_unified`: Main entity creation with consistent patterns
-//! - `entity_builder_unified`: Fluent builder pattern for complex entities
+//! - `entity_limits`: Focused entity count management and FIFO cleanup
+//! - `position_validator`: Spawn position validation and ground height detection
+//! - `collision_detector`: Entity collision detection for spawning
+//! 
 //!
 //! ### Specialized Factories
 //! - `material_factory`: Material and texture creation
@@ -41,12 +44,15 @@
 //!     .spawn(&mut commands);
 //! ```
 //!
-//! ## Factory Benefits
+//! ## Factory Benefits (AGENT.md Compliant)
 //!
-//! - **Consistency**: All entities of the same type have identical component setup
-//! - **Maintainability**: Entity creation logic is centralized
-//! - **Testing**: Factory functions are easy to unit test
-//! - **Performance**: Factories can optimize component allocation
+//! - **Single Responsibility**: Each factory module has one clear purpose
+//! - **Clear Boundaries**: No tangled interdependencies between modules
+//! - **Minimal Coupling**: Modules only depend on what they need
+//! - **Straightforward Data Flow**: Easy to trace entity creation process
+//! - **Maintainability**: Entity creation logic is properly separated
+//! - **Testing**: Individual modules can be unit tested in isolation
+//! - **Performance**: Focused modules enable better optimization
 //!
 //! ## Adding New Factories
 //!
@@ -57,7 +63,11 @@
 
 // Unified factory system - replaces all duplicate factories
 pub mod entity_factory_unified;
-pub mod entity_builder_unified;
+
+// Focused factory modules (following AGENT.md simplicity principles)
+pub mod entity_limits;
+pub mod position_validator;
+pub mod collision_detector;
 
 // Specialized factories
 pub mod material_factory;
@@ -66,9 +76,13 @@ pub mod transform_factory;
 pub mod generic_bundle;
 pub mod rendering_factory;
 
-// Public API - unified factory system
+// Public API - unified factory system  
 pub use entity_factory_unified::*;
-pub use entity_builder_unified::*;
+
+// Focused module exports (AGENT.md compliant architecture)
+pub use position_validator::*;
+pub use collision_detector::*;
+// Note: EntityLimitManager already exported by entity_factory_unified
 
 // Specialized factory exports
 pub use material_factory::*;

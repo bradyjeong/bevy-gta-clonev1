@@ -1,6 +1,50 @@
+//! # Vehicle Components - Simplified Architecture
+//!
+//! This module defines all vehicle-related components following AGENT.md principles.
+//! The architecture was completely refactored from a monolithic SuperCar struct 
+//! to focused, single-responsibility components.
+//!
+//! ## Component-Based Architecture
+//!
+//! ### Core Design Principles:
+//! - **Single Responsibility**: Each component handles one specific aspect
+//! - **Clear Boundaries**: No tangled interdependencies between components
+//! - **Data-Only**: Components contain no logic, only data
+//! - **Composable**: Components can be mixed and matched as needed
+//!
+//! ### SuperCar System Components:
+//! - [`SuperCarSpecs`] - Performance specifications (max speed, acceleration)
+//! - [`EngineState`] - Engine data (RPM, power band, torque)
+//! - [`TurboSystem`] - Turbo-specific data and staging
+//! - [`SuperCarSuspension`] - Suspension and weight distribution
+//! - [`TractionControl`] - Stability and traction systems
+//! - [`DrivingModes`] - Driving mode selection and launch control
+//! - [`ExhaustSystem`] - Exhaust effects and audio
+//! - [`Transmission`] - Gear ratios and transmission data
+//!
+//! ### Bundle Usage:
+//! ```rust
+//! // Create a complete SuperCar entity
+//! let supercar_entity = commands.spawn((
+//!     Car,
+//!     SuperCarBundle::default(),
+//!     Transform::default(),
+//!     // ... other standard components
+//! )).id();
+//! ```
+//!
+//! ## Migration Notes:
+//! 
+//! The old monolithic `SuperCar` struct (36 fields) has been replaced with
+//! focused components. This improves:
+//! - **Maintainability**: Each component can be modified independently
+//! - **Performance**: Bevy ECS optimizations work better with smaller components
+//! - **Testing**: Individual components can be unit tested in isolation
+//! - **Understanding**: Clear separation of concerns makes code easier to follow
+
 use bevy::prelude::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 pub enum DrivingMode {
     Comfort,    // Reduced power, softer suspension
     #[default]
@@ -9,7 +53,7 @@ pub enum DrivingMode {
     Custom,     // User-defined settings
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 pub enum ExhaustMode {
     Quiet,      // Minimal exhaust noise
     Normal,     // Standard exhaust note
@@ -122,43 +166,7 @@ pub struct ExhaustSystem {
     pub pops_and_bangs: bool,
 }
 
-// Legacy SuperCar - DEPRECATED: Use SuperCarBundle for new entities
-#[deprecated(note = "Use SuperCarBundle and individual component queries instead")]
-#[derive(Component, Clone, Default)]
-pub(crate) struct SuperCar {
-    // Temporary compatibility fields - will be removed after migration
-    pub max_speed: f32,
-    pub acceleration: f32,
-    pub turbo_boost: bool,
-    pub exhaust_timer: f32,
-    pub weight: f32,
-    pub power: f32,
-    pub turbo_pressure: f32,
-    pub rpm: f32,
-    pub max_rpm: f32,
-    pub idle_rpm: f32,
-    pub power_band_start: f32,
-    pub power_band_end: f32,
-    pub torque: f32,
-    pub drag_coefficient: f32,
-    pub suspension_stiffness: f32,
-    pub suspension_damping: f32,
-    pub front_weight_bias: f32,
-    pub traction_control: bool,
-    pub stability_control: bool,
-    pub wheel_spin_threshold: f32,
-    pub current_traction: f32,
-    pub turbo_lag: f32,
-    pub turbo_cooldown: f32,
-    pub max_turbo_time: f32,
-    pub current_turbo_time: f32,
-    pub turbo_stage: u8,
-    pub driving_mode: DrivingMode,
-    pub launch_control_engaged: bool,
-    pub launch_control: bool,
-    pub g_force_lateral: f32,
-    pub g_force_longitudinal: f32,
-}
+
 
 // Bundle for creating SuperCar entities with all components
 #[derive(Bundle)]

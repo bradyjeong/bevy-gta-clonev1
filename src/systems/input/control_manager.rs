@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use crate::game_state::GameState;
-use crate::components::{Car, SuperCar, ActiveEntity, Player, Helicopter, F16, NPC};
+use crate::components::{Car, ActiveEntity, Player, Helicopter, F16, NPC, SuperCarSpecs};
 use super::input_config::InputAction;
 use super::input_manager::InputManager;
 use super::vehicle_control_config::{VehicleType as ConfigVehicleType, VehicleControlConfig as ExistingVehicleControlConfig};
@@ -633,8 +633,8 @@ pub fn unified_control_system(
     // All entity queries
     active_entities: Query<(Entity, &Velocity, &Transform), With<ActiveEntity>>,
     player_query: Query<Entity, (With<Player>, With<ActiveEntity>)>,
-    car_query: Query<Entity, (With<Car>, With<ActiveEntity>, Without<SuperCar>)>,
-    supercar_query: Query<Entity, (With<SuperCar>, With<ActiveEntity>)>,
+    car_query: Query<Entity, (With<Car>, With<ActiveEntity>, Without<SuperCarSpecs>)>,
+    supercar_query: Query<Entity, (With<SuperCarSpecs>, With<ActiveEntity>)>,
     helicopter_query: Query<Entity, (With<Helicopter>, With<ActiveEntity>)>,
     f16_query: Query<Entity, (With<F16>, With<ActiveEntity>)>,
 ) {
@@ -683,8 +683,8 @@ pub fn control_action_system(
     // Player query
     player_query: Query<(&Velocity, &Transform), (With<ActiveEntity>, Without<Car>)>,
     // Car queries
-    car_query: Query<(&Velocity, &Transform), (With<Car>, With<ActiveEntity>, Without<SuperCar>)>,
-    supercar_query: Query<(&Velocity, &Transform), (With<SuperCar>, With<ActiveEntity>)>,
+    car_query: Query<(&Velocity, &Transform), (With<Car>, With<ActiveEntity>, Without<SuperCarSpecs>)>,
+    supercar_query: Query<(&Velocity, &Transform), (With<SuperCarSpecs>, With<ActiveEntity>)>,
 ) {
     // Determine current active entity and get velocity/transform
     let (velocity, transform) = if let Ok((vel, trans)) = player_query.single() {
@@ -714,8 +714,8 @@ pub fn control_validation_system(
     mut control_manager: ResMut<ControlManager>,
     current_state: Res<State<GameState>>,
     player_query: Query<(&Velocity, &Transform), (With<ActiveEntity>, Without<Car>)>,
-    car_query: Query<(&Velocity, &Transform), (With<Car>, With<ActiveEntity>, Without<SuperCar>)>,
-    supercar_query: Query<(&Velocity, &Transform), (With<SuperCar>, With<ActiveEntity>)>,
+    car_query: Query<(&Velocity, &Transform), (With<Car>, With<ActiveEntity>, Without<SuperCarSpecs>)>,
+    supercar_query: Query<(&Velocity, &Transform), (With<SuperCarSpecs>, With<ActiveEntity>)>,
 ) {
     // Get current active entity velocity/transform
     let (velocity, transform) = if let Ok((vel, trans)) = player_query.single() {

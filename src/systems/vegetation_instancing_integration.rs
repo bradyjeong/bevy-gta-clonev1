@@ -6,7 +6,7 @@ use crate::components::*;
 pub fn integrate_vegetation_with_instancing_system(
     mut commands: Commands,
     vegetation_query: Query<(Entity, &Transform), (With<Cullable>, Without<VegetationBatchable>)>,
-    frame_counter: Res<FrameCounter>,
+    _frame_counter: Res<FrameCounter>,
 ) {
     // Convert existing vegetation entities to use instancing
     for (entity, _transform) in vegetation_query.iter().take(10) { // Process 10 per frame

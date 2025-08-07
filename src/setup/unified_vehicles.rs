@@ -244,7 +244,7 @@ fn setup_supercar_unified(
             locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             cullable: UnifiedCullable::vehicle(),
         },
-        SuperCar::default(),
+        SuperCarBundle::default(),
         MovementTracker::new(validated_position, 10.0),
         Name::new("BugattiSupercar"),
     )).id();

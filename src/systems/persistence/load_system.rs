@@ -185,16 +185,36 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
             ));
         }
         VehicleType::SuperCar => {
-            let super_car_data: SuperCar = vehicle_data.super_car_data.as_ref()
-                .map(|sc| sc.clone().into())
-                .unwrap_or_default();
-            
             entity_commands.insert((
                 Car,
-                super_car_data,
                 Collider::cuboid(2.0, 1.0, 4.5),
                 ColliderMassProperties::Density(0.8),
             ));
+            
+            // Add SuperCar component bundle if data exists
+            if let Some(ref bundle_data) = vehicle_data.super_car_bundle {
+                let specs: SuperCarSpecs = bundle_data.specs.clone().into();
+                let suspension: SuperCarSuspension = bundle_data.suspension.clone().into();
+                let turbo: TurboSystem = bundle_data.turbo.clone().into();
+                let engine: EngineState = bundle_data.engine.clone().into();
+                let transmission: Transmission = bundle_data.transmission.clone().into();
+                let driving_modes: DrivingModes = bundle_data.driving_modes.clone().into();
+                let aerodynamics: AerodynamicsSystem = bundle_data.aerodynamics.clone().into();
+                let performance: PerformanceMetrics = bundle_data.performance.clone().into();
+                let exhaust: ExhaustSystem = bundle_data.exhaust.clone().into();
+                
+                entity_commands.insert((
+                    specs,
+                    suspension,
+                    turbo,
+                    engine,
+                    transmission,
+                    driving_modes,
+                    aerodynamics,
+                    performance,
+                    exhaust,
+                ));
+            }
         }
         VehicleType::Helicopter => {
             entity_commands.insert((

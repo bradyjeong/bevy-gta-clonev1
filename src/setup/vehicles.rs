@@ -87,7 +87,7 @@ pub fn setup_luxury_bugatti_chiron(
     // Create the luxury Bugatti entity
     let bugatti_entity = commands.spawn((
         Car,
-        SuperCar::default(),
+        SuperCarBundle::default(),
         RigidBody::Dynamic,
         Collider::cuboid(1.1, 0.5, 2.4),
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,

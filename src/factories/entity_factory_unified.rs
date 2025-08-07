@@ -584,62 +584,6 @@ impl UnifiedEntityFactory {
 
 /// VEHICLE CREATION METHODS
 impl UnifiedEntityFactory {
-    /// Spawn complete vehicle entity with all components
-    pub fn spawn_vehicle(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        vehicle_type: VehicleType,
-        position: Vec3,
-        color: Color,
-    ) -> Result<Entity, BundleError> {
-        // Validate position
-        let validated_position = self.validate_position(position)?;
-        
-        // Create bundle using generic system
-        let bundle = GenericBundleFactory::vehicle(vehicle_type, validated_position, color, &self.config)?;
-        
-        // Get vehicle configuration
-        let _vehicle_config = match vehicle_type {
-            VehicleType::BasicCar => &self.config.vehicles.basic_car,
-            VehicleType::SuperCar => &self.config.vehicles.super_car,
-            VehicleType::Helicopter => &self.config.vehicles.helicopter,
-            VehicleType::F16 => &self.config.vehicles.f16,
-        };
-        
-        // Create visual components using existing factories
-        let mesh_handle = match vehicle_type {
-            VehicleType::BasicCar => MeshFactory::create_car_body(meshes),
-            VehicleType::SuperCar => MeshFactory::create_sports_car_body(meshes),
-            VehicleType::Helicopter => MeshFactory::create_helicopter_body(meshes),
-            VehicleType::F16 => MeshFactory::create_f16_body(meshes),
-        };
-        
-        let material_handle = MaterialFactory::create_vehicle_metallic(materials, color);
-        
-        // Spawn main vehicle entity
-        let vehicle_entity = commands.spawn((
-            bundle,
-            Mesh3d(mesh_handle),
-            MeshMaterial3d(material_handle),
-        )).id();
-        
-        // Add vehicle-specific components and children
-        match vehicle_type {
-            VehicleType::Helicopter => {
-                self.add_helicopter_components(commands, vehicle_entity, meshes, materials)?;
-            }
-            VehicleType::F16 => {
-                self.add_f16_components(commands, vehicle_entity, meshes, materials)?;
-            }
-            _ => {
-                self.add_car_components(commands, vehicle_entity, meshes, materials, vehicle_type)?;
-            }
-        }
-        
-        Ok(vehicle_entity)
-    }
     
     /// Create a realistic vehicle with full physics simulation
     pub fn spawn_realistic_vehicle(
@@ -719,9 +663,9 @@ impl UnifiedEntityFactory {
             MovementTracker::new(safe_position, 10.0), // Track vehicle movement with 10m threshold
         ));
         
-        // Add SuperCar component if needed
+        // Add SuperCar components if needed
         if vehicle_type == RealisticVehicleType::SuperCar {
-            commands.entity(vehicle_entity).insert(SuperCar::default());
+            commands.entity(vehicle_entity).insert(SuperCarBundle::default());
         }
         
         // Create vehicle wheels with individual physics
@@ -733,38 +677,10 @@ impl UnifiedEntityFactory {
         Ok(vehicle_entity)
     }
     
-    /// Add car-specific components (wheels, lights, etc.)
-    fn add_car_components(
-        &self,
-        commands: &mut Commands,
-        parent_entity: Entity,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        vehicle_type: VehicleType,
-    ) -> Result<(), BundleError> {
-        let wheel_mesh = MeshFactory::create_standard_wheel(meshes);
-        let wheel_material = MaterialFactory::create_simple_material(materials, Color::srgb(0.2, 0.2, 0.2));
-        
-        // Add four wheels using transform factory
-        let wheel_positions = match vehicle_type {
-            VehicleType::SuperCar => [(-0.9, -0.3, 1.5), (0.9, -0.3, 1.5), (-0.9, -0.3, -1.5), (0.9, -0.3, -1.5)],
-            _ => [(-0.8, -0.3, 1.2), (0.8, -0.3, 1.2), (-0.8, -0.3, -1.2), (0.8, -0.3, -1.2)],
-        };
-        
-        for (x, y, z) in wheel_positions {
-            commands.spawn((
-                Mesh3d(wheel_mesh.clone()),
-                MeshMaterial3d(wheel_material.clone()),
-                TransformFactory::wheel_with_rotation(x, y, z),
-                Cullable { max_distance: self.config.world.lod_distances[1], is_culled: false },
-                ChildOf(parent_entity),
-            ));
-        }
-        
-        Ok(())
-    }
+
     
-    /// Add helicopter-specific components (rotors)
+    /// UNUSED: Add helicopter-specific components (rotors) - TODO: Remove after refactoring
+    #[allow(dead_code)]
     fn add_helicopter_components(
         &self,
         commands: &mut Commands,
@@ -798,7 +714,8 @@ impl UnifiedEntityFactory {
         Ok(())
     }
     
-    /// Add F16-specific components (realistic fighter jet assembly)
+    /// UNUSED: Add F16-specific components (realistic fighter jet assembly) - TODO: Remove after refactoring
+    #[allow(dead_code)]
     fn add_f16_components(
         &self,
         commands: &mut Commands,
@@ -1082,8 +999,8 @@ impl UnifiedEntityFactory {
     /// Create audio sources for realistic vehicle sounds
     fn create_vehicle_audio_sources(
         &self,
-        commands: &mut Commands,
-        vehicle_entity: Entity,
+        _commands: &mut Commands,
+        _vehicle_entity: Entity,
     ) -> Result<(), BundleError> {
 
         
@@ -1096,36 +1013,10 @@ impl UnifiedEntityFactory {
 /// NPC CREATION METHODS
 impl UnifiedEntityFactory {
     /// Spawn complete NPC entity with all components
-    pub fn spawn_npc(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        position: Vec3,
-        appearance: NPCAppearance,
-    ) -> Result<Entity, BundleError> {
-        // Validate position
-        let validated_position = self.validate_position(position)?;
-        
-        // Create bundle using generic system
-        let bundle = GenericBundleFactory::npc(
-            validated_position,
-            appearance.height,
-            appearance.build,
-            appearance.clone(),
-            &self.config,
-        )?;
-        
-        // Create NPC with basic body
-        let npc_entity = commands.spawn(bundle).id();
-        
-        // Add visual components
-        self.add_npc_visual_components(commands, npc_entity, meshes, materials, &appearance)?;
-        
-        Ok(npc_entity)
-    }
+
     
-    /// Add NPC visual components (head, body, limbs)
+    /// UNUSED: Add NPC visual components (head, body, limbs) - TODO: Remove after refactoring
+    #[allow(dead_code)]
     fn add_npc_visual_components(
         &self,
         commands: &mut Commands,
@@ -1168,42 +1059,6 @@ impl UnifiedEntityFactory {
 
 /// BUILDING & ENVIRONMENT CREATION METHODS
 impl UnifiedEntityFactory {
-    /// Spawn complete building entity
-    pub fn spawn_building(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        position: Vec3,
-        size: Vec3,
-        building_type: BuildingType,
-        color: Color,
-    ) -> Result<Entity, BundleError> {
-        // Validate position
-        let validated_position = self.validate_position(position)?;
-        
-        // Create bundle using generic system
-        let bundle = GenericBundleFactory::building(validated_position, size, building_type, color, &self.config)?;
-        
-        // Create appropriate mesh based on building type
-        let mesh_handle = match building_type {
-            BuildingType::Residential => meshes.add(Cuboid::new(size.x, size.y, size.z)),
-            BuildingType::Commercial => meshes.add(Cuboid::new(size.x * 0.8, size.y * 0.8, size.z * 0.8)),
-            BuildingType::Industrial => meshes.add(Cuboid::new(size.x, size.y * 1.5, size.z)),
-            BuildingType::Skyscraper => meshes.add(Cuboid::new(size.x * 0.5, size.y * 2.0, size.z * 0.5)),
-            BuildingType::Generic => meshes.add(Cuboid::new(size.x, size.y, size.z)),
-        };
-        
-        let material_handle = MaterialFactory::create_simple_material(materials, color);
-        
-        let building_entity = commands.spawn((
-            bundle,
-            Mesh3d(mesh_handle),
-            MeshMaterial3d(material_handle),
-        )).id();
-        
-        Ok(building_entity)
-    }
     
     /// Spawn terrain/ground entities
     pub fn spawn_terrain(
@@ -1243,58 +1098,7 @@ impl UnifiedEntityFactory {
         Ok(terrain_entity)
     }
     
-    /// Spawn tree entities
-    pub fn spawn_tree(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        position: Vec3,
-        height: f32,
-        trunk_radius: f32,
-    ) -> Result<Entity, BundleError> {
-        // Validate position
-        let validated_position = self.validate_position(position + Vec3::new(0.0, height / 2.0, 0.0))?;
-        
-        // Create physics bundle for tree
-        let bundle = GenericBundleFactory::physics_object(
-            validated_position,
-            ColliderShape::Cylinder { radius: trunk_radius, height },
-            100.0 * height, // Mass proportional to height
-            self.config.physics.static_group,
-            false, // Static tree
-            &self.config,
-        )?;
-        
-        let trunk_mesh = meshes.add(Cylinder::new(trunk_radius, height));
-        let trunk_material = MaterialFactory::create_simple_material(
-            materials,
-            Color::srgb(0.4, 0.2, 0.1), // Brown trunk
-        );
-        
-        let tree_entity = commands.spawn((
-            bundle,
-            Mesh3d(trunk_mesh),
-            MeshMaterial3d(trunk_material),
-        )).id();
-        
-        // Add leaves/canopy
-        let leaves_mesh = meshes.add(Sphere::new(trunk_radius * 3.0));
-        let leaves_material = MaterialFactory::create_simple_material(
-            materials,
-            Color::srgb(0.2, 0.6, 0.2), // Green leaves
-        );
-        
-        commands.spawn((
-            Mesh3d(leaves_mesh),
-            MeshMaterial3d(leaves_material),
-            Transform::from_xyz(0.0, height * 0.7, 0.0),
-            Cullable { max_distance: self.config.world.lod_distances[1], is_culled: false },
-            ChildOf(tree_entity),
-        ));
-        
-        Ok(tree_entity)
-    }
+
     
     /// Spawn water body (lake, river, etc.)
     pub fn spawn_water_body(
@@ -1505,55 +1309,94 @@ impl UnifiedEntityFactory {
 
 /// BATCH CREATION METHODS
 impl UnifiedEntityFactory {
-    /// Spawn multiple vehicles in batch
+    /// Spawn multiple vehicles in batch using consolidated methods
     pub fn spawn_vehicle_batch(
-        &self,
+        &mut self,
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         vehicle_specs: Vec<(VehicleType, Vec3, Color)>,
+        road_network: Option<&RoadNetwork>,
+        existing_content: &[(Vec3, ContentType, f32)],
+        current_time: f32,
     ) -> Result<Vec<Entity>, BundleError> {
         let mut entities = Vec::new();
         
-        for (vehicle_type, position, color) in vehicle_specs {
-            let entity = self.spawn_vehicle(commands, meshes, materials, vehicle_type, position, color)?;
-            entities.push(entity);
+        for (_vehicle_type, position, _color) in vehicle_specs {
+            if let Some(entity) = self.spawn_entity_consolidated(
+                commands,
+                meshes,
+                materials,
+                ContentType::Vehicle,
+                position,
+                road_network,
+                existing_content,
+                current_time,
+            )? {
+                entities.push(entity);
+            }
         }
         
         Ok(entities)
     }
     
-    /// Spawn multiple NPCs in batch
+    /// Spawn multiple NPCs in batch using consolidated methods
     pub fn spawn_npc_batch(
-        &self,
+        &mut self,
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         npc_specs: Vec<(Vec3, NPCAppearance)>,
+        road_network: Option<&RoadNetwork>,
+        existing_content: &[(Vec3, ContentType, f32)],
+        current_time: f32,
     ) -> Result<Vec<Entity>, BundleError> {
         let mut entities = Vec::new();
         
-        for (position, appearance) in npc_specs {
-            let entity = self.spawn_npc(commands, meshes, materials, position, appearance)?;
-            entities.push(entity);
+        for (position, _appearance) in npc_specs {
+            if let Some(entity) = self.spawn_entity_consolidated(
+                commands,
+                meshes,
+                materials,
+                ContentType::NPC,
+                position,
+                road_network,
+                existing_content,
+                current_time,
+            )? {
+                entities.push(entity);
+            }
         }
         
         Ok(entities)
     }
     
-    /// Spawn multiple buildings in batch
+    /// Spawn multiple buildings in batch using consolidated methods
     pub fn spawn_building_batch(
-        &self,
+        &mut self,
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         building_specs: Vec<(Vec3, Vec3, BuildingType, Color)>,
+        road_network: Option<&RoadNetwork>,
+        existing_content: &[(Vec3, ContentType, f32)],
+        current_time: f32,
     ) -> Result<Vec<Entity>, BundleError> {
         let mut entities = Vec::new();
         
-        for (position, size, building_type, color) in building_specs {
-            let entity = self.spawn_building(commands, meshes, materials, position, size, building_type, color)?;
-            entities.push(entity);
+        for (position, _size, _building_type, _color) in building_specs {
+            if let Some(entity) = self.spawn_entity_consolidated(
+                commands,
+                meshes,
+                materials,
+                ContentType::Building,
+                position,
+                road_network,
+                existing_content,
+                current_time,
+            )? {
+                entities.push(entity);
+            }
         }
         
         Ok(entities)
@@ -1585,35 +1428,21 @@ pub fn setup_unified_entity_factory_basic(mut commands: Commands) {
     commands.insert_resource(UnifiedEntityFactory::default());
 }
 
-/// System to convert legacy vehicles to realistic vehicles
+/// System to convert legacy vehicles to new component-based system
 pub fn convert_legacy_vehicles_system(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    factory: Res<UnifiedEntityFactory>,
-    legacy_vehicles: Query<(Entity, &Transform, Option<&SuperCar>), (With<Car>, Without<RealisticVehicle>)>,
+    legacy_vehicles: Query<(Entity, &Transform, &VehicleState, Has<SuperCarSpecs>), With<Car>>,
 ) {
-    for (entity, transform, supercar) in legacy_vehicles.iter() {
-        // Determine vehicle type
-        let vehicle_type = if supercar.is_some() {
-            RealisticVehicleType::SuperCar
-        } else {
-            RealisticVehicleType::BasicCar
-        };
+    for (entity, transform, vehicle_state, has_supercar_specs) in legacy_vehicles.iter() {
+        // If this vehicle already has the new component system, skip it
+        if has_supercar_specs && vehicle_state.vehicle_type == VehicleType::SuperCar {
+            continue;
+        }
         
-        // Create new realistic vehicle at same position
-        if let Ok(_new_vehicle) = factory.spawn_realistic_vehicle(
-            &mut commands,
-            &mut meshes,
-            &mut materials,
-            vehicle_type,
-            transform.translation,
-            transform.rotation,
-        ) {
-            // Remove old vehicle
-            commands.entity(entity).despawn();
-            
-            info!("Converted legacy vehicle to realistic vehicle at {:?}", transform.translation);
+        // For SuperCars without the new bundle, add the component bundle
+        if vehicle_state.vehicle_type == VehicleType::SuperCar && !has_supercar_specs {
+            commands.entity(entity).insert(SuperCarBundle::default());
+            info!("Added SuperCarBundle to vehicle at {:?}", transform.translation);
         }
     }
 }

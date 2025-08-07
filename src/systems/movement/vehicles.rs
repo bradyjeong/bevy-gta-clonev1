@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{Car, ActiveEntity, ExhaustFlame, DrivingMode};
+use crate::components::{Car, ActiveEntity};
 use crate::systems::input::{ControlManager, ControlAction};
 use crate::systems::physics_utils::PhysicsUtilities;
 use crate::config::GameConfig;

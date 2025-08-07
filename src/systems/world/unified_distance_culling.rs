@@ -167,7 +167,7 @@ pub fn new_unified_distance_culling_system(
     mut distance_cache: ResMut<DistanceCache>,
     mut timer: ResMut<UnifiedCullingTimer>,
     time: Res<Time>,
-    mut commands: Commands,
+    _commands: Commands,
     frame_counter: Res<FrameCounter>,
 ) {
     let Ok((active_entity, active_transform)) = active_query.single() else { return };
@@ -175,7 +175,7 @@ pub fn new_unified_distance_culling_system(
     
     timer.elapsed += time.delta_secs();
     let current_time = timer.elapsed;
-    let current_frame = frame_counter.frame;
+    let _current_frame = frame_counter.frame;
     
     // Time budgeting - max 4ms per frame
     let start_time = std::time::Instant::now();
@@ -420,22 +420,22 @@ pub fn unified_culling_performance_monitor(
 
 /// System to handle entity movement and automatically mark for distance updates
 pub fn unified_culling_movement_tracker(
-    mut commands: Commands,
+    _commands: Commands,
     moved_entities: Query<
         (Entity, &UnifiedCullable, &Transform), 
         (Changed<Transform>, Without<DirtyLOD>)
     >,
     frame_counter: Res<FrameCounter>,
 ) {
-    let current_frame = frame_counter.frame;
+    let _current_frame = frame_counter.frame;
     
-    for (entity, cullable, transform) in moved_entities.iter() {
+    for (_entity, cullable, transform) in moved_entities.iter() {
         // Calculate how much the entity moved
         let movement_threshold = cullable.config.hysteresis;
         let distance_moved = (transform.translation - Vec3::ZERO).length(); // Simplified
         
         if distance_moved > movement_threshold {
-            let priority = if cullable.last_distance < 100.0 {
+            let _priority = if cullable.last_distance < 100.0 {
                 DirtyPriority::High // Close entities get higher priority
             } else {
                 DirtyPriority::Normal

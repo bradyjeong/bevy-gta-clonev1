@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use crate::components::{SuperCar, ActiveEntity, Car};
+use crate::components::{
+    SuperCarSpecs, EngineState, TurboSystem, DrivingModes, PerformanceMetrics,
+    ActiveEntity, Car
+};
 use crate::game_state::GameState;
 
 /// Component marker for the Bugatti telemetry dashboard
@@ -42,7 +45,7 @@ pub fn bugatti_telemetry_input_system(
     mut telemetry_state: ResMut<BugattiTelemetryState>,
     mut overlay_query: Query<&mut Visibility, With<BugattiTelemetryOverlay>>,
     mut commands: Commands,
-    supercar_query: Query<&SuperCar, (With<Car>, With<ActiveEntity>)>,
+    supercar_query: Query<&SuperCarSpecs, (With<Car>, With<ActiveEntity>)>,
 ) {
     if keys.just_pressed(KeyCode::F4) {
         // Only show telemetry if we're driving a SuperCar
@@ -235,10 +238,16 @@ pub fn update_bugatti_telemetry_system(
     mut rpm_query: Query<&mut Text, (With<BugattiRpmGauge>, Without<BugattiSpeedometer>, Without<BugattiTurboIndicator>, Without<BugattiInfoPanel>)>,
     mut turbo_query: Query<&mut Text, (With<BugattiTurboIndicator>, Without<BugattiSpeedometer>, Without<BugattiRpmGauge>, Without<BugattiInfoPanel>)>,
     mut info_query: Query<&mut Text, (With<BugattiInfoPanel>, Without<BugattiSpeedometer>, Without<BugattiRpmGauge>, Without<BugattiTurboIndicator>)>,
-    supercar_query: Query<&SuperCar, (With<Car>, With<ActiveEntity>)>,
+    supercar_query: Query<(
+        &SuperCarSpecs,
+        &EngineState,
+        &TurboSystem,
+        &DrivingModes,
+        &PerformanceMetrics,
+    ), (With<Car>, With<ActiveEntity>)>,
     current_state: Res<State<GameState>>,
 ) {
-    if let Ok(supercar) = supercar_query.single() {
+    if let Ok((specs, engine, turbo, driving_modes, metrics)) = supercar_query.single() {
         // Update at specified interval for smooth dashboard
         telemetry_state.last_update += time.delta_secs();
         if telemetry_state.last_update >= telemetry_state.update_interval {
@@ -248,18 +257,18 @@ pub fn update_bugatti_telemetry_system(
             if *current_state.get() == GameState::Driving {
                 // Update Speedometer
                 if let Ok(mut speed_text) = speedometer_query.single_mut() {
-                    let current_speed = (supercar.rpm / supercar.max_rpm) * supercar.max_speed;
-                    speed_text.0 = format!("{:.0}\nMPH", current_speed.min(supercar.max_speed));
+                    let current_speed = (engine.rpm / engine.max_rpm) * specs.max_speed;
+                    speed_text.0 = format!("{:.0}\nMPH", current_speed.min(specs.max_speed));
                 }
                 
                 // Update RPM Gauge
                 if let Ok(mut rpm_text) = rpm_query.single_mut() {
-                    rpm_text.0 = format!("{:.0}\nRPM", supercar.rpm);
+                    rpm_text.0 = format!("{:.0}\nRPM", engine.rpm);
                 }
                 
                 // Update Turbo Status
                 if let Ok(mut turbo_text) = turbo_query.single_mut() {
-                    let turbo_status = match supercar.turbo_stage {
+                    let turbo_status = match turbo.stage {
                         0 => "TURBO\nOFF",
                         1 => "TURBO\n1/4",
                         2 => "TURBO\n2/4", 
@@ -272,22 +281,22 @@ pub fn update_bugatti_telemetry_system(
                 
                 // Update Info Panel
                 if let Ok(mut info_text) = info_query.single_mut() {
-                    let mode = match supercar.driving_mode {
+                    let mode = match driving_modes.mode {
                         crate::components::DrivingMode::Comfort => "COMFORT",
                         crate::components::DrivingMode::Sport => "SPORT",
                         crate::components::DrivingMode::Track => "TRACK",
                         crate::components::DrivingMode::Custom => "CUSTOM",
                     };
                     
-                    let launch = if supercar.launch_control_engaged {
+                    let launch = if driving_modes.launch_control_engaged {
                         "LAUNCHING"
-                    } else if supercar.launch_control {
+                    } else if driving_modes.launch_control {
                         "READY"
                     } else {
                         "OFF"
                     };
                     
-                    let total_g = (supercar.g_force_lateral.powi(2) + supercar.g_force_longitudinal.powi(2)).sqrt();
+                    let total_g = (metrics.g_force_lateral.powi(2) + metrics.g_force_longitudinal.powi(2)).sqrt();
                     
                     info_text.0 = format!("{} • LAUNCH: {} • G: {:.1}G", mode, launch, total_g);
                 }

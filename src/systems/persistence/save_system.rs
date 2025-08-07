@@ -87,7 +87,7 @@ pub struct SerializableVehicle {
     pub velocity: SerializableVelocity,
     pub is_active: bool,
     pub vehicle_state: SerializableVehicleState,
-    pub super_car_data: Option<SerializableSuperCar>,
+    pub super_car_bundle: Option<SerializableSuperCarBundle>,
     pub aircraft_flight_data: Option<SerializableAircraftFlight>,
 }
 
@@ -131,103 +131,343 @@ impl Into<VehicleState> for SerializableVehicleState {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SerializableSuperCar {
+pub struct SerializableSuperCarBundle {
+    pub specs: SerializableSuperCarSpecs,
+    pub suspension: SerializableSuperCarSuspension,
+    pub turbo: SerializableTurboSystem,
+    pub engine: SerializableEngineState,
+    pub transmission: SerializableTransmission,
+    pub driving_modes: SerializableDrivingModes,
+    pub aerodynamics: SerializableAerodynamicsSystem,
+    pub performance: SerializablePerformanceMetrics,
+    pub exhaust: SerializableExhaustSystem,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializableSuperCarSpecs {
     pub max_speed: f32,
     pub acceleration: f32,
-    pub turbo_boost: bool,
-    pub exhaust_timer: f32,
-    // Advanced hypercar physics
     pub weight: f32,
     pub power: f32,
     pub torque: f32,
     pub drag_coefficient: f32,
-    // Suspension and handling
-    pub suspension_stiffness: f32,
-    pub suspension_damping: f32,
+    pub exhaust_timer: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializableSuperCarSuspension {
+    pub stiffness: f32,
+    pub damping: f32,
     pub front_weight_bias: f32,
-    // Traction control system
     pub traction_control: bool,
     pub stability_control: bool,
     pub wheel_spin_threshold: f32,
     pub current_traction: f32,
-    // Turbo system
-    pub turbo_pressure: f32,
-    pub turbo_lag: f32,
-    pub turbo_cooldown: f32,
-    pub max_turbo_time: f32,
-    pub current_turbo_time: f32,
-    // Engine characteristics
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializableTurboSystem {
+    pub turbo_boost: bool,
+    pub pressure: f32,
+    pub lag: f32,
+    pub cooldown: f32,
+    pub max_time: f32,
+    pub current_time: f32,
+    pub stage: u8,
+    pub pressure_buildup: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializableEngineState {
     pub rpm: f32,
     pub max_rpm: f32,
     pub idle_rpm: f32,
     pub power_band_start: f32,
     pub power_band_end: f32,
+    pub temperature: f32,
+    pub oil_pressure: f32,
+    pub fuel_consumption_rate: f32,
+    pub rev_limiter_active: bool,
 }
 
-impl From<SuperCar> for SerializableSuperCar {
-    fn from(car: SuperCar) -> Self {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializableTransmission {
+    pub gear: u8,
+    pub gear_ratios: Vec<f32>,
+    pub shift_rpm: f32,
+    pub downshift_rpm: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializableDrivingModes {
+    pub mode: DrivingMode,
+    pub launch_control: bool,
+    pub launch_control_engaged: bool,
+    pub launch_rpm_limit: f32,
+    pub sport_mode_active: bool,
+    pub track_mode_active: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializableAerodynamicsSystem {
+    pub downforce: f32,
+    pub active_aero: bool,
+    pub rear_wing_angle: f32,
+    pub front_splitter_level: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializablePerformanceMetrics {
+    pub g_force_lateral: f32,
+    pub g_force_longitudinal: f32,
+    pub performance_timer: f32,
+    pub zero_to_sixty_time: f32,
+    pub is_timing_launch: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SerializableExhaustSystem {
+    pub note_mode: ExhaustMode,
+    pub engine_note_intensity: f32,
+    pub turbo_whistle_intensity: f32,
+    pub backfire_timer: f32,
+    pub pops_and_bangs: bool,
+}
+
+// Component conversion implementations
+impl From<SuperCarSpecs> for SerializableSuperCarSpecs {
+    fn from(specs: SuperCarSpecs) -> Self {
         Self {
-            max_speed: car.max_speed,
-            acceleration: car.acceleration,
-            turbo_boost: car.turbo_boost,
-            exhaust_timer: car.exhaust_timer,
-            weight: car.weight,
-            power: car.power,
-            torque: car.torque,
-            drag_coefficient: car.drag_coefficient,
-            suspension_stiffness: car.suspension_stiffness,
-            suspension_damping: car.suspension_damping,
-            front_weight_bias: car.front_weight_bias,
-            traction_control: car.traction_control,
-            stability_control: car.stability_control,
-            wheel_spin_threshold: car.wheel_spin_threshold,
-            current_traction: car.current_traction,
-            turbo_pressure: car.turbo_pressure,
-            turbo_lag: car.turbo_lag,
-            turbo_cooldown: car.turbo_cooldown,
-            max_turbo_time: car.max_turbo_time,
-            current_turbo_time: car.current_turbo_time,
-            rpm: car.rpm,
-            max_rpm: car.max_rpm,
-            idle_rpm: car.idle_rpm,
-            power_band_start: car.power_band_start,
-            power_band_end: car.power_band_end,
+            max_speed: specs.max_speed,
+            acceleration: specs.acceleration,
+            weight: specs.weight,
+            power: specs.power,
+            torque: specs.torque,
+            drag_coefficient: specs.drag_coefficient,
+            exhaust_timer: specs.exhaust_timer,
         }
     }
 }
 
-impl Into<SuperCar> for SerializableSuperCar {
-    fn into(self) -> SuperCar {
-        let mut supercar = SuperCar::default();
-        
-        // Update with saved values
-        supercar.max_speed = self.max_speed;
-        supercar.acceleration = self.acceleration;
-        supercar.turbo_boost = self.turbo_boost;
-        supercar.exhaust_timer = self.exhaust_timer;
-        supercar.weight = self.weight;
-        supercar.power = self.power;
-        supercar.torque = self.torque;
-        supercar.drag_coefficient = self.drag_coefficient;
-        supercar.suspension_stiffness = self.suspension_stiffness;
-        supercar.suspension_damping = self.suspension_damping;
-        supercar.front_weight_bias = self.front_weight_bias;
-        supercar.traction_control = self.traction_control;
-        supercar.stability_control = self.stability_control;
-        supercar.wheel_spin_threshold = self.wheel_spin_threshold;
-        supercar.current_traction = self.current_traction;
-        supercar.turbo_pressure = self.turbo_pressure;
-        supercar.turbo_lag = self.turbo_lag;
-        supercar.turbo_cooldown = self.turbo_cooldown;
-        supercar.max_turbo_time = self.max_turbo_time;
-        supercar.current_turbo_time = self.current_turbo_time;
-        supercar.rpm = self.rpm;
-        supercar.max_rpm = self.max_rpm;
-        supercar.idle_rpm = self.idle_rpm;
-        supercar.power_band_start = self.power_band_start;
-        supercar.power_band_end = self.power_band_end;
-        
-        supercar
+impl Into<SuperCarSpecs> for SerializableSuperCarSpecs {
+    fn into(self) -> SuperCarSpecs {
+        SuperCarSpecs {
+            max_speed: self.max_speed,
+            acceleration: self.acceleration,
+            weight: self.weight,
+            power: self.power,
+            torque: self.torque,
+            drag_coefficient: self.drag_coefficient,
+            exhaust_timer: self.exhaust_timer,
+        }
+    }
+}
+
+impl From<SuperCarSuspension> for SerializableSuperCarSuspension {
+    fn from(suspension: SuperCarSuspension) -> Self {
+        Self {
+            stiffness: suspension.stiffness,
+            damping: suspension.damping,
+            front_weight_bias: suspension.front_weight_bias,
+            traction_control: suspension.traction_control,
+            stability_control: suspension.stability_control,
+            wheel_spin_threshold: suspension.wheel_spin_threshold,
+            current_traction: suspension.current_traction,
+        }
+    }
+}
+
+impl Into<SuperCarSuspension> for SerializableSuperCarSuspension {
+    fn into(self) -> SuperCarSuspension {
+        SuperCarSuspension {
+            stiffness: self.stiffness,
+            damping: self.damping,
+            front_weight_bias: self.front_weight_bias,
+            traction_control: self.traction_control,
+            stability_control: self.stability_control,
+            wheel_spin_threshold: self.wheel_spin_threshold,
+            current_traction: self.current_traction,
+        }
+    }
+}
+
+impl From<TurboSystem> for SerializableTurboSystem {
+    fn from(turbo: TurboSystem) -> Self {
+        Self {
+            turbo_boost: turbo.turbo_boost,
+            pressure: turbo.pressure,
+            lag: turbo.lag,
+            cooldown: turbo.cooldown,
+            max_time: turbo.max_time,
+            current_time: turbo.current_time,
+            stage: turbo.stage,
+            pressure_buildup: turbo.pressure_buildup,
+        }
+    }
+}
+
+impl Into<TurboSystem> for SerializableTurboSystem {
+    fn into(self) -> TurboSystem {
+        TurboSystem {
+            turbo_boost: self.turbo_boost,
+            pressure: self.pressure,
+            lag: self.lag,
+            cooldown: self.cooldown,
+            max_time: self.max_time,
+            current_time: self.current_time,
+            stage: self.stage,
+            pressure_buildup: self.pressure_buildup,
+        }
+    }
+}
+
+impl From<EngineState> for SerializableEngineState {
+    fn from(engine: EngineState) -> Self {
+        Self {
+            rpm: engine.rpm,
+            max_rpm: engine.max_rpm,
+            idle_rpm: engine.idle_rpm,
+            power_band_start: engine.power_band_start,
+            power_band_end: engine.power_band_end,
+            temperature: engine.temperature,
+            oil_pressure: engine.oil_pressure,
+            fuel_consumption_rate: engine.fuel_consumption_rate,
+            rev_limiter_active: engine.rev_limiter_active,
+        }
+    }
+}
+
+impl Into<EngineState> for SerializableEngineState {
+    fn into(self) -> EngineState {
+        EngineState {
+            rpm: self.rpm,
+            max_rpm: self.max_rpm,
+            idle_rpm: self.idle_rpm,
+            power_band_start: self.power_band_start,
+            power_band_end: self.power_band_end,
+            temperature: self.temperature,
+            oil_pressure: self.oil_pressure,
+            fuel_consumption_rate: self.fuel_consumption_rate,
+            rev_limiter_active: self.rev_limiter_active,
+        }
+    }
+}
+
+impl From<Transmission> for SerializableTransmission {
+    fn from(transmission: Transmission) -> Self {
+        Self {
+            gear: transmission.gear,
+            gear_ratios: transmission.gear_ratios,
+            shift_rpm: transmission.shift_rpm,
+            downshift_rpm: transmission.downshift_rpm,
+        }
+    }
+}
+
+impl Into<Transmission> for SerializableTransmission {
+    fn into(self) -> Transmission {
+        Transmission {
+            gear: self.gear,
+            gear_ratios: self.gear_ratios,
+            shift_rpm: self.shift_rpm,
+            downshift_rpm: self.downshift_rpm,
+        }
+    }
+}
+
+impl From<DrivingModes> for SerializableDrivingModes {
+    fn from(modes: DrivingModes) -> Self {
+        Self {
+            mode: modes.mode,
+            launch_control: modes.launch_control,
+            launch_control_engaged: modes.launch_control_engaged,
+            launch_rpm_limit: modes.launch_rpm_limit,
+            sport_mode_active: modes.sport_mode_active,
+            track_mode_active: modes.track_mode_active,
+        }
+    }
+}
+
+impl Into<DrivingModes> for SerializableDrivingModes {
+    fn into(self) -> DrivingModes {
+        DrivingModes {
+            mode: self.mode,
+            launch_control: self.launch_control,
+            launch_control_engaged: self.launch_control_engaged,
+            launch_rpm_limit: self.launch_rpm_limit,
+            sport_mode_active: self.sport_mode_active,
+            track_mode_active: self.track_mode_active,
+        }
+    }
+}
+
+impl From<AerodynamicsSystem> for SerializableAerodynamicsSystem {
+    fn from(aero: AerodynamicsSystem) -> Self {
+        Self {
+            downforce: aero.downforce,
+            active_aero: aero.active_aero,
+            rear_wing_angle: aero.rear_wing_angle,
+            front_splitter_level: aero.front_splitter_level,
+        }
+    }
+}
+
+impl Into<AerodynamicsSystem> for SerializableAerodynamicsSystem {
+    fn into(self) -> AerodynamicsSystem {
+        AerodynamicsSystem {
+            downforce: self.downforce,
+            active_aero: self.active_aero,
+            rear_wing_angle: self.rear_wing_angle,
+            front_splitter_level: self.front_splitter_level,
+        }
+    }
+}
+
+impl From<PerformanceMetrics> for SerializablePerformanceMetrics {
+    fn from(metrics: PerformanceMetrics) -> Self {
+        Self {
+            g_force_lateral: metrics.g_force_lateral,
+            g_force_longitudinal: metrics.g_force_longitudinal,
+            performance_timer: metrics.performance_timer,
+            zero_to_sixty_time: metrics.zero_to_sixty_time,
+            is_timing_launch: metrics.is_timing_launch,
+        }
+    }
+}
+
+impl Into<PerformanceMetrics> for SerializablePerformanceMetrics {
+    fn into(self) -> PerformanceMetrics {
+        PerformanceMetrics {
+            g_force_lateral: self.g_force_lateral,
+            g_force_longitudinal: self.g_force_longitudinal,
+            performance_timer: self.performance_timer,
+            zero_to_sixty_time: self.zero_to_sixty_time,
+            is_timing_launch: self.is_timing_launch,
+        }
+    }
+}
+
+impl From<ExhaustSystem> for SerializableExhaustSystem {
+    fn from(exhaust: ExhaustSystem) -> Self {
+        Self {
+            note_mode: exhaust.note_mode,
+            engine_note_intensity: exhaust.engine_note_intensity,
+            turbo_whistle_intensity: exhaust.turbo_whistle_intensity,
+            backfire_timer: exhaust.backfire_timer,
+            pops_and_bangs: exhaust.pops_and_bangs,
+        }
+    }
+}
+
+impl Into<ExhaustSystem> for SerializableExhaustSystem {
+    fn into(self) -> ExhaustSystem {
+        ExhaustSystem {
+            note_mode: self.note_mode,
+            engine_note_intensity: self.engine_note_intensity,
+            turbo_whistle_intensity: self.turbo_whistle_intensity,
+            backfire_timer: self.backfire_timer,
+            pops_and_bangs: self.pops_and_bangs,
+        }
     }
 }
 
@@ -366,7 +606,18 @@ pub fn save_game_system(
     current_state: Res<State<GameState>>,
     player_query: Query<(Entity, &Transform, &Velocity, Option<&InCar>), With<Player>>,
     active_query: Query<Entity, With<ActiveEntity>>,
-    car_query: Query<(Entity, &Transform, &Velocity, &VehicleState, Option<&SuperCar>), With<Car>>,
+    car_query: Query<(Entity, &Transform, &Velocity, &VehicleState), With<Car>>,
+    supercar_query: Query<(
+        &SuperCarSpecs,
+        &SuperCarSuspension,
+        &TurboSystem,
+        &EngineState,
+        &Transmission,
+        &DrivingModes,
+        &AerodynamicsSystem,
+        &PerformanceMetrics,
+        &ExhaustSystem,
+    )>,
     helicopter_query: Query<(Entity, &Transform, &Velocity, &VehicleState), With<Helicopter>>,
     f16_query: Query<(Entity, &Transform, &Velocity, &VehicleState, &AircraftFlight), With<F16>>,
 ) {
@@ -398,8 +649,28 @@ pub fn save_game_system(
     let mut vehicles = Vec::new();
 
     // Cars
-    for (entity, transform, velocity, vehicle_state, super_car) in car_query.iter() {
+    for (entity, transform, velocity, vehicle_state) in car_query.iter() {
         let is_active = active_query.get(entity).is_ok();
+        
+        // Check if this car has SuperCar components
+        let super_car_bundle = if vehicle_state.vehicle_type == VehicleType::SuperCar {
+            supercar_query.get(entity).ok().map(|(specs, suspension, turbo, engine, transmission, driving_modes, aerodynamics, performance, exhaust)| {
+                SerializableSuperCarBundle {
+                    specs: specs.clone().into(),
+                    suspension: suspension.clone().into(),
+                    turbo: turbo.clone().into(),
+                    engine: engine.clone().into(),
+                    transmission: transmission.clone().into(),
+                    driving_modes: driving_modes.clone().into(),
+                    aerodynamics: aerodynamics.clone().into(),
+                    performance: performance.clone().into(),
+                    exhaust: exhaust.clone().into(),
+                }
+            })
+        } else {
+            None
+        };
+        
         vehicles.push(SerializableVehicle {
             entity_id: entity.index(),
             vehicle_type: vehicle_state.vehicle_type,
@@ -407,7 +678,7 @@ pub fn save_game_system(
             velocity: (*velocity).into(),
             is_active,
             vehicle_state: vehicle_state.clone().into(),
-            super_car_data: super_car.cloned().map(|sc| sc.into()),
+            super_car_bundle,
             aircraft_flight_data: None,
         });
     }
@@ -422,7 +693,7 @@ pub fn save_game_system(
             velocity: (*velocity).into(),
             is_active,
             vehicle_state: vehicle_state.clone().into(),
-            super_car_data: None,
+            super_car_bundle: None,
             aircraft_flight_data: None,
         });
     }
@@ -437,7 +708,7 @@ pub fn save_game_system(
             velocity: (*velocity).into(),
             is_active,
             vehicle_state: vehicle_state.clone().into(),
-            super_car_data: None,
+            super_car_bundle: None,
             aircraft_flight_data: Some(aircraft_flight.clone().into()),
         });
     }

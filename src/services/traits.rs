@@ -3,12 +3,14 @@ use bevy_rapier3d::prelude::Group;
 use crate::systems::timing_service::{EntityTimerType, SystemType, TimingStats};
 
 /// Core service trait for all services
+#[allow(dead_code)]
 pub trait Service: Send + Sync + 'static {
     fn service_name(&self) -> &'static str;
     fn is_ready(&self) -> bool { true }
 }
 
 /// Configuration service for centralized configuration management
+#[allow(dead_code)]
 pub trait ConfigService: Service {
     fn get_physics_config(&self) -> &crate::config::PhysicsConfig;
     fn get_world_config(&self) -> &crate::config::WorldConfig;
@@ -25,6 +27,7 @@ pub trait ConfigService: Service {
 }
 
 /// Timing service for throttling and timing management
+#[allow(dead_code)]
 pub trait TimingService: Service {
     fn current_time(&self) -> f32;
     fn delta_time(&self) -> f32;
@@ -39,6 +42,7 @@ pub trait TimingService: Service {
 
 
 /// Physics service for physics world interface
+#[allow(dead_code)]
 pub trait PhysicsService: Service {
     fn validate_position(&self, position: Vec3) -> Vec3;
     fn validate_velocity(&self, velocity: Vec3) -> Vec3;
