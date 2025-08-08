@@ -1,0 +1,108 @@
+// Vehicle Control Configuration
+// This file defines control mappings for all vehicle types
+// Edit this file to change controls without touching code
+
+VehicleControlsConfig(
+    vehicle_types: {
+        Walking: VehicleControls(
+            name: "Walking",
+            description: "On-foot movement controls",
+            primary_controls: [
+                (action: Forward, key: ArrowUp, description: "Walk forward"),
+                (action: Backward, key: ArrowDown, description: "Walk backward"),
+                (action: TurnLeft, key: ArrowLeft, description: "Turn left"),
+                (action: TurnRight, key: ArrowRight, description: "Turn right"),
+            ],
+            secondary_controls: [
+                (action: Run, key: ShiftLeft, description: "Run / Sprint"),
+            ],
+            meta_controls: [
+                (action: Interact, key: KeyF, description: "Enter vehicle / Interact"),
+                (action: DebugInfo, key: F1, description: "Toggle debug info"),
+                (action: EmergencyReset, key: F2, description: "Emergency reset"),
+            ],
+        ),
+        
+        Car: VehicleControls(
+            name: "Car",
+            description: "Standard vehicle controls",
+            primary_controls: [
+                (action: Forward, key: ArrowUp, description: "Accelerate / Drive forward"),
+                (action: Backward, key: ArrowDown, description: "Brake / Reverse"),
+                (action: TurnLeft, key: ArrowLeft, description: "Steer left"),
+                (action: TurnRight, key: ArrowRight, description: "Steer right"),
+            ],
+            secondary_controls: [
+                (action: Turbo, key: Space, description: "Turbo boost"),
+            ],
+            meta_controls: [
+                (action: Interact, key: KeyF, description: "Exit vehicle"),
+                (action: DebugInfo, key: F1, description: "Toggle debug info"),
+                (action: EmergencyReset, key: F2, description: "Emergency reset"),
+            ],
+        ),
+        
+        SuperCar: VehicleControls(
+            name: "SuperCar",
+            description: "High-performance vehicle controls",
+            primary_controls: [
+                (action: Forward, key: ArrowUp, description: "Accelerate (High Performance)"),
+                (action: Backward, key: ArrowDown, description: "Brake / Reverse (Racing Brakes)"),
+                (action: TurnLeft, key: ArrowLeft, description: "Steer left (Precision Steering)"),
+                (action: TurnRight, key: ArrowRight, description: "Steer right (Precision Steering)"),
+            ],
+            secondary_controls: [
+                (action: Turbo, key: Space, description: "Nitrous Boost"),
+            ],
+            meta_controls: [
+                (action: Interact, key: KeyF, description: "Exit vehicle"),
+                (action: DebugInfo, key: F1, description: "Toggle debug info"),
+                (action: EmergencyReset, key: F2, description: "Emergency reset"),
+            ],
+        ),
+        
+        Helicopter: VehicleControls(
+            name: "Helicopter",
+            description: "Rotorcraft flight controls",
+            primary_controls: [
+                (action: PitchForward, key: ArrowUp, description: "Pitch forward / Move forward"),
+                (action: PitchBackward, key: ArrowDown, description: "Pitch backward / Move backward"),
+                (action: YawLeft, key: ArrowLeft, description: "Yaw left / Turn left"),
+                (action: YawRight, key: ArrowRight, description: "Yaw right / Turn right"),
+            ],
+            secondary_controls: [
+                (action: VerticalUp, key: ShiftLeft, description: "Collective up / Ascend"),
+                (action: VerticalDown, key: ControlLeft, description: "Collective down / Descend"),
+            ],
+            meta_controls: [
+                (action: Interact, key: KeyF, description: "Exit helicopter"),
+                (action: DebugInfo, key: F1, description: "Toggle debug info"),
+                (action: EmergencyReset, key: F2, description: "Emergency reset"),
+            ],
+        ),
+        
+        F16: VehicleControls(
+            name: "F16 Fighter Jet",
+            description: "Military jet fighter controls",
+            primary_controls: [
+                (action: PitchUp, key: ArrowUp, description: "Pitch up (Nose up)"),
+                (action: PitchDown, key: ArrowDown, description: "Pitch down (Nose down)"),
+                (action: RollLeft, key: ArrowLeft, description: "Roll left (Bank left)"),
+                (action: RollRight, key: ArrowRight, description: "Roll right (Bank right)"),
+                (action: ThrottleUp, key: KeyW, description: "Throttle up / Increase speed"),
+                (action: ThrottleDown, key: KeyS, description: "Throttle down / Decrease speed"),
+                (action: YawLeft, key: KeyA, description: "Rudder left / Yaw left"),
+                (action: YawRight, key: KeyD, description: "Rudder right / Yaw right"),
+            ],
+            secondary_controls: [
+                (action: Afterburner, key: Space, description: "Afterburner / Max thrust"),
+                (action: Afterburner, key: ShiftLeft, description: "Afterburner / Max thrust (Alt)"),
+            ],
+            meta_controls: [
+                (action: Interact, key: KeyF, description: "Exit F16"),
+                (action: Interact, key: Enter, description: "Exit F16 (Alt)"),
+                (action: DebugInfo, key: F1, description: "Toggle debug info"),
+            ],
+        ),
+    }
+)

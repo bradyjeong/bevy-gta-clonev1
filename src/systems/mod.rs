@@ -65,6 +65,7 @@ pub mod water;
 pub mod debug;
 // pub mod timing_service; // Moved to services/
 pub mod spawn_validation;
+pub mod safety;
 pub mod input;
 pub mod persistence;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
@@ -90,6 +91,7 @@ pub mod batching;
 pub use crate::services::{DistanceCache, get_cached_distance, get_cached_distance_squared, MovementTracker, DistanceCachePlugin};
 pub use crate::services::{TimingService, SystemType, EntityTimerType, ManagedTiming, TimingStats};
 pub use spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType, SpawnValidationPlugin};
+pub use safety::{world_bounds_safety_system, position_monitor_system};
 pub use batching::frame_counter_system;
 pub use performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory, UnifiedPerformancePlugin};
 pub use distance_cache_debug::DistanceCacheDebugPlugin;
@@ -105,10 +107,10 @@ pub use world::{
 };
 
 // Input system types
-pub use input::{ControlManager, ControlAction, InputManager, InputConfig, InputAction};
+pub use input::{InputManager, InputConfig, InputAction};
 
 // Physics utilities
-pub use physics_utils::PhysicsUtilities;
+pub use physics_utils::{PhysicsUtilities, InputProcessor, MovementInputs, CollisionGroupHelper, PhysicsBodySetup, apply_universal_physics_safeguards};
 
 // Simple service examples
 pub use simple_service_example::{

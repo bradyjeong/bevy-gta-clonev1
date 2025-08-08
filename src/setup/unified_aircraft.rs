@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
+use crate::factories::{MeshFactory, MaterialFactory};
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
@@ -234,12 +235,26 @@ fn spawn_f16_unified(
     let f16_entity = commands.spawn((
         // Core aircraft components
         F16,
+        AircraftFlight::default(),
+        F16Specs::default(),
+        VehicleState::new(VehicleType::F16),
         
-        // Physics components
+        // Physics components - Compound collider for better physics (Oracle feedback)
         RigidBody::Dynamic,
-        Collider::cuboid(8.0, 1.5, 1.5),  // Half-height = 1.5, total height = 3.0
+        Collider::compound(vec![
+            (Vec3::new(0.0, 0.0, 0.0), Quat::IDENTITY, Collider::cuboid(1.5, 1.5, 8.0)), // Main fuselage (aligned with Z-axis)
+            (Vec3::new(-4.0, 0.0, -2.0), Quat::IDENTITY, Collider::cuboid(4.0, 0.1, 1.0)), // Left wing
+            (Vec3::new(4.0, 0.0, -2.0), Quat::IDENTITY, Collider::cuboid(4.0, 0.1, 1.0)),  // Right wing
+            (Vec3::new(0.0, 1.0, -5.0), Quat::IDENTITY, Collider::cuboid(0.2, 2.0, 1.5)),  // Vertical tail
+        ]),
         LockedAxes::empty(),
         Velocity::zero(),
+        ExternalForce::default(), // For proper force-based physics
+        AdditionalMassProperties::MassProperties(MassProperties {
+            local_center_of_mass: Vec3::new(0.0, 0.0, 1.0), // Center of mass slightly forward (30% of chord)
+            principal_inertia: Vec3::new(9000.0, 165000.0, 175000.0), // Realistic F-16 inertia values
+            ..default()
+        }),
         Transform::from_translation(position),
         
         // Collision and culling
@@ -250,16 +265,67 @@ fn spawn_f16_unified(
         MovementTracker::new(position, 50.0),
     )).id();
     
-    // F16 body - dimensions match collider
+    // F16 main fuselage - using dedicated F16 mesh factory
+    let fuselage_mesh = MeshFactory::create_f16_body(meshes);
+    let fuselage_material = MaterialFactory::create_f16_fuselage_material(materials);
+    
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(16.0, 3.0, 3.0))),  // Height 3.0 matches collider
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.4, 0.4, 0.5),
-            metallic: 0.8,
-            perceptual_roughness: 0.2,
-            ..default()
-        })),
+        Mesh3d(fuselage_mesh),
+        MeshMaterial3d(fuselage_material),
         Transform::from_xyz(0.0, 0.0, 0.0),
+        ChildOf(f16_entity),
+    ));
+    
+    // F16 wings (left and right)
+    let wing_mesh = MeshFactory::create_f16_wing(meshes);
+    let wing_material = MaterialFactory::create_f16_fuselage_material(materials);
+    
+    // Left wing (positioned relative to new Z-axis fuselage)
+    commands.spawn((
+        Mesh3d(wing_mesh.clone()),
+        MeshMaterial3d(wing_material.clone()),
+        Transform::from_xyz(-5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(0.2)), // Swept wing
+        ChildOf(f16_entity),
+    ));
+    
+    // Right wing (positioned relative to new Z-axis fuselage)
+    commands.spawn((
+        Mesh3d(wing_mesh),
+        MeshMaterial3d(wing_material),
+        Transform::from_xyz(5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(-0.2)), // Swept wing
+        ChildOf(f16_entity),
+    ));
+    
+    // F16 canopy (bubble cockpit)
+    let canopy_mesh = MeshFactory::create_f16_canopy(meshes);
+    let canopy_material = MaterialFactory::create_f16_canopy_material(materials);
+    
+    commands.spawn((
+        Mesh3d(canopy_mesh),
+        MeshMaterial3d(canopy_material),
+        Transform::from_xyz(0.0, 0.8, 3.0), // Forward position along +Z, raised
+        ChildOf(f16_entity),
+    ));
+    
+    // F16 vertical tail
+    let tail_mesh = MeshFactory::create_f16_vertical_tail(meshes);
+    let tail_material = MaterialFactory::create_f16_fuselage_material(materials);
+    
+    commands.spawn((
+        Mesh3d(tail_mesh),
+        MeshMaterial3d(tail_material),
+        Transform::from_xyz(0.0, 1.0, -5.0), // Rear position along -Z, raised
+        ChildOf(f16_entity),
+    ));
+    
+    // Engine nozzle for visual effect
+    let engine_mesh = meshes.add(Cylinder::new(0.8, 2.0));
+    let engine_material = MaterialFactory::create_f16_engine_material(materials);
+    
+    commands.spawn((
+        Mesh3d(engine_mesh),
+        MeshMaterial3d(engine_material),
+        Transform::from_xyz(0.0, 0.0, -8.0), // Rear nozzle along -Z
         ChildOf(f16_entity),
     ));
     

@@ -102,6 +102,10 @@ pub fn setup_basic_world(
         FootstepTimer::default(),
         HumanEmotions::default(),
         MovementTracker::new(Vec3::new(0.0, 1.0, 0.0), 5.0), // Track movement with 5m threshold
+        // Control components for new input system
+        ControlState::default(),
+        PlayerControlled,
+        VehicleControlType::Walking,
     ));
     
     // Register player in spawn registry

@@ -276,106 +276,88 @@ impl VehicleControlConfig {
             },
         ]);
         
-        // F16 controls
+        // F16 controls - Intuitive flight controls
         self.vehicle_controls.insert(VehicleType::F16, vec![
-            // Primary controls (Flight stick)
+            // Primary flight controls - Arrow keys for intuitive flight
             ControlBinding {
                 action: InputAction::PitchUp,
-                key: KeyCode::KeyW,
+                key: KeyCode::ArrowUp,
                 description: "Pitch up (Nose up)".to_string(),
                 category: ControlCategory::Primary,
             },
             ControlBinding {
                 action: InputAction::PitchDown,
-                key: KeyCode::KeyS,
+                key: KeyCode::ArrowDown,
                 description: "Pitch down (Nose down)".to_string(),
                 category: ControlCategory::Primary,
             },
             ControlBinding {
                 action: InputAction::RollLeft,
-                key: KeyCode::KeyA,
-                description: "Roll left".to_string(),
+                key: KeyCode::ArrowLeft,
+                description: "Roll left (Bank left)".to_string(),
                 category: ControlCategory::Primary,
             },
             ControlBinding {
                 action: InputAction::RollRight,
-                key: KeyCode::KeyD,
-                description: "Roll right".to_string(),
+                key: KeyCode::ArrowRight,
+                description: "Roll right (Bank right)".to_string(),
+                category: ControlCategory::Primary,
+            },
+            // Secondary flight controls - WASD for throttle and yaw
+            ControlBinding {
+                action: InputAction::VerticalUp,
+                key: KeyCode::KeyW,
+                description: "Throttle up / Increase speed".to_string(),
+                category: ControlCategory::Primary,
+            },
+            ControlBinding {
+                action: InputAction::VerticalDown,
+                key: KeyCode::KeyS,
+                description: "Throttle down / Decrease speed".to_string(),
                 category: ControlCategory::Primary,
             },
             ControlBinding {
                 action: InputAction::YawLeft,
-                key: KeyCode::KeyQ,
+                key: KeyCode::KeyA,
                 description: "Rudder left / Yaw left".to_string(),
                 category: ControlCategory::Primary,
             },
             ControlBinding {
                 action: InputAction::YawRight,
-                key: KeyCode::KeyE,
+                key: KeyCode::KeyD,
                 description: "Rudder right / Yaw right".to_string(),
                 category: ControlCategory::Primary,
             },
-            // Primary controls (Alternative arrow keys)
-            ControlBinding {
-                action: InputAction::Forward,
-                key: KeyCode::ArrowUp,
-                description: "Thrust forward (Alt)".to_string(),
-                category: ControlCategory::Primary,
-            },
-            ControlBinding {
-                action: InputAction::Backward,
-                key: KeyCode::ArrowDown,
-                description: "Thrust backward (Alt)".to_string(),
-                category: ControlCategory::Primary,
-            },
-            ControlBinding {
-                action: InputAction::TurnLeft,
-                key: KeyCode::ArrowLeft,
-                description: "Turn left (Alt)".to_string(),
-                category: ControlCategory::Primary,
-            },
-            ControlBinding {
-                action: InputAction::TurnRight,
-                key: KeyCode::ArrowRight,
-                description: "Turn right (Alt)".to_string(),
-                category: ControlCategory::Primary,
-            },
-            // Secondary controls
-            ControlBinding {
-                action: InputAction::VerticalUp,
-                key: KeyCode::ShiftLeft,
-                description: "Throttle up / Climb".to_string(),
-                category: ControlCategory::Secondary,
-            },
-            ControlBinding {
-                action: InputAction::VerticalDown,
-                key: KeyCode::ControlLeft,
-                description: "Throttle down / Dive".to_string(),
-                category: ControlCategory::Secondary,
-            },
+            // Special controls
             ControlBinding {
                 action: InputAction::Afterburner,
                 key: KeyCode::Space,
                 description: "Afterburner / Max thrust".to_string(),
                 category: ControlCategory::Secondary,
             },
+            ControlBinding {
+                action: InputAction::Afterburner,
+                key: KeyCode::ShiftLeft,
+                description: "Afterburner / Max thrust (Alt)".to_string(),
+                category: ControlCategory::Secondary,
+            },
             // Meta controls
             ControlBinding {
                 action: InputAction::Interact,
                 key: KeyCode::KeyF,
-                description: "Exit vehicle".to_string(),
+                description: "Exit F16".to_string(),
+                category: ControlCategory::Meta,
+            },
+            ControlBinding {
+                action: InputAction::Interact,
+                key: KeyCode::Enter,
+                description: "Exit F16 (Alt)".to_string(),
                 category: ControlCategory::Meta,
             },
             ControlBinding {
                 action: InputAction::DebugInfo,
                 key: KeyCode::F1,
                 description: "Toggle debug info".to_string(),
-                category: ControlCategory::Meta,
-            },
-            ControlBinding {
-                action: InputAction::EmergencyReset,
-                key: KeyCode::F2,
-                description: "Emergency reset".to_string(),
                 category: ControlCategory::Meta,
             },
         ]);

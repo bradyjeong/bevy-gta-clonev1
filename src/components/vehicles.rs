@@ -337,19 +337,43 @@ pub struct AircraftFlight {
     // Flight state
     pub airspeed: f32,
     pub angle_of_attack: f32,
-    pub stall_speed: f32,
-    pub max_speed: f32,
-    
-    // Aerodynamic properties
-    pub lift_coefficient: f32,
-    pub drag_coefficient: f32,
-    pub thrust_power: f32,
-    pub control_sensitivity: f32,
+    pub current_thrust: f32,
     
     // Engine state
     pub afterburner: bool,
+    pub afterburner_active: bool,  // Actual afterburner status (with delay)
+    pub afterburner_timer: f32,    // Time since afterburner request
     pub engine_spool_time: f32,
-    pub current_thrust: f32,
+}
+
+// F16-specific flight specifications (data-only following AGENT.md)
+#[derive(Component, Clone)]
+pub struct F16Specs {
+    // Physical properties
+    pub mass: f32,              // kg
+    pub wing_area: f32,         // m²
+    pub max_thrust: f32,        // Newtons
+    pub afterburner_thrust: f32, // Newtons
+    
+    // Flight envelope
+    pub stall_speed: f32,       // m/s
+    pub max_speed: f32,         // m/s
+    pub max_angle_of_attack: f32, // radians
+    
+    // Aerodynamic coefficients
+    pub lift_coefficient_0: f32,  // CL0 (base lift)
+    pub lift_coefficient_alpha: f32, // CLα (lift per AoA)
+    pub drag_coefficient: f32,    // CD
+    
+    // Control characteristics
+    pub control_sensitivity: f32,
+    pub spool_rate_normal: f32,
+    pub spool_rate_afterburner: f32,
+    
+    // Inertia tensor components (kg⋅m²)
+    pub inertia_roll: f32,    // Ixx - roll axis
+    pub inertia_pitch: f32,   // Iyy - pitch axis  
+    pub inertia_yaw: f32,     // Izz - yaw axis
 }
 
 impl Default for AircraftFlight {
@@ -364,19 +388,45 @@ impl Default for AircraftFlight {
             // Flight state
             airspeed: 0.0,
             angle_of_attack: 0.0,
-            stall_speed: 40.0,     // Minimum speed to maintain lift
-            max_speed: 300.0,      // Maximum airspeed
-            
-            // F16-specific aerodynamic properties (realistic values)
-            lift_coefficient: 1.4,      // F16 has excellent lift characteristics
-            drag_coefficient: 0.03,     // Low drag design for high performance
-            thrust_power: 200.0,        // Powerful F100 engine with afterburner
-            control_sensitivity: 3.0,   // Highly maneuverable fighter jet
+            current_thrust: 0.0,
             
             // Engine starts cold
             afterburner: false,
+            afterburner_active: false,
+            afterburner_timer: 0.0,
             engine_spool_time: 0.0,
-            current_thrust: 0.0,
+        }
+    }
+}
+
+impl Default for F16Specs {
+    fn default() -> Self {
+        Self {
+            // F-16C Fighting Falcon realistic specifications
+            mass: 12000.0,              // kg (empty weight ~8,500 kg + fuel/equipment)
+            wing_area: 27.87,           // m² (300 sq ft)
+            max_thrust: 130000.0,       // Newtons (~29,000 lbf F100-PW-229)
+            afterburner_thrust: 176000.0, // Newtons (~39,500 lbf with afterburner)
+            
+            // Flight envelope
+            stall_speed: 40.0,          // m/s (~80 knots clean config)
+            max_speed: 616.0,           // m/s (Mach 2.0 at altitude)
+            max_angle_of_attack: 0.436, // radians (25 degrees)
+            
+            // Aerodynamic coefficients (simplified but realistic)
+            lift_coefficient_0: 0.2,   // Base lift coefficient
+            lift_coefficient_alpha: 5.0, // Lift curve slope (per radian)
+            drag_coefficient: 0.03,    // Clean configuration drag
+            
+            // Control characteristics
+            control_sensitivity: 3.0,  // Rad/s per control input
+            spool_rate_normal: 2.5,    // Engine spool-up rate
+            spool_rate_afterburner: 1.5, // Faster spool with afterburner
+            
+            // Inertia tensor (realistic F-16 values)
+            inertia_roll: 9000.0,      // kg⋅m² - roll axis (slender body)
+            inertia_pitch: 165000.0,   // kg⋅m² - pitch axis (longer moment arm)
+            inertia_yaw: 175000.0,     // kg⋅m² - yaw axis (similar to pitch)
         }
     }
 }

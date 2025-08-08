@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::systems::world::{
-    optimized_npc_movement,
+    simple_npc_movement,
     migrate_legacy_npcs,
     spawn_new_npc_system,
 };
@@ -13,6 +13,6 @@ impl Plugin for WorldNpcPlugin {
         app
             .add_systems(Update, migrate_legacy_npcs)
             .add_systems(Update, spawn_new_npc_system)
-            .add_systems(Update, optimized_npc_movement);
+            .add_systems(Update, simple_npc_movement);
     }
 }

@@ -1,34 +1,36 @@
 # F16 Fighter Jet - Realistic Flight Controls
 
-## Changes Made
+## Current Control Scheme (Updated)
 
-### Spawn Location
-- **OLD**: F16 spawned at Vec3(80.0, 2.0, 120.0) - far from player
-- **NEW**: F16 spawns at Vec3(5.0, 2.0, 0.0) - 5 units to the right of player spawn for immediate access
+### Primary Flight Controls
+- **Pitch Control**: 
+  - **W** = Pitch Up (nose up)
+  - **S** = Pitch Down (nose down)
+  
+- **Roll Control**:
+  - **A** = Roll Left (bank left)
+  - **D** = Roll Right (bank right)
+  
+- **Yaw Control**:
+  - **Q** = Yaw Left (rudder left)
+  - **E** = Yaw Right (rudder right)
 
-### Control System
-Completely replaced arcade-style controls with realistic flight dynamics:
+### Engine Controls  
+- **Throttle** (Multiple Options):
+  - **Arrow Up** = Increase Throttle
+  - **Arrow Down** = Decrease Throttle  
+  - **Left Shift** = Increase Throttle (alternative)
+  - **Left Ctrl** = Decrease Throttle (alternative)
+  
+- **Afterburner**:
+  - **Space** = Activate Afterburner (hold for continuous thrust)
+  - 0.3 second fuel flow delay for realism
+  - 35% additional thrust when active
 
-#### Flight Control Inputs
-- **Pitch (Elevator)**: W/S keys or Arrow Up/Down
-  - Nose up/down movement with gradual input response
-  - Returns to neutral when released
-  
-- **Roll (Ailerons)**: A/D keys or Arrow Left/Right  
-  - Banking left/right for turns
-  - Returns to neutral when released
-  
-- **Yaw (Rudder)**: Q/E keys
-  - Fine directional control
-  - Less effective than pitch/roll (realistic)
-  
-- **Throttle**: Shift (increase) / Ctrl (decrease)
-  - Gradual power adjustment from 0-100%
-  - Engine spool-up time for realism
-  
-- **Afterburner**: Space key (hold)
-  - 80% thrust boost when active
-  - Drains more rapidly when released
+### Utility Controls
+- **F** = Exit F16 (return to player)
+- **F1** = Debug Information
+- **F2** = Emergency Reset
 
 ### Realistic Flight Physics
 

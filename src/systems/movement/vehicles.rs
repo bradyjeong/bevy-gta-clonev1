@@ -1,18 +1,17 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Car, ActiveEntity};
-use crate::systems::input::{ControlManager, ControlAction};
+use crate::components::ControlState;
 use crate::systems::physics_utils::PhysicsUtilities;
 use crate::config::GameConfig;
 
 pub fn car_movement(
-    control_manager: Res<ControlManager>,
     config: Res<GameConfig>,
-    mut car_query: Query<(&mut Velocity, &Transform), (With<Car>, With<ActiveEntity>)>,
+    mut car_query: Query<(&mut Velocity, &Transform, &ControlState), (With<Car>, With<ActiveEntity>)>,
     _time: Res<Time>,
 ) {
     let start_time = std::time::Instant::now();
-    let Ok((mut velocity, transform)) = car_query.single_mut() else {
+    let Ok((mut velocity, transform, control_state)) = car_query.single_mut() else {
         return;
     };
 
@@ -22,29 +21,26 @@ pub fn car_movement(
     let mut target_linear_velocity = Vec3::ZERO;
     let mut target_angular_velocity = Vec3::ZERO;
     
-    // Use UNIFIED ControlManager controls
-    if control_manager.is_control_active(ControlAction::Accelerate) {
-        let accel_value = control_manager.get_control_value(ControlAction::Accelerate);
+    // Use clean ControlState for car controls
+    if control_state.is_accelerating() {
         let forward = transform.forward();
-        target_linear_velocity += forward * speed * accel_value;
+        target_linear_velocity += forward * speed * control_state.throttle;
     }
     
-    if control_manager.is_control_active(ControlAction::Brake) {
-        let brake_value = control_manager.get_control_value(ControlAction::Brake);
+    if control_state.is_braking() {
         let forward = transform.forward();
-        target_linear_velocity -= forward * speed * brake_value;
+        target_linear_velocity -= forward * speed * control_state.brake;
     }
     
     // Steering (only when moving)
-    if control_manager.is_control_active(ControlAction::Accelerate) || control_manager.is_control_active(ControlAction::Brake) {
-        let steering = control_manager.get_control_value(ControlAction::Steer);
-        if steering.abs() > 0.1 {
-            target_angular_velocity.y = steering * rotation_speed;
+    if control_state.is_accelerating() || control_state.is_braking() {
+        if control_state.steering.abs() > 0.1 {
+            target_angular_velocity.y = control_state.steering * rotation_speed;
         }
     }
     
     // Emergency brake override
-    if control_manager.is_emergency_active() {
+    if control_state.emergency_brake {
         target_linear_velocity *= 0.1;
         target_angular_velocity *= 0.5;
     }

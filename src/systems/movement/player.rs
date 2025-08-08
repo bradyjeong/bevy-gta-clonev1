@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation, HumanBehavior};
-use crate::systems::input::{ControlManager, ControlAction};
+use crate::components::ControlState;
 
 #[derive(Resource)]
 pub struct PlayerInputData {
@@ -22,24 +22,23 @@ impl Default for PlayerInputData {
 }
 
 pub fn read_input_system(
-    control_manager: Res<ControlManager>,
     mut input_data: ResMut<PlayerInputData>,
-    player_query: Query<&Transform, (With<Player>, With<ActiveEntity>)>,
+    player_query: Query<(&Transform, &ControlState), (With<Player>, With<ActiveEntity>)>,
 ) {
-    let Ok(transform) = player_query.single() else {
+    let Ok((transform, control_state)) = player_query.single() else {
         return;
     };
 
     input_data.input_direction = Vec3::ZERO;
-    if control_manager.is_control_active(ControlAction::Accelerate) {
+    if control_state.is_accelerating() {
         input_data.input_direction += *transform.forward();
     }
-    if control_manager.is_control_active(ControlAction::Brake) {
+    if control_state.is_braking() {
         input_data.input_direction -= *transform.forward();
     }
     
-    input_data.rotation_input = control_manager.get_control_value(ControlAction::Steer);
-    input_data.is_running = control_manager.is_control_active(ControlAction::Turbo);
+    input_data.rotation_input = control_state.steering;
+    input_data.is_running = control_state.run;
 }
 
 pub fn stamina_system(

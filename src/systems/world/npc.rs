@@ -3,16 +3,14 @@ use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
 use crate::components::{NPC, Cullable, ActiveEntity};
-use crate::systems::input::ControlManager;
 
 thread_local! {
     static NPC_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
 }
 
-/// Updated NPC movement that uses the unified control system
-pub fn unified_npc_movement(
+/// Simple NPC movement that follows direct AI patterns
+pub fn simple_npc_movement(
     time: Res<Time>,
-    control_manager: Res<ControlManager>,
     mut npc_query: Query<(Entity, &mut Transform, &mut Velocity, &mut NPC, &Cullable)>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
@@ -25,7 +23,7 @@ pub fn unified_npc_movement(
         Vec3::ZERO
     };
     
-    for (entity, mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
+    for (_entity, mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
         // Skip if culled
         if cullable.is_culled {
             velocity.linvel = Vec3::ZERO;
@@ -62,37 +60,18 @@ pub fn unified_npc_movement(
                 NPC_RNG.with(|rng| rng.borrow_mut().gen_range(-900.0..900.0)),
             );
         } else {
-            // Use unified control system for NPC movement
-            if let Some(ai_decision) = control_manager.get_ai_decision(entity) {
-                let direction = ai_decision.movement_direction;
-                if direction.length() > 0.1 {
-                    velocity.linvel = Vec3::new(
-                        direction.x * npc.speed * ai_decision.speed_factor,
-                        velocity.linvel.y, // Preserve gravity
-                        direction.z * npc.speed * ai_decision.speed_factor,
-                    );
-                    
-                    // Face movement direction with AI decision rotation
-                    let rotation_input = ai_decision.rotation_target;
-                    if rotation_input.abs() > 0.1 {
-                        let rotation = Quat::from_rotation_y((-direction.x).atan2(-direction.z) + rotation_input * 0.1);
-                        transform.rotation = rotation;
-                    }
-                }
-            } else {
-                // Fallback to original movement if no AI decision
-                let direction = (target_pos - current_pos).normalize();
-                velocity.linvel = Vec3::new(
-                    direction.x * npc.speed,
-                    velocity.linvel.y, // Preserve gravity
-                    direction.z * npc.speed,
-                );
-                
-                // Face movement direction
-                if direction.length() > 0.1 {
-                    let rotation = Quat::from_rotation_y((-direction.x).atan2(-direction.z));
-                    transform.rotation = rotation;
-                }
+            // Simple, direct NPC movement
+            let direction = (target_pos - current_pos).normalize();
+            velocity.linvel = Vec3::new(
+                direction.x * npc.speed,
+                velocity.linvel.y, // Preserve gravity
+                direction.z * npc.speed,
+            );
+            
+            // Face movement direction
+            if direction.length() > 0.1 {
+                let rotation = Quat::from_rotation_y((-direction.x).atan2(-direction.z));
+                transform.rotation = rotation;
             }
         }
     }

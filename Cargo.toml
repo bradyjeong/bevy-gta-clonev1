@@ -15,6 +15,7 @@ debug-timing = []
 [dependencies]
 bevy = { version = "0.16.1", features = ["serialize", "shader_format_glsl"] }
 bevy_rapier3d = "0.30.0"
+bevy_common_assets = { version = "0.13", features = ["ron"] }
 bytemuck = { version = "1.18", features = ["derive"] }
 rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }

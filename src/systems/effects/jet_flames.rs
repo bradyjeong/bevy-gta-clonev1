@@ -13,9 +13,9 @@ pub fn update_jet_flames(
                 continue;
             }
 
-            // Calculate flame intensity based on throttle and afterburner
+            // Calculate flame intensity based on throttle and afterburner (Oracle fix - use afterburner_active)
             let base_intensity = flight.throttle;
-            let afterburner_boost = if flight.afterburner { 0.8 } else { 0.0 };
+            let afterburner_boost = if flight.afterburner_active { 0.8 } else { 0.0 };
             let flame_intensity = (base_intensity + afterburner_boost).clamp(0.0, 1.0);
 
             // Hide flames when throttle is very low
@@ -55,9 +55,9 @@ pub fn update_flame_colors(
             }
 
             if let Some(material) = material_assets.get_mut(material_handle) {
-                // Calculate flame color based on throttle and afterburner
+                // Calculate flame color based on throttle and afterburner (Oracle fix - use afterburner_active)
                 let base_intensity = flight.throttle;
-                let afterburner_active = flight.afterburner;
+                let afterburner_active = flight.afterburner_active;
 
                 let color = if afterburner_active {
                     // Blue-white hot flame for afterburner

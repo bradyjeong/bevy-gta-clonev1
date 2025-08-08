@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;
 use crate::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
-use crate::systems::input::{ControlManager, ControlAction};
+// Removed complex control system imports
 
 /// Unified physics utilities for consistent physics behavior across all movement systems
 #[derive(Default)]
@@ -263,25 +263,25 @@ pub struct MovementInputs {
     pub jump: f32,
 }
 
-/// Input processing utilities for consistent control handling
+/// Simple input processing utilities for consistent control handling
 pub struct InputProcessor;
 
 impl InputProcessor {
-    /// Unified input processing for all movement systems
-    pub fn process_unified_inputs(control_manager: &ControlManager) -> MovementInputs {
+    /// Create MovementInputs from simple ControlState component
+    pub fn process_control_state(control_state: &crate::components::ControlState) -> MovementInputs {
         MovementInputs {
-            throttle: control_manager.get_control_value(ControlAction::Throttle),
-            brake: control_manager.get_control_value(ControlAction::Brake),
-            steering: control_manager.get_control_value(ControlAction::Steer),
-            pitch: control_manager.get_control_value(ControlAction::Pitch),
-            roll: control_manager.get_control_value(ControlAction::Roll),
-            yaw: control_manager.get_control_value(ControlAction::Yaw),
-            thrust: control_manager.get_control_value(ControlAction::Throttle), // Use Throttle for thrust
-            forward: control_manager.get_control_value(ControlAction::Accelerate), // Use Accelerate for forward
-            backward: control_manager.get_control_value(ControlAction::Brake), // Use Brake for backward
-            left: 0.0, // No direct left action, use steering negative
-            right: 0.0, // No direct right action, use steering positive  
-            jump: 0.0, // No jump action in current ControlAction enum
+            throttle: control_state.throttle,
+            brake: control_state.brake,
+            steering: control_state.steering,
+            pitch: control_state.pitch,
+            roll: control_state.roll,
+            yaw: control_state.yaw,
+            thrust: control_state.throttle, // Use throttle for thrust
+            forward: control_state.throttle, // Use throttle for forward
+            backward: control_state.brake, // Use brake for backward
+            left: if control_state.steering < 0.0 { -control_state.steering } else { 0.0 },
+            right: if control_state.steering > 0.0 { control_state.steering } else { 0.0 },
+            jump: control_state.vertical, // Use vertical for jump
         }
     }
 

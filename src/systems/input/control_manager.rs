@@ -362,6 +362,7 @@ impl ControlManager {
             }
             
             GameState::Jetting => {
+                // Flight control surfaces
                 if input_manager.is_action_pressed(InputAction::PitchUp) {
                     self.active_controls.insert(ControlAction::Pitch, 1.0 * physics_config.acceleration_sensitivity);
                 }
@@ -380,14 +381,24 @@ impl ControlManager {
                 if input_manager.is_action_pressed(InputAction::YawRight) {
                     self.active_controls.insert(ControlAction::Yaw, -1.0 * physics_config.steering_sensitivity);
                 }
-                if input_manager.is_action_pressed(InputAction::Afterburner) {
-                    self.active_controls.insert(ControlAction::Afterburner, 1.0);
+                
+                // Engine controls - both Arrow keys AND Shift/Ctrl work for throttle
+                if input_manager.is_action_pressed(InputAction::Forward) {
+                    self.active_controls.insert(ControlAction::Throttle, 1.0);
+                }
+                if input_manager.is_action_pressed(InputAction::Backward) {
+                    self.active_controls.insert(ControlAction::Throttle, -1.0);
                 }
                 if input_manager.is_action_pressed(InputAction::VerticalUp) {
                     self.active_controls.insert(ControlAction::Throttle, 1.0);
                 }
                 if input_manager.is_action_pressed(InputAction::VerticalDown) {
                     self.active_controls.insert(ControlAction::Throttle, -1.0);
+                }
+                
+                // Afterburner
+                if input_manager.is_action_pressed(InputAction::Afterburner) {
+                    self.active_controls.insert(ControlAction::Afterburner, 1.0);
                 }
             }
         }

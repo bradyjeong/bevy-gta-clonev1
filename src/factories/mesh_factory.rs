@@ -227,23 +227,23 @@ impl MeshFactory {
         meshes.add(Capsule3d::new(safe_radius, safe_length))
     }
     
-    /// Create F16 fighter jet body (main fuselage) - Fixed: matches collider dimensions
+    /// Create F16 fighter jet body (main fuselage) - Fixed: aligned with physics forward (-Z)
     pub fn create_f16_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // Fixed: dimensions match collider cuboid(8.0, 1.5, 1.5) -> total size (16.0, 3.0, 3.0)
-        // Reoriented: length along X-axis (nose at -X, tail at +X)
-        let width = 16.0_f32.clamp(0.1, 50.0);  // X-axis (length)
-        let height = 3.0_f32.clamp(0.1, 10.0); // Y-axis (height)  
-        let depth = 3.0_f32.clamp(0.1, 10.0); // Z-axis (width)
+        // Fixed: length along Z-axis to match physics forward direction (-Z)
+        // Nose at +Z, tail at -Z to align with Transform::forward()
+        let width = 3.0_f32.clamp(0.1, 10.0);   // X-axis (width)
+        let height = 3.0_f32.clamp(0.1, 10.0);  // Y-axis (height)  
+        let depth = 16.0_f32.clamp(0.1, 50.0);  // Z-axis (length)
         meshes.add(Cuboid::new(width, height, depth))
     }
     
     /// Create F16 wing (swept delta wing)
     pub fn create_f16_wing(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
         // F16 wing dimensions: 32.8ft span, average chord ~6ft
-        // Scaled: ~10 units span, 1.8 units chord, thin profile
-        let span = 10.0_f32.clamp(0.1, 30.0);
-        let chord = 1.8_f32.clamp(0.1, 10.0);
-        let thickness = 0.15_f32.clamp(0.01, 1.0);
+        // Reoriented: span along X-axis, chord along Z-axis, thickness along Y-axis
+        let span = 10.0_f32.clamp(0.1, 30.0);      // X-axis (span)
+        let thickness = 0.15_f32.clamp(0.01, 1.0); // Y-axis (thickness)
+        let chord = 1.8_f32.clamp(0.1, 10.0);      // Z-axis (chord)
         meshes.add(Cuboid::new(span, thickness, chord))
     }
     

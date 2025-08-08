@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::config::GameConfig;
-use crate::systems::input::{ControlManager, is_accelerating, is_braking};
+use crate::components::ControlState;
 use crate::systems::physics_utils::PhysicsUtilities;
 
 /// CRITICAL: High-performance realistic vehicle physics system
@@ -10,7 +10,6 @@ use crate::systems::physics_utils::PhysicsUtilities;
 pub fn realistic_vehicle_physics_system(
     time: Res<Time>,
     config: Res<GameConfig>,
-    control_manager: Res<ControlManager>,
     mut query: Query<(
         Entity,
         &mut Velocity,
@@ -20,6 +19,7 @@ pub fn realistic_vehicle_physics_system(
         &mut EnginePhysics,
         &mut VehicleSuspension,
         &mut TirePhysics,
+        &ControlState,
     ), With<ActiveEntity>>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<RealisticVehicle>)>,
     // rapier_context: Query<&RapierContext>, // TODO: Fix RapierContext integration
@@ -33,9 +33,9 @@ pub fn realistic_vehicle_physics_system(
     
     // Sort vehicles by distance and importance for priority processing
     let mut vehicles_with_distance: Vec<_> = query.iter_mut()
-        .map(|(entity, velocity, transform, vehicle, dynamics, engine, suspension, tire_physics)| {
+        .map(|(entity, velocity, transform, vehicle, dynamics, engine, suspension, tire_physics, control_state)| {
             let distance = active_pos.distance(transform.translation);
-            (distance, entity, velocity, transform, vehicle, dynamics, engine, suspension, tire_physics)
+            (distance, entity, velocity, transform, vehicle, dynamics, engine, suspension, tire_physics, control_state)
         })
         .collect();
     
@@ -44,7 +44,7 @@ pub fn realistic_vehicle_physics_system(
     let mut processed_count = 0;
     let max_physics_entities = 8; // Limit active physics simulations
     
-    for (distance, _entity, mut velocity, mut transform, mut vehicle, mut dynamics, mut engine, mut suspension, mut tire_physics) in vehicles_with_distance {
+    for (distance, _entity, mut velocity, mut transform, mut vehicle, mut dynamics, mut engine, mut suspension, mut tire_physics, control_state) in vehicles_with_distance {
         // Check time budget
         if start_time.elapsed().as_millis() as f32 > max_processing_time {
             break;
@@ -84,7 +84,7 @@ pub fn realistic_vehicle_physics_system(
         dynamics.speed = velocity.linvel.length();
         
         // STEP 1: Process user input with realistic constraints
-        process_vehicle_input(&control_manager, &mut engine, &vehicle, dt);
+        process_vehicle_input(&control_state, &mut engine, &vehicle, dt);
         
         // STEP 2: Calculate engine forces with realistic power delivery
         let engine_force = calculate_engine_force(&mut engine, &dynamics, dt);
@@ -164,21 +164,21 @@ fn process_simplified_vehicle_physics(
 
 /// Process realistic vehicle input with proper control systems
 fn process_vehicle_input(
-    control_manager: &Res<ControlManager>,
+    control_state: &ControlState,
     engine: &mut EnginePhysics,
     _vehicle: &RealisticVehicle,
     dt: f32,
 ) {
-    // Use ControlManager for realistic vehicle input
+    // Use ControlState for direct, clean vehicle input
     // Throttle input with realistic response
-    if is_accelerating(control_manager) {
+    if control_state.is_accelerating() {
         engine.throttle_input = (engine.throttle_input + dt * 2.0).clamp(0.0, 1.0);
     } else {
         engine.throttle_input = (engine.throttle_input - dt * 3.0).clamp(0.0, 1.0);
     }
     
     // Brake input with ABS simulation
-    if is_braking(control_manager) {
+    if control_state.is_braking() {
         engine.brake_input = (engine.brake_input + dt * 4.0).clamp(0.0, 1.0);
     } else {
         engine.brake_input = (engine.brake_input - dt * 5.0).clamp(0.0, 1.0);
