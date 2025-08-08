@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
 use crate::components::{PerformanceStats, DirtyFlagsMetrics};
-use crate::systems::input::ControlManager;
+// Removed: use crate::systems::input::ControlManager;
 
 /// Integration system that collects performance data from existing systems
 pub fn integrate_existing_performance_metrics(
     mut tracker: ResMut<UnifiedPerformanceTracker>,
     performance_stats: Res<PerformanceStats>,
     dirty_flags_metrics: Res<DirtyFlagsMetrics>,
-    control_manager: Option<Res<ControlManager>>,
+    // Removed: control_manager: Option<Res<ControlManager>>,
     _time: Res<Time>,
 ) {
     // Integrate existing PerformanceStats
@@ -52,12 +52,8 @@ pub fn integrate_existing_performance_metrics(
         metrics.operations_per_frame = dirty_flags_metrics.entities_marked_visibility;
     }
     
-    // Integrate input system performance
-    if let Some(control_manager) = control_manager {
-        let (max_time_us, _) = control_manager.get_performance_stats();
-        let time_ms = max_time_us as f32 / 1000.0;
-        tracker.record_category_time(PerformanceCategory::Input, time_ms);
-    }
+    // Input system performance now handled by asset-based controls
+    // No complex control manager to track
 }
 
 /// System to record distance cache performance

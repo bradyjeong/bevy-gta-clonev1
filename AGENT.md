@@ -132,6 +132,82 @@ CRITICAL: Never assume package versions. Always verify from official sources fir
 - Always check official package registries before making version claims
 - Update this file when versions are verified
 
+## Asset-Driven Control System
+Primary control configuration using RON (Rusty Object Notation) files following simplicity principles.
+
+### System Architecture (Simplified)
+- **Asset Configuration**: `assets/config/vehicle_controls.ron` - Single source of truth for ALL controls
+- **Asset Processing**: `src/systems/input/asset_based_controls.rs` - Loads RON → ControlState component
+- **Control State**: `src/components/control_state.rs` - Pure data component for all input
+- **Plugin Registration**: `src/plugins/input_plugin.rs` - Single asset-based input system
+
+### Simplicity Benefits
+- **Single Input Path**: Only asset-based controls (removed simple_input_mapping complexity)
+- **No Code Changes**: Add new vehicles/controls by editing RON file only
+- **Runtime Customization**: Players can modify controls without recompilation  
+- **Clean Data Flow**: RON → ControlState → Movement Systems
+- **Unified Interface**: All vehicles use same ControlState component
+
+### Supported Vehicles
+- **Walking**: Arrow keys movement, Shift run, F interact
+- **Car/SuperCar**: Arrow keys throttle/brake/steering, Space turbo
+- **Helicopter**: Arrow keys pitch/yaw, Shift/Ctrl vertical, F exit
+- **F16**: Arrow keys pitch/roll, WASD throttle/yaw, Space afterburner
+- **Yacht**: IJKL movement (configurable), Space boost, F exit
+
+### RON Configuration Structure
+```ron
+VehicleControlsConfig(
+    vehicle_types: {
+        Car: VehicleControls(
+            name: "Car",
+            description: "Standard vehicle controls",
+            primary_controls: [
+                (action: Forward, key: ArrowUp, description: "Accelerate"),
+                (action: TurnLeft, key: ArrowLeft, description: "Steer left"),
+            ],
+            secondary_controls: [
+                (action: Turbo, key: Space, description: "Turbo boost"),
+            ],
+            meta_controls: [
+                (action: Interact, key: KeyF, description: "Exit vehicle"),
+            ],
+        ),
+    }
+)
+```
+
+### Debug Commands
+- `F3`: Display loaded control configuration debug info
+- Asset reloading: Automatic when RON file changes during development
+
+## Simplified Physics Systems
+Following simplicity principles, complex physics have been replaced with maintainable alternatives.
+
+### Vehicle Physics Options
+- **Simple Vehicle Physics**: `src/systems/movement/simple_vehicle_physics.rs` - Direct force application (DEFAULT)
+- **Realistic Vehicle Physics**: `src/systems/movement/realistic_vehicle_physics.rs` - Complex tire/aerodynamics (AVAILABLE)
+
+### Aircraft Physics Options
+- **Simple Aircraft**: `src/systems/movement/simple_aircraft.rs` - Direct control mapping (DEFAULT)
+- **Complex Aircraft**: `src/systems/movement/aircraft.rs` - Advanced aerodynamics (AVAILABLE)
+
+### Simplicity Benefits
+- **Easy to Understand**: Linear force/rotation mapping instead of complex formulas
+- **Maintainable**: No advanced physics calculations requiring aerospace knowledge
+- **Performant**: Fewer calculations per frame
+- **Flight Feel Preserved**: Responsive controls maintain aircraft experience
+- **AGENT.md Compliant**: Single responsibility, clear data flow, minimal coupling
+
+### Switching Physics Systems
+To use complex physics, modify `src/plugins/vehicle_plugin.rs`:
+```rust
+// Change from:
+simple_f16_movement.run_if(in_state(GameState::Jetting)),
+// To:
+f16_movement.run_if(in_state(GameState::Jetting)),
+```
+
 ## Entry Points & Usage
 - Main game: `cargo run` (starts full GTA-style open world game)
 - Debug features: `cargo run --features debug-movement,debug-audio,debug-ui`

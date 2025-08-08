@@ -131,6 +131,7 @@ pub enum VehicleControlType {
     SuperCar,
     Helicopter,
     F16,
+    Yacht,
 }
 
 impl Default for VehicleControlType {
@@ -148,12 +149,13 @@ impl VehicleControlType {
             Self::SuperCar => "SuperCar",
             Self::Helicopter => "Helicopter",
             Self::F16 => "F16 Fighter Jet",
+            Self::Yacht => "Yacht",
         }
     }
     
     /// Check if this vehicle type can use boost/turbo
     pub fn has_boost(&self) -> bool {
-        matches!(self, Self::Car | Self::SuperCar | Self::F16)
+        matches!(self, Self::Car | Self::SuperCar | Self::F16 | Self::Yacht)
     }
     
     /// Check if this vehicle type uses flight controls
@@ -163,7 +165,7 @@ impl VehicleControlType {
     
     /// Check if this vehicle type uses ground vehicle controls
     pub fn uses_ground_controls(&self) -> bool {
-        matches!(self, Self::Walking | Self::Car | Self::SuperCar)
+        matches!(self, Self::Walking | Self::Car | Self::SuperCar | Self::Yacht)
     }
 }
 

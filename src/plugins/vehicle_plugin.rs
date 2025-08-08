@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use crate::systems::movement::{car_movement, helicopter_movement, f16_movement, rotate_helicopter_rotors};
+use crate::systems::movement::{car_movement, rotate_helicopter_rotors, simple_f16_movement, simple_helicopter_movement};
+// Complex aircraft systems available: helicopter_movement, f16_movement
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames, update_flame_colors};
 use crate::systems::safety::{world_bounds_safety_system, position_monitor_system};
 use crate::systems::vehicles::vehicle_lod_system;
@@ -21,11 +22,14 @@ impl Plugin for VehiclePlugin {
             // LOD system runs after safeguards
             vehicle_lod_system,
             
-            // Movement systems (force-based for vehicles)
+            // Movement systems (simplified for AGENT.md compliance)
             car_movement.run_if(in_state(GameState::Driving)),
             // Removed: supercar_movement system (used deleted SuperCar struct)
-            helicopter_movement.run_if(in_state(GameState::Flying)),
-            f16_movement.run_if(in_state(GameState::Jetting)),
+            
+            // Aircraft systems: Use simplified versions by default for better maintainability
+            // Change to complex versions if needed: helicopter_movement, f16_movement
+            simple_helicopter_movement.run_if(in_state(GameState::Flying)),
+            simple_f16_movement.run_if(in_state(GameState::Jetting)),
             rotate_helicopter_rotors,
             exhaust_effects_system,
         ))

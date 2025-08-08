@@ -125,28 +125,28 @@ pub fn setup_yacht(
 
 pub fn yacht_movement_system(
     time: Res<Time>,
-    keys: Res<ButtonInput<KeyCode>>,
-    mut yacht_query: Query<(&mut Transform, &mut Yacht, &mut Velocity), With<Boat>>,
+    mut yacht_query: Query<(&mut Transform, &mut Yacht, &mut Velocity, &crate::components::ControlState), (With<Boat>, With<crate::components::ActiveEntity>)>,
 ) {
-    for (mut transform, yacht, mut velocity) in yacht_query.iter_mut() {
+    for (mut transform, yacht, mut velocity, control_state) in yacht_query.iter_mut() {
         let mut acceleration = Vec3::ZERO;
         let mut angular_velocity = 0.0;
 
-        // Forward/backward movement
-        if keys.pressed(KeyCode::KeyI) {
-            acceleration += transform.forward() * yacht.max_speed;
+        // Forward/backward movement using ControlState
+        if control_state.is_accelerating() {
+            acceleration += transform.forward() * yacht.max_speed * control_state.throttle;
         }
-        if keys.pressed(KeyCode::KeyK) {
-            acceleration -= transform.forward() * yacht.max_speed * 0.5;
+        if control_state.is_braking() {
+            acceleration -= transform.forward() * yacht.max_speed * control_state.brake * 0.5;
         }
 
-        // Turning
-        if keys.pressed(KeyCode::KeyJ) {
-            angular_velocity = yacht.turning_speed;
+        // Turning using ControlState steering
+        if control_state.steering.abs() > 0.1 {
+            angular_velocity = yacht.turning_speed * control_state.steering;
         }
-        if keys.pressed(KeyCode::KeyL) {
-            angular_velocity = -yacht.turning_speed;
-        }
+
+        // Boost functionality
+        let boost_multiplier = if control_state.is_boosting() { 2.0 } else { 1.0 };
+        acceleration *= boost_multiplier;
 
         // Apply rotation
         transform.rotate_y(angular_velocity * time.delta_secs());

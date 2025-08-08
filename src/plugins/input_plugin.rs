@@ -4,7 +4,7 @@ use crate::systems::input::{
     InputConfig, InputManager, InputCompatLayer, VehicleControlConfig,
     process_input_system, update_input_compat_layer,
     LoadedVehicleControls, VehicleControlsConfig, load_vehicle_controls_system, process_loaded_controls_system,
-    simple_input_mapping_system, input_smoothing_system, debug_control_state_system
+    asset_based_input_mapping_system
 };
 
 pub struct InputPlugin;
@@ -30,16 +30,14 @@ impl Plugin for InputPlugin {
             update_input_compat_layer.after(process_input_system),
         ));
         
-        // Simple input systems - run in Update
+        // Asset-based input systems - run in Update
         app.add_systems(Startup, load_vehicle_controls_system)
            .add_systems(Update, (
                process_loaded_controls_system,
-               simple_input_mapping_system,
-               input_smoothing_system.after(simple_input_mapping_system),
-               debug_control_state_system,
+               asset_based_input_mapping_system,
            ));
         
-        info!("Input Plugin initialized with simple control system");
+        info!("Input Plugin initialized with asset-based control system");
     }
 }
 
