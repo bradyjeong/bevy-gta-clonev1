@@ -39,23 +39,31 @@ CORE PRINCIPLE: Simplicity is the key to this codebase.
 - Is the data flow still easy to follow?
 - Would a new developer understand this quickly?
 
-## Event-Driven Architecture: First Principles
+## Event-Driven Architecture & Module Communication
 CORE PRINCIPLE: Events decouple systems while maintaining explicit data flow.
 
-### Event-Driven Guidelines
+### Communication Rules
 - **Cross-Plugin Communication**: Use events for coordination, direct access for computation
+- **Plugins communicate via events for coordination, direct access for computation**
+- **No direct system-to-system calls** across plugin boundaries
+- **Resources for shared state**, not global variables
+- **Each plugin owns its components**
+- **Direct access allowed within plugins** for high-frequency operations
+- **Utility modules** (math, data structures) can be directly imported anywhere
+
+### Event Guidelines
 - **Explicit Data Flow**: Every message visible in schedule with clear ordering
 - **Lightweight Events**: Keep events small (≤128 bytes), Copy/Clone, no world references
 - **One Event Per Concern**: Avoid kitchen-sink generic events requiring runtime casting
 - **Documentation**: Each event group in dedicated module with clear purpose
 
-### When to Use Events vs Direct Access (Bevy 0.16+ Enhanced)
+### When to Use Events vs Direct Access
 **ALWAYS USE EVENTS FOR:**
 - **Cross-plugin boundaries** (architectural enforcement)
 - **Entity lifecycle events** (spawn, despawn, state transitions)
 - **One-to-many notifications** (damage → multiple UI/audio/effect handlers)
 - **Decoupled game logic** (player input → multiple system responses)
-- **Error propagation** between plugins (with Bevy 0.16's unified error handling)
+- **Error propagation** between plugins
 
 **USE DIRECT ACCESS FOR:**
 - **Tight performance loops** (>1000 entities/frame)
@@ -63,12 +71,6 @@ CORE PRINCIPLE: Events decouple systems while maintaining explicit data flow.
 - **Shared resources** (configs, caches, lookup tables)
 - **Utility functions** (math, validation, data structures)
 - **Same-plugin high-frequency ops** (animation, movement within vehicle systems)
-
-**HYBRID APPROACHES (New in 0.16+):**
-- **Observers**: Use for entity-specific events instead of global events
-- **Relationships**: Direct entity links for hierarchies (Parent/Child)
-- **Query Filters**: `Changed<T>`, `AssetChanged<T>` for reactive updates
-- **Commands**: Entity modification requests (better than events for spawning)
 
 ### Event Implementation Rules
 - Events cleared every frame (O(n) performance)
@@ -78,8 +80,7 @@ CORE PRINCIPLE: Events decouple systems while maintaining explicit data flow.
 - Add debug instrumentation for event counts under debug-ui feature
 - Keep stateless builder functions as helpers inside event handlers
 
-### Modern Event Patterns (Bevy 0.16+)
-**EVENT NAMING CONVENTIONS:**
+### Event Naming Conventions
 ```rust
 // Good: Specific, actionable events
 pub struct VehicleEngineStarted { entity: Entity, engine_type: EngineType }
@@ -89,22 +90,6 @@ pub struct WeaponFired { weapon: Entity, target: Option<Vec3> }
 // Avoid: Generic, kitchen-sink events
 pub struct GameEvent { event_type: String, data: HashMap<String, Value> }
 ```
-
-**OBSERVER PATTERN (New in 0.16):**
-```rust
-// Better than global events for entity-specific logic
-app.add_observer(on_vehicle_spawned);
-
-fn on_vehicle_spawned(trigger: Trigger<OnAdd, VehicleComponent>) {
-    // Automatic cleanup, validation, initialization
-}
-```
-
-**PERFORMANCE CONSIDERATIONS:**
-- Events are O(n) cleared every frame
-- Direct queries with `With<T>` filters are more cache-friendly
-- Resource access has no per-frame overhead
-- Observer pattern scales better than global events for entity-specific logic
 
 ## Modern ECS Patterns (Bevy 0.16+)
 CORE PRINCIPLE: Leverage Bevy's latest ECS features for performance and maintainability.
@@ -131,6 +116,28 @@ CORE PRINCIPLE: Leverage Bevy's latest ECS features for performance and maintain
 - **Entity Cloning**: Implement `#[derive(Clone)]` on components for entity duplication
 - **Relationship Components**: Define bidirectional relationships with `Relationship` and `RelationshipTarget`
 
+### Observer Pattern (New in 0.16)
+```rust
+// Better than global events for entity-specific logic
+app.add_observer(on_vehicle_spawned);
+
+fn on_vehicle_spawned(trigger: Trigger<OnAdd, VehicleComponent>) {
+    // Automatic cleanup, validation, initialization
+}
+```
+
+### Hybrid Event Approaches
+- **Observers**: Use for entity-specific events instead of global events
+- **Relationships**: Direct entity links for hierarchies (Parent/Child)
+- **Query Filters**: `Changed<T>`, `AssetChanged<T>` for reactive updates
+- **Commands**: Entity modification requests (better than events for spawning)
+
+### Performance Considerations
+- Events are O(n) cleared every frame
+- Direct queries with `With<T>` filters are more cache-friendly
+- Resource access has no per-frame overhead
+- Observer pattern scales better than global events for entity-specific logic
+
 ## Performance Optimization (Bevy 0.16+)
 
 ### Key Optimizations
@@ -143,7 +150,6 @@ CORE PRINCIPLE: Leverage Bevy's latest ECS features for performance and maintain
 ### Performance Targets
 - 60+ FPS target with system timing intervals (road gen 0.5s, culling 0.5s)
 - Distance caching with 5-frame cache, 2048 entry limit
-- Debug: Press F3 for cache performance stats
 
 ## Commands
 - Build: `cargo build` | Check: `cargo check` | Test: `cargo test test_name`
@@ -163,13 +169,7 @@ CORE PRINCIPLE: Leverage Bevy's latest ECS features for performance and maintain
 - **setup/**: One-time initialization, no ongoing state
 - **factories/**: Entity creation patterns, stateless (use `children!`/`related!` macros)
 
-### Module Communication Rules
-- **Plugins communicate via events for coordination, direct access for computation**
-- **No direct system-to-system calls** across plugin boundaries
-- **Resources for shared state**, not global variables
-- **Each plugin owns its components**
-- **Direct access allowed within plugins** for high-frequency operations
-- **Utility modules** (math, data structures) can be directly imported anywhere
+
 
 ## Code Style
 - snake_case for variables/functions, PascalCase for structs/components
@@ -252,15 +252,15 @@ This ensures all subagents maintain consistency with:
 
 
 ## Asset-Driven Control System
-Primary control configuration using RON (Rusty Object Notation) files following simplicity principles.
+Primary control configuration using RON (Rusty Object Notation) files.
 
-### System Architecture (Simplified)
+### System Architecture
 - **Asset Configuration**: `assets/config/vehicle_controls.ron` - Single source of truth for ALL controls
 - **Asset Processing**: `src/systems/input/asset_based_controls.rs` - Loads RON → ControlState component
 - **Control State**: `src/components/control_state.rs` - Pure data component for all input
 - **Plugin Registration**: `src/plugins/input_plugin.rs` - Single asset-based input system
 
-### Simplicity Benefits
+### Benefits
 - **Single Input Path**: Only asset-based controls (removed simple_input_mapping complexity)
 - **No Code Changes**: Add new vehicles/controls by editing RON file only
 - **Runtime Customization**: Players can modify controls without recompilation  
@@ -276,12 +276,11 @@ Primary control configuration using RON (Rusty Object Notation) files following 
 
 
 
-### Debug Commands
-- `F3`: Display loaded control configuration debug info (or cache performance stats)
+## Debug Commands
+- `F3`: Toggle debug overlay (control configuration, cache performance stats)
 - Asset reloading: Automatic when RON file changes during development
 
 ## Simplified Physics Systems
-Following simplicity principles, complex physics have been replaced with maintainable alternatives.
 
 ### Vehicle Physics Options
 - **Simple Vehicle Physics**: `src/systems/movement/simple_vehicle_physics.rs` - Direct force application (DEFAULT)
@@ -291,12 +290,11 @@ Following simplicity principles, complex physics have been replaced with maintai
 - **Simple Aircraft**: `src/systems/movement/simple_aircraft.rs` - Direct control mapping (DEFAULT)
 - **Complex Aircraft**: `src/systems/movement/aircraft.rs` - Advanced aerodynamics (AVAILABLE)
 
-### Simplicity Benefits
+### Benefits
 - **Easy to Understand**: Linear force/rotation mapping instead of complex formulas
 - **Maintainable**: No advanced physics calculations requiring aerospace knowledge
 - **Performant**: Fewer calculations per frame
 - **Flight Feel Preserved**: Responsive controls maintain aircraft experience
-- **AGENT.md Compliant**: Single responsibility, clear data flow, minimal coupling
 
 
 
