@@ -24,6 +24,39 @@ CORE PRINCIPLE: Simplicity is the key to this codebase.
 - Is the data flow still easy to follow?
 - Would a new developer understand this quickly?
 
+## Event-Driven Architecture: First Principles
+CORE PRINCIPLE: Events decouple systems while maintaining explicit data flow.
+
+### Event-Driven Guidelines
+- **Cross-Plugin Communication**: Always use Bevy events between plugins
+- **Explicit Data Flow**: Every message visible in schedule with clear ordering
+- **Lightweight Events**: Keep events small (≤128 bytes), Copy/Clone, no world references
+- **One Event Per Concern**: Avoid kitchen-sink generic events requiring runtime casting
+- **Documentation**: Each event group in dedicated module with clear purpose
+
+### When to Use Events vs Direct Access
+**USE EVENTS FOR:**
+- Cross-plugin communication (mandatory per architectural boundaries)
+- Entity lifecycle (spawn, despawn, state changes)
+- Game logic triggers (damage, interactions, achievements)
+- User actions (button presses, menu selections)
+- System coordination (phase transitions, mode changes)
+
+**USE DIRECT ACCESS FOR:**
+- Core engine systems (renderer, physics, audio, input primitives)
+- Performance-critical tight loops (movement updates, collision detection)
+- Simple utility functions (math, string processing, data structures)
+- Intra-plugin high-frequency data (position updates, animation frames)
+- Read-only shared data (configurations, constants, lookup tables)
+
+### Event Implementation Rules
+- Events cleared every frame (O(n) performance)
+- Multiple readers can consume same event concurrently
+- Name systems after events: `handle_spawn_car_event`
+- Use `.before()/.after()` for explicit system ordering
+- Add debug instrumentation for event counts under debug-ui feature
+- Keep stateless builder functions as helpers inside event handlers
+
 ## Commands
 - Build: `cargo build` | Check: `cargo check` | Test: `cargo test test_name`
 - Lint: `cargo clippy` | Format: `cargo fmt` | Run: `cargo run`
@@ -42,10 +75,12 @@ CORE PRINCIPLE: Simplicity is the key to this codebase.
 - **factories/**: Entity creation patterns, stateless
 
 ### Module Communication Rules
-- Plugins communicate via Bevy events only
-- No direct system-to-system calls
-- Resources for shared state, not global variables
-- Each plugin owns its components
+- **Plugins communicate via Bevy events only** (except performance-critical cases below)
+- **No direct system-to-system calls** across plugin boundaries
+- **Resources for shared state**, not global variables
+- **Each plugin owns its components**
+- **Direct access allowed within plugins** for high-frequency operations
+- **Utility modules** (math, data structures) can be directly imported anywhere
 
 ## Code Style
 - snake_case for variables/functions, PascalCase for structs/components
@@ -64,10 +99,12 @@ CORE PRINCIPLE: Simplicity is the key to this codebase.
 - Clear, descriptive names over clever ones
 
 ### Dependency Guidelines
-- Only import what you use
-- Avoid circular dependencies between modules
-- Prefer local imports over glob imports
-- Keep external dependencies minimal
+- **Event-First**: Use events for cross-plugin communication before considering direct imports
+- **Direct Import Exceptions**: Core engine (Bevy systems), utilities (math, data structures), performance-critical intra-plugin code
+- **Avoid circular dependencies** between modules
+- **Prefer local imports** over glob imports
+- **Keep external dependencies minimal**
+- **One module per event group** for discoverability
 
 ## Performance
 - Target 60+ FPS, entity culling (buildings 300m, vehicles 150m, NPCs 100m)
