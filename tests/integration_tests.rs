@@ -140,8 +140,8 @@ fn test_vehicle_factory_integration() {
     let factory = app.world().resource::<UnifiedEntityFactory>();
     
     // Test factory configuration
-    assert!(factory.config.gameplay.vehicles.basic_car.max_speed > 0.0);
-    assert!(factory.config.gameplay.vehicles.super_car.max_speed > factory.config.gameplay.vehicles.basic_car.max_speed);
+    assert!(factory.config.gameplay.vehicle.basic_car.max_speed > 0.0);
+    assert!(factory.config.gameplay.vehicle.super_car.max_speed > factory.config.gameplay.vehicle.basic_car.max_speed);
     
     // Test entity limits exist
     assert!(factory.entity_limits.max_buildings > 0);

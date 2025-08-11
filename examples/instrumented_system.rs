@@ -9,6 +9,8 @@ use bevy::prelude::*;
 fn main() {}
 
 #[cfg(feature = "debug-events")]
+
+#[cfg(feature = "debug-events")]
 use gta_game::instrumentation::{EventMetricsPlugin, ScheduleOrderingPlugin};
 use gta_game::events::{DynamicContentSpawned, DynamicContentDespawned, ContentType};
 
