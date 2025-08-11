@@ -1,12 +1,17 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::services::distance_cache::{DistanceCache, get_cached_distance};
+use std::time::{Duration, Instant};
 
 /// Frame counter for LOD updates
 #[derive(Resource, Default)]
 pub struct LODFrameCounter {
     pub frame: u64,
 }
+
+/// Local logging throttle for debug output
+#[derive(Default)]
+pub struct LastLog(Option<Instant>);
 
 /// System to update vegetation LOD based on player distance
 pub fn vegetation_lod_system(
@@ -148,6 +153,7 @@ pub fn adaptive_vegetation_lod_system(
 pub fn vegetation_lod_performance_monitor(
     vegetation_query: Query<&VegetationLOD>,
     mut performance_stats: ResMut<PerformanceStats>,
+    mut last_log: Local<LastLog>,
 ) {
     let mut full_count = 0;
     let mut medium_count = 0;
@@ -169,26 +175,19 @@ pub fn vegetation_lod_performance_monitor(
     
     // EMERGENCY: Disable excessive logging to improve performance
     // Only log every 5 seconds to reduce spam
-    use std::time::{Duration, Instant};
-    thread_local! {
-        static LAST_LOG: std::cell::Cell<Option<Instant>> = std::cell::Cell::new(None);
-    }
-    
     if cfg!(feature = "debug-ui") {
-        LAST_LOG.with(|last| {
-            let now = Instant::now();
-            let should_log = last.get()
-                .map(|last_time| now.duration_since(last_time) > Duration::from_secs(5))
-                .unwrap_or(true);
-                
-            if should_log {
-                info!(
-                    "Vegetation LOD: Full: {}, Medium: {}, Billboard: {}, Culled: {}",
-                    full_count, medium_count, billboard_count, culled_count
-                );
-                last.set(Some(now));
-            }
-        });
+        let now = Instant::now();
+        let should_log = last_log.0
+            .map(|last_time| now.duration_since(last_time) > Duration::from_secs(5))
+            .unwrap_or(true);
+            
+        if should_log {
+            info!(
+                "Vegetation LOD: Full: {}, Medium: {}, Billboard: {}, Culled: {}",
+                full_count, medium_count, billboard_count, culled_count
+            );
+            last_log.0 = Some(now);
+        }
     }
 }
 
