@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+#![allow(unused_imports, unused_variables)]
 use gta_game::plugins::{GameCorePlugin, GameSetupPlugin};
 
 /// Smoke test to ensure the game plugins can be registered without conflicts

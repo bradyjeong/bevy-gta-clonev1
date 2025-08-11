@@ -3,6 +3,7 @@
 //! Verifies behavioral parity between event-based and observer-based systems
 
 use bevy::prelude::*;
+#![allow(unused_imports)]
 use gta_game::{
     components::dynamic_content::{DynamicContent, ContentType},
     events::world::content_events::{DynamicContentSpawned, DynamicContentDespawned},

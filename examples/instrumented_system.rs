@@ -2,8 +2,13 @@
 //! 
 //! Run with: cargo run --example instrumented_system --features debug-events
 
-#![cfg(feature = "debug-events")]
+#![cfg_attr(not(feature = "debug-events"), allow(unused))]
 use bevy::prelude::*;
+
+#[cfg(not(feature = "debug-events"))]
+fn main() {}
+
+#[cfg(feature = "debug-events")]
 use gta_game::instrumentation::{EventMetricsPlugin, ScheduleOrderingPlugin};
 use gta_game::events::{DynamicContentSpawned, DynamicContentDespawned, ContentType};
 

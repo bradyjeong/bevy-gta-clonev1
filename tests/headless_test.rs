@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::app::AppExit;
-use gta_game::config::{GameConfig, ConfigPlugin};
+use gta_game::config::{GameConfig, ConfigPlugin, ConfigReloadedEvent};
 
 /// Headless test runner for CI environments
 #[test]
@@ -91,7 +91,7 @@ fn exit_after_frames(
     
     if *frame_count >= 100 {
         info!("Headless test completed successfully");
-        exit.send(AppExit::Success);
+        exit.write(AppExit::Success);
     }
 }
 

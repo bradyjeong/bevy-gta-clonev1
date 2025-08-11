@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::*;
 use gta_game::components::world::*;
 use gta_game::components::*;
 use gta_game::bundles::*;
+#![allow(unused_imports, unused_variables)]
 use gta_game::factories::entity_factory_unified::*;
 use gta_game::systems::world::unified_distance_culling::*;
 use gta_game::factories::rendering_factory::*;
