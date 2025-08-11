@@ -13,6 +13,8 @@ debug-events = []
 p1_1_decomp = []
 event-audit = []
 legacy-events = []
+ci_headless = []
+perf-tests = []
 
 # Removed gta_simple binary - using main.rs as default
 
@@ -26,3 +28,8 @@ serde = { version = "1.0", features = ["derive"] }
 ron = "0.8"
 chrono = { version = "0.4", features = ["serde"] }
 static_assertions = "1.1"
+thiserror = "2.0"
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.0"

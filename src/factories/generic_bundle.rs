@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::config::*;
+use crate::config::GameConfig;
 use crate::components::*;
 use crate::services::distance_cache::MovementTracker;
 use crate::bundles::*;

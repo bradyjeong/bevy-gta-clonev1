@@ -18,8 +18,11 @@ pub fn camera_follow_system(
     // Camera follows behind all entities using standard positioning
     let entity_behind_direction = -active_transform.forward();
     
+    // Convert Dir3 to Vec3 for calculations
+    let entity_behind_vec = entity_behind_direction.as_vec3();
+    
     // Additional safety check for invalid direction vector
-    if !entity_behind_direction.is_finite() {
+    if !entity_behind_vec.is_finite() {
         return;
     }
     
@@ -28,7 +31,7 @@ pub fn camera_follow_system(
     // Position camera behind and above the entity
     let camera_distance = config.camera.distance;
     let camera_height = config.camera.height;
-    let camera_offset = entity_behind_direction * camera_distance + entity_up * camera_height;
+    let camera_offset = entity_behind_vec * camera_distance + entity_up * camera_height;
     let target_pos = active_transform.translation + camera_offset;
     
     // Safety check for target position

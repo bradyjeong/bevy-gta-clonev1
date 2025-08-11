@@ -1,0 +1,41 @@
+(
+    culling: (
+        building_distance: 300.0,
+        vehicle_distance: 150.0,
+        npc_distance: 100.0,
+        tree_distance: 200.0,
+        effect_distance: 50.0,
+        check_interval: 0.5,
+    ),
+    lod: (
+        building_lod_distances: [50.0, 150.0, 300.0, 500.0],
+        vehicle_lod_distances: [50.0, 100.0, 125.0, 150.0],
+        npc_lod_distances: [25.0, 50.0, 75.0, 100.0],
+        terrain_lod_distances: [100.0, 250.0, 500.0, 1000.0],
+        update_interval: 0.2,
+    ),
+    caching: (
+        distance_cache_size: 2048,
+        distance_cache_ttl: 5,
+        mesh_cache_size: 1024,
+        texture_cache_size: 512,
+        frame_cache_capacity: 256,
+    ),
+    entity_limits: (
+        max_buildings: 200,
+        max_vehicles: 50,
+        max_npcs: 20,
+        max_trees: 100,
+        max_effects: 30,
+        max_sounds: 16,
+        spawn_percentage_threshold: 0.8,
+    ),
+    timing: (
+        lod_update_interval: 0.2,
+        culling_update_interval: 0.5,
+        audio_cleanup_interval: 2.0,
+        effect_update_interval: 0.1,
+        physics_update_interval: 0.016, // 60 FPS physics
+        ai_update_interval: 0.3,
+    ),
+)

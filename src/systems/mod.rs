@@ -84,6 +84,7 @@ pub mod player_collision_resolution;
 pub mod parallel_physics;
 
 pub mod performance_monitor;
+pub mod config;
 // pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
 pub mod batching;
 // Explicit exports following simplicity guidelines - only export what's needed
