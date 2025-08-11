@@ -19,6 +19,7 @@ struct TestEvent {
     value: f32,
 }
 
+#[cfg(feature = "debug-events")]
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
