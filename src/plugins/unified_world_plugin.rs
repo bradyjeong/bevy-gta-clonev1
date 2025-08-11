@@ -11,7 +11,7 @@ use crate::plugins::{
 use crate::factories::initialize_material_factory;
 
 #[cfg(feature = "p1_1_decomp")]
-use crate::world::{ChunkTracker, PlacementGrid, RoadNetwork, WorldCoordinator};
+use crate::world::{ChunkTables, ChunkTracker, PlacementGrid, RoadNetwork, WorldCoordinator};
 
 /// Simplified unified world plugin that coordinates focused world sub-plugins.
 /// This follows the simplicity principle by delegating to specialized plugins
@@ -24,6 +24,7 @@ impl Plugin for UnifiedWorldPlugin {
         #[cfg(feature = "p1_1_decomp")]
         {
             app.init_resource::<ChunkTracker>()
+                .init_resource::<ChunkTables>()
                 .init_resource::<PlacementGrid>()
                 .init_resource::<RoadNetwork>()
                 .init_resource::<WorldCoordinator>();

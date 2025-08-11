@@ -104,7 +104,7 @@ impl Plugin for GameCorePlugin {
             ))
             
             // Observer Pattern Migration
-            .add_plugins(crate::observers::ContentObserverPlugin)
+            // ContentObserverPlugin already added by WorldStreamingPlugin
             
             // Persistence and UI Systems
             .add_plugins((
