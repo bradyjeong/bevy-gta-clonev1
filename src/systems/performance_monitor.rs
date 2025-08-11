@@ -574,6 +574,8 @@ pub fn performance_debug_input_system(
     tracker: Res<UnifiedPerformanceTracker>,
     #[cfg(feature = "debug-ui")]
     event_counters: Option<Res<EventCounters>>,
+    #[cfg(feature = "event-audit")]
+    _event_audit: Option<Res<crate::debug::event_audit::EventAuditStats>>,
 ) {
     if keys.just_pressed(KeyCode::F3) {
         // Toggle overlay visibility

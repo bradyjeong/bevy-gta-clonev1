@@ -25,6 +25,15 @@ use crate::systems::world::event_handlers::spawn_validation_handler_v2::{
     handle_road_validation_request_v2,
 };
 
+use crate::systems::world::event_handlers::content_despawn_handler::{
+    process_marked_for_despawn,
+    mark_distant_content_for_despawn,
+};
+#[cfg(feature = "legacy-events")]
+use crate::systems::world::event_handlers::content_despawn_handler::handle_despawn_request_events;
+
+use crate::observers::content_observers::ContentObserverPlugin;
+
 #[cfg(feature = "p1_1_decomp")]
 use crate::world::{ChunkTracker, ChunkTables, PlacementGrid, RoadNetwork, WorldCoordinator};
 
@@ -35,6 +44,9 @@ pub struct WorldStreamingPlugin;
 
 impl Plugin for WorldStreamingPlugin {
     fn build(&self, app: &mut App) {
+        // Add observer plugin for content lifecycle
+        app.add_plugins(ContentObserverPlugin);
+        
         // Initialize decomposed resources
         #[cfg(feature = "p1_1_decomp")]
         {
@@ -76,7 +88,15 @@ impl Plugin for WorldStreamingPlugin {
                 // Phase 2: Chunk management
                 handle_chunk_load_request,
                 handle_chunk_unload_request,
+                
+                // Observer-based despawn handling
+                mark_distant_content_for_despawn,
+                process_marked_for_despawn.after(mark_distant_content_for_despawn),
             ));
+            
+        // Legacy event handler if feature enabled
+        #[cfg(feature = "legacy-events")]
+        app.add_systems(Update, handle_despawn_request_events);
     }
 }
 

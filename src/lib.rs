@@ -22,6 +22,11 @@ pub mod events; // Event-driven cross-plugin communication
 #[cfg(feature = "p1_1_decomp")]
 pub mod world;
 
+#[cfg(feature = "event-audit")]
+pub mod debug;
+
+pub mod observers;
+
 // Core public API - essential items for external use (reduced from 100+ to ~15)
 pub use components::{Player, ActiveEntity, MainCamera, CullingSettings, PerformanceStats};
 pub use game_state::GameState;

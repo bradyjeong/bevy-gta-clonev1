@@ -65,6 +65,7 @@ pub mod dirty_flags;
 pub mod instanced_vegetation;
 pub mod control_state;
 pub mod world_object;
+pub mod dynamic_content;
 
 pub use player::*;
 pub use vehicles::*;

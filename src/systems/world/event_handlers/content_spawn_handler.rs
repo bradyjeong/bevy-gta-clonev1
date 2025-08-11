@@ -1,20 +1,27 @@
 //! Dynamic content spawn event handler
 //! 
-//! Handles RequestDynamicSpawn events by calling the unified entity factory,
-//! then emits DynamicContentSpawned events. This replaces direct factory calls.
+//! Handles RequestDynamicSpawn events by calling the unified entity factory.
+//! The DynamicContent component addition triggers observers automatically.
 
 use bevy::prelude::*;
-use crate::events::world::content_events::{RequestDynamicSpawn, DynamicContentSpawned, ContentType as EventContentType};
+use crate::events::world::content_events::{RequestDynamicSpawn, ContentType as EventContentType};
+#[allow(unused_imports)] // Will be removed after full migration
+use crate::events::world::content_events::DynamicContentSpawned;
 use crate::components::world::ContentType;
+use crate::components::dynamic_content::DynamicContent;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::systems::world::road_network::RoadNetwork;
 use crate::GlobalRng;
 
 /// Handle dynamic content spawn requests using the unified factory
 /// Named: handle_dynamic_spawn_request (per Oracle requirements)
+/// 
+/// This system now relies on the Observer pattern - adding DynamicContent
+/// component automatically triggers the on_dynamic_content_added observer
 pub fn handle_dynamic_spawn_request(
     mut commands: Commands,
     mut spawn_reader: EventReader<RequestDynamicSpawn>,
+    #[cfg(feature = "legacy-events")]
     mut spawn_complete_writer: EventWriter<DynamicContentSpawned>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -38,14 +45,20 @@ pub fn handle_dynamic_spawn_request(
             &[], // No existing content collision check here (handled by validation)
             time.elapsed_secs(),
         ) {
-            // Emit completion event
+            // Add DynamicContent component to trigger observer
+            commands.entity(entity).insert(DynamicContent::new(
+                crate::components::dynamic_content::ContentType::from(component_content_type)
+            ));
+            
+            // Legacy event emission for compatibility
+            #[cfg(feature = "legacy-events")]
             spawn_complete_writer.write(DynamicContentSpawned::new(
                 entity,
                 request.pos,
                 request.kind,
             ));
             
-            println!("DEBUG: Spawned {} using unified factory at {:?}", 
+            trace!("DEBUG: Spawned {} using unified factory at {:?}", 
                 event_content_type_name(request.kind), request.pos);
         }
     }

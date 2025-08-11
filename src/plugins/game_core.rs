@@ -103,10 +103,17 @@ impl Plugin for GameCorePlugin {
                 UnifiedPerformancePlugin,
             ))
             
+            // Observer Pattern Migration
+            .add_plugins(crate::observers::ContentObserverPlugin)
+            
             // Persistence and UI Systems
             .add_plugins((
                 PersistencePlugin,
                 UIPlugin,
             ));
+            
+        // Debug and Instrumentation
+        #[cfg(feature = "event-audit")]
+        app.add_plugins(crate::debug::EventAuditPlugin);
     }
 }

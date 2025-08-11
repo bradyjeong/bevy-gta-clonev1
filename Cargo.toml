@@ -10,6 +10,8 @@ debug-audio = []
 debug-ui = []
 debug-timing = []
 p1_1_decomp = []
+event-audit = []
+legacy-events = []
 
 # Removed gta_simple binary - using main.rs as default
 

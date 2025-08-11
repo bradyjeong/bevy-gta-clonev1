@@ -5,11 +5,13 @@
 
 pub mod spawn_validation_handler;
 pub mod content_spawn_handler;
+pub mod content_despawn_handler;
 pub mod chunk_handler;
 pub mod validation_to_spawn_bridge;
 
 pub use spawn_validation_handler::*;
 pub use content_spawn_handler::*;
+pub use content_despawn_handler::*;
 pub use chunk_handler::*;
 pub use validation_to_spawn_bridge::*;
 
