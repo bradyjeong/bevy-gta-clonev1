@@ -7,3 +7,9 @@ pub mod event_audit;
 
 #[cfg(feature = "event-audit")]
 pub use event_audit::EventAuditPlugin;
+
+// Size audit modules for component and resource optimization
+pub mod size_audit;
+pub mod size_measurements;
+
+pub use size_audit::{SizeAuditPlugin, SizeAuditReport};
