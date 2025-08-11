@@ -136,10 +136,8 @@ fn setup_starter_vehicles_unified(
                 rigid_body: RigidBody::Dynamic,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
-                    entity_factory.config.physics.vehicle_group,
-                    entity_factory.config.physics.static_group | 
-                    entity_factory.config.physics.vehicle_group | 
-                    entity_factory.config.physics.character_group
+                    Group::GROUP_1, // Vehicle group
+                    Group::GROUP_3 | Group::GROUP_1 | Group::GROUP_2 // Static | Vehicle | Character
                 ),
                 velocity: Velocity::default(),
                 damping: Damping { linear_damping: 1.0, angular_damping: 5.0 },
@@ -234,10 +232,8 @@ fn setup_supercar_unified(
             rigid_body: RigidBody::Dynamic,
             collider: Collider::cuboid(1.1, 0.5, 2.4), // Slightly larger than basic car
             collision_groups: CollisionGroups::new(
-                entity_factory.config.physics.vehicle_group,
-                entity_factory.config.physics.static_group | 
-                entity_factory.config.physics.vehicle_group | 
-                entity_factory.config.physics.character_group
+                Group::GROUP_1, // Vehicle group
+                Group::GROUP_3 | Group::GROUP_1 | Group::GROUP_2 // Static | Vehicle | Character
             ),
             velocity: Velocity::default(),
             damping: Damping { linear_damping: 1.0, angular_damping: 5.0 },
@@ -369,10 +365,8 @@ fn setup_luxury_cars_unified(
                 rigid_body: RigidBody::Dynamic,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
-                    entity_factory.config.physics.vehicle_group,
-                    entity_factory.config.physics.static_group | 
-                    entity_factory.config.physics.vehicle_group | 
-                    entity_factory.config.physics.character_group
+                    Group::GROUP_1, // Vehicle group
+                    Group::GROUP_3 | Group::GROUP_1 | Group::GROUP_2 // Static | Vehicle | Character
                 ),
                 velocity: Velocity::default(),
                 damping: Damping { linear_damping: 1.0, angular_damping: 5.0 },

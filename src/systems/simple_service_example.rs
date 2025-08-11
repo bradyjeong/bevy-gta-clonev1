@@ -18,27 +18,27 @@ pub fn service_example_vehicle_creation(
     }
     
     // Get vehicle configuration from config service
-    let vehicle_config = &config_service.get_config().vehicles.basic_car;
+    let _vehicle_config = &config_service.get_config().gameplay.vehicle;
     
     // Validate spawn position using physics service
     let spawn_position = Vec3::new(15.0, 2.0, 15.0);
     let validated_position = physics_service.validate_position(spawn_position);
     
-    // Validate mass using physics service
-    let validated_mass = physics_service.validate_mass(vehicle_config.mass);
+    // Validate mass using physics service  
+    let validated_mass = physics_service.validate_mass(1500.0); // Default car mass
     
     // Get collision groups from physics service
     let (_, vehicle_group, _) = physics_service.get_collision_groups();
     
     // Create mesh and material
     let mesh_handle = meshes.add(Cuboid::new(
-        vehicle_config.body_size.x,
-        vehicle_config.body_size.y,
-        vehicle_config.body_size.z,
+        2.0, // Default car width
+        0.7, // Default car height  
+        4.0, // Default car length
     ));
     
     let material_handle = materials.add(StandardMaterial {
-        base_color: vehicle_config.default_color,
+        base_color: bevy::color::Color::srgb(0.8, 0.2, 0.2), // Default red color
         ..default()
     });
     
@@ -51,16 +51,16 @@ pub fn service_example_vehicle_creation(
         .insert(ActiveEntity)
         .insert(RigidBody::Dynamic)
         .insert(Collider::cuboid(
-            vehicle_config.collider_size.x / 2.0,
-            vehicle_config.collider_size.y / 2.0,
-            vehicle_config.collider_size.z / 2.0,
+            2.0, // Default car width
+            0.7, // Default car height
+            4.0, // Default car length
         ))
         .insert(CollisionGroups::new(vehicle_group, Group::ALL))
         .insert(AdditionalMassProperties::Mass(validated_mass))
         .insert(Velocity::zero())
         .insert(Damping {
-            linear_damping: vehicle_config.linear_damping,
-            angular_damping: vehicle_config.angular_damping,
+            linear_damping: 1.0,
+            angular_damping: 5.0,
         })
         .insert(Cullable::new(150.0))
         .insert(Name::new("ServiceCreatedCar"))

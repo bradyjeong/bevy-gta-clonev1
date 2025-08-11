@@ -1,5 +1,16 @@
 use serde::{Deserialize, Serialize};
 
+/// Audio configuration for compatibility
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AudioDebug {
+    pub master_volume: f32,
+    pub sfx_volume: f32,
+    pub music_volume: f32,
+    pub ambient_volume: f32,
+    pub enable_3d_audio: bool,
+    pub max_simultaneous_sounds: usize,
+}
+
 /// Debug configuration values
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DebugConfig {
@@ -53,6 +64,19 @@ pub struct CheatConfig {
     pub time_control: bool,
     pub weather_control: bool,
     pub teleport: bool,
+}
+
+impl Default for AudioDebug {
+    fn default() -> Self {
+        Self {
+            master_volume: 1.0,
+            sfx_volume: 0.8,
+            music_volume: 0.6,
+            ambient_volume: 0.7,
+            enable_3d_audio: true,
+            max_simultaneous_sounds: 32,
+        }
+    }
 }
 
 impl Default for DebugConfig {

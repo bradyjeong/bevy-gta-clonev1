@@ -71,9 +71,9 @@ impl PhysicsService {
     
     pub fn get_collision_groups(&self) -> (bevy_rapier3d::prelude::Group, bevy_rapier3d::prelude::Group, bevy_rapier3d::prelude::Group) {
         (
-            self.physics_config.static_group,
-            self.physics_config.vehicle_group,
-            self.physics_config.character_group,
+            bevy_rapier3d::prelude::Group::GROUP_3, // Static group
+            bevy_rapier3d::prelude::Group::GROUP_1, // Vehicle group
+            bevy_rapier3d::prelude::Group::GROUP_2, // Character group
         )
     }
 }
@@ -115,7 +115,7 @@ pub fn initialize_simple_services(
 ) {
     // Register simple services as Bevy resources
     commands.insert_resource(ConfigService::new(config.clone()));
-    commands.insert_resource(PhysicsService::new(config.physics.clone()));
+    commands.insert_resource(PhysicsService::new(config.gameplay.physics.clone()));
     commands.insert_resource(EnhancedTimingService::new());
     
     info!("✅ SIMPLE SERVICES: Initialized config, physics, and timing services");

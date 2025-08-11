@@ -109,7 +109,7 @@ pub fn load_game_config(
     }
 
     if config_changed {
-        reload_events.send(ConfigReloadedEvent {
+        reload_events.write(ConfigReloadedEvent {
             config: game_config.clone(),
         });
     }
@@ -117,7 +117,7 @@ pub fn load_game_config(
 
 /// Handles to loaded configuration assets
 #[derive(Default)]
-struct ConfigHandles {
+pub struct ConfigHandles {
     gameplay: Option<Handle<RonConfigAsset>>,
     performance: Option<Handle<RonConfigAsset>>,
     debug: Option<Handle<RonConfigAsset>>,

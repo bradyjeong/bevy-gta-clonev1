@@ -68,7 +68,7 @@ pub fn render_optimization_system(
         }
         
         // Update visibility based on distance
-        let should_be_visible = distance < config.world.lod_distances[2]; // Use config lod distance
+        let should_be_visible = distance < config.performance.lod.building_lod_distances[2]; // Use config lod distance
         let new_visibility = if should_be_visible {
             Visibility::Visible
         } else {
@@ -163,7 +163,7 @@ pub fn batch_rendering_system(
             let distance = active_pos.distance(transform.translation);
             
             // Simple distance-based visibility using world streaming radius
-            let should_be_visible = distance < config.world.streaming_radius;
+            let should_be_visible = distance < config.performance.culling.building_distance;
             
             let new_visibility = if should_be_visible {
                 Visibility::Visible

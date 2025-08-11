@@ -29,8 +29,8 @@ pub fn camera_follow_system(
     let entity_up = Vec3::Y;
     
     // Position camera behind and above the entity
-    let camera_distance = config.camera.distance;
-    let camera_height = config.camera.height;
+    let camera_distance = config.gameplay.camera.distance;
+    let camera_height = config.gameplay.camera.height;
     let camera_offset = entity_behind_vec * camera_distance + entity_up * camera_height;
     let target_pos = active_transform.translation + camera_offset;
     
@@ -40,7 +40,7 @@ pub fn camera_follow_system(
     }
     
     // Smooth camera movement using interpolation - much more responsive
-    camera_transform.translation = camera_transform.translation.lerp(target_pos, config.camera.lerp_speed);
+    camera_transform.translation = camera_transform.translation.lerp(target_pos, config.gameplay.camera.smoothing);
     
     // Camera looks toward the entity at player height (classic GTA style)
     let look_target = active_transform.translation + Vec3::Y * 1.0;

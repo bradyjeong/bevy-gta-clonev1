@@ -11,23 +11,45 @@ pub struct PhysicsSetup;
 impl PhysicsSetup {
     /// Create standard collision groups for entity type
     pub fn collision_groups_for_entity(entity_type: EntityPhysicsType, config: &GameConfig) -> CollisionGroups {
+        // Convert u32 group numbers to Group constants
+        let static_group = Self::u32_to_group(config.gameplay.physics.static_group);
+        let vehicle_group = Self::u32_to_group(config.gameplay.physics.vehicle_group);
+        let character_group = Self::u32_to_group(config.gameplay.physics.character_group);
+        
         match entity_type {
             EntityPhysicsType::StaticBuilding => CollisionGroups::new(
-                config.physics.static_group,
+                static_group,
                 Group::ALL
             ),
             EntityPhysicsType::DynamicVehicle => CollisionGroups::new(
-                config.physics.vehicle_group,
-                config.physics.static_group | config.physics.vehicle_group | config.physics.character_group
+                vehicle_group,
+                static_group | vehicle_group | character_group
             ),
             EntityPhysicsType::Character => CollisionGroups::new(
-                config.physics.character_group,
+                character_group,
                 Group::ALL
             ),
             EntityPhysicsType::StaticVegetation => CollisionGroups::new(
-                config.physics.static_group,
-                config.physics.vehicle_group | config.physics.character_group
+                static_group,
+                vehicle_group | character_group
             ),
+        }
+    }
+    
+    /// Convert u32 group number to Group constant
+    fn u32_to_group(group_num: u32) -> Group {
+        match group_num {
+            1 => Group::GROUP_1,
+            2 => Group::GROUP_2,
+            3 => Group::GROUP_3,
+            4 => Group::GROUP_4,
+            5 => Group::GROUP_5,
+            6 => Group::GROUP_6,
+            7 => Group::GROUP_7,
+            8 => Group::GROUP_8,
+            9 => Group::GROUP_9,
+            10 => Group::GROUP_10,
+            _ => Group::GROUP_1, // Default to GROUP_1
         }
     }
     

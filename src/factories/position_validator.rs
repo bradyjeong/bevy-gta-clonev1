@@ -34,17 +34,17 @@ impl PositionValidator {
     /// - No magic numbers: Uses configuration values
     /// - Clear error messages with context
     pub fn validate_position(&self, position: Vec3) -> Result<Vec3, BundleError> {
-        if position.x.abs() > self.config.physics.max_world_coord ||
-           position.z.abs() > self.config.physics.max_world_coord {
+        if position.x.abs() > self.config.gameplay.physics.max_world_coord ||
+           position.z.abs() > self.config.gameplay.physics.max_world_coord {
             return Err(BundleError::PositionOutOfBounds {
                 position,
-                max_coord: self.config.physics.max_world_coord,
+                max_coord: self.config.gameplay.physics.max_world_coord,
             });
         }
         
         Ok(position.clamp(
-            Vec3::splat(self.config.physics.min_world_coord),
-            Vec3::splat(self.config.physics.max_world_coord),
+            Vec3::splat(self.config.gameplay.physics.min_world_coord),
+            Vec3::splat(self.config.gameplay.physics.max_world_coord),
         ))
     }
     

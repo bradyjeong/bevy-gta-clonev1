@@ -83,6 +83,7 @@ pub struct PhysicsGameplay {
     pub linear_damping: f32,
     pub angular_damping: f32,
     pub ground_friction: f32,
+    pub max_angular_velocity: f32,
 }
 
 impl Default for GameplayConfig {
@@ -143,6 +144,7 @@ impl Default for GameplayConfig {
                 linear_damping: 0.1,
                 angular_damping: 0.1,
                 ground_friction: 0.6,
+                max_angular_velocity: 10.0,
             },
             camera: CameraGameplay {
                 distance: 10.0,

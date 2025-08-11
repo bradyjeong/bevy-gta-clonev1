@@ -92,26 +92,33 @@ impl BundleSpec for VehicleBundleSpec {
     
     fn create_bundle(self, config: &GameConfig) -> Self::Bundle {
         // Get vehicle type configuration
-        let vehicle_config = match self.vehicle_type {
-            VehicleType::BasicCar => &config.vehicles.basic_car,
-            VehicleType::SuperCar => &config.vehicles.super_car,
-            VehicleType::Helicopter => &config.vehicles.helicopter,
-            VehicleType::F16 => &config.vehicles.f16,
+        let default_max_speed = match self.vehicle_type {
+            VehicleType::BasicCar => config.gameplay.vehicle.car_top_speed,
+            VehicleType::SuperCar => config.gameplay.vehicle.supercar_top_speed,
+            VehicleType::Helicopter => 150.0, // Default helicopter max speed
+            VehicleType::F16 => config.gameplay.vehicle.f16_max_speed,
         };
         
         // Apply overrides with validation
         let max_speed = self.max_speed_override
-            .unwrap_or(vehicle_config.max_speed)
-            .clamp(10.0, config.physics.max_velocity);
+            .unwrap_or(default_max_speed)
+            .clamp(10.0, config.gameplay.physics.max_velocity);
             
+        let default_mass = match self.vehicle_type {
+            VehicleType::BasicCar => 1500.0,
+            VehicleType::SuperCar => 1200.0,
+            VehicleType::Helicopter => 2000.0,
+            VehicleType::F16 => 10000.0,
+        };
+        
         let mass = self.mass_override
-            .unwrap_or(vehicle_config.mass)
-            .clamp(config.physics.min_mass, config.physics.max_mass);
+            .unwrap_or(default_mass)
+            .clamp(config.gameplay.physics.min_mass, config.gameplay.physics.max_mass);
         
         // Create validated transform
         let transform = Transform::from_translation(self.position.clamp(
-            Vec3::splat(config.physics.min_world_coord),
-            Vec3::splat(config.physics.max_world_coord)
+            Vec3::splat(config.gameplay.physics.min_world_coord),
+            Vec3::splat(config.gameplay.physics.max_world_coord)
         ));
         
         // Build bundle with configuration
@@ -120,7 +127,12 @@ impl BundleSpec for VehicleBundleSpec {
             vehicle_state: VehicleState {
                 color: self.color,
                 max_speed,
-                acceleration: vehicle_config.acceleration,
+                acceleration: match self.vehicle_type {
+                    VehicleType::BasicCar => config.gameplay.vehicle.car_acceleration,
+                    VehicleType::SuperCar => config.gameplay.vehicle.supercar_acceleration,
+                    VehicleType::Helicopter => 50.0,
+                    VehicleType::F16 => 100.0,
+                },
                 damage: 0.0,
                 fuel: 100.0,
                 current_lod: VehicleLOD::Full,
@@ -131,20 +143,29 @@ impl BundleSpec for VehicleBundleSpec {
             visibility: Visibility::Visible,
             rigid_body: if self.include_physics { RigidBody::Dynamic } else { RigidBody::Fixed },
             collider: if self.include_collision {
-                Collider::cuboid(
-                    vehicle_config.collider_size.x / 2.0,
-                    vehicle_config.collider_size.y / 2.0,
-                    vehicle_config.collider_size.z / 2.0,
-                )
+                match self.vehicle_type {
+                    VehicleType::BasicCar => Collider::cuboid(2.0, 0.7, 4.0),
+                    VehicleType::SuperCar => Collider::cuboid(2.0, 0.6, 4.5),
+                    VehicleType::Helicopter => Collider::cuboid(3.0, 2.0, 8.0),
+                    VehicleType::F16 => Collider::cuboid(8.0, 3.0, 12.0),
+                }
             } else {
                 Collider::ball(0.1) // Minimal collider
             },
-            collision_groups: CollisionGroups::new(config.physics.vehicle_group, Group::ALL),
+            collision_groups: CollisionGroups::new(
+                match config.gameplay.physics.vehicle_group {
+                    1 => Group::GROUP_1,
+                    2 => Group::GROUP_2,
+                    3 => Group::GROUP_3,
+                    _ => Group::GROUP_1,
+                },
+                Group::ALL
+            ),
             additional_mass: AdditionalMassProperties::Mass(mass),
             velocity: Velocity::zero(),
             damping: Damping { 
-                linear_damping: vehicle_config.linear_damping, 
-                angular_damping: vehicle_config.angular_damping 
+                linear_damping: config.gameplay.physics.linear_damping, 
+                angular_damping: config.gameplay.physics.angular_damping 
             },
             cullable: if self.include_visibility {
                 UnifiedCullable::vehicle()
@@ -156,30 +177,30 @@ impl BundleSpec for VehicleBundleSpec {
     
     fn validate(&self, config: &GameConfig) -> Result<(), BundleError> {
         // Validate position bounds
-        if self.position.x.abs() > config.physics.max_world_coord ||
-           self.position.z.abs() > config.physics.max_world_coord {
+        if self.position.x.abs() > config.gameplay.physics.max_world_coord ||
+           self.position.z.abs() > config.gameplay.physics.max_world_coord {
             return Err(BundleError::PositionOutOfBounds {
                 position: self.position,
-                max_coord: config.physics.max_world_coord,
+                max_coord: config.gameplay.physics.max_world_coord,
             });
         }
         
         // Validate overrides if present
         if let Some(max_speed) = self.max_speed_override {
-            if max_speed <= 0.0 || max_speed > config.physics.max_velocity {
+            if max_speed <= 0.0 || max_speed > config.gameplay.physics.max_velocity {
                 return Err(BundleError::InvalidVelocity {
                     velocity: max_speed,
-                    max_velocity: config.physics.max_velocity,
+                    max_velocity: config.gameplay.physics.max_velocity,
                 });
             }
         }
         
         if let Some(mass) = self.mass_override {
-            if mass < config.physics.min_mass || mass > config.physics.max_mass {
+            if mass < config.gameplay.physics.min_mass || mass > config.gameplay.physics.max_mass {
                 return Err(BundleError::InvalidMass {
                     mass,
-                    min_mass: config.physics.min_mass,
-                    max_mass: config.physics.max_mass,
+                    min_mass: config.gameplay.physics.min_mass,
+                    max_mass: config.gameplay.physics.max_mass,
                 });
             }
         }
@@ -209,8 +230,8 @@ impl BundleSpec for NPCBundleSpec {
         let build = self.build.clamp(0.3, 2.0);
         
         let transform = Transform::from_translation(self.position.clamp(
-            Vec3::splat(config.physics.min_world_coord),
-            Vec3::splat(config.physics.max_world_coord)
+            Vec3::splat(config.gameplay.physics.min_world_coord),
+            Vec3::splat(config.gameplay.physics.max_world_coord)
         ));
         
         NPCBundle {
@@ -219,26 +240,26 @@ impl BundleSpec for NPCBundleSpec {
                 appearance: self.appearance,
                 behavior: NPCBehaviorType::Wandering,
                 target_position: self.position,
-                speed: config.npc.walk_speed,
+                speed: config.gameplay.npc.walk_speed,
                 current_lod: NPCLOD::Full,
                 last_lod_check: 0.0,
             },
             npc_behavior: self.behavior.unwrap_or(NPCBehavior {
-                speed: config.npc.walk_speed,
+                speed: config.gameplay.npc.walk_speed,
                 last_update: 0.0,
-                update_interval: config.npc.update_intervals.close_interval,
+                update_interval: config.gameplay.npc.update_intervals.close_interval,
             }),
             npc_appearance: self.appearance,
             movement_controller: MovementController {
                 current_speed: 0.0,
-                max_speed: config.npc.walk_speed,
+                max_speed: config.gameplay.npc.walk_speed,
                 stamina: 100.0,
             },
             transform,
             visibility: Visibility::Inherited,
             rigid_body: if self.include_physics { RigidBody::Dynamic } else { RigidBody::Fixed },
-            collider: Collider::capsule_y(config.npc.capsule_height, config.npc.capsule_radius),
-            collision_groups: CollisionGroups::new(config.physics.character_group, Group::ALL),
+            collider: Collider::capsule_y(config.gameplay.npc.capsule_height, config.gameplay.npc.capsule_radius),
+            collision_groups: CollisionGroups::new(Group::GROUP_2, Group::ALL), // Character group
             additional_mass: AdditionalMassProperties::Mass(70.0 * build),
             velocity: Velocity::zero(),
             cullable: UnifiedCullable::npc(),
@@ -248,11 +269,11 @@ impl BundleSpec for NPCBundleSpec {
     
     fn validate(&self, config: &GameConfig) -> Result<(), BundleError> {
         // Validate position bounds
-        if self.position.x.abs() > config.physics.max_world_coord ||
-           self.position.z.abs() > config.physics.max_world_coord {
+        if self.position.x.abs() > config.gameplay.physics.max_world_coord ||
+           self.position.z.abs() > config.gameplay.physics.max_world_coord {
             return Err(BundleError::PositionOutOfBounds {
                 position: self.position,
-                max_coord: config.physics.max_world_coord,
+                max_coord: config.gameplay.physics.max_world_coord,
             });
         }
         
@@ -294,14 +315,14 @@ impl BundleSpec for BuildingBundleSpec {
     fn create_bundle(self, config: &GameConfig) -> Self::Bundle {
         // Validate and clamp size
         let size = Vec3::new(
-            self.size.x.clamp(1.0, config.physics.max_collider_size),
-            self.size.y.clamp(1.0, config.physics.max_collider_size),
-            self.size.z.clamp(1.0, config.physics.max_collider_size),
+            self.size.x.clamp(1.0, config.gameplay.physics.max_collider_size),
+            self.size.y.clamp(1.0, config.gameplay.physics.max_collider_size),
+            self.size.z.clamp(1.0, config.gameplay.physics.max_collider_size),
         );
         
         let transform = Transform::from_translation(self.position.clamp(
-            Vec3::splat(config.physics.min_world_coord),
-            Vec3::splat(config.physics.max_world_coord)
+            Vec3::splat(config.gameplay.physics.min_world_coord),
+            Vec3::splat(config.gameplay.physics.max_world_coord)
         ));
         
         BuildingBundle {
@@ -318,29 +339,29 @@ impl BundleSpec for BuildingBundleSpec {
             } else {
                 Collider::ball(0.1) // Minimal collider for LOD
             },
-            collision_groups: CollisionGroups::new(config.physics.static_group, Group::ALL),
+            collision_groups: CollisionGroups::new(Group::GROUP_3, Group::ALL), // Static group
             cullable: UnifiedCullable::building(),
         }
     }
     
     fn validate(&self, config: &GameConfig) -> Result<(), BundleError> {
         // Validate position bounds
-        if self.position.x.abs() > config.physics.max_world_coord ||
-           self.position.z.abs() > config.physics.max_world_coord {
+        if self.position.x.abs() > config.gameplay.physics.max_world_coord ||
+           self.position.z.abs() > config.gameplay.physics.max_world_coord {
             return Err(BundleError::PositionOutOfBounds {
                 position: self.position,
-                max_coord: config.physics.max_world_coord,
+                max_coord: config.gameplay.physics.max_world_coord,
             });
         }
         
         // Validate size bounds
-        if self.size.x < config.physics.min_collider_size || self.size.x > config.physics.max_collider_size ||
-           self.size.y < config.physics.min_collider_size || self.size.y > config.physics.max_collider_size ||
-           self.size.z < config.physics.min_collider_size || self.size.z > config.physics.max_collider_size {
+        if self.size.x < config.gameplay.physics.min_collider_size || self.size.x > config.gameplay.physics.max_collider_size ||
+           self.size.y < config.gameplay.physics.min_collider_size || self.size.y > config.gameplay.physics.max_collider_size ||
+           self.size.z < config.gameplay.physics.min_collider_size || self.size.z > config.gameplay.physics.max_collider_size {
             return Err(BundleError::InvalidSize {
                 size: self.size,
-                min_size: config.physics.min_collider_size,
-                max_size: config.physics.max_collider_size,
+                min_size: config.gameplay.physics.min_collider_size,
+                max_size: config.gameplay.physics.max_collider_size,
             });
         }
         
@@ -373,39 +394,39 @@ impl BundleSpec for PhysicsBundleSpec {
     
     fn create_bundle(self, config: &GameConfig) -> Self::Bundle {
         // Validate and clamp mass
-        let mass = self.mass.clamp(config.physics.min_mass, config.physics.max_mass);
+        let mass = self.mass.clamp(config.gameplay.physics.min_mass, config.gameplay.physics.max_mass);
         
         // Validate and clamp friction/restitution
         let friction = self.friction.clamp(0.0, 2.0);
         let restitution = self.restitution.clamp(0.0, 1.0);
         
         let transform = Transform::from_translation(self.position.clamp(
-            Vec3::splat(config.physics.min_world_coord),
-            Vec3::splat(config.physics.max_world_coord)
+            Vec3::splat(config.gameplay.physics.min_world_coord),
+            Vec3::splat(config.gameplay.physics.max_world_coord)
         ));
         
         // Create collider based on shape
         let collider = match self.collider_shape {
             ColliderShape::Box(size) => {
                 let clamped_size = Vec3::new(
-                    size.x.clamp(config.physics.min_collider_size, config.physics.max_collider_size),
-                    size.y.clamp(config.physics.min_collider_size, config.physics.max_collider_size),
-                    size.z.clamp(config.physics.min_collider_size, config.physics.max_collider_size),
+                    size.x.clamp(config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size),
+                    size.y.clamp(config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size),
+                    size.z.clamp(config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size),
                 );
                 Collider::cuboid(clamped_size.x / 2.0, clamped_size.y / 2.0, clamped_size.z / 2.0)
             }
             ColliderShape::Sphere(radius) => {
-                let clamped_radius = radius.clamp(config.physics.min_collider_size, config.physics.max_collider_size);
+                let clamped_radius = radius.clamp(config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size);
                 Collider::ball(clamped_radius)
             }
             ColliderShape::Capsule { radius, height } => {
-                let clamped_radius = radius.clamp(config.physics.min_collider_size, config.physics.max_collider_size);
-                let clamped_height = height.clamp(config.physics.min_collider_size, config.physics.max_collider_size);
+                let clamped_radius = radius.clamp(config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size);
+                let clamped_height = height.clamp(config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size);
                 Collider::capsule_y(clamped_height, clamped_radius)
             }
             ColliderShape::Cylinder { radius, height } => {
-                let clamped_radius = radius.clamp(config.physics.min_collider_size, config.physics.max_collider_size);
-                let clamped_height = height.clamp(config.physics.min_collider_size, config.physics.max_collider_size);
+                let clamped_radius = radius.clamp(config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size);
+                let clamped_height = height.clamp(config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size);
                 Collider::cylinder(clamped_height, clamped_radius)
             }
         };
@@ -419,8 +440,8 @@ impl BundleSpec for PhysicsBundleSpec {
             additional_mass: AdditionalMassProperties::Mass(mass),
             velocity: Velocity::zero(),
             damping: Damping { 
-                linear_damping: config.physics.linear_damping, 
-                angular_damping: config.physics.angular_damping 
+                linear_damping: config.gameplay.physics.linear_damping, 
+                angular_damping: config.gameplay.physics.angular_damping 
             },
             friction: Friction::coefficient(friction),
             restitution: Restitution::coefficient(restitution),
@@ -429,52 +450,52 @@ impl BundleSpec for PhysicsBundleSpec {
     
     fn validate(&self, config: &GameConfig) -> Result<(), BundleError> {
         // Validate position bounds
-        if self.position.x.abs() > config.physics.max_world_coord ||
-           self.position.z.abs() > config.physics.max_world_coord {
+        if self.position.x.abs() > config.gameplay.physics.max_world_coord ||
+           self.position.z.abs() > config.gameplay.physics.max_world_coord {
             return Err(BundleError::PositionOutOfBounds {
                 position: self.position,
-                max_coord: config.physics.max_world_coord,
+                max_coord: config.gameplay.physics.max_world_coord,
             });
         }
         
         // Validate mass
-        if self.mass < config.physics.min_mass || self.mass > config.physics.max_mass {
+        if self.mass < config.gameplay.physics.min_mass || self.mass > config.gameplay.physics.max_mass {
             return Err(BundleError::InvalidMass {
                 mass: self.mass,
-                min_mass: config.physics.min_mass,
-                max_mass: config.physics.max_mass,
+                min_mass: config.gameplay.physics.min_mass,
+                max_mass: config.gameplay.physics.max_mass,
             });
         }
         
         // Validate collider shape dimensions
         match &self.collider_shape {
             ColliderShape::Box(size) => {
-                if size.x < config.physics.min_collider_size || size.x > config.physics.max_collider_size ||
-                   size.y < config.physics.min_collider_size || size.y > config.physics.max_collider_size ||
-                   size.z < config.physics.min_collider_size || size.z > config.physics.max_collider_size {
+                if size.x < config.gameplay.physics.min_collider_size || size.x > config.gameplay.physics.max_collider_size ||
+                   size.y < config.gameplay.physics.min_collider_size || size.y > config.gameplay.physics.max_collider_size ||
+                   size.z < config.gameplay.physics.min_collider_size || size.z > config.gameplay.physics.max_collider_size {
                     return Err(BundleError::InvalidSize {
                         size: *size,
-                        min_size: config.physics.min_collider_size,
-                        max_size: config.physics.max_collider_size,
+                        min_size: config.gameplay.physics.min_collider_size,
+                        max_size: config.gameplay.physics.max_collider_size,
                     });
                 }
             }
             ColliderShape::Sphere(radius) => {
-                if *radius < config.physics.min_collider_size || *radius > config.physics.max_collider_size {
+                if *radius < config.gameplay.physics.min_collider_size || *radius > config.gameplay.physics.max_collider_size {
                     return Err(BundleError::InvalidSize {
                         size: Vec3::splat(*radius),
-                        min_size: config.physics.min_collider_size,
-                        max_size: config.physics.max_collider_size,
+                        min_size: config.gameplay.physics.min_collider_size,
+                        max_size: config.gameplay.physics.max_collider_size,
                     });
                 }
             }
             ColliderShape::Capsule { radius, height } | ColliderShape::Cylinder { radius, height } => {
-                if *radius < config.physics.min_collider_size || *radius > config.physics.max_collider_size ||
-                   *height < config.physics.min_collider_size || *height > config.physics.max_collider_size {
+                if *radius < config.gameplay.physics.min_collider_size || *radius > config.gameplay.physics.max_collider_size ||
+                   *height < config.gameplay.physics.min_collider_size || *height > config.gameplay.physics.max_collider_size {
                     return Err(BundleError::InvalidSize {
                         size: Vec3::new(*radius, *height, *radius),
-                        min_size: config.physics.min_collider_size,
-                        max_size: config.physics.max_collider_size,
+                        min_size: config.gameplay.physics.min_collider_size,
+                        max_size: config.gameplay.physics.max_collider_size,
                     });
                 }
             }
@@ -589,7 +610,7 @@ impl GenericBundleFactory {
             position,
             collider_shape,
             mass,
-            friction: config.physics.ground_friction,
+            friction: config.gameplay.physics.ground_friction,
             restitution: 0.3,
             collision_group,
             is_dynamic,

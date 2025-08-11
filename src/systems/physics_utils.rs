@@ -12,8 +12,8 @@ impl PhysicsUtilities {
     /// Validate and clamp velocity to safe ranges for physics stability
     pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
         // Clamp linear velocity to prevent physics instability
-        velocity.linvel = velocity.linvel.clamp_length_max(config.physics.max_velocity);
-        velocity.angvel = velocity.angvel.clamp_length_max(config.physics.max_angular_velocity);
+        velocity.linvel = velocity.linvel.clamp_length_max(config.gameplay.physics.max_velocity);
+        velocity.angvel = velocity.angvel.clamp_length_max(config.gameplay.physics.max_angular_velocity);
         
         // Ensure all values are finite
         if !velocity.linvel.is_finite() {
@@ -103,7 +103,7 @@ impl PhysicsUtilities {
         velocity: &mut Velocity,
         config: &GameConfig
     ) {
-        let bounds = config.physics.max_world_coord;
+        let bounds = config.gameplay.physics.max_world_coord;
         
         // Check and clamp X bounds
         if transform.translation.x > bounds {
@@ -225,9 +225,9 @@ impl PhysicsBodySetup {
         let aabb = shape.raw.compute_local_aabb();
         let size = aabb.half_extents().magnitude();
         
-        if size > config.physics.max_collider_size || size < config.physics.min_collider_size {
+        if size > config.gameplay.physics.max_collider_size || size < config.gameplay.physics.min_collider_size {
             warn!("Collider size {} outside safe range [{}, {}]", 
-                  size, config.physics.min_collider_size, config.physics.max_collider_size);
+                  size, config.gameplay.physics.min_collider_size, config.gameplay.physics.max_collider_size);
             return None;
         }
         
@@ -236,7 +236,7 @@ impl PhysicsBodySetup {
     
     /// Validate and create mass properties
     pub fn create_mass_properties(mass: f32, config: &GameConfig) -> Option<AdditionalMassProperties> {
-        let clamped_mass = mass.clamp(config.physics.min_mass, config.physics.max_mass);
+        let clamped_mass = mass.clamp(config.gameplay.physics.min_mass, config.gameplay.physics.max_mass);
         
         if !clamped_mass.is_finite() || clamped_mass <= 0.0 {
             return None;
