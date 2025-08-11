@@ -33,7 +33,7 @@ fn debug_unified_world_activity(
             .as_ref()
             .map(|t| t.loaded.len())
             .unwrap_or(0);
-        let roads_count = roads.as_ref().map(|r| r.roads.len()).unwrap_or(0);
+        let roads_count = roads.as_ref().map(|r| r.active_nodes as usize).unwrap_or(0);
         
         println!("🌍 WORLD STATUS:");
         println!("  ✅ Loaded chunks (fast): {}", tracker.get_loaded_chunks().len());
