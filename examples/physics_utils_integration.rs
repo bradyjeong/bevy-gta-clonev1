@@ -1,6 +1,7 @@
 // Example integration showing how to use the new unified physics utilities
 // This demonstrates the extracted common patterns from movement systems
 
+#![allow(unused_variables, dead_code)]
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use gta_game::systems::{PhysicsUtilities, CollisionGroupHelper, PhysicsBodySetup, InputProcessor};

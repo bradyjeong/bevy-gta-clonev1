@@ -1,6 +1,6 @@
+#![allow(unused_imports, dead_code)]
 use bevy::prelude::*;
 use bevy::app::AppExit;
-#![allow(unused_imports, dead_code)]
 use gta_game::config::{GameConfig, ConfigPlugin, ConfigReloadedEvent};
 
 /// Headless test runner for CI environments

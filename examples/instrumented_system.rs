@@ -56,8 +56,8 @@ fn generate_test_events(
         for i in 0..5 {
             spawn_writer.write(DynamicContentSpawned {
                 entity: Entity::from_raw(i),
-                content_type: ContentType::Vehicle,
-                position: Vec3::new(i as f32 * 10.0, 0.0, 0.0),
+                kind: ContentType::Vehicle,
+                pos: Vec3::new(i as f32 * 10.0, 0.0, 0.0),
             });
         }
     }
@@ -66,7 +66,6 @@ fn generate_test_events(
     if t as u32 % 5 == 0 {
         despawn_writer.write(DynamicContentDespawned {
             entity: Entity::from_raw(1),
-            content_type: ContentType::Vehicle,
         });
     }
 }
@@ -112,7 +111,7 @@ fn handle_spawn_events(
         
         for event in events {
             // Simulate spawn processing
-            info!("Spawned {:?} at {:?}", event.content_type, event.position);
+            info!("Spawned {:?} at {:?}", event.kind, event.pos);
         }
     });
 }
@@ -122,7 +121,7 @@ fn handle_spawn_events(
     mut reader: EventReader<DynamicContentSpawned>,
 ) {
     for event in reader.read() {
-        info!("Spawned {:?} at {:?}", event.content_type, event.position);
+        info!("Spawned {:?} at {:?}", event.kind, event.pos);
     }
 }
 
@@ -144,7 +143,7 @@ fn handle_despawn_events(
     
     for event in events {
         // Simulate despawn processing
-        info!("Despawned {:?}", event.content_type);
+        info!("Despawned entity {:?}", event.entity);
     }
     
     system_metrics.record("handle_despawn_events", start.elapsed());
@@ -155,6 +154,6 @@ fn handle_despawn_events(
     mut reader: EventReader<DynamicContentDespawned>,
 ) {
     for event in reader.read() {
-        info!("Despawned {:?}", event.content_type);
+        info!("Despawned entity {:?}", event.entity);
     }
 }

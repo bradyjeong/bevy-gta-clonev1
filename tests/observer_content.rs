@@ -6,6 +6,7 @@
 use bevy::prelude::*;
 use gta_game::components::dynamic_content::{DynamicContent, ContentType, MarkedForDespawn};
 use gta_game::observers::content_observers::{ContentObserverPlugin, ContentInitialized, ObserverMetrics};
+#[allow(unused_imports)]
 use gta_game::events::world::content_events::{DynamicContentSpawned, DynamicContentDespawned};
 
 /// Test that adding DynamicContent triggers the spawn observer
