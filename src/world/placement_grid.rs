@@ -112,29 +112,11 @@ impl PlacementGrid {
         z * 8 + x
     }
     
-    // Additional methods for migration compatibility
     pub fn get_occupied_count(&self) -> usize {
         self.occupied_cells.count_ones() as usize
     }
     
-    pub fn get_cell_size(&self) -> f32 {
-        50.0 // Fixed cell size
-    }
-    
-    pub fn set_cell_size(&mut self, _size: f32) {
-        // Cell size is fixed at 50.0 in this implementation
-        // This method exists for migration compatibility
-    }
-    
-    pub fn mark_occupied(&mut self, position: Vec3, radius: f32) {
-        self.add_entity(position, ContentType::Building, radius);
-    }
-    
-    pub fn can_place_at(&self, position: Vec3, radius: f32, min_distance: f32) -> bool {
-        self.can_place(position, ContentType::Building, radius.max(min_distance))
-    }
-    
-    // V2 compatibility methods
+    // V2 methods for streaming systems
     pub fn check_collision(&self, position: Vec3, radius: f32) -> bool {
         // Returns true if there's a collision (opposite of can_place)
         // Use EventContentType::Building for V2 compatibility

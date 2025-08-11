@@ -14,30 +14,38 @@ pub struct ChunkUnloadRequest {
     pub coord: ChunkCoord,
 }
 
-/// ChunkTracker - Manages loaded chunks and streaming state (≤48 bytes)
+/// ChunkTracker - Core chunk streaming state (≤64 bytes)
 #[derive(Resource, Debug)]
 pub struct ChunkTracker {
-    /// Currently loaded chunk coordinates and states (32 bytes = 2 chunks max)
-    pub loaded_chunks: [(ChunkCoord, ChunkState); 2],
+    /// Currently loaded chunk coordinates and states (36 bytes = 3 chunks * 12 bytes)
+    pub loaded_chunks: [(ChunkCoord, ChunkState); 3],
     /// Current focus chunk for streaming (8 bytes)
     pub focus_chunk: ChunkCoord,
     /// Streaming radius in chunks (2 bytes)
     pub lod_radius: i16,
-    /// Frame counters for performance tracking (2 bytes)
-    pub performance_stats: u16,
     /// Active chunk count (1 byte)
     pub active_count: u8,
     /// Focus chunk valid flag (1 byte)
     pub focus_valid: bool,
-    
-    // V2 compatibility fields (not included in size constraints)
-    #[cfg(feature = "world_v2")]
+    /// Frame counter for performance tracking (4 bytes)
+    pub last_update_frame: u32,
+    /// Performance flags (4 bytes)
+    pub perf_flags: u32,
+    /// Reserved padding (8 bytes)
+    _padding: [u32; 2],
+}
+
+/// ChunkTables - Dynamic chunk data (unbounded size)
+/// Separated from ChunkTracker to maintain cache-friendliness
+#[derive(Resource, Debug, Default)]
+pub struct ChunkTables {
+    /// All loaded chunks with their states
     pub loaded: HashMap<ChunkCoord, ChunkState>,
-    #[cfg(feature = "world_v2")]
+    /// Chunks currently being loaded
     pub loading: HashMap<ChunkCoord, ChunkState>,
-    #[cfg(feature = "world_v2")]
+    /// Chunks being unloaded
     pub unloading: HashMap<ChunkCoord, ChunkState>,
-    #[cfg(feature = "world_v2")]
+    /// Distance cache for streaming decisions
     pub distances: HashMap<ChunkCoord, f32>,
 }
 
@@ -81,20 +89,14 @@ pub enum ChunkState {
 impl Default for ChunkTracker {
     fn default() -> Self {
         Self {
-            loaded_chunks: [(ChunkCoord { x: 0, z: 0 }, ChunkState::Unloaded); 2],
+            loaded_chunks: [(ChunkCoord { x: 0, z: 0 }, ChunkState::Unloaded); 3],
             focus_chunk: ChunkCoord { x: 0, z: 0 },
             lod_radius: 8,
-            performance_stats: 0,
             active_count: 0,
             focus_valid: false,
-            #[cfg(feature = "world_v2")]
-            loaded: HashMap::new(),
-            #[cfg(feature = "world_v2")]
-            loading: HashMap::new(),
-            #[cfg(feature = "world_v2")]
-            unloading: HashMap::new(),
-            #[cfg(feature = "world_v2")]
-            distances: HashMap::new(),
+            last_update_frame: 0,
+            perf_flags: 0,
+            _padding: [0; 2],
         }
     }
 }
@@ -138,11 +140,10 @@ impl ChunkTracker {
         self.set_chunk_state(coord, ChunkState::Loaded);
     }
     
-    // Migration support methods
     pub fn clear(&mut self) {
-        self.loaded_chunks = [(ChunkCoord { x: 0, z: 0 }, ChunkState::Unloaded); 2];
+        self.loaded_chunks = [(ChunkCoord { x: 0, z: 0 }, ChunkState::Unloaded); 3];
         self.active_count = 0;
-        self.performance_stats = 0;
+        self.last_update_frame = 0;
     }
     
     pub fn get_loaded_chunks(&self) -> Vec<ChunkCoord> {
@@ -154,10 +155,6 @@ impl ChunkTracker {
             }
         }
         chunks
-    }
-    
-    pub fn mark_chunk_loaded(&mut self, coord: ChunkCoord, _lod_level: usize) {
-        self.mark_loaded(coord);
     }
     
     pub fn mark_chunk_loading(&mut self, coord: ChunkCoord) {
@@ -176,10 +173,6 @@ impl ChunkTracker {
             }
         }
         false
-    }
-    
-    pub fn update_chunk_distance(&mut self, _coord: ChunkCoord, _distance: f32) {
-        // Distance tracking not implemented in compact version
     }
     
     pub fn get_loading_count(&self) -> usize {
@@ -244,14 +237,38 @@ impl ChunkTracker {
     }
 }
 
-// Static size assertion - ChunkTracker actual size is ~48 bytes
-// [(ChunkCoord, ChunkState); 2] = 20 bytes (2 * (8 + 1) + alignment)
+impl ChunkTables {
+    pub fn new() -> Self {
+        Self::default()
+    }
+    
+    pub fn update_chunk_distance(&mut self, coord: ChunkCoord, distance: f32) {
+        self.distances.insert(coord, distance);
+    }
+    
+    pub fn get_chunk_distance(&self, coord: ChunkCoord) -> Option<f32> {
+        self.distances.get(&coord).copied()
+    }
+    
+    pub fn clear(&mut self) {
+        self.loaded.clear();
+        self.loading.clear();
+        self.unloading.clear();
+        self.distances.clear();
+    }
+}
+
+// Static size assertions - ChunkTracker MUST be ≤64 bytes (hot-path resource)
+// loaded_chunks: [(ChunkCoord, ChunkState); 3] = 36 bytes (12 bytes * 3)
 // focus_chunk: ChunkCoord = 8 bytes
 // lod_radius: i16 = 2 bytes
-// performance_stats: u16 = 2 bytes
 // active_count: u8 = 1 byte
 // focus_valid: bool = 1 byte
-// Total with alignment: ~48 bytes (without V2 fields)
-// With V2 fields: includes 4 HashMaps, so size is unbounded
-#[cfg(not(feature = "world_v2"))]
+// last_update_frame: u32 = 4 bytes
+// perf_flags: u32 = 4 bytes
+// _padding: [u32; 2] = 8 bytes
+// Total: 36 + 8 + 2 + 1 + 1 + 4 + 4 + 8 = 64 bytes exactly
 static_assertions::const_assert!(std::mem::size_of::<ChunkTracker>() <= 64);
+
+// ChunkTables has unbounded size due to HashMaps (this is intentional)
+// No size constraint needed for ChunkTables as it's designed for dynamic data

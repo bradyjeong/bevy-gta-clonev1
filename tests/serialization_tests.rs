@@ -67,8 +67,8 @@ mod serialization_tests {
         assert!(size <= 36, "WorldCoordinator size {} exceeds limit", size);
         
         // Test default values
-        assert!(coordinator.get_streaming_radius() > 0.0);
-        assert_eq!(coordinator.get_focus_position(), bevy::math::Vec3::ZERO);
+        assert!(coordinator.streaming_radius > 0.0);
+        assert_eq!(coordinator.get_focus_vec3(), bevy::math::Vec3::ZERO);
     }
     
     /// Cross-target validation: Test that sizes are consistent
@@ -94,14 +94,14 @@ mod serialization_tests {
         let mut tracker = ChunkTracker::new();
         let coord = ChunkCoord { x: 5, z: -3 };
         
-        tracker.mark_chunk_loaded(coord, 2);
+        tracker.mark_loaded(coord);
         assert!(tracker.is_chunk_loaded(coord));
         
         // Simulate migration by clearing and re-adding
         tracker.clear();
         assert!(!tracker.is_chunk_loaded(coord));
         
-        tracker.mark_chunk_loaded(coord, 2);
+        tracker.mark_loaded(coord);
         assert!(tracker.is_chunk_loaded(coord));
     }
     

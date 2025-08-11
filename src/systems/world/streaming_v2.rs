@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::events::world::chunk_events::{RequestChunkLoad, RequestChunkUnload, ChunkCoord as EventChunkCoord};
-use crate::world::{ChunkTracker, PlacementGrid, RoadNetwork, WorldCoordinator};
+use crate::world::{ChunkTracker, ChunkTables, PlacementGrid, RoadNetwork, WorldCoordinator};
 use crate::world::chunk_tracker::{ChunkCoord, ChunkState};
 use crate::systems::world::unified_world::{UNIFIED_CHUNK_SIZE, UNIFIED_STREAMING_RADIUS};
 
 /// V2 unified world streaming system using decomposed resources
-#[cfg(feature = "world_v2")]
 pub fn unified_world_streaming_system_v2(
     mut tracker: ResMut<ChunkTracker>,
+    mut tables: ResMut<ChunkTables>,
     mut coordinator: ResMut<WorldCoordinator>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     _time: Res<Time>,
@@ -26,55 +26,59 @@ pub fn unified_world_streaming_system_v2(
     let mut chunks_unloaded_this_frame = 0;
     
     // Update active chunk - track in tracker instead
-    let current_chunk = ChunkCoord::from_world_pos(active_pos);
+    let _current_chunk = ChunkCoord::from_world_pos(active_pos);
     coordinator.update_focus(active_pos);
     
     // Cleanup distant chunks
-    let chunks_to_unload = cleanup_distant_chunks_v2(&mut tracker, active_pos);
+    let chunks_to_unload = cleanup_distant_chunks_v2(&mut tracker, &mut tables, active_pos);
     let max_chunks_per_frame = coordinator.get_max_chunks_per_frame().max(4);
     for coord in chunks_to_unload {
         if chunks_unloaded_this_frame >= max_chunks_per_frame {
             break;
         }
-        request_chunk_unload_v2(&mut tracker, coord, &mut chunk_unload_writer);
+        request_chunk_unload_v2(&mut tracker, &mut tables, coord, &mut chunk_unload_writer);
         chunks_unloaded_this_frame += 1;
     }
     
     // Load new chunks
     let streaming_radius_chunks = (coordinator.streaming_radius / UNIFIED_CHUNK_SIZE).ceil() as i32;
-    let chunks_to_load = get_chunks_to_load_v2(&mut tracker, active_pos, streaming_radius_chunks);
+    let chunks_to_load = get_chunks_to_load_v2(&mut tracker, &mut tables, active_pos, streaming_radius_chunks);
     for coord in chunks_to_load {
         if chunks_loaded_this_frame >= max_chunks_per_frame {
             break;
         }
-        request_chunk_loading_v2(&mut tracker, coord, &mut chunk_load_writer);
+        request_chunk_loading_v2(&mut tracker, &mut tables, coord, &mut chunk_load_writer);
         chunks_loaded_this_frame += 1;
     }
 }
 
-fn cleanup_distant_chunks_v2(tracker: &mut ChunkTracker, active_pos: Vec3) -> Vec<ChunkCoord> {
+fn cleanup_distant_chunks_v2(tracker: &mut ChunkTracker, tables: &mut ChunkTables, active_pos: Vec3) -> Vec<ChunkCoord> {
     let mut to_unload = Vec::new();
     
     // Clone to avoid borrow issues
-    let loaded_chunks: Vec<ChunkCoord> = tracker.loaded.keys().cloned().collect();
+    let loaded_chunks: Vec<ChunkCoord> = tables.loaded.keys().cloned().collect();
     
     for coord in loaded_chunks {
         let distance = active_pos.distance(coord.to_world_pos());
         
         if distance > UNIFIED_STREAMING_RADIUS + UNIFIED_CHUNK_SIZE {
             // Mark for unloading if not already marked
-            if !tracker.unloading.contains_key(&coord) {
-                tracker.unloading.insert(coord, ChunkState::Unloading);
+            if !tables.unloading.contains_key(&coord) {
+                tables.unloading.insert(coord, ChunkState::Unloading);
                 to_unload.push(coord);
             }
         }
     }
     
+    // Update tracker's loaded_chunks array
+    tracker.cleanup_distant_chunks(ChunkCoord::from_world_pos(active_pos), (UNIFIED_STREAMING_RADIUS / UNIFIED_CHUNK_SIZE).ceil() as i16);
+    
     to_unload
 }
 
 fn get_chunks_to_load_v2(
-    tracker: &mut ChunkTracker,
+    _tracker: &mut ChunkTracker,
+    tables: &mut ChunkTables,
     active_pos: Vec3,
     streaming_radius_chunks: i32,
 ) -> Vec<ChunkCoord> {
@@ -88,8 +92,8 @@ fn get_chunks_to_load_v2(
             
             if distance <= UNIFIED_STREAMING_RADIUS {
                 // Check if chunk is not already loaded or loading
-                if !tracker.loaded.contains_key(&coord) && !tracker.loading.contains_key(&coord) {
-                    tracker.loading.insert(coord, ChunkState::Loading);
+                if !tables.loaded.contains_key(&coord) && !tables.loading.contains_key(&coord) {
+                    tables.loading.insert(coord, ChunkState::Loading);
                     to_load.push(coord);
                 }
             }
@@ -101,11 +105,15 @@ fn get_chunks_to_load_v2(
 
 fn request_chunk_loading_v2(
     tracker: &mut ChunkTracker,
+    tables: &mut ChunkTables,
     coord: ChunkCoord,
     chunk_load_writer: &mut EventWriter<RequestChunkLoad>,
 ) {
-    // Mark as loading in tracker
-    tracker.loading.insert(coord, ChunkState::Loading);
+    // Mark as loading in tables
+    tables.loading.insert(coord, ChunkState::Loading);
+    
+    // Update tracker's loaded_chunks array
+    tracker.mark_loading(coord);
     
     // Convert internal ChunkCoord to event ChunkCoord and emit request
     let event_coord = EventChunkCoord::new(coord.x, coord.z);
@@ -114,40 +122,47 @@ fn request_chunk_loading_v2(
 
 fn request_chunk_unload_v2(
     tracker: &mut ChunkTracker,
+    tables: &mut ChunkTables,
     coord: ChunkCoord,
     chunk_unload_writer: &mut EventWriter<RequestChunkUnload>,
 ) {
     // Mark as unloading
-    tracker.unloading.insert(coord, ChunkState::Unloading);
+    tables.unloading.insert(coord, ChunkState::Unloading);
+    
+    // Update tracker's loaded_chunks array
+    tracker.mark_chunk_unloading(coord);
     
     // Convert internal ChunkCoord to event ChunkCoord and emit request
     let event_coord = EventChunkCoord::new(coord.x, coord.z);
     chunk_unload_writer.write(RequestChunkUnload::new(event_coord));
     
     // Remove from loaded and loading maps
-    tracker.loaded.remove(&coord);
-    tracker.loading.remove(&coord);
+    tables.loaded.remove(&coord);
+    tables.loading.remove(&coord);
 }
 
 /// V2 chunk state query system
-#[cfg(feature = "world_v2")]
 pub fn update_chunk_states_v2(
     mut tracker: ResMut<ChunkTracker>,
+    mut tables: ResMut<ChunkTables>,
     active_query: Query<&Transform, With<ActiveEntity>>,
 ) {
     let Ok(active_transform) = active_query.single() else { return };
     let active_pos = active_transform.translation;
     
-    // Update distances for all loaded chunks
-    let loaded_coords: Vec<ChunkCoord> = tracker.loaded.keys().cloned().collect();
+    // Update tracker focus chunk for hot-path access
+    tracker.focus_chunk = ChunkCoord::from_world_pos(active_pos);
+    tracker.focus_valid = true;
+    
+    // Update distances for all loaded chunks in tables (less frequent access)
+    let loaded_coords: Vec<ChunkCoord> = tables.loaded.keys().cloned().collect();
     for coord in loaded_coords {
         let distance = active_pos.distance(coord.to_world_pos());
-        tracker.distances.insert(coord, distance);
+        tables.distances.insert(coord, distance);
     }
 }
 
 /// V2 placement validation system
-#[cfg(feature = "world_v2")]
 pub fn validate_placement_system_v2(
     placement_grid: Res<PlacementGrid>,
     mut validation_query: Query<(&Transform, &mut PlacementValidation), Added<PlacementValidation>>,
@@ -162,7 +177,6 @@ pub fn validate_placement_system_v2(
 }
 
 /// V2 spawn position finder
-#[cfg(feature = "world_v2")]
 pub fn find_valid_spawn_position_v2(
     placement_grid: Res<PlacementGrid>,
     mut spawn_requests: Query<(&mut Transform, &SpawnRequest), Added<SpawnRequest>>,
@@ -179,7 +193,6 @@ pub fn find_valid_spawn_position_v2(
 }
 
 /// V2 road pathfinding system
-#[cfg(feature = "world_v2")]
 pub fn pathfinding_system_v2(
     road_network: Res<RoadNetwork>,
     mut path_requests: Query<(&Transform, &mut PathRequest), Changed<PathRequest>>,
@@ -199,7 +212,6 @@ pub fn pathfinding_system_v2(
 }
 
 /// V2 road validation system
-#[cfg(feature = "world_v2")]
 pub fn road_validation_system_v2(
     road_network: Res<RoadNetwork>,
     mut road_queries: Query<(&Transform, &mut RoadValidation), Added<RoadValidation>>,

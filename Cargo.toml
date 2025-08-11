@@ -4,13 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-default = []
+default = ["p1_1_decomp"]
 debug-movement = []
 debug-audio = []
 debug-ui = []
 debug-timing = []
 p1_1_decomp = []
-world_v2 = []
 
 # Removed gta_simple binary - using main.rs as default
 

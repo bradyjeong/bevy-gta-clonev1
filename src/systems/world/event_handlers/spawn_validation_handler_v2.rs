@@ -28,7 +28,6 @@ impl ValidationTracker {
 }
 
 /// V2 Handle spawn validation requests by coordinating with road validation
-#[cfg(feature = "world_v2")]
 pub fn handle_spawn_validation_request_v2(
     mut validation_reader: EventReader<RequestSpawnValidation>,
     mut road_validation_writer: EventWriter<RequestRoadValidation>,
@@ -44,7 +43,6 @@ pub fn handle_spawn_validation_request_v2(
 }
 
 /// V2 Handle road validation results and emit final spawn validation results
-#[cfg(feature = "world_v2")]
 pub fn handle_road_validation_result_v2(
     mut road_validation_reader: EventReader<RoadValidationResult>,
     mut spawn_validation_writer: EventWriter<SpawnValidationResult>,
@@ -64,7 +62,6 @@ pub fn handle_road_validation_result_v2(
 }
 
 /// V2 Handle road validation requests using RoadNetwork resource
-#[cfg(feature = "world_v2")]
 pub fn handle_road_validation_request_v2(
     mut road_request_reader: EventReader<RequestRoadValidation>,
     mut road_result_writer: EventWriter<RoadValidationResult>,

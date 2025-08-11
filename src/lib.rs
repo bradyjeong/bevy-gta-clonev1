@@ -19,7 +19,7 @@ pub mod shared; // Shared types to break circular dependencies
 pub mod resources;
 pub mod events; // Event-driven cross-plugin communication
 
-#[cfg(any(feature = "p1_1_decomp", feature = "world_v2"))]
+#[cfg(feature = "p1_1_decomp")]
 pub mod world;
 
 // Core public API - essential items for external use (reduced from 100+ to ~15)

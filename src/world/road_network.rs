@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-/// RoadNetwork - Manages road topology and pathfinding (≤56 bytes)
+/// RoadNetwork - Manages road topology and pathfinding
+/// Cache resource: accessed for pathfinding queries (<100 times/frame)
+/// Size optimized for cache-friendliness despite infrequent access
 #[derive(Resource, Debug)]
 pub struct RoadNetwork {
     /// Road nodes array (16 bytes = 4 nodes * 4 bytes each)
@@ -132,14 +134,6 @@ impl RoadNetwork {
         false
     }
     
-    // Migration compatibility methods
-    pub fn reset(&mut self) {
-        self.nodes = [(0, 0); 4];
-        self.connections = 0;
-        self.active_nodes = 0;
-        self.network_flags = 0;
-    }
-    
     pub fn is_near_road(&self, position: Vec3, max_distance: f32) -> bool {
         // Check if position is near any road node
         for i in 0..self.active_nodes as usize {
@@ -179,11 +173,13 @@ impl RoadNetwork {
     }
 }
 
-// Static size assertion - RoadNetwork actual size
+// RoadNetwork is a cache resource (not hot-path)
+// Even though it's small, it's accessed infrequently (<100 times/frame)
+// So no strict size assertion needed, but we keep it small for efficiency
 // nodes: [(u16, u16); 4] = 16 bytes
 // connections: u64 = 8 bytes
 // active_nodes: u8 = 1 byte
 // network_flags: u8 = 1 byte
 // generation_seed: u32 = 4 bytes
-// Total: 16 + 8 + 1 + 1 + 4 = 30 bytes + alignment padding
+// Total: 16 + 8 + 1 + 1 + 4 = 30 bytes + alignment = 32 bytes
 static_assertions::const_assert!(std::mem::size_of::<RoadNetwork>() <= 32);

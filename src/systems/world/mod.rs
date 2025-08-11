@@ -36,8 +36,7 @@ pub use map_system::*;
 pub use unified_world::*;
 pub use layered_generation::*;
 
-// Export V2 streaming systems when feature is enabled
-#[cfg(feature = "world_v2")]
+// Export V2 streaming systems (now always enabled)
 pub mod streaming_v2;
 pub use unified_lod::*;
 pub use npc_lod::*;

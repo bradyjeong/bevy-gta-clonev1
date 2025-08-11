@@ -100,6 +100,12 @@ CORE PRINCIPLE: Leverage Bevy's latest ECS features for performance and maintain
 - **Data-Oriented Design**: Group related data together, avoid complex nested structures
 - **Entity Relationships**: Use Bevy's relationship system instead of manual entity references
 
+### Resource Design Guidelines
+- **Hot-Path Resources**: Keep frequently accessed resources (per-frame) under 64 bytes
+- **Config/Cache Resources**: Larger sizes acceptable for infrequent access (MeshCache, ControlConfig)
+- **Static Assertions**: Add `const _: () = assert!(size_of::<HotResource>() <= 64);` for performance-critical resources
+- **Access Patterns**: Resources accessed <100 times/frame don't need size restrictions
+
 ### Query Optimization
 - **Specific Queries**: Use `With<T>` and `Without<T>` to minimize entity iteration
 - **Query Filters**: Leverage `Changed<T>`, `Added<T>`, `AssetChanged<T>` for targeted updates
@@ -183,9 +189,9 @@ fn on_vehicle_spawned(trigger: Trigger<OnAdd, VehicleComponent>) {
 
 ### Simplicity Rules
 - Prefer explicit over implicit (no magic)
-- Max 4-5 function parameters (use structs for more)
+- Max 4-5 function parameters (use builder pattern or config structs for complex cases)
 - Avoid nested Option/Result chains
-- Keep structs under 10 fields
+- Keep data structs focused (10 fields guideline, more OK for configs/builders)
 - Single responsibility per function
 - Clear, descriptive names over clever ones
 

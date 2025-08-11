@@ -112,23 +112,6 @@ impl WorldCoordinator {
         requested
     }
     
-    // Migration support methods
-    pub fn get_focus_position(&self) -> Vec3 {
-        self.get_focus_vec3()
-    }
-    
-    pub fn set_focus_position(&mut self, position: Vec3) {
-        self.update_focus(position);
-    }
-    
-    pub fn get_streaming_radius(&self) -> f32 {
-        self.streaming_radius
-    }
-    
-    pub fn set_streaming_radius(&mut self, radius: f32) {
-        self.streaming_radius = radius;
-    }
-    
     pub fn set_max_chunks_per_frame(&mut self, max_chunks: usize) {
         // Store in reserved field
         self._reserved[0] = max_chunks as u32;
@@ -136,10 +119,6 @@ impl WorldCoordinator {
     
     pub fn get_max_chunks_per_frame(&self) -> usize {
         self._reserved[0] as usize
-    }
-    
-    pub fn update_frame_counter(&mut self, frame: u32) {
-        self.generation_frame = frame;
     }
 }
 
