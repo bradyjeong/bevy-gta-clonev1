@@ -9,6 +9,8 @@ debug-movement = []
 debug-audio = []
 debug-ui = []
 debug-timing = []
+p1_1_decomp = []
+world_v2 = []
 
 # Removed gta_simple binary - using main.rs as default
 
@@ -21,3 +23,4 @@ rand = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 ron = "0.8"
 chrono = { version = "0.4", features = ["serde"] }
+static_assertions = "1.1"

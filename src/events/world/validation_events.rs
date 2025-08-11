@@ -43,6 +43,7 @@ pub enum ValidationReason {
     OutOfBounds = 3,
     InWater = 4,
     BlockedByTerrain = 5,
+    Collision = 6,
 }
 
 impl ValidationReason {
@@ -54,6 +55,7 @@ impl ValidationReason {
             Self::OutOfBounds => "out_of_bounds",
             Self::InWater => "in_water",
             Self::BlockedByTerrain => "blocked_by_terrain",
+            Self::Collision => "collision",
         }
     }
 }

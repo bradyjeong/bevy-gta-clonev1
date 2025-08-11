@@ -2429,6 +2429,7 @@ dependencies = [
  "rand",
  "ron",
  "serde",
+ "static_assertions",
 ]
 
 [[package]]

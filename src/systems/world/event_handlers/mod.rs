@@ -12,3 +12,7 @@ pub use spawn_validation_handler::*;
 pub use content_spawn_handler::*;
 pub use chunk_handler::*;
 pub use validation_to_spawn_bridge::*;
+
+// Export V2 handlers when feature is enabled
+#[cfg(feature = "world_v2")]
+pub mod spawn_validation_handler_v2;

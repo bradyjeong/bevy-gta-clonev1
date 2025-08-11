@@ -111,6 +111,11 @@ impl PlacementGrid {
         self.grid.clear();
     }
     
+    // Getter for migration support
+    pub fn get_cell_size(&self) -> f32 {
+        self.cell_size
+    }
+    
     pub fn add_entity(&mut self, position: Vec3, content_type: ContentType, radius: f32) {
         let cell = self.world_to_grid(position);
         self.grid.entry(cell).or_default().push((position, content_type, radius));
