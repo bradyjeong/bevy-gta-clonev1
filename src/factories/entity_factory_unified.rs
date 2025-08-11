@@ -242,8 +242,8 @@ impl UnifiedEntityFactory {
     pub fn spawn_entity_consolidated(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         content_type: ContentType,
         position: Vec3,
         road_network: Option<&RoadNetwork>,
@@ -301,8 +301,8 @@ impl UnifiedEntityFactory {
     pub fn spawn_building_consolidated(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         position: Vec3,
         current_time: f32,
     ) -> Result<Entity, BundleError> {
@@ -316,8 +316,8 @@ impl UnifiedEntityFactory {
     pub fn spawn_vehicle_consolidated(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         position: Vec3,
         current_time: f32,
     ) -> Result<Entity, BundleError> {
@@ -331,8 +331,8 @@ impl UnifiedEntityFactory {
     pub fn spawn_npc_consolidated(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         position: Vec3,
         current_time: f32,
     ) -> Result<Entity, BundleError> {
@@ -346,8 +346,8 @@ impl UnifiedEntityFactory {
     pub fn spawn_tree_consolidated(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         position: Vec3,
         current_time: f32,
     ) -> Result<Entity, BundleError> {
@@ -362,8 +362,8 @@ impl UnifiedEntityFactory {
     pub fn spawn_batch_consolidated(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         content_type: ContentType,
         positions: Vec<Vec3>,
         _road_network: Option<&RoadNetwork>,

@@ -4,6 +4,7 @@
 //! with headless app tests and verify UnifiedEntityFactory delegates properly.
 
 use bevy::prelude::*;
+#[allow(unused_imports)]
 use bevy_rapier3d::prelude::*;
 use gta_game::{
     factories::{BuildingsFactory, VehicleFactory, NPCFactory, VegetationFactory, UnifiedEntityFactory, GroundHeightCache},
@@ -48,7 +49,7 @@ fn test_buildings_factory_spawn() {
     
     // Verify building has correct content type
     let mut query = app.world().query::<&DynamicContent>();
-    let dynamic_content = query.single(app.world());
+    let dynamic_content = query.single(app.world()).unwrap();
     assert_eq!(dynamic_content.content_type, ContentType::Building);
 }
 
@@ -131,7 +132,7 @@ fn test_npc_factory_spawn() {
     
     // Verify NPC has correct content type
     let mut query = app.world().query::<&DynamicContent>();
-    let dynamic_content = query.single(app.world());
+    let dynamic_content = query.single(app.world()).unwrap();
     assert_eq!(dynamic_content.content_type, ContentType::NPC);
 }
 
@@ -171,7 +172,7 @@ fn test_vegetation_factory_spawn() {
     
     // Verify vegetation has correct content type
     let mut query = app.world().query::<&DynamicContent>();
-    let dynamic_content = query.single(app.world());
+    let dynamic_content = query.single(app.world()).unwrap();
     assert_eq!(dynamic_content.content_type, ContentType::Tree);
 }
 

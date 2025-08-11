@@ -38,8 +38,8 @@ impl NPCFactory {
     pub fn spawn_npc(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         position: Vec3,
         config: &GameConfig,
         current_time: f32,
@@ -105,8 +105,8 @@ impl NPCFactory {
     pub fn spawn_batch(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         positions: Vec<Vec3>,
         config: &GameConfig,
         current_time: f32,

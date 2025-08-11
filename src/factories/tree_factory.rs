@@ -38,8 +38,8 @@ impl VegetationFactory {
     pub fn spawn_vegetation(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         position: Vec3,
         config: &GameConfig,
         current_time: f32,
@@ -99,8 +99,8 @@ impl VegetationFactory {
     pub fn spawn_batch(
         &mut self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         positions: Vec<Vec3>,
         config: &GameConfig,
         current_time: f32,
@@ -167,8 +167,8 @@ impl VegetationFactory {
     fn add_vegetation_visual(
         commands: &mut Commands,
         parent: Entity,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
         vegetation_type: VegetationType,
         height: f32,
         radius: f32,
