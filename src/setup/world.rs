@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
+use crate::GlobalRng;
 use crate::constants::*;
 use crate::bundles::VisibleChildBundle;
 use crate::systems::audio::FootstepTimer;
@@ -15,6 +16,7 @@ pub fn setup_basic_world(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
+    mut global_rng: ResMut<GlobalRng>,
 ) {
     // Camera (higher to see the massive Dubai world)
     commands.spawn((
@@ -96,10 +98,14 @@ pub fn setup_basic_world(
     // Add human behavior components separately
     commands.entity(player_entity).insert((
         HumanMovement::default(),
-        HumanAnimation::default(),
-        HumanBehavior::default(),
+        HumanAnimation::new(global_rng.gen_range(3.0..8.0)),
+        HumanBehavior::new(
+            global_rng.gen_range(0.95..1.05),
+            global_rng.gen_range(0.95..1.05), 
+            global_rng.gen_range(0.8..1.0)
+        ),
         PlayerBody::default(),
-        FootstepTimer::default(),
+        FootstepTimer::new(global_rng.gen_range(0.45..0.55)),
         HumanEmotions::default(),
         MovementTracker::new(Vec3::new(0.0, 1.0, 0.0), 5.0), // Track movement with 5m threshold
         // Control components for new input system

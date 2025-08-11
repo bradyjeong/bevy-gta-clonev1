@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::*;
 use crate::systems::world::road_network::RoadNetwork;
+use crate::events::world::chunk_events::{RequestChunkLoad, RequestChunkUnload, ChunkCoord as EventChunkCoord};
 
 // UNIFIED WORLD GENERATION SYSTEM
 // This replaces map_system.rs, dynamic_content.rs coordination
@@ -303,10 +304,11 @@ pub enum ContentLayer {
 
 /// Main unified world streaming system
 pub fn unified_world_streaming_system(
-    mut commands: Commands,
     mut world_manager: ResMut<UnifiedWorldManager>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     time: Res<Time>,
+    mut chunk_load_writer: EventWriter<RequestChunkLoad>,
+    mut chunk_unload_writer: EventWriter<RequestChunkUnload>,
 ) {
     let Ok(active_transform) = active_query.single() else { return };
     let active_pos = active_transform.translation;
@@ -327,7 +329,7 @@ pub fn unified_world_streaming_system(
         if world_manager.chunks_unloaded_this_frame >= world_manager.max_chunks_per_frame {
             break;
         }
-        unload_chunk(&mut commands, &mut world_manager, coord);
+        request_chunk_unload(&mut world_manager, coord, &mut chunk_unload_writer);
         world_manager.chunks_unloaded_this_frame += 1;
     }
     
@@ -337,51 +339,40 @@ pub fn unified_world_streaming_system(
         if world_manager.chunks_loaded_this_frame >= world_manager.max_chunks_per_frame {
             break;
         }
-        initiate_chunk_loading(&mut commands, &mut world_manager, coord);
+        request_chunk_loading(&mut world_manager, coord, &mut chunk_load_writer);
         world_manager.chunks_loaded_this_frame += 1;
     }
 }
 
-fn initiate_chunk_loading(
-    commands: &mut Commands,
+fn request_chunk_loading(
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
+    chunk_load_writer: &mut EventWriter<RequestChunkLoad>,
 ) {
-    // This function starts the chunk loading process
-    // The actual content generation will be handled by layer-specific systems
+    // This function emits chunk loading requests
+    // The actual content generation will be handled by event handlers
     let chunk = world_manager.get_chunk_mut(coord);
     chunk.state = ChunkState::Loading;
     
-    // Create a marker entity for this chunk
-    let chunk_entity = commands.spawn((
-        UnifiedChunkEntity {
-            coord,
-            layer: ContentLayer::Roads, // Start with roads
-        },
-        Transform::from_translation(coord.to_world_pos()),
-        Visibility::Visible,
-        InheritedVisibility::VISIBLE,
-        ViewVisibility::default(),
-    )).id();
-    
-    chunk.entities.push(chunk_entity);
+    // Convert internal ChunkCoord to event ChunkCoord and emit request
+    let event_coord = EventChunkCoord::new(coord.x, coord.z);
+    chunk_load_writer.write(RequestChunkLoad::new(event_coord));
 }
 
-fn unload_chunk(
-    commands: &mut Commands,
+fn request_chunk_unload(
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
+    chunk_unload_writer: &mut EventWriter<RequestChunkUnload>,
 ) {
-    if let Some(chunk) = world_manager.chunks.get(&coord) {
-        // Despawn all entities in this chunk
-        for &entity in &chunk.entities {
-            commands.entity(entity).despawn();
-        }
-        
+    if world_manager.chunks.contains_key(&coord) {
         // Clear from placement grid
         world_manager.clear_placement_grid_for_chunk(coord);
+        
+        // Convert internal ChunkCoord to event ChunkCoord and emit request
+        let event_coord = EventChunkCoord::new(coord.x, coord.z);
+        chunk_unload_writer.write(RequestChunkUnload::new(event_coord));
+        
+        // Remove chunk data
+        world_manager.chunks.remove(&coord);
     }
-    
-    // Remove chunk data
-    world_manager.chunks.remove(&coord);
 }

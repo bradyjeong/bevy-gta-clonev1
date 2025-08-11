@@ -61,15 +61,17 @@
 //! 3. Include validation and default values
 //! 4. Export from this module
 
-// Unified factory system - replaces all duplicate factories
+// Unified factory system - thin coordinator that delegates to focused factories  
 pub mod entity_factory_unified;
 
+// Common utilities shared across focused factories
+pub mod common;
+
 // Focused factory modules (following AGENT.md simplicity principles)
-// pub mod entity_limits; // Moved to services/
 pub mod position_validator;
 pub mod collision_detector;
 
-// Domain-specific factories (following simplicity guidelines)
+// Domain-specific focused factories (following simplicity guidelines)
 pub mod building_factory;
 pub mod vehicle_factory;
 pub mod npc_factory;
@@ -83,19 +85,22 @@ pub mod transform_factory;
 pub mod generic_bundle;
 pub mod rendering_factory;
 
-// Public API - unified factory system  
+// Public API - unified factory system (thin coordinator)
 pub use entity_factory_unified::*;
+
+// Common utilities exports
+pub use common::*;
 
 // Focused module exports (AGENT.md compliant architecture)
 pub use position_validator::*;
 pub use collision_detector::*;
 
-// Domain-specific factory exports
-pub use building_factory::*;
-pub use vehicle_factory::*;
-pub use npc_factory::*;
-pub use tree_factory::*;
-pub use entity_limit::{EntityLimitManager, EntityType, EntityLimit}; // Avoid conflict with unified factory
+// Domain-specific focused factory exports
+pub use building_factory::{BuildingsFactory, BuildingType};
+pub use vehicle_factory::VehicleFactory;
+pub use npc_factory::{NPCFactory, NPCType};
+pub use tree_factory::{VegetationFactory, VegetationType};
+pub use entity_limit::{EntityLimitManager, EntityType, EntityLimit};
 
 // Specialized factory exports
 pub use material_factory::*;

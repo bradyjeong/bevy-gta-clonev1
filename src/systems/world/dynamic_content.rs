@@ -1,17 +1,12 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use rand::Rng;
-use std::cell::RefCell;
-use crate::components::*;
+use crate::components::{DynamicTerrain, ActiveEntity, DynamicContent, Car};
+use crate::GlobalRng;
 use crate::components::world::EntityLimits;
-use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-use crate::systems::world::road_network::RoadNetwork;
-use crate::systems::world::road_generation::is_on_road_spline;
-
-
-thread_local! {
-    static CONTENT_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
+use crate::events::world::validation_events::{RequestSpawnValidation, ValidationId};
+use crate::events::world::content_events::{ContentType as EventContentType};
+use crate::components::world::ContentType;
+use std::collections::HashMap;
 
 pub fn dynamic_terrain_system(
     mut terrain_query: Query<&mut Transform, (With<DynamicTerrain>, Without<ActiveEntity>)>,
@@ -38,18 +33,32 @@ pub struct DynamicContentTimer {
     last_player_pos: Option<Vec3>,
 }
 
-pub fn dynamic_content_system(
+// Track validation requests for dynamic content
+#[derive(Default)]
+pub struct DynamicValidationTracker {
+    pending_validations: HashMap<u32, (Vec3, EventContentType)>,
+    next_validation_id: u32,
+}
+
+impl DynamicValidationTracker {
+    pub fn new_id(&mut self) -> u32 {
+        let id = self.next_validation_id;
+        self.next_validation_id = self.next_validation_id.wrapping_add(1);
+        id
+    }
+}
+
+pub fn query_dynamic_content(
     mut commands: Commands,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<DynamicContent>)>,
     content_query: Query<(Entity, &Transform, &DynamicContent)>,
     existing_vehicles_query: Query<&Transform, (With<Car>, Without<DynamicContent>)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     _entity_limits: ResMut<EntityLimits>,
-    mut unified_factory: ResMut<UnifiedEntityFactory>,
-    road_network: Res<RoadNetwork>,
     time: Res<Time>,
     mut timer: Local<DynamicContentTimer>,
+    mut validation_tracker: Local<DynamicValidationTracker>,
+    mut validation_writer: EventWriter<RequestSpawnValidation>,
+    mut rng: ResMut<GlobalRng>,
 ) {
     if let Ok(active_transform) = active_query.single() {
         let active_pos = active_transform.translation;
@@ -133,7 +142,7 @@ pub fn dynamic_content_system(
                 
                 // Only spawn if no content exists nearby
                 if !has_content_at_position(spawn_pos, &existing_content, spawn_density * 0.8) {
-                    spawn_dynamic_content_safe_unified(&mut commands, spawn_pos, &existing_content, &mut meshes, &mut materials, &mut unified_factory, &road_network, time.elapsed_secs());
+                    request_spawn_validation(spawn_pos, &mut validation_tracker, &mut validation_writer, &mut rng);
                 }
             }
             if spawn_attempts > max_spawn_attempts { break; }
@@ -158,19 +167,7 @@ fn has_content_at_position(position: Vec3, existing_content: &[(Vec3, ContentTyp
 
 
 
-fn is_in_water_area(position: Vec3) -> bool {
-    // Lake position and size (must match water.rs setup)
-    let lake_center = Vec3::new(300.0, -2.0, 300.0);
-    let lake_size = 200.0;
-    let buffer = 20.0; // Extra buffer around lake
-    
-    let distance = Vec2::new(
-        position.x - lake_center.x,
-        position.z - lake_center.z,
-    ).length();
-    
-    distance < (lake_size / 2.0 + buffer)
-}
+
 
 
 
@@ -211,84 +208,39 @@ pub fn vehicle_separation_system(
 // These functions were marked with #[allow(dead_code)] and have been
 // consolidated into the unified spawning pipeline for Phase 3.
 
-/// NEW UNIFIED SPAWN FUNCTION - Phase 2.1
-/// This replaces spawn_dynamic_content_safe using the unified factory
-fn spawn_dynamic_content_safe_unified(
-    commands: &mut Commands,
+/// Request spawn validation for dynamic content (Phase 3 - Event-driven)
+/// This replaces spawn_dynamic_content_safe_unified using events
+fn request_spawn_validation(
     position: Vec3,
-    existing_content: &[(Vec3, ContentType, f32)],
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    unified_factory: &mut ResMut<UnifiedEntityFactory>,
-    road_network: &RoadNetwork,
-    current_time: f32,
+    validation_tracker: &mut DynamicValidationTracker,
+    validation_writer: &mut EventWriter<RequestSpawnValidation>,
+    rng: &mut GlobalRng,
 ) {
     // Ultra-reduced spawn rates from AGENT.md (buildings 8%, vehicles 4%, trees 5%, NPCs 1%)
-    let on_road = is_on_road_spline(position, road_network, 25.0);
+    let content_type = if rng.gen_range(0.0..1.0) < 0.08 {
+        Some(EventContentType::Building)
+    } else if rng.gen_range(0.0..1.0) < 0.04 {
+        Some(EventContentType::Vehicle)
+    } else if rng.gen_range(0.0..1.0) < 0.05 {
+        Some(EventContentType::Tree)
+    } else if rng.gen_range(0.0..1.0) < 0.01 {
+        Some(EventContentType::NPC)
+    } else {
+        None
+    };
     
-    // Buildings - 8% spawn rate, not on roads
-    if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.08 {
-        if !on_road && !is_in_water_area(position) {
-            if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
-                commands,
-                meshes,
-                materials,
-                ContentType::Building,
-                position,
-                Some(road_network),
-                existing_content,
-                current_time,
-            ) {
-                println!("DEBUG: Spawned building using unified factory at {:?}", position);
-            }
-        }
-    }
-    
-    // Vehicles - 4% spawn rate, only on roads  
-    else if on_road && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.04 {
-        if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
-            commands,
-            meshes,
-            materials,
-            ContentType::Vehicle,
+    if let Some(content_type) = content_type {
+        let validation_id = validation_tracker.new_id();
+        validation_tracker.pending_validations.insert(validation_id, (position, content_type));
+        
+        validation_writer.write(RequestSpawnValidation::new(
+            ValidationId::new(validation_id),
             position,
-            Some(road_network),
-            existing_content,
-            current_time,
-        ) {
-            println!("DEBUG: Spawned vehicle using unified factory at {:?}", position);
-        }
-    }
-    
-    // Trees - 5% spawn rate, not on roads, not in water
-    else if !on_road && !is_in_water_area(position) && CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.05 {
-        if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
-            commands,
-            meshes,
-            materials,
-            ContentType::Tree,
-            position,
-            Some(road_network),
-            existing_content,
-            current_time,
-        ) {
-            println!("DEBUG: Spawned tree using unified factory at {:?}", position);
-        }
-    }
-    
-    // NPCs - 1% spawn rate, anywhere
-    else if CONTENT_RNG.with(|rng| rng.borrow_mut().gen_range(0.0..1.0)) < 0.01 {
-        if let Ok(Some(_entity)) = unified_factory.spawn_entity_consolidated(
-            commands,
-            meshes,
-            materials,
-            ContentType::NPC,
-            position,
-            Some(road_network),
-            existing_content,
-            current_time,
-        ) {
-            println!("DEBUG: Spawned NPC using unified factory at {:?}", position);
-        }
+            content_type,
+        ));
     }
 }
+
+
+
+

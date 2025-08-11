@@ -1,11 +1,6 @@
 use bevy::prelude::*;
-use rand::Rng;
-use std::cell::RefCell;
 use crate::components::{Player, ActiveEntity, HumanAnimation, HumanBehavior, HumanMovement};
-
-thread_local! {
-    static BEHAVIOR_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
+use crate::GlobalRng;
 
 #[derive(Component)]
 pub struct HumanEmotions {
@@ -38,6 +33,7 @@ impl Default for HumanEmotions {
 // System to update human emotional state based on actions and environment
 pub fn human_emotional_state_system(
     time: Res<Time>,
+    mut global_rng: ResMut<GlobalRng>,
     mut player_query: Query<
         (&mut HumanEmotions, &mut HumanBehavior, &mut HumanMovement, &HumanAnimation),
         (With<Player>, With<ActiveEntity>),
@@ -87,33 +83,33 @@ pub fn human_emotional_state_system(
     match emotions.mood {
         Mood::Tired => {
             behavior.personality_speed_modifier = 0.7;
-            behavior.reaction_time = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.15..0.25));
+            behavior.reaction_time = global_rng.gen_range(0.15..0.25);
             behavior.confidence_level = 0.6;
             movement.tired_speed_modifier = 0.5;
         }
         Mood::Anxious => {
             behavior.personality_speed_modifier = 1.3;
-            behavior.reaction_time = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.03..0.08));
+            behavior.reaction_time = global_rng.gen_range(0.03..0.08);
             behavior.confidence_level = 0.4;
-            behavior.movement_variation = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.7..1.4));
+            behavior.movement_variation = global_rng.gen_range(0.7..1.4);
         }
         Mood::Confident => {
             behavior.personality_speed_modifier = 1.1;
-            behavior.reaction_time = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.05..0.1));
+            behavior.reaction_time = global_rng.gen_range(0.05..0.1);
             behavior.confidence_level = 1.0;
-            behavior.movement_variation = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.95..1.05));
+            behavior.movement_variation = global_rng.gen_range(0.95..1.05);
         }
         Mood::Excited => {
             behavior.personality_speed_modifier = 1.2;
-            behavior.reaction_time = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.04..0.09));
+            behavior.reaction_time = global_rng.gen_range(0.04..0.09);
             behavior.confidence_level = 0.9;
-            behavior.movement_variation = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.8..1.3));
+            behavior.movement_variation = global_rng.gen_range(0.8..1.3);
         }
         Mood::Calm => {
             behavior.personality_speed_modifier = 1.0;
-            behavior.reaction_time = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.08..0.12));
+            behavior.reaction_time = global_rng.gen_range(0.08..0.12);
             behavior.confidence_level = 0.8;
-            behavior.movement_variation = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.9..1.1));
+            behavior.movement_variation = global_rng.gen_range(0.9..1.1);
         }
     }
 }
@@ -121,6 +117,7 @@ pub fn human_emotional_state_system(
 // System to add subtle random behaviors like looking around, fidgeting
 pub fn human_fidget_system(
     time: Res<Time>,
+    mut global_rng: ResMut<GlobalRng>,
     mut player_query: Query<
         (&mut HumanAnimation, &HumanBehavior),
         (With<Player>, With<ActiveEntity>),
@@ -140,9 +137,9 @@ pub fn human_fidget_system(
         
         // Vary fidget frequency based on personality
         let base_fidget_time = match behavior.confidence_level {
-            level if level > 0.8 => BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(5.0..10.0)),
-            level if level > 0.6 => BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(3.0..7.0)),
-            _ => BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(2.0..5.0)), // Anxious people fidget more
+            level if level > 0.8 => global_rng.gen_range(5.0..10.0),
+            level if level > 0.6 => global_rng.gen_range(3.0..7.0),
+            _ => global_rng.gen_range(2.0..5.0), // Anxious people fidget more
         };
         
         animation.next_fidget_time = base_fidget_time;

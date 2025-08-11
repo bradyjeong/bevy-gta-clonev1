@@ -104,3 +104,34 @@ pub enum GameSystemSets {
     /// Runs every frame after initial setup is complete.
     ServiceUpdates,
 }
+
+/// World event flow system sets for explicit ordering of dynamic content events.
+///
+/// These sets ensure deterministic processing of world events within a single frame:
+/// 1. Query systems identify spawn candidates
+/// 2. Validation requests are sent for road/terrain checks  
+/// 3. Validation responses are processed
+/// 4. Valid spawn requests are emitted
+/// 5. Spawn requests are executed to create entities
+///
+/// This guarantees 0-frame latency for the complete validation→spawn pipeline.
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub enum WorldEventFlow {
+    /// Dynamic content querying - identifies potential spawn locations
+    SpawnQuery,
+    
+    /// Spawn validation transmission - sends validation requests
+    SpawnValidationTx,
+    
+    /// Road validation processing - validates against road/terrain constraints
+    RoadValidation,
+    
+    /// Spawn validation reception - processes validation results
+    SpawnValidationRx,
+    
+    /// Spawn emission - converts validation results to spawn requests
+    SpawnEmit,
+    
+    /// Spawn execution - creates entities from spawn requests
+    SpawnExecute,
+}

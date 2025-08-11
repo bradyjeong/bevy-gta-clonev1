@@ -42,7 +42,7 @@ pub fn unified_factory_debug_system(
             (npcs as f32 / factory.entity_limits.max_npcs as f32) * 100.0,
             trees, factory.entity_limits.max_trees,
             (trees as f32 / factory.entity_limits.max_trees as f32) * 100.0,
-            factory.position_cache.len()
+            "N/A" // Ground cache now managed separately
         );
     }
 }

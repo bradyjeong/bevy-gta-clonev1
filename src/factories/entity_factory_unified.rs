@@ -1,28 +1,27 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
-use rand::Rng;
-use std::collections::HashMap;
 use crate::components::*;
-use crate::bundles::{
-    VisibleChildBundle, DynamicContentBundle, DynamicPhysicsBundle, VegetationBundle
+use crate::factories::{
+    BuildingsFactory, VehicleFactory, NPCFactory, VegetationFactory
 };
-use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
-use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};
-
-use crate::systems::{RoadNetwork, is_on_road_spline, UnifiedCullable, MovementTracker};
-
+use crate::factories::common::GroundHeightCache;
+use crate::factories::generic_bundle::BundleError;
+use crate::systems::{RoadNetwork, is_on_road_spline};
 use crate::GameConfig;
 
-/// Unified Entity Factory - Single point of all entity creation
-/// Consolidates EntityFactory, UnifiedEntityFactory, RealisticVehicleFactory functionality
-/// Phase 2.1: Enhanced with centralized spawn logic and entity limit management
+/// Thin coordinator that delegates to focused factories following AGENT.md simplicity principles
+/// Single responsibility: coordinate between focused factories and maintain compatibility
 #[derive(Resource)]
 pub struct UnifiedEntityFactory {
     pub config: GameConfig,
-    /// Entity limit management with configurable thresholds
+    /// Entity limit management with configurable thresholds  
     pub entity_limits: EntityLimitManager,
-    /// Position validation cache for performance
-    pub position_cache: HashMap<(i32, i32), f32>, // (grid_x, grid_z) -> ground_height
+    /// Shared ground height cache used by all focused factories
+    pub ground_cache: GroundHeightCache,
+    /// Focused factory instances
+    pub buildings_factory: BuildingsFactory,
+    pub vehicle_factory: VehicleFactory,
+    pub npc_factory: NPCFactory,
+    pub vegetation_factory: VegetationFactory,
 }
 
 /// Entity limit manager with configurable thresholds and automatic cleanup
@@ -122,7 +121,11 @@ impl UnifiedEntityFactory {
         Self {
             config: GameConfig::default(),
             entity_limits: EntityLimitManager::default(),
-            position_cache: HashMap::new(),
+            ground_cache: GroundHeightCache::default(),
+            buildings_factory: BuildingsFactory::new(),
+            vehicle_factory: VehicleFactory::new(),
+            npc_factory: NPCFactory::new(),
+            vegetation_factory: VegetationFactory::new(),
         }
     }
     
@@ -131,7 +134,11 @@ impl UnifiedEntityFactory {
         Self {
             config,
             entity_limits: EntityLimitManager::default(),
-            position_cache: HashMap::new(),
+            ground_cache: GroundHeightCache::default(),
+            buildings_factory: BuildingsFactory::new(),
+            vehicle_factory: VehicleFactory::new(),
+            npc_factory: NPCFactory::new(),
+            vegetation_factory: VegetationFactory::new(),
         }
     }
     
@@ -151,22 +158,7 @@ impl UnifiedEntityFactory {
         ))
     }
     
-    /// Get ground height at position with caching for performance
-    pub fn get_ground_height(&mut self, position: Vec2) -> f32 {
-        let grid_x = (position.x / 10.0) as i32; // 10m grid resolution
-        let grid_z = (position.y / 10.0) as i32;
-        
-        if let Some(&cached_height) = self.position_cache.get(&(grid_x, grid_z)) {
-            return cached_height;
-        }
-        
-        // Simple ground detection - would be enhanced with actual terrain data
-        let ground_height = -0.15; // Match terrain level at y = -0.15
-        
-        // Cache for future use
-        self.position_cache.insert((grid_x, grid_z), ground_height);
-        ground_height
-    }
+
     
     /// Check if position is valid for spawning (not on roads, water, etc.)
     pub fn is_spawn_position_valid(
@@ -246,7 +238,7 @@ impl UnifiedEntityFactory {
 /// CONSOLIDATED SPAWN METHODS - Phase 2.1 Enhanced
 /// These methods consolidate all duplicate spawn logic from multiple systems
 impl UnifiedEntityFactory {
-    /// Master spawn method - automatically determines best spawn logic and handles limits
+    /// Master spawn method - delegates to focused factories and handles limits
     pub fn spawn_entity_consolidated(
         &mut self,
         commands: &mut Commands,
@@ -261,40 +253,51 @@ impl UnifiedEntityFactory {
         // Validate position first
         let validated_position = self.validate_position(position)?;
         
-        // Check if position is valid for this content type
-        if !self.is_spawn_position_valid(validated_position, content_type, road_network) {
-            return Ok(None); // Position not valid, but no error
-        }
-        
         // Check for collisions with existing content
         if self.has_content_collision(validated_position, content_type, existing_content) {
             return Ok(None); // Collision detected, but no error
         }
         
-        // Spawn the appropriate entity type
-        let entity = match content_type {
+        // Delegate to appropriate focused factory with shared ground cache and road network
+        let entity_result = match content_type {
             ContentType::Building => {
-                self.spawn_building_consolidated(commands, meshes, materials, validated_position, current_time)?
+                self.buildings_factory.spawn_building(
+                    commands, meshes, materials, validated_position, &self.config, current_time,
+                    road_network, &mut self.ground_cache
+                ).map_err(|e| BundleError::InvalidConfiguration(e))
             }
             ContentType::Vehicle => {
-                self.spawn_vehicle_consolidated(commands, meshes, materials, validated_position, current_time)?
+                self.vehicle_factory.spawn_vehicle(
+                    commands, meshes, materials, validated_position, &self.config, current_time,
+                    road_network, &mut self.ground_cache
+                ).map_err(|e| BundleError::InvalidConfiguration(e))
             }
             ContentType::NPC => {
-                self.spawn_npc_consolidated(commands, meshes, materials, validated_position, current_time)?
+                self.npc_factory.spawn_npc(
+                    commands, meshes, materials, validated_position, &self.config, current_time,
+                    road_network, &mut self.ground_cache
+                ).map_err(|e| BundleError::InvalidConfiguration(e))
             }
             ContentType::Tree => {
-                self.spawn_tree_consolidated(commands, meshes, materials, validated_position, current_time)?
+                self.vegetation_factory.spawn_vegetation(
+                    commands, meshes, materials, validated_position, &self.config, current_time,
+                    road_network, &mut self.ground_cache
+                ).map_err(|e| BundleError::InvalidConfiguration(e))
             }
             _ => return Ok(None), // Unsupported content type
         };
         
-        // Enforce entity limits and track the new entity
-        self.entity_limits.enforce_limit(commands, content_type, entity, current_time);
-        
-        Ok(Some(entity))
+        // Handle result and enforce limits
+        match entity_result {
+            Ok(entity) => {
+                self.entity_limits.enforce_limit(commands, content_type, entity, current_time);
+                Ok(Some(entity))
+            }
+            Err(bundle_error) => Err(bundle_error),
+        }
     }
     
-    /// Consolidated building spawn with all features from dynamic_content.rs and layered_generation.rs
+    /// Legacy building spawn for backward compatibility - delegates to focused factory
     pub fn spawn_building_consolidated(
         &mut self,
         commands: &mut Commands,
@@ -303,59 +306,13 @@ impl UnifiedEntityFactory {
         position: Vec3,
         current_time: f32,
     ) -> Result<Entity, BundleError> {
-        let mut rng = rand::thread_rng();
-        
-        // Determine building size and type
-        let height = rng.gen_range(8.0..30.0);
-        let width = rng.gen_range(8.0..15.0);
-        
-        // Building positioned with base on terrain surface
-        let ground_level = self.get_ground_height(Vec2::new(position.x, position.z));
-        let building_mesh_y = ground_level + height / 2.0;
-        let final_position = Vec3::new(position.x, building_mesh_y, position.z);
-        
-        // Create material with random color
-        let building_material = materials.add(StandardMaterial {
-            base_color: Color::srgb(
-                rng.gen_range(0.5..0.9),
-                rng.gen_range(0.5..0.9),
-                rng.gen_range(0.5..0.9),
-            ),
-            ..default()
-        });
-        
-        // Create building entity using enhanced bundle system
-        let building_entity = commands.spawn((
-            // Use dynamic content bundle for compatibility
-            DynamicContentBundle {
-                dynamic_content: DynamicContent { content_type: ContentType::Building },
-                transform: Transform::from_translation(final_position),
-                visibility: Visibility::default(),
-                inherited_visibility: InheritedVisibility::VISIBLE,
-                view_visibility: ViewVisibility::default(),
-                cullable: UnifiedCullable::building(),
-            },
-            // Building-specific components
-            Building {
-                building_type: BuildingType::Generic,
-                height,
-                scale: Vec3::new(width, height, width),
-            },
-            // Physics components  
-            RigidBody::Fixed,
-            Collider::cuboid(width / 2.0, height / 2.0, width / 2.0),
-            CollisionGroups::new(self.config.physics.static_group, Group::ALL),
-            // Visual components
-            Mesh3d(meshes.add(Cuboid::new(width, height, width))),
-            MeshMaterial3d(building_material),
-            // Debug name
-            Name::new(format!("Building_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
-        )).id();
-        
-        Ok(building_entity)
+        self.buildings_factory.spawn_building(
+            commands, meshes, materials, position, &self.config, current_time,
+            None, &mut self.ground_cache
+        ).map_err(|e| BundleError::InvalidConfiguration(e))
     }
     
-    /// Consolidated vehicle spawn with enhanced bundles and physics
+    /// Legacy vehicle spawn for backward compatibility - delegates to focused factory
     pub fn spawn_vehicle_consolidated(
         &mut self,
         commands: &mut Commands,
@@ -364,59 +321,13 @@ impl UnifiedEntityFactory {
         position: Vec3,
         current_time: f32,
     ) -> Result<Entity, BundleError> {
-        let mut rng = rand::thread_rng();
-        
-        // Random vehicle color
-        let car_colors = [
-            Color::srgb(1.0, 0.0, 0.0), Color::srgb(0.0, 0.0, 1.0), Color::srgb(0.0, 1.0, 0.0),
-            Color::srgb(1.0, 1.0, 0.0), Color::srgb(1.0, 0.0, 1.0), Color::srgb(0.0, 1.0, 1.0),
-            Color::srgb(0.5, 0.5, 0.5), Color::srgb(1.0, 1.0, 1.0), Color::srgb(0.0, 0.0, 0.0),
-        ];
-        let color = car_colors[rng.gen_range(0..car_colors.len())];
-        
-        // Position vehicle on ground surface
-        let ground_level = self.get_ground_height(Vec2::new(position.x, position.z));
-        let final_position = Vec3::new(position.x, ground_level + 0.5, position.z);
-        
-        // Create vehicle entity using consolidated bundle approach
-        let vehicle_entity = commands.spawn((
-            // Dynamic content bundle for compatibility
-            DynamicPhysicsBundle {
-                dynamic_content: DynamicContent { content_type: ContentType::Vehicle },
-                transform: Transform::from_translation(final_position),
-                visibility: Visibility::default(),
-                inherited_visibility: InheritedVisibility::VISIBLE,
-                view_visibility: ViewVisibility::default(),
-                rigid_body: RigidBody::Dynamic,
-                collider: Collider::cuboid(1.0, 0.5, 2.0),
-                collision_groups: CollisionGroups::new(
-                    self.config.physics.vehicle_group,
-                    self.config.physics.static_group | self.config.physics.vehicle_group | self.config.physics.character_group
-                ),
-                velocity: Velocity::default(),
-                cullable: UnifiedCullable::vehicle(),
-            },
-            // Vehicle-specific components
-            Car,
-            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            Damping { linear_damping: 1.0, angular_damping: 5.0 },
-            MovementTracker::new(final_position, 10.0),
-            Name::new(format!("Vehicle_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
-        )).id();
-        
-        // Add car body as child entity
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
-            MeshMaterial3d(materials.add(color)),
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            ChildOf(vehicle_entity),
-            VisibleChildBundle::default(),
-        ));
-        
-        Ok(vehicle_entity)
+        self.vehicle_factory.spawn_vehicle(
+            commands, meshes, materials, position, &self.config, current_time,
+            None, &mut self.ground_cache
+        ).map_err(|e| BundleError::InvalidConfiguration(e))
     }
     
-    /// Consolidated NPC spawn using enhanced state system
+    /// Legacy NPC spawn for backward compatibility - delegates to focused factory
     pub fn spawn_npc_consolidated(
         &mut self,
         commands: &mut Commands,
@@ -425,61 +336,13 @@ impl UnifiedEntityFactory {
         position: Vec3,
         current_time: f32,
     ) -> Result<Entity, BundleError> {
-        let mut rng = rand::thread_rng();
-        
-        // Random NPC appearance
-        let npc_colors = [
-            Color::srgb(0.8, 0.6, 0.4), Color::srgb(0.6, 0.4, 0.3),
-            Color::srgb(0.9, 0.7, 0.5), Color::srgb(0.7, 0.5, 0.4),
-        ];
-        let color = npc_colors[rng.gen_range(0..npc_colors.len())];
-        
-        // Position NPC on ground
-        let ground_level = self.get_ground_height(Vec2::new(position.x, position.z));
-        let final_position = Vec3::new(position.x, ground_level + 1.0, position.z);
-        
-        // Random target position for movement
-        let target_x = rng.gen_range(-900.0..900.0);
-        let target_z = rng.gen_range(-900.0..900.0);
-        let target_position = Vec3::new(target_x, ground_level + 1.0, target_z);
-        
-        // Create NPC entity using consolidated approach
-        let npc_entity = commands.spawn((
-            // Dynamic physics bundle
-            DynamicPhysicsBundle {
-                dynamic_content: DynamicContent { content_type: ContentType::NPC },
-                transform: Transform::from_translation(final_position),
-                visibility: Visibility::default(),
-                inherited_visibility: InheritedVisibility::VISIBLE,
-                view_visibility: ViewVisibility::default(),
-                rigid_body: RigidBody::Dynamic,
-                collider: Collider::capsule(Vec3::new(0.0, -0.9, 0.0), Vec3::new(0.0, 0.9, 0.0), 0.3),
-                collision_groups: CollisionGroups::new(
-                    self.config.physics.character_group,
-                    Group::ALL
-                ),
-                velocity: Velocity::default(),
-                cullable: UnifiedCullable::npc(),
-            },
-            // NPC-specific components
-            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            MovementTracker::new(final_position, 5.0),
-            NPC {
-                target_position,
-                speed: rng.gen_range(2.0..5.0),
-                last_update: current_time,
-                update_interval: rng.gen_range(0.05..0.2),
-            },
-            // Visual mesh
-            Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
-            MeshMaterial3d(materials.add(color)),
-            Name::new(format!("NPC_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
-        )).id();
-        
-        Ok(npc_entity)
+        self.npc_factory.spawn_npc(
+            commands, meshes, materials, position, &self.config, current_time,
+            None, &mut self.ground_cache
+        ).map_err(|e| BundleError::InvalidConfiguration(e))
     }
     
-    /// Consolidated tree spawn with LOD support
+    /// Legacy tree spawn for backward compatibility - delegates to focused factory
     pub fn spawn_tree_consolidated(
         &mut self,
         commands: &mut Commands,
@@ -488,65 +351,14 @@ impl UnifiedEntityFactory {
         position: Vec3,
         current_time: f32,
     ) -> Result<Entity, BundleError> {
-        // Position tree on ground
-        let ground_level = self.get_ground_height(Vec2::new(position.x, position.z));
-        let final_position = Vec3::new(position.x, ground_level, position.z);
-        
-        // Create tree entity using vegetation bundle
-        let tree_entity = commands.spawn((
-            VegetationBundle {
-                dynamic_content: DynamicContent { content_type: ContentType::Tree },
-                transform: Transform::from_translation(final_position),
-                visibility: Visibility::default(),
-                inherited_visibility: InheritedVisibility::VISIBLE,
-                view_visibility: ViewVisibility::default(),
-                cullable: UnifiedCullable::vegetation(),
-            },
-            Name::new(format!("Tree_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
-        )).id();
-        
-        // Add palm tree trunk as child
-        commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
-            MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
-            Transform::from_xyz(0.0, 4.0, 0.0),
-            ChildOf(tree_entity),
-            VisibleChildBundle::default(),
-        ));
-        
-        // Add palm fronds as children
-        for i in 0..4 {
-            let angle = (i as f32) * std::f32::consts::PI / 2.0;
-            
-            commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
-                MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
-                Transform::from_xyz(
-                    angle.cos() * 1.2, 
-                    7.5, 
-                    angle.sin() * 1.2
-                ).with_rotation(
-                    Quat::from_rotation_y(angle) * 
-                    Quat::from_rotation_z(-0.2) // Slight droop
-                ),
-                ChildOf(tree_entity),
-                VisibleChildBundle::default(),
-            ));
-        }
-        
-        // Add physics collider as child
-        commands.spawn((
-            RigidBody::Fixed,
-            Collider::cylinder(4.0, 0.3),
-            CollisionGroups::new(self.config.physics.static_group, Group::ALL),
-            Transform::from_xyz(0.0, 4.0, 0.0),
-            ChildOf(tree_entity),
-        ));
-        
-        Ok(tree_entity)
+        self.vegetation_factory.spawn_vegetation(
+            commands, meshes, materials, position, &self.config, current_time,
+            None, &mut self.ground_cache
+        ).map_err(|e| BundleError::InvalidConfiguration(e))
     }
+
     
-    /// Batch spawn multiple entities of the same type efficiently
+    /// Batch spawn multiple entities - delegates to focused factories
     pub fn spawn_batch_consolidated(
         &mut self,
         commands: &mut Commands,
@@ -554,864 +366,50 @@ impl UnifiedEntityFactory {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         content_type: ContentType,
         positions: Vec<Vec3>,
-        road_network: Option<&RoadNetwork>,
+        _road_network: Option<&RoadNetwork>,
         existing_content: &[(Vec3, ContentType, f32)],
         current_time: f32,
     ) -> Result<Vec<Entity>, BundleError> {
-        let mut spawned_entities = Vec::new();
+        // Filter valid positions to avoid collision checks inside factories
+        let valid_positions: Vec<Vec3> = positions.into_iter()
+            .filter_map(|pos| {
+                let validated_pos = self.validate_position(pos).ok()?;
+                if !self.has_content_collision(validated_pos, content_type, existing_content) {
+                    Some(validated_pos)
+                } else {
+                    None
+                }
+            })
+            .collect();
         
-        for position in positions {
-            if let Some(entity) = self.spawn_entity_consolidated(
-                commands,
-                meshes,
-                materials,
-                content_type,
-                position,
-                road_network,
-                existing_content,
-                current_time,
-            )? {
-                spawned_entities.push(entity);
-            }
+        // Use focused factory batch methods
+        let spawned_entities = match content_type {
+            ContentType::Building => self.buildings_factory.spawn_batch(
+                commands, meshes, materials, valid_positions, &self.config, current_time,
+                None, &mut self.ground_cache
+            ),
+            ContentType::Vehicle => self.vehicle_factory.spawn_batch(
+                commands, meshes, materials, valid_positions, &self.config, current_time,
+                None, &mut self.ground_cache
+            ),
+            ContentType::NPC => self.npc_factory.spawn_batch(
+                commands, meshes, materials, valid_positions, &self.config, current_time,
+                None, &mut self.ground_cache
+            ),
+            ContentType::Tree => self.vegetation_factory.spawn_batch(
+                commands, meshes, materials, valid_positions, &self.config, current_time,
+                None, &mut self.ground_cache
+            ),
+            _ => Vec::new(),
+        };
+        
+        // Enforce limits for all spawned entities
+        for entity in &spawned_entities {
+            self.entity_limits.enforce_limit(commands, content_type, *entity, current_time);
         }
         
         Ok(spawned_entities)
     }
-}
-
-/// VEHICLE CREATION METHODS
-impl UnifiedEntityFactory {
-    
-    /// Create a realistic vehicle with full physics simulation
-    pub fn spawn_realistic_vehicle(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        vehicle_type: RealisticVehicleType,
-        position: Vec3,
-        rotation: Quat,
-    ) -> Result<Entity, BundleError> {
-        // Validate and clamp position for safety
-        let safe_position = self.validate_position(position)?;
-        
-        // Get vehicle configuration based on type
-        let vehicle_config = self.get_realistic_vehicle_configuration(&vehicle_type);
-        
-        // Create main vehicle entity with basic components
-        let vehicle_entity = commands.spawn((
-            Transform::from_translation(safe_position).with_rotation(rotation),
-            Visibility::default(),
-            RigidBody::Dynamic,
-            Velocity::default(),
-        )).id();
-        
-        // Add physics components
-        commands.entity(vehicle_entity).insert((
-            Collider::cuboid(
-                vehicle_config.body_size.x / 2.0,
-                vehicle_config.body_size.y / 2.0,
-                vehicle_config.body_size.z / 2.0,
-            ),
-            CollisionGroups::new(
-                Group::from_bits_truncate(self.config.physics.vehicle_group.bits()),
-                Group::from_bits_truncate(self.config.physics.static_group.bits() | self.config.physics.character_group.bits()),
-            ),
-            AdditionalMassProperties::Mass(vehicle_config.mass),
-            Damping {
-                linear_damping: vehicle_config.linear_damping,
-                angular_damping: vehicle_config.angular_damping,
-            },
-            Friction {
-                coefficient: self.config.physics.ground_friction,
-                combine_rule: CoefficientCombineRule::Average,
-            },
-        ));
-        
-        // Add visual components
-        commands.entity(vehicle_entity).insert((
-            Mesh3d(meshes.add(Cuboid::new(
-                vehicle_config.body_size.x,
-                vehicle_config.body_size.y,
-                vehicle_config.body_size.z,
-            ))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: vehicle_config.default_color,
-                metallic: 0.8,
-                perceptual_roughness: 0.2,
-                ..default()
-            })),
-        ));
-        
-        // Add vehicle system components
-        commands.entity(vehicle_entity).insert((
-            RealisticVehicle {
-                vehicle_type: vehicle_type.clone(),
-                physics_enabled: true,
-                ..default()
-            },
-            vehicle_config.dynamics.clone(),
-            vehicle_config.engine.clone(),
-            vehicle_config.suspension.clone(),
-            vehicle_config.tire_physics.clone(),
-
-            Car,
-            Cullable::new(200.0),
-            MovementTracker::new(safe_position, 10.0), // Track vehicle movement with 10m threshold
-        ));
-        
-        // Add SuperCar components if needed
-        if vehicle_type == RealisticVehicleType::SuperCar {
-            commands.entity(vehicle_entity).insert(SuperCarBundle::default());
-        }
-        
-        // Create vehicle wheels with individual physics
-        self.create_realistic_vehicle_wheels(commands, meshes, materials, vehicle_entity, &vehicle_type)?;
-        
-        // Create audio sources for realistic sound
-        self.create_vehicle_audio_sources(commands, vehicle_entity)?;
-        
-        Ok(vehicle_entity)
-    }
-    
-
-    
-    /// UNUSED: Add helicopter-specific components (rotors) - TODO: Remove after refactoring
-    #[allow(dead_code)]
-    fn add_helicopter_components(
-        &self,
-        commands: &mut Commands,
-        parent_entity: Entity,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-    ) -> Result<(), BundleError> {
-        let rotor_mesh = MeshFactory::create_rotor_blade(meshes);
-        let rotor_material = MaterialFactory::create_simple_material(materials, Color::srgb(0.1, 0.1, 0.1));
-        
-        // Main rotor
-        commands.spawn((
-            MainRotor,
-            Mesh3d(rotor_mesh.clone()),
-            MeshMaterial3d(rotor_material.clone()),
-            TransformFactory::main_rotor(),
-            Cullable { max_distance: self.config.world.lod_distances[1], is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        // Tail rotor
-        commands.spawn((
-            TailRotor,
-            Mesh3d(rotor_mesh),
-            MeshMaterial3d(rotor_material),
-            TransformFactory::tail_rotor(),
-            Cullable { max_distance: self.config.world.lod_distances[1], is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        Ok(())
-    }
-    
-    /// UNUSED: Add F16-specific components (realistic fighter jet assembly) - TODO: Remove after refactoring
-    #[allow(dead_code)]
-    fn add_f16_components(
-        &self,
-        commands: &mut Commands,
-        parent_entity: Entity,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-    ) -> Result<(), BundleError> {
-        let lod_distance = self.config.world.lod_distances.get(2).copied().unwrap_or(300.0).clamp(50.0, 1000.0);
-        
-        // Wings (swept delta configuration)
-        let wing_mesh = MeshFactory::create_f16_wing(meshes);
-        let wing_material = MaterialFactory::create_f16_fuselage_material(materials);
-        
-        commands.spawn((
-            Mesh3d(wing_mesh.clone()),
-            MeshMaterial3d(wing_material.clone()),
-            TransformFactory::f16_left_wing(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        commands.spawn((
-            Mesh3d(wing_mesh),
-            MeshMaterial3d(wing_material.clone()),
-            TransformFactory::f16_right_wing(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        // Canopy (bubble canopy)
-        commands.spawn((
-            Mesh3d(MeshFactory::create_f16_canopy(meshes)),
-            MeshMaterial3d(MaterialFactory::create_f16_canopy_material(materials)),
-            TransformFactory::f16_canopy(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        // Air intakes
-        let intake_mesh = MeshFactory::create_f16_air_intake(meshes);
-        let intake_material = MaterialFactory::create_f16_intake_material(materials);
-        
-        commands.spawn((
-            Mesh3d(intake_mesh.clone()),
-            MeshMaterial3d(intake_material.clone()),
-            TransformFactory::f16_left_air_intake(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        commands.spawn((
-            Mesh3d(intake_mesh),
-            MeshMaterial3d(intake_material),
-            TransformFactory::f16_right_air_intake(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        // Vertical tail
-        commands.spawn((
-            Mesh3d(MeshFactory::create_f16_vertical_tail(meshes)),
-            MeshMaterial3d(wing_material.clone()),
-            TransformFactory::f16_vertical_tail(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        // Horizontal stabilizers
-        let h_stab_mesh = MeshFactory::create_f16_horizontal_stabilizer(meshes);
-        
-        commands.spawn((
-            Mesh3d(h_stab_mesh.clone()),
-            MeshMaterial3d(wing_material.clone()),
-            TransformFactory::f16_left_horizontal_stabilizer(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        commands.spawn((
-            Mesh3d(h_stab_mesh),
-            MeshMaterial3d(wing_material),
-            TransformFactory::f16_right_horizontal_stabilizer(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        // Engine nozzle
-        commands.spawn((
-            Mesh3d(MeshFactory::create_f16_engine_nozzle(meshes)),
-            MeshMaterial3d(MaterialFactory::create_f16_engine_material(materials)),
-            TransformFactory::f16_engine_nozzle(),
-            Cullable { max_distance: lod_distance, is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        Ok(())
-    }
-
-    /// Get configuration for specific realistic vehicle type
-    fn get_realistic_vehicle_configuration(&self, vehicle_type: &RealisticVehicleType) -> VehicleConfiguration {
-        match vehicle_type {
-            RealisticVehicleType::BasicCar => VehicleConfiguration {
-                body_size: self.config.vehicles.basic_car.body_size,
-                mass: self.config.vehicles.basic_car.mass,
-                linear_damping: self.config.vehicles.basic_car.linear_damping,
-                angular_damping: self.config.vehicles.basic_car.angular_damping,
-                default_color: self.config.vehicles.basic_car.default_color,
-                dynamics: VehicleDynamics {
-                    total_mass: self.config.vehicles.basic_car.mass,
-                    front_weight_ratio: 0.6,
-                    center_of_gravity: Vec3::new(0.0, 0.3, 0.1),
-                    drag_coefficient: 0.35,
-                    frontal_area: 2.2,
-                    ..default()
-                },
-                engine: EnginePhysics {
-                    max_torque: 200.0,
-                    max_rpm: 6000.0,
-                    gear_ratios: vec![-3.0, 3.5, 2.0, 1.3, 1.0, 0.8],
-                    ..default()
-                },
-                suspension: VehicleSuspension {
-                    spring_strength: 25000.0,
-                    damping_ratio: 0.6,
-                    max_compression: 0.3,
-                    rest_length: 0.5,
-                    ..default()
-                },
-                tire_physics: TirePhysics {
-                    dry_grip: 1.0,
-                    wet_grip: 0.7,
-                    lateral_grip: 0.9,
-                    rolling_resistance: 0.015,
-                    ..default()
-                },
-            },
-            RealisticVehicleType::SuperCar => VehicleConfiguration {
-                body_size: self.config.vehicles.super_car.body_size,
-                mass: self.config.vehicles.super_car.mass,
-                linear_damping: self.config.vehicles.super_car.linear_damping,
-                angular_damping: self.config.vehicles.super_car.angular_damping,
-                default_color: self.config.vehicles.super_car.default_color,
-                dynamics: VehicleDynamics {
-                    total_mass: self.config.vehicles.super_car.mass,
-                    front_weight_ratio: 0.45,
-                    center_of_gravity: Vec3::new(0.0, 0.25, -0.1),
-                    drag_coefficient: 0.28,
-                    frontal_area: 1.9,
-                    downforce_coefficient: 0.3,
-                    ..default()
-                },
-                engine: EnginePhysics {
-                    max_torque: 400.0,
-                    max_rpm: 8500.0,
-                    gear_ratios: vec![-3.2, 4.0, 2.4, 1.6, 1.2, 0.9, 0.7],
-                    ..default()
-                },
-                suspension: VehicleSuspension {
-                    spring_strength: 35000.0,
-                    damping_ratio: 0.7,
-                    max_compression: 0.2,
-                    rest_length: 0.4,
-                    ..default()
-                },
-                tire_physics: TirePhysics {
-                    dry_grip: 1.4,
-                    wet_grip: 0.9,
-                    lateral_grip: 1.3,
-                    rolling_resistance: 0.012,
-                    ..default()
-                },
-            },
-            RealisticVehicleType::Truck => VehicleConfiguration {
-                body_size: Vec3::new(2.5, 2.0, 8.0),
-                mass: 8000.0,
-                linear_damping: 2.0,
-                angular_damping: 8.0,
-                default_color: Color::srgb(0.6, 0.6, 0.7),
-                dynamics: VehicleDynamics {
-                    total_mass: 8000.0,
-                    front_weight_ratio: 0.4,
-                    center_of_gravity: Vec3::new(0.0, 1.0, 0.5),
-                    drag_coefficient: 0.6,
-                    frontal_area: 4.0,
-                    ..default()
-                },
-                engine: EnginePhysics {
-                    max_torque: 800.0,
-                    max_rpm: 3500.0,
-                    gear_ratios: vec![-4.5, 5.0, 3.8, 2.8, 2.0, 1.5, 1.0, 0.8],
-                    differential_ratio: 4.5,
-                    ..default()
-                },
-                suspension: VehicleSuspension {
-                    spring_strength: 45000.0,
-                    damping_ratio: 0.8,
-                    max_compression: 0.4,
-                    rest_length: 0.6,
-                    ..default()
-                },
-                tire_physics: TirePhysics {
-                    dry_grip: 0.9,
-                    wet_grip: 0.6,
-                    lateral_grip: 0.7,
-                    rolling_resistance: 0.025,
-                    ..default()
-                },
-            },
-            _ => {
-                // Default to basic car configuration
-                self.get_realistic_vehicle_configuration(&RealisticVehicleType::BasicCar)
-            }
-        }
-    }
-    
-    /// Create individual wheels with physics for realistic vehicles
-    fn create_realistic_vehicle_wheels(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        vehicle_entity: Entity,
-        vehicle_type: &RealisticVehicleType,
-    ) -> Result<(), BundleError> {
-        let wheel_positions = match vehicle_type {
-            RealisticVehicleType::BasicCar | RealisticVehicleType::SuperCar => {
-                vec![
-                    Vec3::new(-0.8, -0.2, 1.2),  // Front left
-                    Vec3::new(0.8, -0.2, 1.2),   // Front right
-                    Vec3::new(-0.8, -0.2, -1.2), // Rear left
-                    Vec3::new(0.8, -0.2, -1.2),  // Rear right
-                ]
-            },
-            RealisticVehicleType::Truck => {
-                vec![
-                    Vec3::new(-1.0, -0.5, 2.5),  // Front left
-                    Vec3::new(1.0, -0.5, 2.5),   // Front right
-                    Vec3::new(-1.0, -0.5, -2.5), // Rear left
-                    Vec3::new(1.0, -0.5, -2.5),  // Rear right
-                ]
-            },
-            _ => vec![],
-        };
-        
-        for (index, position) in wheel_positions.iter().enumerate() {
-            commands.spawn((
-                Transform::from_translation(*position),
-                Visibility::default(),
-                
-                // Wheel mesh
-                Mesh3d(meshes.add(Cylinder::new(0.35, 0.2))),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgb(0.2, 0.2, 0.2),
-                    metallic: 0.1,
-                    perceptual_roughness: 0.8,
-                    ..default()
-                })),
-                
-                // Wheel physics
-                VehicleWheel {
-                    index,
-                    position: *position,
-                    max_steering_angle: if index < 2 { 0.6 } else { 0.0 }, // Front wheels steer
-                    is_drive_wheel: match vehicle_type {
-                        RealisticVehicleType::SuperCar => index >= 2, // RWD
-                        _ => true, // AWD for others
-                    },
-                    is_brake_wheel: true,
-                    radius: if matches!(vehicle_type, RealisticVehicleType::Truck) { 0.5 } else { 0.35 },
-                    width: if matches!(vehicle_type, RealisticVehicleType::Truck) { 0.3 } else { 0.2 },
-                    ..default()
-                },
-                
-                ChildOf(vehicle_entity),
-            ));
-        }
-        
-        Ok(())
-    }
-    
-    /// Create audio sources for realistic vehicle sounds
-    fn create_vehicle_audio_sources(
-        &self,
-        _commands: &mut Commands,
-        _vehicle_entity: Entity,
-    ) -> Result<(), BundleError> {
-
-        
-
-        
-        Ok(())
-    }
-}
-
-/// NPC CREATION METHODS
-impl UnifiedEntityFactory {
-    /// Spawn complete NPC entity with all components
-
-    
-    /// UNUSED: Add NPC visual components (head, body, limbs) - TODO: Remove after refactoring
-    #[allow(dead_code)]
-    fn add_npc_visual_components(
-        &self,
-        commands: &mut Commands,
-        parent_entity: Entity,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        appearance: &NPCAppearance,
-    ) -> Result<(), BundleError> {
-        // Head
-        let head_mesh = MeshFactory::create_npc_head(meshes, appearance.build);
-        let head_material = MaterialFactory::create_simple_material(materials, appearance.skin_tone);
-        
-        commands.spawn((
-            Mesh3d(head_mesh),
-            MeshMaterial3d(head_material),
-            Transform::from_xyz(0.0, appearance.height * 0.85, 0.0),
-            Cullable { max_distance: self.config.world.lod_distances[0], is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        // Body
-        let body_mesh = meshes.add(Cuboid::new(
-            0.4 * appearance.build,
-            0.6 * appearance.height,
-            0.2 * appearance.build,
-        ));
-        let body_material = MaterialFactory::create_simple_material(materials, appearance.shirt_color);
-        
-        commands.spawn((
-            Mesh3d(body_mesh),
-            MeshMaterial3d(body_material),
-            Transform::from_xyz(0.0, appearance.height * 0.5, 0.0),
-            Cullable { max_distance: self.config.world.lod_distances[0], is_culled: false },
-            ChildOf(parent_entity),
-        ));
-        
-        Ok(())
-    }
-}
-
-/// BUILDING & ENVIRONMENT CREATION METHODS
-impl UnifiedEntityFactory {
-    
-    /// Spawn terrain/ground entities
-    pub fn spawn_terrain(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        position: Vec3,
-        size: Vec2,
-    ) -> Result<Entity, BundleError> {
-        // Validate position
-        let validated_position = self.validate_position(position)?;
-        
-        // Create physics bundle for terrain
-        let bundle = GenericBundleFactory::physics_object(
-            validated_position,
-            ColliderShape::Box(Vec3::new(size.x, 0.2, size.y)),
-            1000.0, // Large mass for terrain
-            self.config.physics.static_group,
-            false, // Static terrain
-            &self.config,
-        )?;
-        
-        let mesh_handle = meshes.add(Plane3d::default().mesh().size(size.x, size.y));
-        let material_handle = MaterialFactory::create_simple_material(
-            materials,
-            Color::srgb(0.85, 0.75, 0.6), // Ground color
-        );
-        
-        let terrain_entity = commands.spawn((
-            bundle,
-            Mesh3d(mesh_handle),
-            MeshMaterial3d(material_handle),
-            DynamicTerrain,
-        )).id();
-        
-        Ok(terrain_entity)
-    }
-    
-
-    
-    /// Spawn water body (lake, river, etc.)
-    pub fn spawn_water_body(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        position: Vec3,
-        size: Vec2,
-        depth: f32,
-    ) -> Result<Entity, BundleError> {
-        // Validate position
-        let validated_position = self.validate_position(position - Vec3::new(0.0, depth / 2.0, 0.0))?;
-        
-        // Create physics bundle for water bottom
-        let bottom_bundle = GenericBundleFactory::physics_object(
-            validated_position,
-            ColliderShape::Cylinder { radius: size.x / 2.0, height: depth },
-            10000.0, // Heavy water body
-            self.config.physics.static_group,
-            false, // Static water body
-            &self.config,
-        )?;
-        
-        // Water bottom
-        let bottom_mesh = meshes.add(Cylinder::new(size.x / 2.0, depth));
-        let bottom_material = MaterialFactory::create_water_bottom_material(
-            materials,
-            Color::srgb(0.3, 0.25, 0.2),
-        );
-        
-        let water_entity = commands.spawn((
-            bottom_bundle,
-            Mesh3d(bottom_mesh),
-            MeshMaterial3d(bottom_material),
-            Lake {
-                size: size.x,
-                depth,
-                wave_height: 0.5,
-                wave_speed: 1.0,
-                position,
-            },
-            WaterBody,
-        )).id();
-        
-        // Water surface
-        let surface_mesh = meshes.add(Plane3d::default().mesh().size(size.x * 0.9, size.y * 0.9));
-        let surface_material = MaterialFactory::create_water_surface_material(
-            materials,
-            Color::srgba(0.1, 0.4, 0.8, 0.7),
-        );
-        
-        commands.spawn((
-            Mesh3d(surface_mesh),
-            MeshMaterial3d(surface_material),
-            Transform::from_translation(position),
-            WaterWave {
-                amplitude: 0.5,
-                frequency: 1.0,
-                phase: 0.0,
-            },
-            Cullable { max_distance: self.config.world.lod_distances[2], is_culled: false },
-            ChildOf(water_entity),
-        ));
-        
-        Ok(water_entity)
-    }
-    
-    /// Spawn particle effect
-    pub fn spawn_particle_effect(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        position: Vec3,
-        effect_type: ParticleEffectType,
-    ) -> Result<Entity, BundleError> {
-        // Validate position
-        let validated_position = self.validate_position(position)?;
-        
-        let (mesh, material_color, _lifetime) = match effect_type {
-            ParticleEffectType::Exhaust => (
-                meshes.add(Sphere::new(0.15)),
-                Color::srgb(1.0, 0.3, 0.0),
-                2.0,
-            ),
-            ParticleEffectType::Explosion => (
-                meshes.add(Sphere::new(0.5)),
-                Color::srgb(1.0, 0.8, 0.0),
-                1.0,
-            ),
-            ParticleEffectType::Spark => (
-                meshes.add(Sphere::new(0.05)),
-                Color::srgb(1.0, 1.0, 0.8),
-                0.5,
-            ),
-            _ => (
-                meshes.add(Sphere::new(0.1)),
-                Color::srgb(0.5, 0.5, 0.5),
-                1.0,
-            ),
-        };
-        
-        let material_handle = materials.add(StandardMaterial {
-            base_color: material_color,
-            emissive: LinearRgba::rgb(1.0, 0.5, 0.0),
-            ..Default::default()
-        });
-        
-        // Create minimal physics for particle
-        let bundle = GenericBundleFactory::physics_object(
-            validated_position,
-            ColliderShape::Sphere(0.1),
-            0.1, // Very light particle
-            self.config.physics.static_group,
-            true, // Dynamic particle
-            &self.config,
-        )?;
-        
-        let effect_entity = commands.spawn((
-            bundle,
-            Mesh3d(mesh),
-            MeshMaterial3d(material_handle),
-            ExhaustFlame,
-            Cullable { max_distance: self.config.world.lod_distances[0], is_culled: false },
-        )).id();
-        
-        Ok(effect_entity)
-    }
-}
-
-/// VISUAL HELPER METHODS
-impl UnifiedEntityFactory {
-    /// Create a visual child entity with standardized components
-    pub fn spawn_visual_child(
-        &self,
-        commands: &mut Commands,
-        parent: Entity,
-        mesh: Handle<Mesh>,
-        material: Handle<StandardMaterial>,
-        transform: Transform,
-    ) -> Entity {
-        commands.spawn((
-            Mesh3d(mesh),
-            MeshMaterial3d(material),
-            transform,
-            ChildOf(parent),
-            VisibleChildBundle::default(),
-        )).id()
-    }
-    
-    /// Create a visual child entity with a name (for debugging)
-    pub fn spawn_named_visual_child(
-        &self,
-        commands: &mut Commands,
-        parent: Entity,
-        mesh: Handle<Mesh>,
-        material: Handle<StandardMaterial>,
-        transform: Transform,
-        name: &str,
-    ) -> Entity {
-        commands.spawn((
-            Mesh3d(mesh),
-            MeshMaterial3d(material),
-            transform,
-            ChildOf(parent),
-            VisibleChildBundle::default(),
-            Name::new(name.to_string()),
-        )).id()
-    }
-    
-    /// Create a road entity with standardized components
-    pub fn spawn_road_entity(
-        &self,
-        commands: &mut Commands,
-        position: Vec3,
-        size: Vec3,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-    ) -> Result<Entity, BundleError> {
-        // Validate position
-        let validated_position = self.validate_position(position)?;
-        
-        let road_entity = commands.spawn((
-            Transform::from_translation(validated_position),
-            RigidBody::Fixed,
-            Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0),
-            CollisionGroups::new(
-                self.config.physics.static_group,
-                self.config.physics.vehicle_group | self.config.physics.character_group
-            ),
-            RoadEntity { road_id: 0 },
-            Name::new("Road Segment"),
-        )).id();
-        
-        // Add visual representation
-        self.spawn_visual_child(
-            commands,
-            road_entity,
-            meshes.add(Cuboid::new(size.x, size.y, size.z)),
-            MaterialFactory::create_water_bottom_material(materials, Color::srgb(0.3, 0.3, 0.3)),
-            Transform::default(),
-        );
-        
-        Ok(road_entity)
-    }
-}
-
-/// BATCH CREATION METHODS
-impl UnifiedEntityFactory {
-    /// Spawn multiple vehicles in batch using consolidated methods
-    pub fn spawn_vehicle_batch(
-        &mut self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        vehicle_specs: Vec<(VehicleType, Vec3, Color)>,
-        road_network: Option<&RoadNetwork>,
-        existing_content: &[(Vec3, ContentType, f32)],
-        current_time: f32,
-    ) -> Result<Vec<Entity>, BundleError> {
-        let mut entities = Vec::new();
-        
-        for (_vehicle_type, position, _color) in vehicle_specs {
-            if let Some(entity) = self.spawn_entity_consolidated(
-                commands,
-                meshes,
-                materials,
-                ContentType::Vehicle,
-                position,
-                road_network,
-                existing_content,
-                current_time,
-            )? {
-                entities.push(entity);
-            }
-        }
-        
-        Ok(entities)
-    }
-    
-    /// Spawn multiple NPCs in batch using consolidated methods
-    pub fn spawn_npc_batch(
-        &mut self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        npc_specs: Vec<(Vec3, NPCAppearance)>,
-        road_network: Option<&RoadNetwork>,
-        existing_content: &[(Vec3, ContentType, f32)],
-        current_time: f32,
-    ) -> Result<Vec<Entity>, BundleError> {
-        let mut entities = Vec::new();
-        
-        for (position, _appearance) in npc_specs {
-            if let Some(entity) = self.spawn_entity_consolidated(
-                commands,
-                meshes,
-                materials,
-                ContentType::NPC,
-                position,
-                road_network,
-                existing_content,
-                current_time,
-            )? {
-                entities.push(entity);
-            }
-        }
-        
-        Ok(entities)
-    }
-    
-    /// Spawn multiple buildings in batch using consolidated methods
-    pub fn spawn_building_batch(
-        &mut self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        building_specs: Vec<(Vec3, Vec3, BuildingType, Color)>,
-        road_network: Option<&RoadNetwork>,
-        existing_content: &[(Vec3, ContentType, f32)],
-        current_time: f32,
-    ) -> Result<Vec<Entity>, BundleError> {
-        let mut entities = Vec::new();
-        
-        for (position, _size, _building_type, _color) in building_specs {
-            if let Some(entity) = self.spawn_entity_consolidated(
-                commands,
-                meshes,
-                materials,
-                ContentType::Building,
-                position,
-                road_network,
-                existing_content,
-                current_time,
-            )? {
-                entities.push(entity);
-            }
-        }
-        
-        Ok(entities)
-    }
-}
-
-/// Configuration structure for realistic vehicle creation
-#[derive(Clone)]
-struct VehicleConfiguration {
-    body_size: Vec3,
-    mass: f32,
-    linear_damping: f32,
-    angular_damping: f32,
-    default_color: Color,
-    dynamics: VehicleDynamics,
-    engine: EnginePhysics,
-    suspension: VehicleSuspension,
-    tire_physics: TirePhysics,
 }
 
 impl Default for UnifiedEntityFactory {
@@ -1420,42 +418,7 @@ impl Default for UnifiedEntityFactory {
     }
 }
 
-/// System to initialize UnifiedEntityFactory as a resource (basic version)
+/// System to initialize UnifiedEntityFactory as a resource
 pub fn setup_unified_entity_factory_basic(mut commands: Commands) {
     commands.insert_resource(UnifiedEntityFactory::default());
-}
-
-/// System to convert legacy vehicles to new component-based system
-pub fn convert_legacy_vehicles_system(
-    mut commands: Commands,
-    legacy_vehicles: Query<(Entity, &Transform, &VehicleState, Has<SuperCarSpecs>), With<Car>>,
-) {
-    for (entity, transform, vehicle_state, has_supercar_specs) in legacy_vehicles.iter() {
-        // If this vehicle already has the new component system, skip it
-        if has_supercar_specs && vehicle_state.vehicle_type == VehicleType::SuperCar {
-            continue;
-        }
-        
-        // For SuperCars without the new bundle, add the component bundle
-        if vehicle_state.vehicle_type == VehicleType::SuperCar && !has_supercar_specs {
-            commands.entity(entity).insert(SuperCarBundle::default());
-            info!("Added SuperCarBundle to vehicle at {:?}", transform.translation);
-        }
-    }
-}
-
-/// Performance monitoring for unified entity factory
-pub fn unified_entity_factory_performance_system(
-    time: Res<Time>,
-    realistic_vehicles: Query<&RealisticVehicle>,
-    mut last_report: Local<f32>,
-) {
-    let current_time = time.elapsed_secs();
-    
-    if current_time - *last_report > 20.0 {
-        *last_report = current_time;
-        let total_realistic = realistic_vehicles.iter().count();
-        let physics_enabled = realistic_vehicles.iter().filter(|v| v.physics_enabled).count();
-        info!("UNIFIED FACTORY: {}/{} realistic vehicles with physics enabled", physics_enabled, total_realistic);
-    }
 }

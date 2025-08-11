@@ -4,6 +4,8 @@ use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 
 use crate::components::world::{MeshCache, EntityLimits};
 use crate::components::{DirtyFlagsMetrics, CullingSettings, PerformanceStats};
+use crate::GlobalRng;
+use crate::events::world::*;
 use crate::plugins::{
     InputPlugin, PlayerPlugin, VehiclePlugin, VegetationLODPlugin, 
     PersistencePlugin, UIPlugin, WaterPlugin, UnifiedWorldPlugin
@@ -42,6 +44,21 @@ impl Plugin for GameCorePlugin {
             .init_resource::<DirtyFlagsMetrics>()
             .init_resource::<MeshCache>()
             .init_resource::<EntityLimits>()
+            .init_resource::<GlobalRng>()
+            
+            // World Generation Events (Event-Driven Architecture)
+            .add_event::<RequestChunkLoad>()
+            .add_event::<ChunkLoaded>()
+            .add_event::<RequestChunkUnload>()
+            .add_event::<ChunkUnloaded>()
+            .add_event::<RequestDynamicSpawn>()
+            .add_event::<DynamicContentSpawned>()
+            .add_event::<RequestDynamicDespawn>()
+            .add_event::<DynamicContentDespawned>()
+            .add_event::<RequestSpawnValidation>()
+            .add_event::<SpawnValidationResult>()
+            .add_event::<RequestRoadValidation>()
+            .add_event::<RoadValidationResult>()
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
             .insert_resource(AmbientLight {
                 color: Color::srgb(1.0, 0.9, 0.7),

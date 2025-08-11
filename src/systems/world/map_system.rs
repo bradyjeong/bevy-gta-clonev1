@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use rand::Rng;
 use crate::components::*;
 use crate::constants::*;
+use crate::resources::GlobalRng;
 
 use crate::systems::world::road_network::{RoadSpline, RoadNetwork};
 use crate::systems::world::road_generation::is_on_road_spline;
@@ -106,6 +108,7 @@ pub fn map_streaming_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     road_network: Res<RoadNetwork>,
+    mut global_rng: ResMut<GlobalRng>,
 ) {
     let Ok(active_transform) = active_query.single() else { return; };
     let player_pos = active_transform.translation;
@@ -142,6 +145,7 @@ pub fn map_streaming_system(
                         &map_system,
                         &road_network,
                         distance,
+                        &mut global_rng,
                     );
                     map_system.chunks.insert(coord, chunk_entity);
                 }
@@ -181,9 +185,10 @@ fn spawn_chunk(
     map_system: &MapSystem,
     road_network: &RoadNetwork,
     distance: f32,
+    global_rng: &mut GlobalRng,
 ) -> Entity {
     let world_pos = chunk_coord_to_world(coord);
-    let template = generate_chunk_template(coord, road_network);
+    let template = generate_chunk_template(coord, road_network, global_rng);
     let lod_level = calculate_lod_level(distance, &map_system.lod_distances);
     
     let chunk_entity = commands.spawn((
@@ -367,13 +372,7 @@ fn spawn_landmark(
 
 
 
-fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork) -> ChunkTemplate {
-    use rand::Rng;
-    use std::cell::RefCell;
-    
-    thread_local! {
-        static MAP_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-    }
+fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork, global_rng: &mut GlobalRng) -> ChunkTemplate {
     
     let mut buildings = Vec::new();
     let mut vegetation = Vec::new();
@@ -385,9 +384,9 @@ fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork) -> ChunkTem
     
     for _ in 0..(building_density * 30.0) as usize {
         let pos = Vec3::new(
-            MAP_RNG.with(|rng| rng.borrow_mut().gen_range(-CHUNK_SIZE/2.0..CHUNK_SIZE/2.0)),
+            global_rng.gen_range(-CHUNK_SIZE/2.0..CHUNK_SIZE/2.0),
             0.0,
-            MAP_RNG.with(|rng| rng.borrow_mut().gen_range(-CHUNK_SIZE/2.0..CHUNK_SIZE/2.0)),
+            global_rng.gen_range(-CHUNK_SIZE/2.0..CHUNK_SIZE/2.0),
         );
         
         // Convert to world position for road checking
@@ -405,18 +404,18 @@ fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork) -> ChunkTem
         println!("DEBUG: MAP_SYSTEM - Spawning building at {:?}", world_pos);
         
         let building_type = if distance_from_center < 5.0 {
-            if MAP_RNG.with(|rng| rng.borrow_mut().gen_bool(0.3)) { BuildingType::Skyscraper } else { BuildingType::Commercial }
+            if global_rng.0.gen_bool(0.3) { BuildingType::Skyscraper } else { BuildingType::Commercial }
         } else if distance_from_center < 10.0 {
-            if MAP_RNG.with(|rng| rng.borrow_mut().gen_bool(0.6)) { BuildingType::Residential } else { BuildingType::Commercial }
+            if global_rng.0.gen_bool(0.6) { BuildingType::Residential } else { BuildingType::Commercial }
         } else {
             BuildingType::Residential
         };
         
         let (scale, height) = match building_type {
-            BuildingType::Skyscraper => (Vec3::new(8.0, 15.0, 8.0), MAP_RNG.with(|rng| rng.borrow_mut().gen_range(40.0..80.0))),
-            BuildingType::Commercial => (Vec3::new(12.0, 8.0, 6.0), MAP_RNG.with(|rng| rng.borrow_mut().gen_range(8.0..20.0))),
-            BuildingType::Residential => (Vec3::new(6.0, 6.0, 8.0), MAP_RNG.with(|rng| rng.borrow_mut().gen_range(6.0..15.0))),
-            _ => (Vec3::new(4.0, 4.0, 4.0), MAP_RNG.with(|rng| rng.borrow_mut().gen_range(3.0..8.0))),
+            BuildingType::Skyscraper => (Vec3::new(8.0, 15.0, 8.0), global_rng.gen_range(40.0..80.0)),
+            BuildingType::Commercial => (Vec3::new(12.0, 8.0, 6.0), global_rng.gen_range(8.0..20.0)),
+            BuildingType::Residential => (Vec3::new(6.0, 6.0, 8.0), global_rng.gen_range(6.0..15.0)),
+            _ => (Vec3::new(4.0, 4.0, 4.0), global_rng.gen_range(3.0..8.0)),
         };
         
         buildings.push(BuildingTemplate {
@@ -428,34 +427,34 @@ fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork) -> ChunkTem
     }
     
     // Generate vegetation patches
-    for _ in 0..MAP_RNG.with(|rng| rng.borrow_mut().gen_range(3..8)) {
+    for _ in 0..global_rng.gen_range(3..8) {
         vegetation.push(VegetationPatch {
             position: Vec3::new(
-                MAP_RNG.with(|rng| rng.borrow_mut().gen_range(-CHUNK_SIZE/2.0..CHUNK_SIZE/2.0)),
+                global_rng.gen_range(-CHUNK_SIZE/2.0..CHUNK_SIZE/2.0),
                 0.0,
-                MAP_RNG.with(|rng| rng.borrow_mut().gen_range(-CHUNK_SIZE/2.0..CHUNK_SIZE/2.0)),
+                global_rng.gen_range(-CHUNK_SIZE/2.0..CHUNK_SIZE/2.0),
             ),
-            radius: MAP_RNG.with(|rng| rng.borrow_mut().gen_range(10.0..30.0)),
-            density: MAP_RNG.with(|rng| rng.borrow_mut().gen_range(0.3..0.8)),
-            vegetation_type: if MAP_RNG.with(|rng| rng.borrow_mut().gen_bool(0.6)) { VegetationType::Trees } else { VegetationType::Bushes },
+            radius: global_rng.gen_range(10.0..30.0),
+            density: global_rng.gen_range(0.3..0.8),
+            vegetation_type: if global_rng.0.gen_bool(0.6) { VegetationType::Trees } else { VegetationType::Bushes },
         });
     }
     
     // Occasional landmarks
-    if MAP_RNG.with(|rng| rng.borrow_mut().gen_bool(0.1)) {
+    if global_rng.0.gen_bool(0.1) {
         landmarks.push(LandmarkTemplate {
             position: Vec3::new(
-                MAP_RNG.with(|rng| rng.borrow_mut().gen_range(-CHUNK_SIZE/4.0..CHUNK_SIZE/4.0)),
+                global_rng.gen_range(-CHUNK_SIZE/4.0..CHUNK_SIZE/4.0),
                 0.0,
-                MAP_RNG.with(|rng| rng.borrow_mut().gen_range(-CHUNK_SIZE/4.0..CHUNK_SIZE/4.0)),
+                global_rng.gen_range(-CHUNK_SIZE/4.0..CHUNK_SIZE/4.0),
             ),
-            landmark_type: match MAP_RNG.with(|rng| rng.borrow_mut().gen_range(0..4)) {
+            landmark_type: match global_rng.gen_range(0..4) {
                 0 => LandmarkType::Fountain,
                 1 => LandmarkType::Statue,
                 2 => LandmarkType::Monument,
                 _ => LandmarkType::Stadium,
             },
-            scale: MAP_RNG.with(|rng| rng.borrow_mut().gen_range(0.5..2.0)),
+            scale: global_rng.gen_range(0.5..2.0),
         });
     }
     

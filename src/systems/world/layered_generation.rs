@@ -1,7 +1,6 @@
 use bevy::prelude::*;
-use rand::Rng;
-use std::cell::RefCell;
 use crate::components::*;
+use crate::resources::GlobalRng;
 use crate::bundles::VisibleChildBundle;
 use crate::systems::world::unified_world::{
     UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState,
@@ -16,9 +15,7 @@ use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_marking
 // - Road Markings:y =  0.01  (1cm above road surface)
 // Unified road height prevents overlapping geometry and z-fighting issues
 
-thread_local! {
-    static LAYERED_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
+
 
 // LAYERED CONTENT GENERATION SYSTEMS
 // These systems generate content in layers: Roads -> Buildings -> Vehicles -> Vegetation
@@ -397,6 +394,7 @@ pub fn building_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut global_rng: ResMut<GlobalRng>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -413,7 +411,7 @@ pub fn building_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_buildings_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        generate_buildings_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, &mut global_rng);
     }
 }
 
@@ -423,6 +421,7 @@ fn generate_buildings_for_chunk(
     coord: ChunkCoord,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    global_rng: &mut GlobalRng,
 ) {
     let chunk_center = coord.to_world_pos();
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
@@ -435,13 +434,13 @@ fn generate_buildings_for_chunk(
     let building_attempts = (building_density * 8.0) as usize;
     
     for _ in 0..building_attempts {
-        let local_x = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
-        let local_z = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
+        let local_x = global_rng.gen_range(-half_size..half_size);
+        let local_z = global_rng.gen_range(-half_size..half_size);
         let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
         
         // Check if position is valid (not on road, not overlapping other buildings)
         if !is_on_road_unified(position, &world_manager.road_network) {
-            let building_size = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(8.0..15.0));
+            let building_size = global_rng.gen_range(8.0..15.0);
             if world_manager.placement_grid.can_place(
                 position,
                 ContentType::Building,
@@ -519,6 +518,7 @@ pub fn vehicle_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut global_rng: ResMut<GlobalRng>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -535,7 +535,7 @@ pub fn vehicle_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_vehicles_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        generate_vehicles_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, &mut global_rng);
     }
 }
 
@@ -545,6 +545,7 @@ fn generate_vehicles_for_chunk(
     coord: ChunkCoord,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    global_rng: &mut GlobalRng,
 ) {
     let chunk_center = coord.to_world_pos();
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
@@ -553,8 +554,8 @@ fn generate_vehicles_for_chunk(
     let vehicle_attempts = 2; // Conservative number to prevent overcrowding
     
     for _ in 0..vehicle_attempts {
-        let local_x = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
-        let local_z = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
+        let local_x = global_rng.gen_range(-half_size..half_size);
+        let local_z = global_rng.gen_range(-half_size..half_size);
         let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
         
         // Only spawn on roads with sufficient spacing
@@ -634,6 +635,7 @@ pub fn vegetation_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut global_rng: ResMut<GlobalRng>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -650,7 +652,7 @@ pub fn vegetation_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_vegetation_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        generate_vegetation_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, &mut global_rng);
     }
 }
 
@@ -660,6 +662,7 @@ fn generate_vegetation_for_chunk(
     coord: ChunkCoord,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    global_rng: &mut GlobalRng,
 ) {
     let chunk_center = coord.to_world_pos();
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
@@ -668,8 +671,8 @@ fn generate_vegetation_for_chunk(
     let vegetation_attempts = 8;
     
     for _ in 0..vegetation_attempts {
-        let local_x = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
-        let local_z = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
+        let local_x = global_rng.gen_range(-half_size..half_size);
+        let local_z = global_rng.gen_range(-half_size..half_size);
         let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
         
         // Only spawn vegetation away from roads and buildings

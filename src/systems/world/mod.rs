@@ -19,6 +19,9 @@ pub mod vegetation_lod;
 pub mod unified_distance_culling;
 pub mod unified_factory_setup;
 
+// EVENT HANDLERS (Phase 3 - Decoupled Architecture)
+pub mod event_handlers;
+
 pub use npc::*;
 pub use culling::*;
 pub use dynamic_content::*;
@@ -43,3 +46,4 @@ pub use unified_distance_culling::{
     VehicleLODUpdate, NPCLODUpdate, VegetationLODUpdate, ChunkLODUpdate, ChunkUnloadRequest
 };
 pub use unified_factory_setup::*;
+pub use event_handlers::*;

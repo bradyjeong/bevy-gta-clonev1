@@ -44,6 +44,7 @@ pub enum BundleError {
     InvalidMass { mass: f32, min_mass: f32, max_mass: f32 },
     InvalidVelocity { velocity: f32, max_velocity: f32 },
     InvalidEntityType { entity_type: String },
+    InvalidConfiguration(String),
 }
 
 impl std::fmt::Display for BundleError {
@@ -63,6 +64,9 @@ impl std::fmt::Display for BundleError {
             }
             BundleError::InvalidEntityType { entity_type } => {
                 write!(f, "Invalid entity type: {}", entity_type)
+            }
+            BundleError::InvalidConfiguration(msg) => {
+                write!(f, "Invalid configuration: {}", msg)
             }
         }
     }

@@ -1,11 +1,6 @@
 use bevy::prelude::*;
-use rand::Rng;
-use std::cell::RefCell;
 use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation};
-
-thread_local! {
-    static AUDIO_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
+use crate::GlobalRng;
 
 
 
@@ -14,9 +9,8 @@ pub struct FootstepTimer {
     pub timer: Timer,
 }
 
-impl Default for FootstepTimer {
-    fn default() -> Self {
-        let interval = AUDIO_RNG.with(|rng| rng.borrow_mut().gen_range(0.45..0.55));
+impl FootstepTimer {
+    pub fn new(interval: f32) -> Self {
         Self {
             timer: Timer::from_seconds(interval, TimerMode::Repeating),
         }
@@ -40,6 +34,7 @@ impl Default for FootstepSound {
 pub fn footstep_system(
     mut commands: Commands,
     time: Res<Time>,
+    mut global_rng: ResMut<GlobalRng>,
     mut player_query: Query<
         (Entity, &Transform, &HumanAnimation, &HumanMovement, Option<&mut FootstepTimer>),
         (With<Player>, With<ActiveEntity>),
@@ -51,7 +46,8 @@ pub fn footstep_system(
 
     // Add timer component if it doesn't exist
     if timer.is_none() {
-        commands.entity(entity).insert(FootstepTimer::default());
+        let interval = global_rng.gen_range(0.45..0.55);
+        commands.entity(entity).insert(FootstepTimer::new(interval));
         return;
     }
     
@@ -68,7 +64,7 @@ pub fn footstep_system(
             ));
             
             // Add variation to next step interval
-            let new_interval = AUDIO_RNG.with(|rng| rng.borrow_mut().gen_range(0.45..0.55));
+            let new_interval = global_rng.gen_range(0.45..0.55);
             let speed_multiplier = if animation.is_running { 0.6 } else { 1.0 };
             timer.timer.set_duration(std::time::Duration::from_secs_f32(new_interval * speed_multiplier));
         }

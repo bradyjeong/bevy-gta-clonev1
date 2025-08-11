@@ -1,10 +1,4 @@
 use bevy::prelude::*;
-use rand::Rng;
-use std::cell::RefCell;
-
-thread_local! {
-    static PLAYER_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
 
 #[derive(Component)]
 pub struct Player;
@@ -59,8 +53,8 @@ pub struct HumanAnimation {
     pub is_running: bool,
 }
 
-impl Default for HumanAnimation {
-    fn default() -> Self {
+impl HumanAnimation {
+    pub fn new(next_fidget_time: f32) -> Self {
         Self {
             walk_cycle_time: 0.0,
             step_frequency: 3.0,
@@ -68,7 +62,7 @@ impl Default for HumanAnimation {
             body_sway_amplitude: 0.015,
             breathing_rate: 1.4,
             idle_fidget_timer: 0.0,
-            next_fidget_time: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(3.0..8.0)),
+            next_fidget_time,
             is_walking: false,
             is_running: false,
         }
@@ -86,16 +80,16 @@ pub struct HumanBehavior {
     pub confidence_level: f32,
 }
 
-impl Default for HumanBehavior {
-    fn default() -> Self {
+impl HumanBehavior {
+    pub fn new(movement_variation: f32, personality_speed_modifier: f32, confidence_level: f32) -> Self {
         Self {
             reaction_time: 0.0,
             input_delay_timer: 0.0,
-            movement_variation: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.95..1.05)),
+            movement_variation,
             directional_drift: Vec3::ZERO,
             last_direction_change: 0.0,
-            personality_speed_modifier: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.95..1.05)),
-            confidence_level: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.8..1.0)),
+            personality_speed_modifier,
+            confidence_level,
         }
     }
 }

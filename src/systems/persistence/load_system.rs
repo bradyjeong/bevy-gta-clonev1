@@ -4,6 +4,7 @@ use std::fs;
 use std::collections::HashMap;
 
 use crate::components::*;
+use crate::GlobalRng;
 use crate::game_state::GameState;
 use super::save_system::*;
 
@@ -18,6 +19,7 @@ pub fn load_game_system(
     mut load_state: ResMut<LoadState>,
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
+    mut global_rng: ResMut<GlobalRng>,
     // Queries for cleanup
     player_query: Query<Entity, With<Player>>,
     car_query: Query<Entity, With<Car>>,
@@ -53,7 +55,7 @@ pub fn load_game_system(
     load_state.entity_mapping.clear();
     
     // Load player
-    let player_entity = spawn_player(&mut commands, &save_data.player);
+    let player_entity = spawn_player(&mut commands, &save_data.player, &mut global_rng);
     load_state.entity_mapping.insert(save_data.player.entity_id, player_entity);
 
     // Load vehicles
@@ -126,7 +128,7 @@ fn cleanup_existing_entities(
     }
 }
 
-fn spawn_player(commands: &mut Commands, player_data: &SerializablePlayer) -> Entity {
+fn spawn_player(commands: &mut Commands, player_data: &SerializablePlayer, global_rng: &mut GlobalRng) -> Entity {
     info!("Spawning player...");
 
     let transform: Transform = player_data.transform.clone().into();
@@ -137,8 +139,12 @@ fn spawn_player(commands: &mut Commands, player_data: &SerializablePlayer) -> En
         transform,
         velocity,
         HumanMovement::default(),
-        HumanAnimation::default(),
-        HumanBehavior::default(),
+        HumanAnimation::new(global_rng.gen_range(3.0..8.0)),
+        HumanBehavior::new(
+            global_rng.gen_range(0.95..1.05),
+            global_rng.gen_range(0.95..1.05), 
+            global_rng.gen_range(0.8..1.0)
+        ),
         PlayerBody::default(),
         RigidBody::Dynamic,
         Collider::capsule_y(0.9, 0.4),
