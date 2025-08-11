@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use bevy_gta_clone::config::{GameConfig, ConfigReloadedEvent, ConfigPlugin};
-use bevy_gta_clone::config::gameplay::GameplayConfig;
-use bevy_gta_clone::config::performance::PerformanceConfig;
-use bevy_gta_clone::config::debug::DebugConfig;
+use gta_game::config::{GameConfig, ConfigReloadedEvent, ConfigPlugin};
+use gta_game::config::gameplay::GameplayConfig;
+use gta_game::config::performance::PerformanceConfig;
+use gta_game::config::debug::DebugConfig;
 
 #[test]
 fn test_config_loading() {

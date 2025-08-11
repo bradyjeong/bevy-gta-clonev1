@@ -15,7 +15,7 @@ fn test_observer_triggers_on_spawn() {
     let mut app = App::new();
     app
         .add_plugins(MinimalPlugins)
-        .add_plugin(ContentObserverPlugin)
+        .add_plugins(ContentObserverPlugin)
         .add_event::<DynamicContentSpawned>();
     
     // Spawn entity with DynamicContent
@@ -41,7 +41,7 @@ fn test_legacy_event_emission() {
     let mut app = App::new();
     app
         .add_plugins(MinimalPlugins)
-        .add_plugin(ContentObserverPlugin)
+        .add_plugins(ContentObserverPlugin)
         .add_event::<DynamicContentSpawned>()
         .add_event::<DynamicContentDespawned>();
     
@@ -74,7 +74,7 @@ fn test_observer_performance() {
     let mut observer_app = App::new();
     observer_app
         .add_plugins(MinimalPlugins)
-        .add_plugin(ContentObserverPlugin);
+        .add_plugins(ContentObserverPlugin);
     
     let observer_start = Instant::now();
     for i in 0..ENTITY_COUNT {
@@ -128,7 +128,7 @@ fn test_observer_triggers_on_despawn() {
     let mut app = App::new();
     app
         .add_plugins(MinimalPlugins)
-        .add_plugin(ContentObserverPlugin);
+        .add_plugins(ContentObserverPlugin);
     
     // Spawn entity
     let entity = app.world_mut().spawn((
@@ -154,7 +154,7 @@ fn test_all_content_types() {
     let mut app = App::new();
     app
         .add_plugins(MinimalPlugins)
-        .add_plugin(ContentObserverPlugin);
+        .add_plugins(ContentObserverPlugin);
     
     let content_types = [
         ContentType::Road,

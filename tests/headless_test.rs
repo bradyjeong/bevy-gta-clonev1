@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::app::AppExit;
-use bevy_gta_clone::config::{GameConfig, ConfigPlugin};
+use gta_game::config::{GameConfig, ConfigPlugin};
 
 /// Headless test runner for CI environments
 #[test]
@@ -146,7 +146,7 @@ fn test_memory_usage() {
 #[test]
 #[cfg(all(feature = "ci_headless", debug_assertions))]
 fn test_headless_hot_reload() {
-    use bevy_gta_clone::config::ConfigReloadedEvent;
+    use gta_game::config::ConfigReloadedEvent;
     
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, ConfigPlugin))
