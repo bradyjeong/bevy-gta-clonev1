@@ -12,6 +12,7 @@ use crate::systems::vegetation_instancing_integration::{
     integrate_vegetation_with_instancing_system,
 };
 use crate::system_sets::GameSystemSets;
+use crate::components::instanced_vegetation::VegetationInstancingConfig;
 
 /// Plugin responsible for vegetation instancing and rendering optimization
 pub struct VegetationInstancingPlugin;
@@ -19,6 +20,8 @@ pub struct VegetationInstancingPlugin;
 impl Plugin for VegetationInstancingPlugin {
     fn build(&self, app: &mut App) {
         app
+            // Ensure config resource exists
+            .init_resource::<VegetationInstancingConfig>()
             .add_systems(Update, (
                 // Core instancing pipeline
                 collect_vegetation_instances_system

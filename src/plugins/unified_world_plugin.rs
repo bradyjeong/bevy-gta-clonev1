@@ -13,6 +13,12 @@ use crate::factories::initialize_material_factory;
 #[cfg(feature = "p1_1_decomp")]
 use crate::world::{ChunkTables, ChunkTracker, PlacementGrid, RoadNetwork, WorldCoordinator};
 
+// Legacy world manager (to be removed after full P1.1 migration)
+use crate::systems::world::unified_world::UnifiedWorldManager;
+use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+// Legacy road network used by some systems (to be migrated)
+use crate::systems::world::road_network::RoadNetwork as LegacyRoadNetwork;
+
 /// Simplified unified world plugin that coordinates focused world sub-plugins.
 /// This follows the simplicity principle by delegating to specialized plugins
 /// rather than managing all systems directly.
@@ -29,6 +35,11 @@ impl Plugin for UnifiedWorldPlugin {
                 .init_resource::<RoadNetwork>()
                 .init_resource::<WorldCoordinator>();
         }
+
+        // Temporary: also provide legacy UnifiedWorldManager for systems not yet migrated
+        app.init_resource::<UnifiedWorldManager>()
+            .init_resource::<UnifiedEntityFactory>()
+            .init_resource::<LegacyRoadNetwork>();
         
         app
             // Add focused world plugins
