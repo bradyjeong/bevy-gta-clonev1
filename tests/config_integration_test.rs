@@ -151,7 +151,7 @@ fn test_config_reader(config: Res<GameConfig>) {
     // Systems can read configuration values
     assert!(config.performance.culling.building_distance > 0.0);
     assert!(config.performance.entity_limits.max_vehicles > 0);
-    assert!(config.gameplay.physics.gravity > 0.0);
+    assert!(config.gameplay.world.gravity > 0.0);
 }
 
 /// Performance test for configuration access

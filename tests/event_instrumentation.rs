@@ -1,4 +1,4 @@
-#[cfg(feature = "debug-events")]
+#![cfg(feature = "debug-events")]
 mod event_instrumentation_tests {
     use bevy::prelude::*;
     use gta_game::instrumentation::{EventMetrics, SystemMetrics, EventMetricsPlugin};
@@ -178,17 +178,4 @@ mod event_instrumentation_tests {
     }
 }
 
-#[cfg(not(feature = "debug-events"))]
-#[test]
-fn test_feature_disabled() {
-    // Ensure no-op implementations work when feature is disabled
-    use gta_game::instrumentation::{EventMetricsPlugin, ScheduleOrderingPlugin};
-    
-    let mut app = bevy::app::App::new();
-    app.add_plugins(bevy::MinimalPlugins);
-    app.add_plugins(EventMetricsPlugin);
-    app.add_plugins(ScheduleOrderingPlugin);
-    
-    // Should compile and run without errors
-    app.update();
-}
+

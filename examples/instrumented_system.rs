@@ -2,6 +2,7 @@
 //! 
 //! Run with: cargo run --example instrumented_system --features debug-events
 
+#![cfg(feature = "debug-events")]
 use bevy::prelude::*;
 use gta_game::instrumentation::{EventMetricsPlugin, ScheduleOrderingPlugin};
 use gta_game::events::{DynamicContentSpawned, DynamicContentDespawned, ContentType};
@@ -39,13 +40,13 @@ fn generate_test_events(
     
     // High frequency test events
     for _ in 0..10 {
-        writer.send(TestEvent { value: t.sin() });
+        writer.write(TestEvent { value: t.sin() });
     }
     
     // Medium frequency spawn events
     if t as u32 % 2 == 0 {
         for i in 0..5 {
-            spawn_writer.send(DynamicContentSpawned {
+            spawn_writer.write(DynamicContentSpawned {
                 entity: Entity::from_raw(i),
                 content_type: ContentType::Vehicle,
                 position: Vec3::new(i as f32 * 10.0, 0.0, 0.0),
@@ -55,7 +56,7 @@ fn generate_test_events(
     
     // Low frequency despawn events
     if t as u32 % 5 == 0 {
-        despawn_writer.send(DynamicContentDespawned {
+        despawn_writer.write(DynamicContentDespawned {
             entity: Entity::from_raw(1),
             content_type: ContentType::Vehicle,
         });

@@ -23,8 +23,8 @@ fn example_vehicle_physics_with_utilities(
         // 2. Apply natural deceleration when no input
         PhysicsUtilities::apply_natural_deceleration(
             &mut velocity,
-            config.physics.linear_damping,
-            config.physics.angular_damping,
+            config.gameplay.physics.linear_damping,
+            config.gameplay.physics.angular_damping,
             dt
         );
         
@@ -77,8 +77,8 @@ fn spawn_example_entities(
     let vehicle_collision_groups = CollisionGroupHelper::vehicle_groups();
     let (vehicle_body, vehicle_groups, vehicle_damping) = PhysicsBodySetup::create_dynamic_body(
         vehicle_collision_groups,
-        config.physics.linear_damping,
-        config.physics.angular_damping
+        config.gameplay.physics.linear_damping,
+        config.gameplay.physics.angular_damping
     );
     
     commands.spawn((
@@ -93,8 +93,8 @@ fn spawn_example_entities(
     let character_collision_groups = CollisionGroupHelper::character_groups();
     let (character_body, character_groups, character_damping) = PhysicsBodySetup::create_dynamic_body(
         character_collision_groups,
-        config.physics.linear_damping * 2.0, // Higher damping for characters
-        config.physics.angular_damping * 2.0
+        config.gameplay.physics.linear_damping * 2.0, // Higher damping for characters
+        config.gameplay.physics.angular_damping * 2.0
     );
     
     commands.spawn((
