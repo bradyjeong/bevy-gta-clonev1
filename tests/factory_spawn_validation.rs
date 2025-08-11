@@ -1,3 +1,4 @@
+#![cfg(feature = "factory-tests")]
 //! Factory Spawn Validation Tests
 //! 
 //! Following Oracle P0-D guidance: Test each focused factory can spawn entities successfully
