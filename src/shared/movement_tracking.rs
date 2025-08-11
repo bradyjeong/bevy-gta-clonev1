@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::mem::size_of;
 
 /// Shared movement tracking component to break circular dependencies
 #[derive(Component, Default, Debug, Clone)]
@@ -8,6 +9,9 @@ pub struct SharedMovementTracker {
     pub distance_traveled: f32,
     pub last_update_time: f32,
 }
+
+// Static assertion: SharedMovementTracker is a hot-path component (accessed every frame)
+const _: () = assert!(size_of::<SharedMovementTracker>() <= 64, "SharedMovementTracker exceeds 64-byte cache line");
 
 impl SharedMovementTracker {
     pub fn new(position: Vec3) -> Self {

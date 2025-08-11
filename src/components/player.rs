@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::mem::size_of;
 
 #[derive(Component)]
 pub struct Player;
@@ -22,6 +23,9 @@ pub struct HumanMovement {
     pub stamina_recovery_rate: f32,
     pub tired_speed_modifier: f32,
 }
+
+// Static assertion: HumanMovement is a hot-path component (updated every frame)
+const _: () = assert!(size_of::<HumanMovement>() <= 64, "HumanMovement exceeds 64-byte cache line");
 
 impl Default for HumanMovement {
     fn default() -> Self {
@@ -52,6 +56,9 @@ pub struct HumanAnimation {
     pub is_walking: bool,
     pub is_running: bool,
 }
+
+// Static assertion: HumanAnimation is a hot-path component (updated every frame)
+const _: () = assert!(size_of::<HumanAnimation>() <= 64, "HumanAnimation exceeds 64-byte cache line");
 
 impl HumanAnimation {
     pub fn new(next_fidget_time: f32) -> Self {

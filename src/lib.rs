@@ -19,7 +19,7 @@ pub mod shared; // Shared types to break circular dependencies
 pub mod resources;
 pub mod events; // Event-driven cross-plugin communication
 
-#[cfg(feature = "p1_1_decomp")]
+// World module is always available (needed for tests and core functionality)
 pub mod world;
 
 #[cfg(feature = "event-audit")]
@@ -27,8 +27,17 @@ pub mod debug;
 
 pub mod observers;
 
+#[cfg(feature = "debug-events")]
+pub mod instrumentation;
+
 // Core public API - essential items for external use (reduced from 100+ to ~15)
 pub use components::{Player, ActiveEntity, MainCamera, CullingSettings, PerformanceStats};
+// Additional exports for size testing
+pub use components::player::{HumanMovement, HumanAnimation};
+pub use components::control_state::{ControlState, PlayerControlled, AIControlled};
+pub use components::lod::VegetationLOD;
+pub use components::npc_optimized::{NPCCore, NPCConfig};
+pub use world::chunk_tracker::{ChunkTracker, ChunkTables};
 pub use game_state::GameState;
 pub use config::GameConfig;
 pub use plugins::UnifiedWorldPlugin;

@@ -66,6 +66,7 @@ pub mod instanced_vegetation;
 pub mod control_state;
 pub mod world_object;
 pub mod dynamic_content;
+pub mod npc_optimized;
 
 pub use player::*;
 pub use vehicles::*;
@@ -79,3 +80,4 @@ pub use dirty_flags::*;
 pub use instanced_vegetation::*;
 pub use control_state::*;
 pub use world_object::*;
+pub use npc_optimized::*;

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::mem::size_of;
 
 /// Level of Detail component with vegetation-specific settings
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
@@ -7,6 +8,9 @@ pub struct VegetationLOD {
     pub distance_to_player: f32,
     pub last_update_frame: u64,
 }
+
+// Static assertion: VegetationLOD is a hot-path component (checked every frame for culling)
+const _: () = assert!(size_of::<VegetationLOD>() <= 64, "VegetationLOD exceeds 64-byte cache line");
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum VegetationDetailLevel {

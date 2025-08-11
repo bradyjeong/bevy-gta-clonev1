@@ -6,6 +6,9 @@ use std::time::{Duration, Instant};
 #[cfg(feature = "debug-ui")]
 use crate::events::EventCounters;
 
+#[cfg(feature = "debug-events")]
+use crate::instrumentation::{EventMetrics, SystemMetrics};
+
 /// Unified performance tracking system - centralizes all performance metrics
 #[derive(Resource)]
 pub struct UnifiedPerformanceTracker {
@@ -576,6 +579,10 @@ pub fn performance_debug_input_system(
     event_counters: Option<Res<EventCounters>>,
     #[cfg(feature = "event-audit")]
     _event_audit: Option<Res<crate::debug::event_audit::EventAuditStats>>,
+    #[cfg(feature = "debug-events")]
+    event_metrics: Option<Res<EventMetrics>>,
+    #[cfg(feature = "debug-events")]
+    system_metrics: Option<Res<SystemMetrics>>,
 ) {
     if keys.just_pressed(KeyCode::F3) {
         // Toggle overlay visibility
@@ -587,26 +594,29 @@ pub fn performance_debug_input_system(
             };
         } else {
             // Create overlay if it doesn't exist
-            #[cfg(feature = "debug-ui")]
-            spawn_performance_overlay(&mut commands, &tracker, event_counters);
-            #[cfg(not(feature = "debug-ui"))]
-            spawn_performance_overlay(&mut commands, &tracker, None);
+            #[cfg(all(feature = "debug-ui", feature = "debug-events"))]
+            spawn_performance_overlay(&mut commands, &tracker, event_counters, event_metrics, system_metrics);
+            #[cfg(all(feature = "debug-ui", not(feature = "debug-events")))]
+            spawn_performance_overlay(&mut commands, &tracker, event_counters, None, None);
+            #[cfg(all(not(feature = "debug-ui"), feature = "debug-events"))]
+            spawn_performance_overlay(&mut commands, &tracker, None, event_metrics, system_metrics);
+            #[cfg(all(not(feature = "debug-ui"), not(feature = "debug-events")))]
+            spawn_performance_overlay(&mut commands, &tracker);
         }
     }
 }
 
 /// Spawn the performance overlay UI
+#[cfg(all(feature = "debug-ui", feature = "debug-events"))]
 fn spawn_performance_overlay(
     commands: &mut Commands, 
     tracker: &UnifiedPerformanceTracker,
-    #[cfg(feature = "debug-ui")]
     event_counters: Option<Res<EventCounters>>,
-    #[cfg(not(feature = "debug-ui"))]
-    _event_counters: Option<()>,
+    event_metrics: Option<Res<EventMetrics>>,
+    system_metrics: Option<Res<SystemMetrics>>,
 ) {
     let summary = tracker.get_performance_summary();
     
-    #[cfg(feature = "debug-ui")]
     let mut display_text = format!(
         "Performance Monitor (F3)\n\
         FPS: {:.1} | Frame: {:.2}ms\n\
@@ -622,7 +632,89 @@ fn spawn_performance_overlay(
         summary.bottleneck_systems.len()
     );
     
-    #[cfg(not(feature = "debug-ui"))]
+    if let Some(counters) = event_counters {
+        display_text.push_str("\n\n");
+        display_text.push_str(&counters.get_debug_text());
+        
+        let warnings = counters.get_warnings();
+        if !warnings.is_empty() {
+            display_text.push_str("\n--- EVENT WARNINGS ---\n");
+            for warning in &warnings {
+                display_text.push_str(&format!("⚠️ {}\n", warning));
+            }
+        }
+    }
+    
+    // Add event metrics section
+    if let Some(ref metrics) = event_metrics {
+        display_text.push_str("\n\n--- EVENT METRICS ---\n");
+        let mut sorted_events: Vec<_> = metrics.event_counts.iter().collect();
+        sorted_events.sort_by(|a, b| b.1.rate_per_second.partial_cmp(&a.1.rate_per_second).unwrap());
+        
+        for (name, stats) in sorted_events.iter().take(5) {
+            display_text.push_str(&format!(
+                "{}: {}/frame | {:.1}/sec | max queue: {}\n",
+                name, stats.frame_count, stats.rate_per_second, stats.max_queue_size
+            ));
+        }
+    }
+    
+    // Add system timing section
+    if let Some(ref sys_metrics) = system_metrics {
+        display_text.push_str("\n--- SLOW SYSTEMS (>1ms) ---\n");
+        let slow_systems = sys_metrics.get_slow_systems(std::time::Duration::from_millis(1));
+        for (name, duration) in slow_systems.iter().take(5) {
+            display_text.push_str(&format!(
+                "{}: {:.2}ms avg\n",
+                name, duration.as_secs_f32() * 1000.0
+            ));
+        }
+    }
+    
+    commands.spawn((
+        Text::new(display_text),
+        TextFont {
+            font_size: 14.0,
+            ..default()
+        },
+        TextColor(Color::srgb(1.0, 1.0, 0.0)), // Yellow text
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(10.0),
+            right: Val::Px(10.0),
+            padding: UiRect::all(Val::Px(10.0)),
+            max_width: Val::Px(400.0),
+            ..default()
+        },
+        PerformanceOverlay,
+    ));
+}
+
+#[cfg(all(feature = "debug-ui", not(feature = "debug-events")))]
+fn spawn_performance_overlay(
+    commands: &mut Commands, 
+    tracker: &UnifiedPerformanceTracker,
+    event_counters: Option<Res<EventCounters>>,
+    _event_metrics: Option<()>,
+    _system_metrics: Option<()>,
+) {
+    let summary = tracker.get_performance_summary();
+    
+    let mut display_text = format!(
+        "Performance Monitor (F3)\n\
+        FPS: {:.1} | Frame: {:.2}ms\n\
+        Entities: {} (Culled: {})\n\
+        Memory: {:.1} GB\n\
+        Alerts: {} | Bottlenecks: {}",
+        summary.avg_fps,
+        summary.avg_frame_time,
+        summary.total_entities,
+        summary.culled_entities,
+        summary.memory_usage_gb,
+        summary.active_alerts,
+        summary.bottleneck_systems.len()
+    );
+    
     let display_text = format!(
         "Performance Monitor (F3)\n\
         FPS: {:.1} | Frame: {:.2}ms\n\
@@ -638,7 +730,6 @@ fn spawn_performance_overlay(
         summary.bottleneck_systems.len()
     );
     
-    #[cfg(feature = "debug-ui")]
     if let Some(counters) = event_counters {
         display_text.push_str("\n\n");
         display_text.push_str(&counters.get_debug_text());
@@ -651,6 +742,117 @@ fn spawn_performance_overlay(
             }
         }
     }
+    
+    commands.spawn((
+        Text::new(display_text),
+        TextFont {
+            font_size: 14.0,
+            ..default()
+        },
+        TextColor(Color::srgb(1.0, 1.0, 0.0)), // Yellow text
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(10.0),
+            right: Val::Px(10.0),
+            padding: UiRect::all(Val::Px(10.0)),
+            max_width: Val::Px(400.0),
+            ..default()
+        },
+        PerformanceOverlay,
+    ));
+}
+
+#[cfg(all(not(feature = "debug-ui"), feature = "debug-events"))]
+fn spawn_performance_overlay(
+    commands: &mut Commands, 
+    tracker: &UnifiedPerformanceTracker,
+    _event_counters: Option<()>,
+    event_metrics: Option<Res<EventMetrics>>,
+    system_metrics: Option<Res<SystemMetrics>>,
+) {
+    let summary = tracker.get_performance_summary();
+    
+    let mut display_text = format!(
+        "Performance Monitor (F3)\n\
+        FPS: {:.1} | Frame: {:.2}ms\n\
+        Entities: {} (Culled: {})\n\
+        Memory: {:.1} GB\n\
+        Alerts: {} | Bottlenecks: {}",
+        summary.avg_fps,
+        summary.avg_frame_time,
+        summary.total_entities,
+        summary.culled_entities,
+        summary.memory_usage_gb,
+        summary.active_alerts,
+        summary.bottleneck_systems.len()
+    );
+    
+    // Add event metrics section
+    if let Some(ref metrics) = event_metrics {
+        display_text.push_str("\n\n--- EVENT METRICS ---\n");
+        let mut sorted_events: Vec<_> = metrics.event_counts.iter().collect();
+        sorted_events.sort_by(|a, b| b.1.rate_per_second.partial_cmp(&a.1.rate_per_second).unwrap());
+        
+        for (name, stats) in sorted_events.iter().take(5) {
+            display_text.push_str(&format!(
+                "{}: {}/frame | {:.1}/sec | max queue: {}\n",
+                name, stats.frame_count, stats.rate_per_second, stats.max_queue_size
+            ));
+        }
+    }
+    
+    // Add system timing section
+    if let Some(ref sys_metrics) = system_metrics {
+        display_text.push_str("\n--- SLOW SYSTEMS (>1ms) ---\n");
+        let slow_systems = sys_metrics.get_slow_systems(std::time::Duration::from_millis(1));
+        for (name, duration) in slow_systems.iter().take(5) {
+            display_text.push_str(&format!(
+                "{}: {:.2}ms avg\n",
+                name, duration.as_secs_f32() * 1000.0
+            ));
+        }
+    }
+    
+    commands.spawn((
+        Text::new(display_text),
+        TextFont {
+            font_size: 14.0,
+            ..default()
+        },
+        TextColor(Color::srgb(1.0, 1.0, 0.0)), // Yellow text
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(10.0),
+            right: Val::Px(10.0),
+            padding: UiRect::all(Val::Px(10.0)),
+            max_width: Val::Px(400.0),
+            ..default()
+        },
+        PerformanceOverlay,
+    ));
+}
+
+#[cfg(all(not(feature = "debug-ui"), not(feature = "debug-events")))]
+fn spawn_performance_overlay(
+    commands: &mut Commands, 
+    tracker: &UnifiedPerformanceTracker,
+) {
+    let summary = tracker.get_performance_summary();
+    
+    let display_text = format!(
+        "Performance Monitor (F3)\n\
+        FPS: {:.1} | Frame: {:.2}ms\n\
+        Entities: {} (Culled: {})\n\
+        Memory: {:.1} GB\n\
+        Alerts: {} | Bottlenecks: {}",
+        summary.avg_fps,
+        summary.avg_frame_time,
+        summary.total_entities,
+        summary.culled_entities,
+        summary.memory_usage_gb,
+        summary.active_alerts,
+        summary.bottleneck_systems.len()
+    );
     
     commands.spawn((
         Text::new(display_text),

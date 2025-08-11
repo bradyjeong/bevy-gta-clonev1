@@ -73,7 +73,7 @@ pub struct NPCConfig {
     /// Display name
     pub name: String,
     /// Appearance configuration
-    pub appearance: NPCAppearance,
+    pub appearance: NPCVisualConfig,
     /// Spawn point for respawning
     pub spawn_point: Vec3,
     /// Patrol route (if any)
@@ -89,7 +89,7 @@ pub struct NPCConfig {
 /// Appearance data (kept separate as it's visual-only)
 #[derive(Component, Default, Debug, Clone)]
 #[component(immutable)]
-pub struct NPCAppearance {
+pub struct NPCVisualConfig {
     pub model_id: u32,
     pub skin_tone: Color,
     pub hair_color: Color,
@@ -120,8 +120,8 @@ const _: () = assert!(
 
 /// Example system showing how to work with split components
 pub fn update_npc_ai(
-    mut query: Query<(&mut NPCCore, &NPCConfig), Without<Player>>,
-    time: Res<Time>,
+    mut query: Query<(&mut NPCCore, &NPCConfig)>,
+    _time: Res<Time>,
 ) {
     for (mut core, config) in query.iter_mut() {
         // Hot-path: Update AI state based on core data
@@ -129,7 +129,7 @@ pub fn update_npc_ai(
             NPCAIState::Idle => {
                 // Check alert level
                 if core.alert_level > 50 {
-                    core.ai_state = NPCAIState::Alert;
+                    core.ai_state = NPCAIState::Attacking;
                 }
             }
             NPCAIState::Patrolling => {
@@ -163,15 +163,15 @@ pub fn spawn_optimized_npc(
         // Cold-path configuration (only accessed when needed)
         NPCConfig {
             name: "Guard".to_string(),
-            appearance: NPCAppearance::default(),
+            appearance: NPCVisualConfig::default(),
             spawn_point: position,
             patrol_route: vec![],
             inventory: vec![],
             dialog_id: None,
             abilities: vec![],
         },
-        // Transform component (managed by Bevy)
-        TransformBundle::from_transform(Transform::from_translation(position)),
+        // Transform component
+        Transform::from_translation(position),
     ));
 }
 

@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn test_spawn_height_calculation() {
-        let service = GroundDetectionService::default();
+        let _service = GroundDetectionService::default();
         // Mock a scenario where we can't test actual raycasting
         let entity_height = 1.8;
         let expected_spawn_height = DEFAULT_GROUND_HEIGHT + entity_height * 0.5;

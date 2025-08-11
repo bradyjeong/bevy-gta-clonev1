@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::mem::size_of;
 
 /// ECS-first vehicle control state component
 /// 
@@ -49,6 +50,10 @@ pub struct ControlState {
     /// Running/sprint modifier for walking
     pub run: bool,
 }
+
+// Static assertion: ControlState is a hot-path component (accessed every frame)
+// Must fit within single cache line for optimal performance
+const _: () = assert!(size_of::<ControlState>() <= 64, "ControlState exceeds 64-byte cache line");
 
 impl ControlState {
     /// Create a new ControlState with all inputs set to neutral/off

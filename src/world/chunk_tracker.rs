@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
+use std::mem::size_of;
 
 /// Event requesting a chunk to be loaded
 #[derive(Event)]
@@ -34,6 +35,9 @@ pub struct ChunkTracker {
     /// Reserved padding (8 bytes)
     _padding: [u32; 2],
 }
+
+// Static assertion: ChunkTracker is a hot-path resource (accessed every frame for streaming)
+const _: () = assert!(size_of::<ChunkTracker>() <= 64, "ChunkTracker exceeds 64-byte cache line");
 
 /// ChunkTables - Dynamic chunk data (unbounded size)
 /// Separated from ChunkTracker to maintain cache-friendliness
