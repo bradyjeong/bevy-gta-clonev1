@@ -101,6 +101,7 @@ pub use unified_distance_calculator::UnifiedDistanceCalculatorPlugin;
 
 // World systems (frequently used together)
 pub use world::{
+    unified_world::{UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState},
     road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType},
     road_generation::is_on_road_spline,
     unified_distance_culling::UnifiedCullable,
