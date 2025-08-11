@@ -58,6 +58,7 @@ pub mod water_plugin;
 pub mod persistence_plugin;
 pub mod input_plugin;
 pub mod vegetation_lod_plugin;
+pub mod vegetation_instancing_plugin;
 
 // New focused world plugins
 pub mod world_streaming_plugin;
@@ -77,6 +78,7 @@ pub use water_plugin::*;
 pub use persistence_plugin::*;
 pub use input_plugin::*;
 pub use vegetation_lod_plugin::*;
+pub use vegetation_instancing_plugin::*;
 
 // New focused world plugins
 pub use world_streaming_plugin::*;

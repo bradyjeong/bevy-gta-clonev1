@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use gta_game::systems::input::vehicle_control_config::{
-    VehicleControlConfig, VehicleType, ControlCategory, InputAction
+    VehicleControlConfig, VehicleType, ControlCategory
 };
+use gta_game::systems::input::InputAction;
 use gta_game::game_state::GameState;
 
 fn main() {

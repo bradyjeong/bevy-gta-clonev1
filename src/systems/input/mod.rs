@@ -4,7 +4,7 @@ pub mod vehicle_control_config;
 // pub mod control_manager; // Removed: Complex system replaced with asset-based controls
 pub mod asset_based_controls;
 
-pub use input_config::*;
+pub use input_config::{InputConfig, InputAction};
 pub use input_manager::*;
 pub use vehicle_control_config::*;
 // pub use control_manager::*; // Removed: Complex system replaced with asset-based controls

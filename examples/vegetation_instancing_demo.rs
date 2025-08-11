@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use gta_game::components::*;
 use gta_game::systems::*;
+use gta_game::systems::vegetation_instancing_integration::*;
+use gta_game::systems::rendering::*;
 
 fn main() {
     App::new()
@@ -38,11 +40,11 @@ fn main() {
 
 fn setup_camera(mut commands: Commands) {
     // Spawn camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 10.0, 30.0)
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 10.0, 30.0)
             .looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    ));
     
     // Spawn active entity (player)
     commands.spawn((
@@ -53,13 +55,12 @@ fn setup_camera(mut commands: Commands) {
     ));
     
     // Add lighting
-    commands.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
+    commands.spawn((
+        DirectionalLight {
             illuminance: 10000.0,
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -0.5, -0.5, 0.0)),
-        ..default()
-    });
+        Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -0.5, -0.5, 0.0)),
+    ));
 }

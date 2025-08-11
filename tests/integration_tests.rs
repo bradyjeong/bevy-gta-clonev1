@@ -3,10 +3,10 @@ use bevy_rapier3d::prelude::*;
 use gta_game::components::*;
 use gta_game::game_state::GameState;
 
-use gta_game::systems::input::{InputManager, ControlManager, ControlEntityType, AIControlDecision};
+use gta_game::systems::input::InputManager;
 use gta_game::factories::entity_factory_unified::UnifiedEntityFactory;
 use gta_game::systems::world::unified_distance_culling::*;
-use gta_game::systems::distance_cache::DistanceCache;
+use gta_game::services::distance_cache::DistanceCache;
 
 /// Integration test for core game components and systems
 #[test]
@@ -20,8 +20,7 @@ fn test_core_game_initialization() {
         .insert_state(GameState::Driving);
     
     // Add just the resources we want to test
-    app.insert_resource(InputManager::default())
-        .insert_resource(ControlManager::default());
+    app.insert_resource(InputManager::default());
     
     // Run a single update to ensure everything initializes
     app.update();
@@ -29,7 +28,6 @@ fn test_core_game_initialization() {
     // Verify game state resource exists
     assert!(app.world().contains_resource::<State<GameState>>());
     assert!(app.world().contains_resource::<InputManager>());
-    assert!(app.world().contains_resource::<ControlManager>());
 }
 
 /// Test SuperCar component system integration
@@ -150,32 +148,15 @@ fn test_vehicle_factory_integration() {
     assert!(factory.entity_limits.max_vehicles > 0);
 }
 
+/*
 /// Test control manager integration
+/// DISABLED: ControlManager removed in favor of asset-based controls
 #[test]
 fn test_control_manager_integration() {
-    let mut app = App::new();
-    
-    app.add_plugins(MinimalPlugins)
-        .add_plugins(AssetPlugin::default())
-        .init_state::<GameState>()
-        .insert_resource(InputManager::default())
-        .insert_resource(ControlManager::default())
-        .insert_state(GameState::Driving);
-    
-    // Test control manager functionality
-    let mut control_manager = app.world_mut().resource_mut::<ControlManager>();
-    
-    // Test entity registration
-    let test_entity = Entity::from_raw(12345);
-    control_manager.register_entity(test_entity, ControlEntityType::Vehicle);
-    
-    // Test AI decision functionality
-    let decision = AIControlDecision::default();
-    control_manager.update_ai_decision(test_entity, decision);
-    
-    // Verify AI decision was stored
-    assert!(control_manager.get_ai_decision(test_entity).is_some());
+    // This test is disabled because ControlManager was removed
+    // in favor of the new asset-based control system
 }
+*/
 
 /// Test component bundle consistency
 #[test]
@@ -217,7 +198,7 @@ fn test_realistic_scenario_integration() {
         .insert_resource(DistanceCache::new())
         .insert_resource(UnifiedCullingTimer::default())
         .insert_resource(InputManager::default())
-        .insert_resource(ControlManager::default())
+
         .insert_state(GameState::Driving);
     
     // Create a realistic game scenario
@@ -281,10 +262,7 @@ fn test_error_handling() {
     let distance_cache = DistanceCache::new();
     assert_eq!(distance_cache.len(), 0);
     
-    // Test control manager with no registered entities
-    let control_manager = ControlManager::default();
-    // Control manager doesn't expose direct registration check, so test AI decision instead
-    assert!(control_manager.get_ai_decision(invalid_entity).is_none());
+    // Note: ControlManager removed in favor of asset-based controls
 }
 
 /// Performance test to ensure systems don't regress

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use gta_game::systems::world::unified_distance_culling::*;
-use gta_game::systems::distance_cache::*;
+use gta_game::services::distance_cache::*;
 use gta_game::components::*;
 
 #[cfg(test)]
@@ -14,10 +14,7 @@ mod tests {
         
         // Add required resources manually
         app.insert_resource(FrameCounter::default())
-            .insert_resource(PerformanceStats {
-                entity_count: 0,
-                culled_entities: 0,
-            });
+            .insert_resource(PerformanceStats::default());
         app
     }
 

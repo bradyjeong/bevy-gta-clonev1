@@ -58,3 +58,24 @@ fn initialize_streaming_world(mut world_manager: ResMut<UnifiedWorldManager>) {
     world_manager.road_network.reset();
     println!("DEBUG: World streaming initialized!");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_world_streaming_plugin_instantiation() {
+        // Test that plugin can be instantiated
+        let plugin = WorldStreamingPlugin;
+        let mut app = App::new();
+        
+        // Test that adding plugin doesn't panic during registration
+        app.add_plugins(MinimalPlugins);
+        
+        // Just test the build method doesn't panic
+        plugin.build(&mut app);
+        
+        // Verify UnifiedWorldManager resource is initialized
+        assert!(app.world().get_resource::<UnifiedWorldManager>().is_some());
+    }
+}

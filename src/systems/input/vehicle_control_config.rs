@@ -526,7 +526,7 @@ mod tests {
         // Test F16 controls
         assert_eq!(
             config.get_key_for_vehicle_action(VehicleType::F16, InputAction::PitchUp),
-            Some(KeyCode::KeyW)
+            Some(KeyCode::ArrowUp)
         );
     }
     

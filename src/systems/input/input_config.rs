@@ -35,6 +35,31 @@ pub enum InputAction {
     EmergencyReset,
 }
 
+impl std::fmt::Display for InputAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InputAction::Forward => write!(f, "Forward"),
+            InputAction::Backward => write!(f, "Backward"),
+            InputAction::TurnLeft => write!(f, "Turn Left"),
+            InputAction::TurnRight => write!(f, "Turn Right"),
+            InputAction::VerticalUp => write!(f, "Vertical Up"),
+            InputAction::VerticalDown => write!(f, "Vertical Down"),
+            InputAction::PitchUp => write!(f, "Pitch Up"),
+            InputAction::PitchDown => write!(f, "Pitch Down"),
+            InputAction::RollLeft => write!(f, "Roll Left"),
+            InputAction::RollRight => write!(f, "Roll Right"),
+            InputAction::YawLeft => write!(f, "Yaw Left"),
+            InputAction::YawRight => write!(f, "Yaw Right"),
+            InputAction::Run => write!(f, "Run"),
+            InputAction::Turbo => write!(f, "Turbo"),
+            InputAction::Afterburner => write!(f, "Afterburner"),
+            InputAction::Interact => write!(f, "Interact"),
+            InputAction::DebugInfo => write!(f, "Debug Info"),
+            InputAction::EmergencyReset => write!(f, "Emergency Reset"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Resource)]
 pub struct InputConfig {
     // State-specific bindings

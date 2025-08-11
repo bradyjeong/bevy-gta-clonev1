@@ -3,6 +3,9 @@ use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "debug-ui")]
+use crate::events::EventCounters;
+
 /// Unified performance tracking system - centralizes all performance metrics
 #[derive(Resource)]
 pub struct UnifiedPerformanceTracker {
@@ -569,6 +572,8 @@ pub fn performance_debug_input_system(
     mut overlay_query: Query<&mut Visibility, With<PerformanceOverlay>>,
     mut commands: Commands,
     tracker: Res<UnifiedPerformanceTracker>,
+    #[cfg(feature = "debug-ui")]
+    event_counters: Option<Res<EventCounters>>,
 ) {
     if keys.just_pressed(KeyCode::F3) {
         // Toggle overlay visibility
@@ -580,32 +585,75 @@ pub fn performance_debug_input_system(
             };
         } else {
             // Create overlay if it doesn't exist
-            spawn_performance_overlay(&mut commands, &tracker);
+            #[cfg(feature = "debug-ui")]
+            spawn_performance_overlay(&mut commands, &tracker, event_counters);
+            #[cfg(not(feature = "debug-ui"))]
+            spawn_performance_overlay(&mut commands, &tracker, None);
         }
     }
 }
 
 /// Spawn the performance overlay UI
-fn spawn_performance_overlay(commands: &mut Commands, tracker: &UnifiedPerformanceTracker) {
+fn spawn_performance_overlay(
+    commands: &mut Commands, 
+    tracker: &UnifiedPerformanceTracker,
+    #[cfg(feature = "debug-ui")]
+    event_counters: Option<Res<EventCounters>>,
+    #[cfg(not(feature = "debug-ui"))]
+    _event_counters: Option<()>,
+) {
     let summary = tracker.get_performance_summary();
     
+    #[cfg(feature = "debug-ui")]
+    let mut display_text = format!(
+        "Performance Monitor (F3)\n\
+        FPS: {:.1} | Frame: {:.2}ms\n\
+        Entities: {} (Culled: {})\n\
+        Memory: {:.1} GB\n\
+        Alerts: {} | Bottlenecks: {}",
+        summary.avg_fps,
+        summary.avg_frame_time,
+        summary.total_entities,
+        summary.culled_entities,
+        summary.memory_usage_gb,
+        summary.active_alerts,
+        summary.bottleneck_systems.len()
+    );
+    
+    #[cfg(not(feature = "debug-ui"))]
+    let display_text = format!(
+        "Performance Monitor (F3)\n\
+        FPS: {:.1} | Frame: {:.2}ms\n\
+        Entities: {} (Culled: {})\n\
+        Memory: {:.1} GB\n\
+        Alerts: {} | Bottlenecks: {}",
+        summary.avg_fps,
+        summary.avg_frame_time,
+        summary.total_entities,
+        summary.culled_entities,
+        summary.memory_usage_gb,
+        summary.active_alerts,
+        summary.bottleneck_systems.len()
+    );
+    
+    #[cfg(feature = "debug-ui")]
+    if let Some(counters) = event_counters {
+        display_text.push_str("\n\n");
+        display_text.push_str(&counters.get_debug_text());
+        
+        let warnings = counters.get_warnings();
+        if !warnings.is_empty() {
+            display_text.push_str("\n--- EVENT WARNINGS ---\n");
+            for warning in &warnings {
+                display_text.push_str(&format!("⚠️ {}\n", warning));
+            }
+        }
+    }
+    
     commands.spawn((
-        Text::new(format!(
-            "Performance Monitor (F3)\n\
-            FPS: {:.1} | Frame: {:.2}ms\n\
-            Entities: {} (Culled: {})\n\
-            Memory: {:.1} GB\n\
-            Alerts: {} | Bottlenecks: {}",
-            summary.avg_fps,
-            summary.avg_frame_time,
-            summary.total_entities,
-            summary.culled_entities,
-            summary.memory_usage_gb,
-            summary.active_alerts,
-            summary.bottleneck_systems.len()
-        )),
+        Text::new(display_text),
         TextFont {
-            font_size: 16.0,
+            font_size: 14.0,
             ..default()
         },
         TextColor(Color::srgb(1.0, 1.0, 0.0)), // Yellow text
@@ -614,6 +662,7 @@ fn spawn_performance_overlay(commands: &mut Commands, tracker: &UnifiedPerforman
             top: Val::Px(10.0),
             right: Val::Px(10.0),
             padding: UiRect::all(Val::Px(10.0)),
+            max_width: Val::Px(400.0),
             ..default()
         },
         PerformanceOverlay,
@@ -672,11 +721,26 @@ pub struct UnifiedPerformancePlugin;
 impl Plugin for UnifiedPerformancePlugin {
     fn build(&self, app: &mut App) {
         app
-            .init_resource::<UnifiedPerformanceTracker>()
-            .add_systems(Update, (
+            .init_resource::<UnifiedPerformanceTracker>();
+            
+        #[cfg(feature = "debug-ui")]
+        {
+            app.init_resource::<EventCounters>()
+                .add_systems(Update, (
+                    unified_performance_monitoring_system,
+                    performance_debug_input_system,
+                    update_performance_overlay_system,
+                    crate::events::reset_event_counters,
+                ).chain());
+        }
+        
+        #[cfg(not(feature = "debug-ui"))]
+        {
+            app.add_systems(Update, (
                 unified_performance_monitoring_system,
                 performance_debug_input_system,
                 update_performance_overlay_system,
             ));
+        }
     }
 }

@@ -5,7 +5,7 @@ use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use crate::components::world::{MeshCache, EntityLimits};
 use crate::components::{DirtyFlagsMetrics, CullingSettings, PerformanceStats};
 use crate::GlobalRng;
-use crate::events::world::*;
+use crate::events::*;
 use crate::plugins::{
     InputPlugin, PlayerPlugin, VehiclePlugin, VegetationLODPlugin, 
     PersistencePlugin, UIPlugin, WaterPlugin, UnifiedWorldPlugin
@@ -59,6 +59,16 @@ impl Plugin for GameCorePlugin {
             .add_event::<SpawnValidationResult>()
             .add_event::<RequestRoadValidation>()
             .add_event::<RoadValidationResult>()
+            
+            // Service Coordination Events (Replaces Direct Calls)
+            .add_event::<RequestDistance>()
+            .add_event::<RequestDistanceToReference>()
+            .add_event::<DistanceResult>()
+            .add_event::<DistanceToReferenceResult>()
+            .add_event::<RequestGroundHeight>()
+            .add_event::<GroundHeightResult>()
+            .add_event::<RequestSpawnPositionValidation>()
+            .add_event::<SpawnPositionValidationResult>()
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
             .insert_resource(AmbientLight {
                 color: Color::srgb(1.0, 0.9, 0.7),

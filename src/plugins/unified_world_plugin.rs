@@ -6,6 +6,7 @@ use crate::plugins::{
     WorldNpcPlugin,
     WorldDebugPlugin,
     TimingPlugin,
+    VegetationInstancingPlugin,
 };
 use crate::factories::initialize_material_factory;
 
@@ -24,6 +25,7 @@ impl Plugin for UnifiedWorldPlugin {
             .add_plugins(WorldLodPlugin)
             .add_plugins(WorldNpcPlugin)
             .add_plugins(WorldDebugPlugin)
+            .add_plugins(VegetationInstancingPlugin)
             
             // Initialize material factory
             .add_systems(Startup, initialize_material_factory);

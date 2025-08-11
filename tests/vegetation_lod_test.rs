@@ -58,9 +58,9 @@ fn test_vegetation_mesh_lod_selection() {
     let mut app = App::new();
     let mut meshes = app.world_mut().resource_mut::<Assets<Mesh>>();
     
-    let full_mesh = meshes.add(Cylinder::new(0.3, 8.0).mesh().into());
-    let medium_mesh = meshes.add(Cylinder::new(0.25, 6.0).mesh().into());
-    let billboard_mesh = meshes.add(Plane3d::default().mesh().size(2.0, 3.0).into());
+    let full_mesh = meshes.add(Cylinder::new(0.3, 8.0).mesh());
+    let medium_mesh = meshes.add(Cylinder::new(0.25, 6.0).mesh());
+    let billboard_mesh = meshes.add(Plane3d::default().mesh().size(2.0, 3.0));
     
     let mesh_lod = VegetationMeshLOD::new(
         full_mesh.clone(),
