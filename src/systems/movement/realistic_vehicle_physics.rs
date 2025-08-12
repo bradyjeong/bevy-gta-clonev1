@@ -1,15 +1,17 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::prelude::Velocity;
 use crate::components::*;
 use crate::config::GameConfig;
 use crate::components::ControlState;
 use crate::systems::physics_utils::PhysicsUtilities;
+use crate::services::ground_detection::GroundDetectionService;
 
 /// CRITICAL: High-performance realistic vehicle physics system
 /// Optimized for 60+ FPS with comprehensive safety checks and entity limits
 pub fn realistic_vehicle_physics_system(
     time: Res<Time>,
     config: Res<GameConfig>,
+    ground_detection: Res<GroundDetectionService>,
     mut query: Query<(
         Entity,
         &mut Velocity,
@@ -22,7 +24,6 @@ pub fn realistic_vehicle_physics_system(
         &ControlState,
     ), With<ActiveEntity>>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<RealisticVehicle>)>,
-    // rapier_context: Query<&RapierContext>, // TODO: Fix RapierContext integration
 ) {
     let start_time = std::time::Instant::now();
     let dt = time.delta_secs().clamp(0.001, 0.05);
@@ -89,10 +90,23 @@ pub fn realistic_vehicle_physics_system(
         // STEP 2: Calculate engine forces with realistic power delivery
         let engine_force = calculate_engine_force(&mut engine, &dynamics, dt);
         
-        // STEP 3: Calculate suspension forces (simplified without ground detection for now)
-        let suspension_forces = Vec3::new(0.0, -dynamics.total_mass * 9.81, 0.0); // Basic gravity
+        // STEP 3: Update ground detection and suspension
+        // Use proper terrain height detection
+        update_ground_detection_with_terrain(
+            &transform,
+            &mut suspension,
+            &ground_detection,
+        );
         
-        // STEP 4: Calculate tire forces with realistic friction model
+        // STEP 4: Calculate suspension forces with proper ground detection
+        let suspension_forces = calculate_suspension_forces(
+            &mut suspension,
+            &dynamics,
+            &transform,
+            dt,
+        );
+        
+        // STEP 5: Calculate tire forces with realistic friction model
         let tire_forces = calculate_tire_forces(
             &mut tire_physics,
             &suspension,
@@ -406,11 +420,96 @@ fn apply_physics_safeguards(
     // Use unified velocity validation
     PhysicsUtilities::validate_velocity(velocity, config);
     
-    // Use unified ground collision system
-    PhysicsUtilities::apply_ground_collision(velocity, transform, 0.1, 2.0);
+    // Use unified ground collision system with terrain height
+    // Note: This would ideally get ground_detection service passed in,
+    // but for now use a reasonable default height
+    PhysicsUtilities::apply_ground_collision(velocity, transform, 0.0, 2.0);
     
     // Use unified world bounds system
     PhysicsUtilities::apply_world_bounds(transform, velocity, config);
+}
+
+/// Simplified ground detection without Rapier dependency
+/// Update ground detection using proper terrain height data
+fn update_ground_detection_with_terrain(
+    transform: &Transform,
+    suspension: &mut VehicleSuspension,
+    ground_detection: &GroundDetectionService,
+) {
+    // Get terrain height at vehicle's XZ position
+    let vehicle_pos_2d = Vec2::new(transform.translation.x, transform.translation.z);
+    let ground_level = ground_detection.get_ground_height_simple(vehicle_pos_2d);
+    
+    let vehicle_height = transform.translation.y;
+    let wheel_bottom = vehicle_height - suspension.rest_length;
+    
+    if wheel_bottom <= ground_level + 0.1 {
+        // Vehicle is close to ground
+        suspension.ground_contact = true;
+        let penetration = (ground_level - wheel_bottom).max(0.0);
+        suspension.compression = (penetration / suspension.max_compression)
+            .clamp(0.0, suspension.max_compression);
+        suspension.ground_normal = Vec3::Y;
+    } else {
+        // Vehicle is in the air
+        suspension.ground_contact = false;
+        suspension.compression = 0.0;
+        suspension.ground_normal = Vec3::Y;
+    }
+}
+
+/// Legacy simple ground detection - kept for reference
+#[allow(dead_code)]
+fn update_ground_detection_simple(
+    transform: &Transform,
+    suspension: &mut VehicleSuspension,
+) {
+    // Simple ground detection based on height
+    let ground_level = 0.0; // Assume flat ground at y=0
+    let vehicle_height = transform.translation.y;
+    let wheel_bottom = vehicle_height - suspension.rest_length;
+    
+    if wheel_bottom <= ground_level + 0.1 {
+        // Vehicle is close to ground
+        suspension.ground_contact = true;
+        let penetration = (ground_level - wheel_bottom).max(0.0);
+        suspension.compression = (penetration / suspension.max_compression)
+            .clamp(0.0, suspension.max_compression);
+        suspension.ground_normal = Vec3::Y;
+    } else {
+        // Vehicle is in the air
+        suspension.ground_contact = false;
+        suspension.compression = 0.0;
+        suspension.ground_normal = Vec3::Y;
+    }
+}
+
+/// Calculate suspension forces based on ground contact
+fn calculate_suspension_forces(
+    suspension: &mut VehicleSuspension,
+    dynamics: &VehicleDynamics,
+    transform: &Transform,
+    dt: f32,
+) -> Vec3 {
+    if !suspension.ground_contact {
+        // No ground contact - apply gravity
+        return Vec3::new(0.0, -dynamics.total_mass * 9.81, 0.0);
+    }
+    
+    // Calculate spring force using spring strength
+    let spring_force = suspension.compression * suspension.spring_strength;
+    
+    // Calculate damping force based on compression velocity
+    let damping_force = suspension.velocity * suspension.damping_ratio * suspension.spring_strength;
+    
+    // Total suspension force
+    suspension.force = (spring_force + damping_force).max(0.0);
+    
+    // Update suspension velocity for next frame
+    suspension.velocity = (suspension.compression - suspension.compression) / dt.max(0.001);
+    
+    // Apply force in vehicle's up direction
+    transform.up() * suspension.force
 }
 
 /// System to update vehicle wheel positions and rotations

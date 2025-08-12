@@ -3,10 +3,13 @@
 
 #[cfg(test)]
 mod serialization_tests {
+    use bevy::prelude::*;
     use gta_game::world::{
         ChunkTracker, PlacementGrid, RoadNetwork, WorldCoordinator,
-        ChunkCoord, PlacementMode,
+        ChunkCoord,
+        placement_grid::PlacementMode,
     };
+    use gta_game::events::world::chunk_events::{RequestChunkLoad};
     
     /// Test that PlacementGrid serialization is stable
     #[test]
@@ -87,22 +90,61 @@ mod serialization_tests {
         assert!(std::mem::align_of::<ChunkTracker>() <= 8);
     }
     
-    /// Test migration data integrity
+    /// Test migration data integrity using event-driven flow
     #[test]
     fn test_migration_data_integrity() {
-        // Test that data survives round-trip through migration
-        let mut tracker = ChunkTracker::new();
+        use gta_game::events::world::chunk_events::{ChunkLoaded};
+        
+        // Setup test app with events
+        let mut app = App::new();
+        app
+            .add_plugins(MinimalPlugins)
+            .add_event::<RequestChunkLoad>()
+            .add_event::<ChunkLoaded>()
+            .insert_resource(ChunkTracker::new());
+        
+        // Add system to handle chunk load events
+        app.add_systems(Update, handle_chunk_load_test);
+        
         let coord = ChunkCoord { x: 5, z: -3 };
         
-        tracker.mark_loaded(coord);
+        // Send event to load chunk
+        let event_coord = gta_game::events::world::chunk_events::ChunkCoord { x: 5, z: -3 };
+        app.world_mut().send_event(RequestChunkLoad { coord: event_coord });
+        app.update();
+        
+        // Verify chunk is loaded via resource
+        let tracker = app.world().resource::<ChunkTracker>();
         assert!(tracker.is_chunk_loaded(coord));
         
-        // Simulate migration by clearing and re-adding
-        tracker.clear();
+        // Simulate migration by clearing
+        app.world_mut().resource_mut::<ChunkTracker>().clear();
+        let tracker = app.world().resource::<ChunkTracker>();
         assert!(!tracker.is_chunk_loaded(coord));
         
-        tracker.mark_loaded(coord);
+        // Send event to reload chunk
+        app.world_mut().send_event(RequestChunkLoad { coord: event_coord });
+        app.update();
+        
+        // Verify chunk is loaded again
+        let tracker = app.world().resource::<ChunkTracker>();
         assert!(tracker.is_chunk_loaded(coord));
+    }
+    
+    // Test system to handle chunk load events
+    fn handle_chunk_load_test(
+        mut tracker: ResMut<ChunkTracker>,
+        mut events: EventReader<gta_game::events::world::chunk_events::RequestChunkLoad>,
+        mut loaded_events: EventWriter<gta_game::events::world::chunk_events::ChunkLoaded>,
+    ) {
+        for event in events.read() {
+            let world_coord = ChunkCoord { x: event.coord.x, z: event.coord.z };
+            tracker.mark_loaded(world_coord);
+            loaded_events.write(gta_game::events::world::chunk_events::ChunkLoaded {
+                coord: event.coord,
+                content_count: 0,
+            });
+        }
     }
     
     /// Test negative coordinate handling

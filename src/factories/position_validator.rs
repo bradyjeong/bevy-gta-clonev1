@@ -4,6 +4,7 @@ use crate::config::GameConfig;
 use crate::components::ContentType;
 use crate::factories::generic_bundle::BundleError;
 use crate::world::RoadNetwork;
+// Direct import allowed - factories and road_generation are both in UnifiedWorldPlugin
 use crate::systems::world::road_generation::is_on_road_spline;
 
 /// Position validator for entity spawning

@@ -4,7 +4,7 @@ use crate::config::GameConfig;
 use crate::components::*;
 use crate::services::distance_cache::MovementTracker;
 use crate::bundles::*;
-use crate::systems::world::unified_world::UnifiedChunkEntity;
+use crate::world::chunk_data::UnifiedChunkEntity;
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 /// Type alias for old NPCBehavior to maintain compatibility
@@ -715,14 +715,14 @@ impl GenericBundleFactory {
     /// Create unified chunk bundle
     pub fn unified_chunk(
         chunk_coord: (i32, i32),
-        layer: crate::systems::world::unified_world::ContentLayer,
+        layer: crate::world::chunk_data::ContentLayer,
         content_type: ContentType,
         position: Vec3,
         _max_distance: f32,
     ) -> UnifiedChunkBundle {
         UnifiedChunkBundle {
             chunk_entity: UnifiedChunkEntity { 
-                coord: crate::systems::world::unified_world::ChunkCoord::new(chunk_coord.0, chunk_coord.1), 
+                coord: crate::world::chunk_coord::ChunkCoord::new(chunk_coord.0, chunk_coord.1), 
                 layer 
             },
             dynamic_content: DynamicContent { content_type },

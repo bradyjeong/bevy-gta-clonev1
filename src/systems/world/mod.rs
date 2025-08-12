@@ -10,7 +10,7 @@ pub mod debug;
 pub mod map_system;
 
 // NEW UNIFIED WORLD SYSTEM
-pub mod unified_world;
+pub mod streaming_system;
 pub mod layered_generation;
 pub mod unified_lod;
 pub mod npc_lod;
@@ -35,7 +35,7 @@ pub use debug::*;
 pub use map_system::*;
 
 // Export unified system components
-pub use unified_world::*;
+pub use streaming_system::*;
 pub use layered_generation::*;
 
 // Export V2 streaming systems (now always enabled)

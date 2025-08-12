@@ -83,10 +83,26 @@ impl ChunkUnloaded {
     }
 }
 
+/// Notification that chunk generation has finished (16 bytes)
+/// Sent by: chunk generation systems (after all content is spawned)
+/// Handled by: world streaming system (to transition state from Loading to Loaded)
+#[derive(Event, Debug, Clone, Copy)]
+pub struct ChunkFinishedLoading {
+    pub coord: ChunkCoord,
+    pub lod_level: usize,
+}
+
+impl ChunkFinishedLoading {
+    pub fn new(coord: ChunkCoord, lod_level: usize) -> Self {
+        Self { coord, lod_level }
+    }
+}
+
 // Compile-time size verification (≤128 bytes requirement)
 const _: () = {
     assert!(std::mem::size_of::<RequestChunkLoad>() <= 128);
     assert!(std::mem::size_of::<ChunkLoaded>() <= 128);
     assert!(std::mem::size_of::<RequestChunkUnload>() <= 128);
     assert!(std::mem::size_of::<ChunkUnloaded>() <= 128);
+    assert!(std::mem::size_of::<ChunkFinishedLoading>() <= 128);
 };

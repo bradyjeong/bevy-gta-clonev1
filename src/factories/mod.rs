@@ -89,7 +89,7 @@ pub mod rendering_factory;
 pub use entity_factory_unified::*;
 
 // Common utilities exports
-pub use common::*;
+pub use common::{GroundHeightCache, FocusedFactory, ValidationUtils};
 
 // Focused module exports (AGENT.md compliant architecture)
 pub use position_validator::*;

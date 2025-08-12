@@ -1,4 +1,31 @@
+// =============================================================================
+// ARCHITECTURAL LINT RULES & COMPILE-TIME GUARDS
+// =============================================================================
+//
+// These lint rules enforce the architectural decisions documented in 
+// architectural_shift.md to maintain code quality and prevent violations.
+//
+// DENIED PATTERNS (will cause compilation failure):
+// - `unsafe_code`: No unsafe blocks allowed - Rust's safety guarantees must be maintained
+// - `dead_code`: All code must be actively used or removed
+// - `unused_imports`: Keep imports clean and intentional
+// - `unused_mut`: Avoid unnecessary mutability
+//
+// WARNED PATTERNS (will show warnings, future deny):
+// - `clippy::expect_used`: Prefer proper error handling over expect()
+//
+// CI-ENFORCED PATTERNS (caught by GitHub Actions):
+// - `thread_local!`: Violates single-threaded architecture
+// - `lazy_static!`: Use Bevy Resources instead for shared state
+// - `RefCell`: Violates ECS patterns, use Bevy's change detection
+// - Cross-plugin imports: Plugins must communicate via events, not direct imports
+//
+// See .github/workflows/ci.yml for the architecture-guard job that enforces these.
+// =============================================================================
+
 #![deny(dead_code, unused_imports, unused_mut)]
+#![deny(unsafe_code)]
+#![warn(clippy::expect_used)] // Warn for now, will deny after fixing remaining uses
 
 pub mod components;
 pub mod config;

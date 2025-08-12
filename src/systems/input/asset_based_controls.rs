@@ -1,7 +1,18 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Once;
 use crate::components::{ControlState, VehicleControlType};
+
+// Macro to warn only once
+macro_rules! warn_once {
+    ($($arg:tt)*) => {{
+        static ONCE: Once = Once::new();
+        ONCE.call_once(|| {
+            warn!($($arg)*);
+        });
+    }};
+}
 
 /// Asset-based control configuration system
 /// 
@@ -140,8 +151,12 @@ pub fn asset_based_input_mapping_system(
     loaded_controls: Res<LoadedVehicleControls>,
     mut query: Query<(&mut ControlState, &VehicleControlType)>,
 ) {
-    // Skip if controls haven't loaded yet
-    let Some(ref config) = loaded_controls.config else {
+    // Use fallback controls if asset hasn't loaded yet
+    let config = if let Some(ref cfg) = loaded_controls.config {
+        cfg
+    } else {
+        // Apply minimal fallback controls to prevent complete control failure
+        apply_fallback_controls(&keyboard_input, &mut query);
         return;
     };
     
@@ -265,6 +280,129 @@ pub fn debug_loaded_controls_system(
         }
     } else {
         info!("Vehicle controls not yet loaded");
+    }
+}
+
+/// Apply fallback controls when asset fails to load
+fn apply_fallback_controls(
+    keyboard_input: &Res<ButtonInput<KeyCode>>,
+    query: &mut Query<(&mut ControlState, &VehicleControlType)>,
+) {
+    warn_once!("Using fallback controls - vehicle_controls.ron asset failed to load");
+    
+    for (mut control_state, vehicle_type) in query.iter_mut() {
+        control_state.reset();
+        
+        // Basic WASD/Arrow key controls that work for all vehicle types
+        match vehicle_type {
+            VehicleControlType::Walking => {
+                // Walking controls - map to throttle/brake/steering for movement
+                if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
+                    control_state.throttle = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
+                    control_state.brake = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
+                    control_state.steering = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
+                    control_state.steering = -1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ShiftLeft) {
+                    control_state.run = true;
+                }
+                if keyboard_input.just_pressed(KeyCode::KeyF) {
+                    control_state.interact = true;
+                }
+            }
+            VehicleControlType::Car | VehicleControlType::SuperCar => {
+                // Car controls
+                if keyboard_input.pressed(KeyCode::ArrowUp) {
+                    control_state.throttle = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowDown) {
+                    control_state.brake = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowLeft) {
+                    control_state.steering = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowRight) {
+                    control_state.steering = -1.0;
+                }
+                if keyboard_input.pressed(KeyCode::Space) {
+                    control_state.boost = 1.0;
+                }
+            }
+            VehicleControlType::Helicopter => {
+                // Helicopter controls
+                if keyboard_input.pressed(KeyCode::ArrowUp) {
+                    control_state.pitch = -1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowDown) {
+                    control_state.pitch = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowLeft) {
+                    control_state.yaw = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowRight) {
+                    control_state.yaw = -1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ShiftLeft) {
+                    control_state.vertical = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ControlLeft) {
+                    control_state.vertical = -1.0;
+                }
+            }
+            VehicleControlType::F16 => {
+                // F16 controls
+                if keyboard_input.pressed(KeyCode::ArrowUp) {
+                    control_state.pitch = -1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowDown) {
+                    control_state.pitch = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowLeft) {
+                    control_state.roll = -1.0;
+                }
+                if keyboard_input.pressed(KeyCode::ArrowRight) {
+                    control_state.roll = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::KeyW) {
+                    control_state.throttle = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::KeyS) {
+                    control_state.brake = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::Space) {
+                    control_state.boost = 1.0;
+                }
+            }
+            VehicleControlType::Yacht => {
+                // Yacht controls
+                if keyboard_input.pressed(KeyCode::KeyI) {
+                    control_state.throttle = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::KeyK) {
+                    control_state.brake = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::KeyJ) {
+                    control_state.steering = 1.0;
+                }
+                if keyboard_input.pressed(KeyCode::KeyL) {
+                    control_state.steering = -1.0;
+                }
+                if keyboard_input.pressed(KeyCode::Space) {
+                    control_state.boost = 1.0;
+                }
+            }
+        }
+        
+        // Universal exit control
+        if keyboard_input.just_pressed(KeyCode::KeyF) {
+            control_state.interact = true;
+        }
     }
 }
 

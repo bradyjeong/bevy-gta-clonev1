@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::*;
-use crate::systems::world::unified_world::{
-    UnifiedChunkEntity, ContentLayer,
-};
-use crate::world::chunk_tracker::{ChunkTracker, ChunkTables, ChunkCoord};
+use crate::world::chunk_data::{UnifiedChunkEntity, ContentLayer};
+use crate::world::chunk_tracker::{ChunkTracker, ChunkTables};
+use crate::world::chunk_coord::ChunkCoord;
 use crate::services::distance_cache::{DistanceCache, get_cached_distance};
 
 // MASTER UNIFIED LOD AND CULLING SYSTEM

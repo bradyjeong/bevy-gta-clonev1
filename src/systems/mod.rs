@@ -101,11 +101,15 @@ pub use unified_distance_calculator::UnifiedDistanceCalculatorPlugin;
 
 // World systems (frequently used together)
 pub use world::{
-    unified_world::{UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState},
+    streaming_system::*,
     road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType},
+    // NOTE: is_on_road_spline export maintained for intra-plugin use only
+    // Cross-plugin validation should use RequestRoadValidation/RoadValidationResult events
     road_generation::is_on_road_spline,
     unified_distance_culling::UnifiedCullable,
 };
+
+
 
 // Input system types
 pub use input::{InputManager, InputConfig, InputAction};

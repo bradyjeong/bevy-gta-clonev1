@@ -70,7 +70,7 @@ impl VehicleFactory {
             DynamicPhysicsBundle {
                 dynamic_content: DynamicContent { content_type: ContentType::Vehicle },
                 transform: Transform::from_translation(final_position),
-                visibility: Visibility::default(),
+                visibility: Visibility::Visible,
                 inherited_visibility: InheritedVisibility::VISIBLE,
                 view_visibility: ViewVisibility::default(),
                 rigid_body: RigidBody::Dynamic,

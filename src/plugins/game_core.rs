@@ -6,13 +6,15 @@ use crate::components::world::{MeshCache, EntityLimits};
 use crate::components::{DirtyFlagsMetrics, CullingSettings, PerformanceStats};
 use crate::GlobalRng;
 use crate::events::*;
+use crate::events::world::chunk_events::ChunkFinishedLoading;
 use crate::plugins::{
     InputPlugin, PlayerPlugin, VehiclePlugin, VegetationLODPlugin, 
     PersistencePlugin, UIPlugin, WaterPlugin, UnifiedWorldPlugin, SpawnValidationPlugin
 };
 use crate::systems::{
     DistanceCachePlugin, DistanceCacheDebugPlugin, 
-    TransformSyncPlugin, UnifiedDistanceCalculatorPlugin, UnifiedPerformancePlugin
+    TransformSyncPlugin, UnifiedDistanceCalculatorPlugin, UnifiedPerformancePlugin,
+    parallel_physics::ParallelPhysicsConfig
 };
 use crate::services::GroundDetectionPlugin;
 use crate::GameState;
@@ -56,10 +58,12 @@ impl Plugin for GameCorePlugin {
             .init_resource::<MeshCache>()
             .init_resource::<EntityLimits>()
             .init_resource::<GlobalRng>()
+            .init_resource::<ParallelPhysicsConfig>()
             
             // World Generation Events (Event-Driven Architecture)
             .add_event::<RequestChunkLoad>()
             .add_event::<ChunkLoaded>()
+            .add_event::<ChunkFinishedLoading>()
             .add_event::<RequestChunkUnload>()
             .add_event::<ChunkUnloaded>()
             .add_event::<RequestDynamicSpawn>()

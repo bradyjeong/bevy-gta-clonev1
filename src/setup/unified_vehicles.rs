@@ -149,13 +149,13 @@ fn setup_starter_vehicles_unified(
         )).id();
         
         // Add car body as child entity
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
-            MeshMaterial3d(materials.add(color)),
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            ChildOf(vehicle_entity),
-            InheritedVisibility::VISIBLE,
-        ));
+        commands.entity(vehicle_entity).with_children(|parent| {
+            parent.spawn((
+                Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
+                MeshMaterial3d(materials.add(color)),
+                Transform::from_xyz(0.0, 0.0, 0.0),
+            ));
+        });
         
         // Use spawn validator for safe positioning
         if let Some(safe_position) = SpawnValidator::spawn_entity_safely(
@@ -245,30 +245,29 @@ fn setup_supercar_unified(
         Name::new("BugattiSupercar"),
     )).id();
     
-    // Supercar body with premium materials
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(2.0, 1.0, 4.5))),
-        MeshMaterial3d(materials.add(color_scheme.get_material())),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        ChildOf(supercar_entity),
-        InheritedVisibility::VISIBLE,
-    ));
-    
-    // Add carbon fiber accents
-    for side in [-1.0, 1.0] {
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(0.05, 0.6, 3.0))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.15, 0.15, 0.15), // Carbon fiber black
-                metallic: 0.9,
-                perceptual_roughness: 0.1,
-                ..default()
-            })),
-            Transform::from_xyz(side * 1.0, 0.0, 0.0),
-            ChildOf(supercar_entity),
-            InheritedVisibility::VISIBLE,
+    // Add supercar body and accents as children
+    commands.entity(supercar_entity).with_children(|parent| {
+        // Supercar body with premium materials
+        parent.spawn((
+            Mesh3d(meshes.add(Cuboid::new(2.0, 1.0, 4.5))),
+            MeshMaterial3d(materials.add(color_scheme.get_material())),
+            Transform::from_xyz(0.0, 0.0, 0.0),
         ));
-    }
+        
+        // Add carbon fiber accents
+        for side in [-1.0, 1.0] {
+            parent.spawn((
+                Mesh3d(meshes.add(Cuboid::new(0.05, 0.6, 3.0))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.15, 0.15, 0.15), // Carbon fiber black
+                    metallic: 0.9,
+                    perceptual_roughness: 0.1,
+                    ..default()
+                })),
+                Transform::from_xyz(side * 1.0, 0.0, 0.0),
+            ));
+        }
+    });
     
     // Register with spawn validator
     if let Some(safe_position) = SpawnValidator::spawn_entity_safely(
@@ -378,18 +377,18 @@ fn setup_luxury_cars_unified(
         )).id();
         
         // Add luxury car body with premium materials
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: color,
-                metallic: 0.8,
-                perceptual_roughness: 0.1,
-                ..default()
-            })),
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            ChildOf(vehicle_entity),
-            InheritedVisibility::VISIBLE,
-        ));
+        commands.entity(vehicle_entity).with_children(|parent| {
+            parent.spawn((
+                Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: color,
+                    metallic: 0.8,
+                    perceptual_roughness: 0.1,
+                    ..default()
+                })),
+                Transform::from_xyz(0.0, 0.0, 0.0),
+            ));
+        });
         
         // Use spawn validator for safe positioning
         if let Some(safe_position) = SpawnValidator::spawn_entity_safely(

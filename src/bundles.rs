@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::services::distance_cache::MovementTracker;
-use crate::systems::world::unified_world::UnifiedChunkEntity;
+use crate::world::chunk_data::UnifiedChunkEntity;
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 /// Bundle for entities that need to be visible and inherit visibility from parents

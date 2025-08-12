@@ -9,6 +9,7 @@ pub mod world;
 pub mod distance_events;
 pub mod ground_events;
 pub mod player_events;
+pub mod cross_plugin_events;
 mod size_verification;
 
 #[cfg(feature = "debug-ui")]
@@ -23,8 +24,16 @@ pub use world::{
 
 // Re-export service coordination events
 pub use distance_events::*;
-pub use ground_events::*;
+pub use ground_events::{
+    GroundRequestId,
+    RequestGroundHeight,
+    GroundHeightResult,
+    RequestSpawnPositionValidation,
+    SpawnPositionValidationResult,
+    // Exclude SurfaceType re-export to avoid ambiguity with cross_plugin_events
+};
 pub use player_events::*;
+pub use cross_plugin_events::*;
 
 #[cfg(feature = "debug-ui")]
 pub use debug_instrumentation::*;

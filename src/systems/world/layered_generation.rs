@@ -1,14 +1,15 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::GlobalRng;
-use crate::bundles::VisibleChildBundle;
-use crate::systems::world::unified_world::{
-    UnifiedChunkEntity, ContentLayer, ChunkCoord,
-    UNIFIED_CHUNK_SIZE,
-};
-use crate::world::chunk_tracker::{ChunkProgress, ChunkCoord as V2ChunkCoord, ChunkTables};
+
+use crate::world::chunk_coord::ChunkCoord;
+use crate::world::chunk_data::{UnifiedChunkEntity, ContentLayer};
+use crate::world::constants::UNIFIED_CHUNK_SIZE;
+use crate::world::chunk_tracker::{ChunkProgress, ChunkTables};
+use crate::world::chunk_coord::ChunkCoord as V2ChunkCoord;
 use crate::world::placement_grid::PlacementGrid;
 use crate::world::road_network::{RoadNetwork, RoadType};
+use crate::events::world::chunk_events::{ChunkFinishedLoading, RequestChunkLoad};
 
 // UNIFIED Y-COORDINATE SYSTEM (prevents z-fighting):
 // - Terrain:      y = -0.15  (15cm below ground)
@@ -26,12 +27,21 @@ use crate::world::road_network::{RoadNetwork, RoadType};
 pub fn layered_generation_coordinator(
     tables: Res<ChunkTables>,
     mut progress: ResMut<ChunkProgress>,
+    mut finished_writer: EventWriter<ChunkFinishedLoading>,
     time: Res<Time>,
+    mut load_reader: EventReader<RequestChunkLoad>,
 ) {
     let current_time = time.elapsed_secs();
     
+    // Also process any new chunk load requests
+    for request in load_reader.read() {
+        debug!("Processing RequestChunkLoad for chunk {:?}", request.coord);
+    }
+    
     // Process chunks that are in loading state
     let mut chunks_to_update = Vec::new();
+    
+    debug!("Checking {} chunks in loading state", tables.loading.len());
     
     for (chunk_coord, _) in &tables.loading {
         let last_update = progress.get_last_update(*chunk_coord);
@@ -40,12 +50,13 @@ pub fn layered_generation_coordinator(
         // PERFORMANCE: Increased from 0.1 to 0.2 seconds to reduce generation frequency
         if current_time - last_update > 0.2 {
             chunks_to_update.push(*chunk_coord);
+            debug!("Will update chunk {:?} (last update: {}, current: {})", chunk_coord, last_update, current_time);
         }
     }
     
     // Update chunk generation progress
     for coord in chunks_to_update {
-        advance_chunk_generation(coord, current_time, &mut progress);
+        advance_chunk_generation(coord, current_time, &mut progress, &mut finished_writer);
     }
 }
 
@@ -53,6 +64,7 @@ fn advance_chunk_generation(
     coord: V2ChunkCoord,
     current_time: f32,
     progress: &mut ChunkProgress,
+    finished_writer: &mut EventWriter<ChunkFinishedLoading>,
 ) {
     // Update timing in v2 progress
     progress.last_update.insert(coord, current_time);
@@ -75,6 +87,16 @@ fn advance_chunk_generation(
         Some(ContentLayer::Vegetation)
     } else {
         // All layers complete - chunk generation finished
+        // Emit event to transition chunk state from Loading to Loaded
+        let chunk_coord = crate::events::world::chunk_events::ChunkCoord::new(coord.x, coord.z);
+        
+        // Calculate LOD based on chunk distance (assuming default distance for now)
+        // In production, you'd track the actual distance from player
+        let lod_level = 0; // Default LOD for newly loaded chunks
+        
+        finished_writer.write(ChunkFinishedLoading::new(chunk_coord, lod_level));
+        debug!("Chunk generation complete for {:?}, emitting ChunkFinishedLoading", coord);
+        
         None
     };
 
@@ -101,7 +123,12 @@ pub fn road_layer_system(
         })
         .collect();
     
+    if !chunks_to_process.is_empty() {
+        debug!("Processing {} chunks for road generation", chunks_to_process.len());
+    }
+    
     for coord in chunks_to_process {
+        debug!("Generating roads for chunk {:?}", coord);
         generate_roads_for_chunk(&mut commands, coord, &mut meshes, &mut materials, &mut progress, &mut v2_grid, &mut v2_roads);
     }
 }
@@ -196,8 +223,8 @@ fn spawn_unified_road_entity_v2(
         RoadEntity { road_id: node_id as u32 },
         Transform::from_translation(position),
         GlobalTransform::default(),
-        Visibility::default(),
-        InheritedVisibility::VISIBLE,
+        Visibility::Visible,
+        InheritedVisibility::default(),
         ViewVisibility::default(),
         DynamicContent {
             content_type: ContentType::Road,
@@ -209,13 +236,17 @@ fn spawn_unified_road_entity_v2(
     let road_length = 50.0; // Standard road segment length
     
     let road_mesh = Mesh::from(Plane3d::default().mesh().size(road_width, road_length));
-    commands.spawn((
-        Mesh3d(meshes.add(road_mesh)),
-        MeshMaterial3d(road_material),
-        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)), // Ground level
-        ChildOf(road_entity),
-        VisibleChildBundle::default(),
-    ));
+    commands.entity(road_entity).with_children(|parent| {
+        parent.spawn((
+            Mesh3d(meshes.add(road_mesh)),
+            MeshMaterial3d(road_material),
+            Transform::from_translation(Vec3::ZERO),
+            GlobalTransform::default(),
+            Visibility::Visible,
+            InheritedVisibility::default(),
+            ViewVisibility::default(),
+        ));
+    });
     
     road_entity
 }

@@ -13,7 +13,6 @@
 use bevy::prelude::*;
 use crate::components::ContentType;
 use crate::world::RoadNetwork;
-use crate::systems::world::road_generation::is_on_road_spline;
 
 /// Pure stateless spawn validation functions
 /// 
@@ -44,9 +43,11 @@ impl SpawnValidation {
         }
         
         // Road constraint checks
+        // NOTE: Direct RoadNetwork.is_near_road() is OK here as RoadNetwork is a shared resource.
+        // For cross-plugin coordination, use RequestRoadValidation/RoadValidationResult events.
         if let Some(roads) = road_network {
             let road_tolerance = Self::get_road_tolerance(content_type);
-            let on_road = is_on_road_spline(position, roads, road_tolerance.abs());
+            let on_road = roads.is_near_road(position, road_tolerance.abs());
             
             match content_type {
                 ContentType::Vehicle => {
@@ -106,12 +107,15 @@ impl SpawnValidation {
     /// 
     /// Pure function that wraps road spline checking.
     /// Returns true if position is within tolerance of any road.
+    /// 
+    /// NOTE: Uses RoadNetwork directly as it's a shared resource.
+    /// For cross-plugin event-based validation, use RequestRoadValidation/RoadValidationResult.
     pub fn is_on_road(
         position: Vec3,
         road_network: &RoadNetwork,
         tolerance: f32,
     ) -> bool {
-        is_on_road_spline(position, road_network, tolerance)
+        road_network.is_near_road(position, tolerance)
     }
     
     /// Get ground height at position

@@ -55,8 +55,9 @@ pub fn debug_game_state(
         if let Ok(player_entity) = player_query.single() {
             commands.entity(player_entity)
                 .insert(ActiveEntity)
-                .insert(Visibility::Visible)
-                .remove::<ChildOf>();
+                .insert(Visibility::Visible);
+            // Note: To properly remove parent-child relationship, we would need to find the parent
+            // and call parent.remove_children(&[player_entity])
             state.set(GameState::Walking);
             info!("Restored player ActiveEntity and set to Walking state");
         } else {

@@ -4,9 +4,11 @@ use crate::components::{Car, ActiveEntity};
 use crate::components::ControlState;
 use crate::systems::physics_utils::PhysicsUtilities;
 use crate::config::GameConfig;
+use crate::services::ground_detection::GroundDetectionService;
 
 pub fn car_movement(
     config: Res<GameConfig>,
+    ground_detection: Res<GroundDetectionService>,
     mut car_query: Query<(&mut Velocity, &Transform, &ControlState), (With<Car>, With<ActiveEntity>)>,
     _time: Res<Time>,
 ) {
@@ -51,7 +53,11 @@ pub fn car_movement(
     
     // Apply unified physics safety systems
     PhysicsUtilities::validate_velocity(&mut velocity, &config);
-    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 1.0);
+    
+    // Get terrain height at vehicle position
+    let vehicle_pos_2d = Vec2::new(transform.translation.x, transform.translation.z);
+    let ground_level = ground_detection.get_ground_height_simple(vehicle_pos_2d);
+    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, ground_level + 0.5, 1.0);
     
     // Performance monitoring
     let processing_time = start_time.elapsed().as_millis() as f32;

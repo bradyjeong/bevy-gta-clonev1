@@ -43,9 +43,20 @@ fn check_dir_recursive(dir: &Path, patterns: &[&str], violations: &mut Vec<(std:
                 check_dir_recursive(&path, patterns, violations);
             } else if path.extension().and_then(|s| s.to_str()) == Some("rs") {
                 if let Ok(content) = fs::read_to_string(&path) {
-                    for pattern in patterns {
-                        if content.contains(pattern) {
-                            violations.push((path.clone(), pattern.to_string()));
+                    // Check each line, skipping comments
+                    for line in content.lines() {
+                        let trimmed = line.trim();
+                        // Skip lines that are comments
+                        if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with("*") {
+                            continue;
+                        }
+                        
+                        // Check for patterns in non-comment lines
+                        for pattern in patterns {
+                            if line.contains(pattern) {
+                                violations.push((path.clone(), pattern.to_string()));
+                                break; // Only report once per pattern per file
+                            }
                         }
                     }
                 }

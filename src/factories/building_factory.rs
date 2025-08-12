@@ -74,7 +74,7 @@ impl BuildingsFactory {
             DynamicContentBundle {
                 dynamic_content: DynamicContent { content_type: ContentType::Building },
                 transform: Transform::from_translation(final_position),
-                visibility: Visibility::default(),
+                visibility: Visibility::Visible,
                 inherited_visibility: InheritedVisibility::VISIBLE,
                 view_visibility: ViewVisibility::default(),
                 cullable: UnifiedCullable::building(),

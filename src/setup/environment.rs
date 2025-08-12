@@ -45,44 +45,44 @@ pub fn setup_palm_trees(
             ViewVisibility::default(),
         )).id();
 
-        // Simple trunk - single brown cylinder
-        commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
-            MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
-            Transform::from_xyz(0.0, 4.0, 0.0),
-            ChildOf(palm_entity),
-            VisibleChildBundle::default(),
-        ));
-
-        // Simple fronds - just 4 green rectangles arranged in a cross
-        for i in 0..4 {
-            let angle = (i as f32) * std::f32::consts::PI / 2.0;
-            
-            commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
-                MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
-                Transform::from_xyz(
-                    angle.cos() * 1.2, 
-                    7.5, 
-                    angle.sin() * 1.2
-                ).with_rotation(
-                    Quat::from_rotation_y(angle) * 
-                    Quat::from_rotation_z(-0.2) // Slight droop
-                ),
-                ChildOf(palm_entity),
+        // Spawn all palm tree parts as children
+        commands.entity(palm_entity).with_children(|parent| {
+            // Simple trunk - single brown cylinder
+            parent.spawn((
+                Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
+                MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
+                Transform::from_xyz(0.0, 4.0, 0.0),
                 VisibleChildBundle::default(),
             ));
-        }
 
-        // Simple physics collider for trunk
-        commands.spawn((
-            RigidBody::Fixed,
-            Collider::cylinder(4.0, 0.3),
-            CollisionGroups::new(STATIC_GROUP, Group::ALL),
-            Transform::from_xyz(0.0, 4.0, 0.0),
-            ChildOf(palm_entity),
-            Cullable { max_distance: 200.0, is_culled: false },
-        ));
+            // Simple fronds - just 4 green rectangles arranged in a cross
+            for i in 0..4 {
+                let angle = (i as f32) * std::f32::consts::PI / 2.0;
+                
+                parent.spawn((
+                    Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
+                    MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
+                    Transform::from_xyz(
+                        angle.cos() * 1.2, 
+                        7.5, 
+                        angle.sin() * 1.2
+                    ).with_rotation(
+                        Quat::from_rotation_y(angle) * 
+                        Quat::from_rotation_z(-0.2) // Slight droop
+                    ),
+                    VisibleChildBundle::default(),
+                ));
+            }
+
+            // Simple physics collider for trunk
+            parent.spawn((
+                RigidBody::Fixed,
+                Collider::cylinder(4.0, 0.3),
+                CollisionGroups::new(STATIC_GROUP, Group::ALL),
+                Transform::from_xyz(0.0, 4.0, 0.0),
+                Cullable { max_distance: 200.0, is_culled: false },
+            ));
+        });
     }
 }
 

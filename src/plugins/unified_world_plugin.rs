@@ -10,6 +10,7 @@ use crate::plugins::{
 };
 use crate::factories::initialize_material_factory;
 use crate::world::{ChunkTables, ChunkTracker, PlacementGrid, RoadNetwork, WorldCoordinator};
+use crate::resources::{ChunkManager, StreamingMetrics};
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::events::PlayerChunkChanged;
 use crate::systems::world::{PlayerChunkTracker, track_player_chunk_changes, handle_player_chunk_changed};
@@ -29,7 +30,9 @@ impl Plugin for UnifiedWorldPlugin {
             .init_resource::<WorldCoordinator>()
             .init_resource::<crate::world::chunk_tracker::ChunkProgress>()
             .init_resource::<UnifiedEntityFactory>()
-            .insert_resource(PlayerChunkTracker::new(400.0));
+            .insert_resource(PlayerChunkTracker::new(400.0))
+            .insert_resource(ChunkManager::new(4)) // 4 chunk radius
+            .insert_resource(StreamingMetrics::new(4)); // Max 4 chunks per frame
         
         // Register events and observers for player chunk tracking
         app.add_event::<PlayerChunkChanged>()

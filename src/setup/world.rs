@@ -117,121 +117,114 @@ pub fn setup_basic_world(
     // Register player in spawn registry
     spawn_registry.register_entity(player_entity, Vec3::new(0.0, player_y, 0.0), SpawnableType::Player);
 
-    // Human-like body parts
-    
-    // Torso
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(0.6, 0.8, 0.3))),
-        MeshMaterial3d(materials.add(Color::srgb(0.2, 0.4, 0.8))), // Blue shirt
-        Transform::from_xyz(0.0, 0.6, 0.0),
-        ChildOf(player_entity),
-        PlayerTorso,
-        BodyPart {
-            rest_position: Vec3::new(0.0, 0.6, 0.0),
-            rest_rotation: Quat::IDENTITY,
-            animation_offset: Vec3::ZERO,
-            animation_rotation: Quat::IDENTITY,
-        },
-        VisibleChildBundle::default(),
-    ));
+    // Human-like body parts - spawn as children
+    commands.entity(player_entity).with_children(|parent| {
+        // Torso
+        parent.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.6, 0.8, 0.3))),
+            MeshMaterial3d(materials.add(Color::srgb(0.2, 0.4, 0.8))), // Blue shirt
+            Transform::from_xyz(0.0, 0.6, 0.0),
+            PlayerTorso,
+            BodyPart {
+                rest_position: Vec3::new(0.0, 0.6, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
 
-    // Head
-    commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(0.2))),
-        MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
-        Transform::from_xyz(0.0, 1.2, 0.0),
-        ChildOf(player_entity),
-        PlayerHead,
-        BodyPart {
-            rest_position: Vec3::new(0.0, 1.2, 0.0),
-            rest_rotation: Quat::IDENTITY,
-            animation_offset: Vec3::ZERO,
-            animation_rotation: Quat::IDENTITY,
-        },
-        VisibleChildBundle::default(),
-    ));
+        // Head
+        parent.spawn((
+            Mesh3d(meshes.add(Sphere::new(0.2))),
+            MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
+            Transform::from_xyz(0.0, 1.2, 0.0),
+            PlayerHead,
+            BodyPart {
+                rest_position: Vec3::new(0.0, 1.2, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
 
-    // Left Arm
-    commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
-        MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
-        Transform::from_xyz(-0.4, 0.7, 0.0),
-        ChildOf(player_entity),
-        PlayerLeftArm,
-        BodyPart {
-            rest_position: Vec3::new(-0.4, 0.7, 0.0),
-            rest_rotation: Quat::IDENTITY,
-            animation_offset: Vec3::ZERO,
-            animation_rotation: Quat::IDENTITY,
-        },
-        VisibleChildBundle::default(),
-    ));
+        // Left Arm
+        parent.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
+            MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
+            Transform::from_xyz(-0.4, 0.7, 0.0),
+            PlayerLeftArm,
+            BodyPart {
+                rest_position: Vec3::new(-0.4, 0.7, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
 
-    // Right Arm
-    commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
-        MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
-        Transform::from_xyz(0.4, 0.7, 0.0),
-        ChildOf(player_entity),
-        PlayerRightArm,
-        BodyPart {
-            rest_position: Vec3::new(0.4, 0.7, 0.0),
-            rest_rotation: Quat::IDENTITY,
-            animation_offset: Vec3::ZERO,
-            animation_rotation: Quat::IDENTITY,
-        },
-        VisibleChildBundle::default(),
-    ));
+        // Right Arm
+        parent.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
+            MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
+            Transform::from_xyz(0.4, 0.7, 0.0),
+            PlayerRightArm,
+            BodyPart {
+                rest_position: Vec3::new(0.4, 0.7, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
 
-    // Left Leg
-    commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.6))), // Dark blue pants
-        Transform::from_xyz(-0.15, 0.0, 0.0),
-        ChildOf(player_entity),
-        PlayerLeftLeg,
-        BodyPart {
-            rest_position: Vec3::new(-0.15, 0.0, 0.0),
-            rest_rotation: Quat::IDENTITY,
-            animation_offset: Vec3::ZERO,
-            animation_rotation: Quat::IDENTITY,
-        },
-        VisibleChildBundle::default(),
-    ));
+        // Left Leg
+        parent.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
+            MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.6))), // Dark blue pants
+            Transform::from_xyz(-0.15, 0.0, 0.0),
+            PlayerLeftLeg,
+            BodyPart {
+                rest_position: Vec3::new(-0.15, 0.0, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
 
-    // Right Leg
-    commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
-        MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.6))), // Dark blue pants
-        Transform::from_xyz(0.15, 0.0, 0.0),
-        ChildOf(player_entity),
-        PlayerRightLeg,
-        BodyPart {
-            rest_position: Vec3::new(0.15, 0.0, 0.0),
-            rest_rotation: Quat::IDENTITY,
-            animation_offset: Vec3::ZERO,
-            animation_rotation: Quat::IDENTITY,
-        },
-        VisibleChildBundle::default(),
-    ));
+        // Right Leg
+        parent.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
+            MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.6))), // Dark blue pants
+            Transform::from_xyz(0.15, 0.0, 0.0),
+            PlayerRightLeg,
+            BodyPart {
+                rest_position: Vec3::new(0.15, 0.0, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
 
-    // Feet (Left)
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
-        MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))), // Black shoes
-        Transform::from_xyz(-0.15, -0.4, 0.1),
-        ChildOf(player_entity),
-        VisibleChildBundle::default(),
-    ));
+        // Feet (Left)
+        parent.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
+            MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))), // Black shoes
+            Transform::from_xyz(-0.15, -0.4, 0.1),
+            VisibleChildBundle::default(),
+        ));
 
-    // Feet (Right)
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
-        MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))), // Black shoes
-        Transform::from_xyz(0.15, -0.4, 0.1),
-        ChildOf(player_entity),
-        VisibleChildBundle::default(),
-    ));
+        // Feet (Right)
+        parent.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
+            MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))), // Black shoes
+            Transform::from_xyz(0.15, -0.4, 0.1),
+            VisibleChildBundle::default(),
+        ));
+    });
 
     // Waypoint UI - DISABLED to clean up top right corner
     /*

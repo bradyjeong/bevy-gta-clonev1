@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::ContentType;
 use crate::world::RoadNetwork;
+// Direct import allowed - factories and road_generation are both in UnifiedWorldPlugin
 use crate::systems::world::road_generation::is_on_road_spline;
 
 /// Shared ground height calculation with caching

@@ -147,79 +147,77 @@ fn spawn_helicopter_unified(
         MovementTracker::new(position, 50.0),
     )).id();
     
-    // Helicopter body - Realistic shape using capsule
-    commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.8, 4.0))),  // Helicopter fuselage shape
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.25, 0.28, 0.3), // Military gunmetal
-            metallic: 0.8,
-            perceptual_roughness: 0.4,
-            reflectance: 0.3,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        ChildOf(helicopter_entity),
-    ));
-    
-    // Cockpit bubble - rounded cockpit
-    commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(0.8))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(0.05, 0.05, 0.08, 0.15),
-            metallic: 0.1,
-            perceptual_roughness: 0.1,
-            alpha_mode: AlphaMode::Blend,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
-        ChildOf(helicopter_entity),
-    ));
-    
-    // Tail boom - tapered cylinder
-    commands.spawn((
-        Mesh3d(meshes.add(Cylinder::new(0.25, 3.5))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.25, 0.28, 0.3),
-            metallic: 0.8,
-            perceptual_roughness: 0.4,
-            reflectance: 0.3,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.0, 4.5),
-        ChildOf(helicopter_entity),
-    ));
-    
-    // Main rotor blades - thin and aerodynamic
-    for i in 0..4 {
-        let angle = i as f32 * std::f32::consts::PI / 2.0;
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(8.0, 0.02, 0.3))),  // Long thin blade
+    // Spawn all helicopter parts as children
+    commands.entity(helicopter_entity).with_children(|parent| {
+        // Helicopter body - Realistic shape using capsule
+        parent.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.8, 4.0))),  // Helicopter fuselage shape
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.08, 0.08, 0.08),
-                metallic: 0.2,
-                perceptual_roughness: 0.9,
+                base_color: Color::srgb(0.25, 0.28, 0.3), // Military gunmetal
+                metallic: 0.8,
+                perceptual_roughness: 0.4,
+                reflectance: 0.3,
                 ..default()
             })),
-            Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
-            ChildOf(helicopter_entity),
-            MainRotor,
+            Transform::from_xyz(0.0, 0.0, 0.0),
         ));
-    }
-    
-    // Landing skids - long narrow cylinders
-    for x in [-0.8, 0.8] {
-        commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(0.04, 3.0))),
+        
+        // Cockpit bubble - rounded cockpit
+        parent.spawn((
+            Mesh3d(meshes.add(Sphere::new(0.8))),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.35, 0.35, 0.35),
-                metallic: 0.7,
-                perceptual_roughness: 0.6,
+                base_color: Color::srgba(0.05, 0.05, 0.08, 0.15),
+                metallic: 0.1,
+                perceptual_roughness: 0.1,
+                alpha_mode: AlphaMode::Blend,
                 ..default()
             })),
-            Transform::from_xyz(x, -1.0, 0.0).with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
-            ChildOf(helicopter_entity),
+            Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
         ));
-    }
+        
+        // Tail boom - tapered cylinder
+        parent.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.25, 3.5))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.25, 0.28, 0.3),
+                metallic: 0.8,
+                perceptual_roughness: 0.4,
+                reflectance: 0.3,
+                ..default()
+            })),
+            Transform::from_xyz(0.0, 0.0, 4.5),
+        ));
+        
+        // Main rotor blades - thin and aerodynamic
+        for i in 0..4 {
+            let angle = i as f32 * std::f32::consts::PI / 2.0;
+            parent.spawn((
+                Mesh3d(meshes.add(Cuboid::new(8.0, 0.02, 0.3))),  // Long thin blade
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.08, 0.08, 0.08),
+                    metallic: 0.2,
+                    perceptual_roughness: 0.9,
+                    ..default()
+                })),
+                Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
+                MainRotor,
+            ));
+        }
+        
+        // Landing skids - long narrow cylinders
+        for x in [-0.8, 0.8] {
+            parent.spawn((
+                Mesh3d(meshes.add(Cylinder::new(0.04, 3.0))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.35, 0.35, 0.35),
+                    metallic: 0.7,
+                    perceptual_roughness: 0.6,
+                    ..default()
+                })),
+                Transform::from_xyz(x, -1.0, 0.0).with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+            ));
+        }
+    });
     
     helicopter_entity
 }
@@ -265,69 +263,66 @@ fn spawn_f16_unified(
         MovementTracker::new(position, 50.0),
     )).id();
     
-    // F16 main fuselage - using dedicated F16 mesh factory
-    let fuselage_mesh = MeshFactory::create_f16_body(meshes);
-    let fuselage_material = MaterialFactory::create_f16_fuselage_material(materials);
-    
-    commands.spawn((
-        Mesh3d(fuselage_mesh),
-        MeshMaterial3d(fuselage_material),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        ChildOf(f16_entity),
-    ));
-    
-    // F16 wings (left and right)
-    let wing_mesh = MeshFactory::create_f16_wing(meshes);
-    let wing_material = MaterialFactory::create_f16_fuselage_material(materials);
-    
-    // Left wing (positioned relative to new Z-axis fuselage)
-    commands.spawn((
-        Mesh3d(wing_mesh.clone()),
-        MeshMaterial3d(wing_material.clone()),
-        Transform::from_xyz(-5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(0.2)), // Swept wing
-        ChildOf(f16_entity),
-    ));
-    
-    // Right wing (positioned relative to new Z-axis fuselage)
-    commands.spawn((
-        Mesh3d(wing_mesh),
-        MeshMaterial3d(wing_material),
-        Transform::from_xyz(5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(-0.2)), // Swept wing
-        ChildOf(f16_entity),
-    ));
-    
-    // F16 canopy (bubble cockpit)
-    let canopy_mesh = MeshFactory::create_f16_canopy(meshes);
-    let canopy_material = MaterialFactory::create_f16_canopy_material(materials);
-    
-    commands.spawn((
-        Mesh3d(canopy_mesh),
-        MeshMaterial3d(canopy_material),
-        Transform::from_xyz(0.0, 0.8, 3.0), // Forward position along +Z, raised
-        ChildOf(f16_entity),
-    ));
-    
-    // F16 vertical tail
-    let tail_mesh = MeshFactory::create_f16_vertical_tail(meshes);
-    let tail_material = MaterialFactory::create_f16_fuselage_material(materials);
-    
-    commands.spawn((
-        Mesh3d(tail_mesh),
-        MeshMaterial3d(tail_material),
-        Transform::from_xyz(0.0, 1.0, -5.0), // Rear position along -Z, raised
-        ChildOf(f16_entity),
-    ));
-    
-    // Engine nozzle for visual effect
-    let engine_mesh = meshes.add(Cylinder::new(0.8, 2.0));
-    let engine_material = MaterialFactory::create_f16_engine_material(materials);
-    
-    commands.spawn((
-        Mesh3d(engine_mesh),
-        MeshMaterial3d(engine_material),
-        Transform::from_xyz(0.0, 0.0, -8.0), // Rear nozzle along -Z
-        ChildOf(f16_entity),
-    ));
+    // Spawn all F16 parts as children
+    commands.entity(f16_entity).with_children(|parent| {
+        // F16 main fuselage - using dedicated F16 mesh factory
+        let fuselage_mesh = MeshFactory::create_f16_body(meshes);
+        let fuselage_material = MaterialFactory::create_f16_fuselage_material(materials);
+        
+        parent.spawn((
+            Mesh3d(fuselage_mesh),
+            MeshMaterial3d(fuselage_material),
+            Transform::from_xyz(0.0, 0.0, 0.0),
+        ));
+        
+        // F16 wings (left and right)
+        let wing_mesh = MeshFactory::create_f16_wing(meshes);
+        let wing_material = MaterialFactory::create_f16_fuselage_material(materials);
+        
+        // Left wing (positioned relative to new Z-axis fuselage)
+        parent.spawn((
+            Mesh3d(wing_mesh.clone()),
+            MeshMaterial3d(wing_material.clone()),
+            Transform::from_xyz(-5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(0.2)), // Swept wing
+        ));
+        
+        // Right wing (positioned relative to new Z-axis fuselage)
+        parent.spawn((
+            Mesh3d(wing_mesh),
+            MeshMaterial3d(wing_material),
+            Transform::from_xyz(5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(-0.2)), // Swept wing
+        ));
+        
+        // F16 canopy (bubble cockpit)
+        let canopy_mesh = MeshFactory::create_f16_canopy(meshes);
+        let canopy_material = MaterialFactory::create_f16_canopy_material(materials);
+        
+        parent.spawn((
+            Mesh3d(canopy_mesh),
+            MeshMaterial3d(canopy_material),
+            Transform::from_xyz(0.0, 0.8, 3.0), // Forward position along +Z, raised
+        ));
+        
+        // F16 vertical tail
+        let tail_mesh = MeshFactory::create_f16_vertical_tail(meshes);
+        let tail_material = MaterialFactory::create_f16_fuselage_material(materials);
+        
+        parent.spawn((
+            Mesh3d(tail_mesh),
+            MeshMaterial3d(tail_material),
+            Transform::from_xyz(0.0, 1.0, -5.0), // Rear position along -Z, raised
+        ));
+        
+        // Engine nozzle for visual effect
+        let engine_mesh = meshes.add(Cylinder::new(0.8, 2.0));
+        let engine_material = MaterialFactory::create_f16_engine_material(materials);
+        
+        parent.spawn((
+            Mesh3d(engine_mesh),
+            MeshMaterial3d(engine_material),
+            Transform::from_xyz(0.0, 0.0, -8.0), // Rear nozzle along -Z
+        ));
+    });
     
     f16_entity
 }

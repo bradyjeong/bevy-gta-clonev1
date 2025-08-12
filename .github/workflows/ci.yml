@@ -11,9 +11,49 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
+  # Architectural compliance checks
+  architecture-guard:
+    name: Architecture Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check for forbidden patterns
+        run: |
+          echo "Checking for architectural violations..."
+          
+          # Check for thread_local usage
+          if grep -r "thread_local!" --include="*.rs" src/; then
+            echo "❌ ERROR: Found thread_local! usage - violates single-threaded architecture"
+            exit 1
+          fi
+          
+          # Check for lazy_static usage
+          if grep -r "lazy_static!" --include="*.rs" src/; then
+            echo "❌ ERROR: Found lazy_static! usage - use Resources instead"
+            exit 1
+          fi
+          
+          # Check for RefCell usage (excluding test code)
+          if grep -r "RefCell" --include="*.rs" --exclude-dir=tests src/ | grep -v "^src/tests"; then
+            echo "❌ ERROR: Found RefCell usage - violates ECS patterns"
+            exit 1
+          fi
+          
+          # Check for cross-plugin imports (simplified check)
+          # This checks for patterns like "use crate::systems::{other_module}::"
+          # where other_module is not the current module
+          if grep -r "use crate::systems::" --include="*.rs" src/plugins/ | grep -v "use crate::systems::events"; then
+            echo "⚠️  WARNING: Potential cross-plugin import detected - verify it's not a violation"
+            grep -r "use crate::systems::" --include="*.rs" src/plugins/ | grep -v "use crate::systems::events" || true
+          fi
+          
+          echo "✅ Architecture compliance check passed"
+
   test:
     name: Test Suite
     runs-on: ${{ matrix.os }}
+    needs: architecture-guard
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -72,6 +112,7 @@ jobs:
   performance:
     name: Performance Tests
     runs-on: ubuntu-latest
+    needs: architecture-guard
     steps:
       - uses: actions/checkout@v3
       
@@ -98,6 +139,7 @@ jobs:
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
+    needs: architecture-guard
     steps:
       - uses: actions/checkout@v3
       
@@ -126,6 +168,7 @@ jobs:
   build:
     name: Build Check
     runs-on: ${{ matrix.os }}
+    needs: architecture-guard
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]

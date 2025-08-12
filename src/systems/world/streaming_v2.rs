@@ -2,8 +2,9 @@ use bevy::prelude::*;
 use crate::components::*;
 use crate::events::world::chunk_events::{RequestChunkLoad, RequestChunkUnload, ChunkCoord as EventChunkCoord};
 use crate::world::{ChunkTracker, ChunkTables, PlacementGrid, RoadNetwork, WorldCoordinator};
-use crate::world::chunk_tracker::{ChunkCoord, ChunkState};
-use crate::systems::world::unified_world::{UNIFIED_CHUNK_SIZE, UNIFIED_STREAMING_RADIUS};
+use crate::world::chunk_coord::ChunkCoord;
+use crate::world::chunk_data::ChunkState;
+use crate::world::constants::{UNIFIED_CHUNK_SIZE, UNIFIED_STREAMING_RADIUS};
 
 /// V2 unified world streaming system using decomposed resources
 pub fn unified_world_streaming_system_v2(
@@ -43,6 +44,11 @@ pub fn unified_world_streaming_system_v2(
     // Load new chunks
     let streaming_radius_chunks = (coordinator.streaming_radius / UNIFIED_CHUNK_SIZE).ceil() as i32;
     let chunks_to_load = get_chunks_to_load_v2(&mut tracker, &mut tables, active_pos, streaming_radius_chunks);
+    
+    if !chunks_to_load.is_empty() {
+        debug!("Loading {} new chunks", chunks_to_load.len());
+    }
+    
     for coord in chunks_to_load {
         if chunks_loaded_this_frame >= max_chunks_per_frame {
             break;
@@ -61,7 +67,7 @@ fn cleanup_distant_chunks_v2(tracker: &mut ChunkTracker, tables: &mut ChunkTable
     for coord in loaded_chunks {
         let distance = active_pos.distance(coord.to_world_pos());
         
-        if distance > UNIFIED_STREAMING_RADIUS + UNIFIED_CHUNK_SIZE {
+        if distance > UNIFIED_STREAMING_RADIUS as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE {
             // Mark for unloading if not already marked
             if !tables.unloading.contains_key(&coord) {
                 tables.unloading.insert(coord, ChunkState::Unloading);
@@ -71,7 +77,7 @@ fn cleanup_distant_chunks_v2(tracker: &mut ChunkTracker, tables: &mut ChunkTable
     }
     
     // Update tracker's loaded_chunks array
-    tracker.cleanup_distant_chunks(ChunkCoord::from_world_pos(active_pos), (UNIFIED_STREAMING_RADIUS / UNIFIED_CHUNK_SIZE).ceil() as i16);
+    tracker.cleanup_distant_chunks(ChunkCoord::from_world_pos(active_pos), UNIFIED_STREAMING_RADIUS as i16);
     
     to_unload
 }
@@ -90,7 +96,7 @@ fn get_chunks_to_load_v2(
             let coord = ChunkCoord::new(active_chunk.x + dx, active_chunk.z + dz);
             let distance = active_pos.distance(coord.to_world_pos());
             
-            if distance <= UNIFIED_STREAMING_RADIUS {
+            if distance <= UNIFIED_STREAMING_RADIUS as f32 * UNIFIED_CHUNK_SIZE {
                 // Check if chunk is not already loaded or loading
                 if !tables.loaded.contains_key(&coord) && !tables.loading.contains_key(&coord) {
                     tables.loading.insert(coord, ChunkState::Loading);

@@ -3,6 +3,7 @@ use bevy_rapier3d::prelude::*;
 use crate::components::{ControlState, ActiveEntity, RealisticVehicle};
 use crate::systems::physics_utils::PhysicsUtilities;
 use crate::config::GameConfig;
+use crate::services::ground_detection::GroundDetectionService;
 
 /// Simple vehicle physics system following AGENT.md simplicity principles
 /// 
@@ -20,6 +21,7 @@ use crate::config::GameConfig;
 pub fn simple_vehicle_physics_system(
     time: Res<Time>,
     config: Res<GameConfig>,
+    ground_detection: Res<GroundDetectionService>,
     mut query: Query<
         (&mut Velocity, &Transform, &ControlState, &mut RealisticVehicle),
         With<ActiveEntity>
@@ -97,7 +99,11 @@ pub fn simple_vehicle_physics_system(
         
         // STEP 4: Apply safety systems using unified physics utilities
         PhysicsUtilities::validate_velocity(&mut velocity, &config);
-        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.1, 2.0);
+        
+        // Get terrain height at vehicle position for proper ground collision
+        let vehicle_pos_2d = Vec2::new(transform.translation.x, transform.translation.z);
+        let ground_level = ground_detection.get_ground_height_simple(vehicle_pos_2d);
+        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, ground_level + 0.5, 2.0);
         
         // Update vehicle state
         vehicle.physics_enabled = true;

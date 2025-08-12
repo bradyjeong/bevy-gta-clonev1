@@ -11,6 +11,8 @@ use crate::systems::world::{
     handle_validation_to_spawn_bridge,
 };
 
+use crate::systems::world::streaming_system::handle_chunk_finished_loading;
+
 use crate::systems::world::streaming_v2::{
     unified_world_streaming_system_v2,
     update_chunk_states_v2,
@@ -77,6 +79,7 @@ impl Plugin for WorldStreamingPlugin {
                 unified_world_streaming_system_v2,
                 update_chunk_states_v2,
                 layered_generation_coordinator,
+                handle_chunk_finished_loading.after(layered_generation_coordinator),
                 
                 // Observer-based dynamic content spawning (replaces timer-based system)
                 // Content spawning now handled reactively via on_chunk_loaded observer

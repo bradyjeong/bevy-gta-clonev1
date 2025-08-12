@@ -3,7 +3,6 @@ use std::collections::{HashMap, VecDeque, BTreeMap};
 use crate::components::*;
 use crate::config::GameConfig;
 use crate::systems::world::road_network::RoadNetwork;
-use crate::systems::world::road_generation::is_on_road_spline;
 
 /// Revolutionary infinite world streaming system
 /// Scales from 10km² to 1,000km² seamlessly with hierarchical LOD management
@@ -473,6 +472,10 @@ pub struct WorldMemoryUsage {
 }
 
 /// Main infinite world streaming system
+// LEGACY SYSTEM - Not currently registered in any plugin.
+// For active world streaming, see WorldStreamingPlugin which uses V2 systems.
+// This system violates architectural boundaries by directly calling road validation.
+// Active systems should use RequestRoadValidation/RoadValidationResult events.
 pub fn infinite_world_streaming_system(
     mut commands: Commands,
     mut world_manager: ResMut<WorldLODManager>,
@@ -565,8 +568,10 @@ fn initiate_chunk_generation(
                     0.0,
                 );
                 
-                // Only spawn building if not on road
-                if is_on_road_spline(building_pos, road_network, 25.0) {
+                // ARCHITECTURAL NOTE: Direct road checking violates plugin boundaries.
+                // Active systems should use RequestRoadValidation/RoadValidationResult events instead.
+                // This legacy code uses direct access as it's not actively registered in any plugin.
+                if road_network.is_near_road(building_pos, 25.0) {
                     println!("DEBUG: INFINITE_STREAMING - Skipping building at {:?} - on road", building_pos);
                 } else {
                     println!("DEBUG: INFINITE_STREAMING - Spawning building at {:?}", building_pos);

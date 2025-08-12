@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 use std::mem::size_of;
+use crate::world::chunk_coord::ChunkCoord;
+use crate::world::chunk_data::ChunkState;
 
 /// Event requesting a chunk to be loaded
 #[derive(Event)]
@@ -53,42 +55,7 @@ pub struct ChunkTables {
     pub distances: HashMap<ChunkCoord, f32>,
 }
 
-/// Chunk coordinate identifier (8 bytes)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ChunkCoord {
-    pub x: i32,
-    pub z: i32,
-}
 
-impl ChunkCoord {
-    pub fn new(x: i32, z: i32) -> Self {
-        Self { x, z }
-    }
-    
-    pub fn from_world_pos(world_pos: Vec3) -> Self {
-        Self {
-            x: (world_pos.x / 200.0).floor() as i32,  // Using UNIFIED_CHUNK_SIZE
-            z: (world_pos.z / 200.0).floor() as i32,
-        }
-    }
-    
-    pub fn to_world_pos(&self) -> Vec3 {
-        Vec3::new(
-            self.x as f32 * 200.0 + 100.0,  // Using UNIFIED_CHUNK_SIZE
-            0.0,
-            self.z as f32 * 200.0 + 100.0,
-        )
-    }
-}
-
-/// Chunk loading state (1 byte enum)
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum ChunkState {
-    Loading,
-    Loaded,
-    Unloading,
-    Unloaded,
-}
 
 impl Default for ChunkTracker {
     fn default() -> Self {
@@ -288,13 +255,13 @@ pub struct ChunkProgress {
 }
 
 impl ChunkProgress {
-    pub fn mark_layer(&mut self, coord: ChunkCoord, layer: crate::systems::world::unified_world::ContentLayer) {
+    pub fn mark_layer(&mut self, coord: ChunkCoord, layer: crate::world::chunk_data::ContentLayer) {
         match layer {
-            crate::systems::world::unified_world::ContentLayer::Roads => { self.roads_generated.insert(coord, true); }
-            crate::systems::world::unified_world::ContentLayer::Buildings => { self.buildings_generated.insert(coord, true); }
-            crate::systems::world::unified_world::ContentLayer::Vehicles => { self.vehicles_generated.insert(coord, true); }
-            crate::systems::world::unified_world::ContentLayer::Vegetation => { self.vegetation_generated.insert(coord, true); }
-            crate::systems::world::unified_world::ContentLayer::NPCs => {}
+            crate::world::chunk_data::ContentLayer::Roads => { self.roads_generated.insert(coord, true); }
+            crate::world::chunk_data::ContentLayer::Buildings => { self.buildings_generated.insert(coord, true); }
+            crate::world::chunk_data::ContentLayer::Vehicles => { self.vehicles_generated.insert(coord, true); }
+            crate::world::chunk_data::ContentLayer::Vegetation => { self.vegetation_generated.insert(coord, true); }
+            crate::world::chunk_data::ContentLayer::NPCs => {}
         }
     }
     pub fn get_flags(&self, coord: ChunkCoord) -> (bool,bool,bool,bool) {

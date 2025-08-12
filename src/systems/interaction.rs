@@ -40,7 +40,7 @@ pub fn interaction_system(
                         .insert(Visibility::Hidden);
                     
                     // Make player a child of the car
-                    commands.entity(player_entity).insert(ChildOf(car_entity));
+                    commands.entity(car_entity).add_child(player_entity);
                     
                     // Add ActiveEntity and control components to car
                     let mut car_commands = commands.entity(car_entity);
@@ -81,7 +81,7 @@ pub fn interaction_system(
                         .insert(Visibility::Hidden);
                     
                     // Make player a child of the helicopter
-                    commands.entity(player_entity).insert(ChildOf(helicopter_entity));
+                    commands.entity(helicopter_entity).add_child(player_entity);
                     
                     // Add ActiveEntity and control components to helicopter
                     let mut helicopter_commands = commands.entity(helicopter_entity);
@@ -122,7 +122,7 @@ pub fn interaction_system(
                         .insert(Visibility::Hidden);
                     
                     // Make player a child of the F16
-                    commands.entity(player_entity).insert(ChildOf(f16_entity));
+                    commands.entity(f16_entity).add_child(player_entity);
                     
                     // Add ActiveEntity and control components to F16
                     let mut f16_commands = commands.entity(f16_entity);
@@ -173,9 +173,9 @@ pub fn interaction_system(
                         let exit_position = car_transform.translation + car_transform.right() * 3.0;
                         
                         // Remove the child relationship and position the player in world space
+                        commands.entity(active_car).remove_children(&[player_entity]);
                         let mut player_commands = commands.entity(player_entity);
                         player_commands
-                            .remove::<ChildOf>()
                             .remove::<InCar>()
                             .insert(Transform::from_translation(exit_position).with_rotation(car_transform.rotation))
                             .insert(Velocity::zero())
@@ -227,9 +227,9 @@ pub fn interaction_system(
                         let exit_position = helicopter_transform.translation + helicopter_transform.right() * 4.0 + Vec3::new(0.0, -1.0, 0.0); // Drop to ground level
                         
                         // Remove the child relationship and position the player in world space
+                        commands.entity(active_helicopter).remove_children(&[player_entity]);
                         let mut player_commands = commands.entity(player_entity);
                         player_commands
-                            .remove::<ChildOf>()
                             .remove::<InCar>()
                             .insert(Transform::from_translation(exit_position).with_rotation(helicopter_transform.rotation))
                             .insert(Velocity::zero())
@@ -282,9 +282,9 @@ pub fn interaction_system(
                         let exit_position = f16_transform.translation + f16_transform.right() * 6.0 + Vec3::new(0.0, -2.0, 0.0); // Drop to ground level
                         
                         // Remove the child relationship and position the player in world space
+                        commands.entity(active_f16).remove_children(&[player_entity]);
                         let mut player_commands = commands.entity(player_entity);
                         player_commands
-                            .remove::<ChildOf>()
                             .remove::<InCar>()
                             .insert(Transform::from_translation(exit_position).with_rotation(f16_transform.rotation))
                             .insert(Velocity::zero())

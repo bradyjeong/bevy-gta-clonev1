@@ -6,7 +6,6 @@ use crate::constants::*;
 use crate::resources::GlobalRng;
 
 use crate::world::RoadNetwork;
-use crate::systems::world::road_generation::is_on_road_spline;
 use crate::systems::world::road_network::RoadSpline;
 use std::collections::HashMap;
 
@@ -373,6 +372,9 @@ fn spawn_landmark(
 
 
 
+// LEGACY SYSTEM - This function is part of the legacy map system.
+// For active systems, use event-based validation via RequestRoadValidation/RoadValidationResult events.
+// Direct road checking preserved here for backwards compatibility in unused legacy code.
 fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork, global_rng: &mut GlobalRng) -> ChunkTemplate {
     
     let mut buildings = Vec::new();
@@ -397,8 +399,10 @@ fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork, global_rng:
             coord.y as f32 * CHUNK_SIZE + pos.z,
         );
         
-        // Skip if too close to roads using proper road detection
-        if is_on_road_spline(world_pos, &*road_network, 25.0) {
+        // ARCHITECTURAL NOTE: Direct road checking violates plugin boundaries.
+        // Active systems should use RequestRoadValidation/RoadValidationResult events instead.
+        // This legacy code uses direct access as it's not actively registered in any plugin.
+        if road_network.is_near_road(world_pos, 25.0) {
             println!("DEBUG: MAP_SYSTEM - Skipping building at {:?} - on road", world_pos);
             continue;
         }

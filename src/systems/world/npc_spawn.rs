@@ -4,18 +4,17 @@ use crate::components::{
     NPCCore, NPCType, NPCLOD, Cullable, NPCBehaviorType, NPCAppearance, NPCGender,
     NPC_LOD_CULL_DISTANCE, NPCVisuals
 };
-
+use crate::events::world::chunk_events::ChunkLoaded;
 use crate::config::GameConfig;
-use crate::services::timing_service::{TimingService, EntityTimerType, ManagedTiming};
+use crate::services::timing_service::{EntityTimerType, ManagedTiming};
 use crate::services::ground_detection::GroundDetectionService;
 use rand::prelude::*;
 
-/// Spawn NPCs using the new architecture while maintaining compatibility
-/// This system replaces the old spawn_dynamic_npc function
-/// CONSOLIDATED: Now uses spawn validation from UnifiedEntityFactory
-pub fn spawn_new_npc_system(
+/// Observer-based NPC spawning that responds to chunk loading events
+/// Replaces timer-based polling with reactive spawning per architectural_shift.md §59-63
+pub fn on_npc_spawn_request(
+    trigger: Trigger<ChunkLoaded>,
     mut commands: Commands,
-    timing_service: Res<TimingService>,
     npc_query: Query<Entity, With<NPCCore>>,
     ground_service: Res<GroundDetectionService>,
     _config: Res<GameConfig>,
@@ -25,14 +24,26 @@ pub fn spawn_new_npc_system(
         return;
     }
     
-    // Spawn new NPCs occasionally using unified spawning pipeline
-    if timing_service.current_time % 10.0 < 0.1 {  // REDUCED: From 5.0 to 10.0 seconds
-        let mut rng = thread_rng();
-        
-        // Try to find a valid spawn position using unified validation
+    let chunk_loaded = trigger.event();
+    let chunk_coord = chunk_loaded.coord;
+    let mut rng = thread_rng();
+    
+    // Calculate spawn area based on chunk coordinates
+    let chunk_center_x = (chunk_coord.x as f32) * 200.0 + 100.0;
+    let chunk_center_z = (chunk_coord.z as f32) * 200.0 + 100.0;
+    
+    // Spawn 1-3 NPCs per chunk with low probability
+    let spawn_count = if rng.gen_range(0.0..1.0) < 0.3 { // 30% chance to spawn NPCs
+        rng.gen_range(1..=3)
+    } else {
+        0
+    };
+    
+    for _ in 0..spawn_count {
+        // Try to find a valid spawn position within chunk bounds
         for _ in 0..5 { // REDUCED: From 10 to 5 attempts
-            let x = rng.gen_range(-50.0..50.0);
-            let z = rng.gen_range(-50.0..50.0);
+            let x = chunk_center_x + rng.gen_range(-80.0..80.0);
+            let z = chunk_center_z + rng.gen_range(-80.0..80.0);
             let position = Vec2::new(x, z);
             
             if ground_service.is_spawn_position_valid(position) {
