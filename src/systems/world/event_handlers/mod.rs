@@ -10,9 +10,9 @@ pub mod chunk_handler;
 pub mod validation_to_spawn_bridge;
 
 pub use spawn_validation_handler::*;
-pub use content_spawn_handler::*;
+pub use content_spawn_handler::handle_request_dynamic_spawn;
 pub use content_despawn_handler::*;
-pub use chunk_handler::*;
+pub use chunk_handler::{handle_request_chunk_load, handle_chunk_unload_request};
 pub use validation_to_spawn_bridge::*;
 
 // Export V2 handlers (now default)

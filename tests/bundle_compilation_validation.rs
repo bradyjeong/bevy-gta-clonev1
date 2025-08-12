@@ -8,6 +8,7 @@ use bevy_rapier3d::prelude::*;
 use gta_game::{
     bundles::*,
     components::{self, *},
+    components::world::NPCState,
     systems::{UnifiedCullable, MovementTracker, UnifiedChunkEntity, ChunkCoord, ContentLayer},
 };
 

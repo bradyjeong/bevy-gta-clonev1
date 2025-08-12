@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{
-    NPCState, NPCType, NPCLOD, Cullable, NPCBehaviorType, NPCAppearance, NPCGender,
-    NPC_LOD_CULL_DISTANCE
+    NPCCore, NPCType, NPCLOD, Cullable, NPCBehaviorType, NPCAppearance, NPCGender,
+    NPC_LOD_CULL_DISTANCE, NPCVisuals
 };
 
 use crate::config::GameConfig;
@@ -16,7 +16,7 @@ use rand::prelude::*;
 pub fn spawn_new_npc_system(
     mut commands: Commands,
     timing_service: Res<TimingService>,
-    npc_query: Query<Entity, With<NPCState>>,
+    npc_query: Query<Entity, With<NPCCore>>,
     ground_service: Res<GroundDetectionService>,
     _config: Res<GameConfig>,
 ) {
@@ -60,8 +60,15 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
     
     // Create NPC with new state-based architecture
     let entity = commands.spawn((
-        NPCState {
+        NPCCore {
             npc_type: NPCType::Civilian,
+            behavior: NPCBehaviorType::Wandering,
+            target_position: spawn_position,
+            speed: rng.gen_range(2.0..4.0),
+            current_lod: NPCLOD::Full,
+            last_lod_check: 0.0,
+        },
+        NPCVisuals {
             appearance: NPCAppearance {
                 height: 1.8, // Standard NPC height
                 build: rng.gen_range(0.8..1.2),
@@ -71,11 +78,6 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
                 pants_color: Color::linear_rgb(rng.gen_range(0.1..0.6), rng.gen_range(0.1..0.6), rng.gen_range(0.1..0.6)),
                 gender: if rng.gen_bool(0.5) { NPCGender::Male } else { NPCGender::Female },
             },
-            behavior: NPCBehaviorType::Wandering,
-            target_position: spawn_position,
-            speed: rng.gen_range(2.0..4.0),
-            current_lod: NPCLOD::Full,
-            last_lod_check: 0.0,
         },
         Transform::from_translation(spawn_position),
         GlobalTransform::default(),
@@ -102,8 +104,8 @@ pub fn spawn_simple_npc_with_ground_detection(
         _ => NPCType::Emergency,
     };
     
-    let npc_state = NPCState::new(npc_type);
-    let height = npc_state.appearance.height;
+    let npc_state = NPCCore::new(npc_type);
+    let height = 1.8; // Default NPC height - appearance is in separate component
     
     // Get ground height at spawn position
     let ground_y = ground_service.get_spawn_height(position, height, rapier_context);
@@ -137,8 +139,8 @@ pub fn spawn_simple_npc(
         _ => NPCType::Emergency,
     };
     
-    let npc_state = NPCState::new(npc_type);
-    let height = npc_state.appearance.height;
+    let npc_state = NPCCore::new(npc_type);
+    let height = 1.8; // Default NPC height - appearance is in separate component
     
     // Use simplified entity creation
     commands.spawn((
@@ -168,8 +170,8 @@ pub fn spawn_npc_with_new_architecture(
         _ => NPCType::Emergency,
     };
     
-    let npc_state = NPCState::new(npc_type);
-    let height = npc_state.appearance.height;
+    let npc_state = NPCCore::new(npc_type);
+    let height = 1.8; // Default NPC height - appearance is in separate component
     
     #[allow(deprecated)]
     commands.spawn((
@@ -188,11 +190,11 @@ pub fn spawn_npc_with_new_architecture(
 /// Migration system - converts old NPC entities to unified architecture
 pub fn migrate_legacy_npcs(
     mut commands: Commands,
-    legacy_npc_query: Query<(Entity, &crate::components::NPC, &Transform), Without<NPCState>>,
+    legacy_npc_query: Query<(Entity, &crate::components::NPC, &Transform), Without<NPCCore>>,
 ) {
     for (entity, legacy_npc, _transform) in legacy_npc_query.iter() {
         // Create new state component based on legacy data
-        let mut npc_state = NPCState::new(NPCType::Civilian);
+        let mut npc_state = NPCCore::new(NPCType::Civilian);
         npc_state.target_position = legacy_npc.target_position;
         npc_state.speed = legacy_npc.speed;
         npc_state.current_lod = NPCLOD::StateOnly; // Start with no rendering

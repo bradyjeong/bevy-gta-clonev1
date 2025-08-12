@@ -6,7 +6,7 @@
 mod tests {
     use crate::components::ContentType;
     use crate::factories::common::SpawnValidation;
-    use crate::systems::RoadNetwork;
+    use crate::world::RoadNetwork;
     use bevy::prelude::*;
 
     /// Test that water validation prevents vehicle spawns in water

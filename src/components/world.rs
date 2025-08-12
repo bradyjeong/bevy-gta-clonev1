@@ -55,16 +55,23 @@ pub enum NPCLOD {
     StateOnly, // 150m+: No rendering, just AI/movement state
 }
 
-// Lightweight state component - always in memory
+// Hot-path NPC state - frequently updated data (≤64 bytes)
 #[derive(Component, Clone)]
-pub struct NPCState {
-    pub npc_type: NPCType,
-    pub appearance: NPCAppearance,
-    pub behavior: NPCBehaviorType,
-    pub target_position: Vec3,
-    pub speed: f32,
-    pub current_lod: NPCLOD,
-    pub last_lod_check: f32,
+pub struct NPCCore {
+    pub target_position: Vec3,     // 12 bytes - updated frequently
+    pub speed: f32,                // 4 bytes - performance critical
+    pub current_lod: NPCLOD,       // 1 byte - updated by LOD system
+    pub last_lod_check: f32,       // 4 bytes - performance tracking
+    pub behavior: NPCBehaviorType, // 1 byte - AI state
+    pub npc_type: NPCType,         // 1 byte - for behavior logic
+    // Total: ~23 bytes (well under 64)
+}
+
+// Cold-path NPC configuration - static after spawn
+#[derive(Component, Clone)]
+#[component(immutable)]  // Appearance never changes after spawn
+pub struct NPCVisuals {
+    pub appearance: NPCAppearance,  // Visual configuration only
 }
 
 #[derive(Component, Debug, Clone, Copy)]
@@ -92,7 +99,7 @@ pub enum NPCBehaviorType {
     Socializing,
 }
 
-impl NPCState {
+impl NPCCore {
     pub fn new(npc_type: NPCType) -> Self {
         use rand::prelude::*;
         let mut rng = thread_rng();
@@ -106,7 +113,6 @@ impl NPCState {
         
         Self {
             npc_type,
-            appearance: NPCAppearance::random(),
             behavior: NPCBehaviorType::Wandering,
             target_position: Vec3::new(
                 rng.gen_range(-900.0..900.0),
@@ -116,6 +122,14 @@ impl NPCState {
             speed,
             current_lod: NPCLOD::StateOnly,
             last_lod_check: 0.0,
+        }
+    }
+}
+
+impl NPCVisuals {
+    pub fn new() -> Self {
+        Self {
+            appearance: NPCAppearance::random(),
         }
     }
 }
@@ -196,6 +210,12 @@ pub struct NPCBodyPart {
     pub animation_rotation: Quat,
 }
 
+// Compile-time size assertions for split NPC components
+const _: () = assert!(
+    std::mem::size_of::<NPCCore>() <= 64,
+    "NPCCore exceeds 64-byte cache line"
+);
+
 // LOD distances for NPCs - optimized for 60+ FPS target
 pub const NPC_LOD_FULL_DISTANCE: f32 = 25.0;
 pub const NPC_LOD_MEDIUM_DISTANCE: f32 = 50.0;
@@ -251,6 +271,7 @@ pub enum ContentType {
 pub struct PerformanceCritical;
 
 #[derive(Component, Clone)]
+#[component(immutable)]  // Building properties don't change after spawn
 pub struct Building {
     pub building_type: BuildingType,
     pub height: f32,
@@ -356,3 +377,6 @@ impl Default for EntityLimits {
         }
     }
 }
+
+// Backward compatibility alias for migration
+pub type NPCState = NPCCore;

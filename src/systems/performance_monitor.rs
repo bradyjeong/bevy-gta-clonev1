@@ -715,21 +715,6 @@ fn spawn_performance_overlay(
         summary.bottleneck_systems.len()
     );
     
-    let display_text = format!(
-        "Performance Monitor (F3)\n\
-        FPS: {:.1} | Frame: {:.2}ms\n\
-        Entities: {} (Culled: {})\n\
-        Memory: {:.1} GB\n\
-        Alerts: {} | Bottlenecks: {}",
-        summary.avg_fps,
-        summary.avg_frame_time,
-        summary.total_entities,
-        summary.culled_entities,
-        summary.memory_usage_gb,
-        summary.active_alerts,
-        summary.bottleneck_systems.len()
-    );
-    
     if let Some(counters) = event_counters {
         display_text.push_str("\n\n");
         display_text.push_str(&counters.get_debug_text());

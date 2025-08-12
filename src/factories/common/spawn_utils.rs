@@ -5,8 +5,8 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::ContentType;
-use crate::systems::RoadNetwork;
-use crate::systems::is_on_road_spline;
+use crate::world::RoadNetwork;
+use crate::systems::world::road_generation::is_on_road_spline;
 
 /// Shared ground height calculation with caching
 pub struct GroundHeightCache {

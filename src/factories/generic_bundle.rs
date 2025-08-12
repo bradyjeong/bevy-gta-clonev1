@@ -235,9 +235,8 @@ impl BundleSpec for NPCBundleSpec {
         ));
         
         NPCBundle {
-            npc_marker: NPCState {
+            npc_marker: NPCCore {
                 npc_type: NPCType::Civilian,
-                appearance: self.appearance,
                 behavior: NPCBehaviorType::Wandering,
                 target_position: self.position,
                 speed: config.gameplay.npc.walk_speed,

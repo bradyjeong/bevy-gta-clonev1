@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
-use crate::systems::world::road_network::RoadNetwork;
+use crate::world::RoadNetwork;
 use crate::components::RoadEntity;
 use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh};
 use crate::bundles::VisibleChildBundle;
+use crate::events::PlayerChunkChanged;
 
 // MAIN ROAD GENERATION SYSTEM (Replaces old grid system)
 // UNIFIED Y-COORDINATE SYSTEM (prevents z-fighting):
@@ -13,74 +14,32 @@ use crate::bundles::VisibleChildBundle;
 // - Road Markings:y =  0.01  (1cm above road surface)
 // Unified road height prevents overlapping geometry and z-fighting issues
 
-// Add timer to reduce frequency of road checks
-#[derive(Resource, Default)]
-pub struct RoadGenerationTimer {
-    timer: f32,
-    last_player_chunk: Option<(i32, i32)>,
-}
-
-pub fn road_network_system(
+/// Observer function that handles road generation when player enters new chunks
+pub fn handle_player_chunk_changed(
+    trigger: Trigger<PlayerChunkChanged>,
     mut commands: Commands,
-    mut road_network: ResMut<RoadNetwork>,
-    active_query: Query<&Transform, With<ActiveEntity>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    _road_network: ResMut<RoadNetwork>,
+    _meshes: ResMut<Assets<Mesh>>,
+    _materials: ResMut<Assets<StandardMaterial>>,
     road_query: Query<(Entity, &Transform), With<RoadEntity>>,
-
-    time: Res<Time>,
-    mut timer: Local<RoadGenerationTimer>,
 ) {
-    let Ok(active_transform) = active_query.single() else { return };
-    let active_pos = active_transform.translation;
+    let event = trigger.event();
+    let active_pos = event.position;
+    let (chunk_x, chunk_z) = event.new_chunk;
     
-
+    let chunk_size = 400.0f32;
+    let active_radius = 800.0f32;   // Increased for better road coverage
+    let cleanup_radius = 2000.0f32;  // Very large cleanup radius to prevent premature despawning
     
-    // Update timer
-    timer.timer += time.delta_secs();
-    
-    // Only process road generation every 0.5 seconds OR when player changes chunk
-    let chunk_size = 400.0;
-    let current_chunk = (
-        (active_pos.x / chunk_size).floor() as i32, // Use floor instead of round for more predictable chunking
-        (active_pos.z / chunk_size).floor() as i32,
-    );
-    
-    let chunk_changed = timer.last_player_chunk != Some(current_chunk);
-    let should_update = timer.timer >= 0.5 || chunk_changed;
-    
-    if !should_update {
-        return;
-    }
-    
-    timer.timer = 0.0;
-    timer.last_player_chunk = Some(current_chunk);
-    
-    // Clear cache if no roads exist but cache exists (optimization)
-    if road_network.roads.is_empty() && !road_network.generated_chunks.is_empty() {
-        road_network.clear_cache();
-    }
-    
-
-
-    
-    let active_radius = 800.0;   // Increased for better road coverage
-    let cleanup_radius = 2000.0;  // Very large cleanup radius to prevent premature despawning
-    
-    // Clean up distant road entities (very conservative cleanup)
-    if chunk_changed {
-        for (entity, transform) in road_query.iter() {
-            // Simple distance check - only remove roads that are extremely far away
-            let distance = active_pos.distance(transform.translation);
-            if distance > cleanup_radius {
-                println!("DEBUG: Cleaning up road entity at distance {}", distance);
-                commands.entity(entity).despawn();
-            }
+    // Clean up distant road entities
+    for (entity, transform) in road_query.iter() {
+        // Simple distance check - only remove roads that are extremely far away
+        let distance = active_pos.distance(transform.translation);
+        if distance > cleanup_radius {
+            println!("DEBUG: Cleaning up road entity at distance {}", distance);
+            commands.entity(entity).despawn();
         }
     }
-    
-    // Determine which chunks need roads
-    let (chunk_x, chunk_z) = current_chunk;
     
     let chunk_radius = ((active_radius / chunk_size).ceil() as i32).max(3); // Ensure at least 3x3 chunk coverage
     
@@ -99,21 +58,23 @@ pub fn road_network_system(
             let distance = active_pos.distance(chunk_center);
             if distance <= active_radius {
                 // println!("DEBUG: Generating roads for chunk ({}, {}) at distance {}", check_chunk_x, check_chunk_z, distance);
-                let new_road_ids = road_network.generate_chunk_roads(check_chunk_x, check_chunk_z);
+                // NOTE: Legacy road generation - new RoadNetwork uses different approach
+                // let new_road_ids = road_network.generate_chunk_roads(check_chunk_x, check_chunk_z);
                 // println!("DEBUG: Generated {} roads for chunk ({}, {})", new_road_ids.len(), check_chunk_x, check_chunk_z);
                 
                 // Spawn mesh entities for new roads
-                for road_id in new_road_ids {
-                    if let Some(road) = road_network.roads.get(&road_id) {
-                        // println!("DEBUG: Spawning road entity for road {} at start {:?} with type {:?}", road_id, road.evaluate(0.0), road.road_type);
-                        spawn_road_entity(&mut commands, road_id, road, &mut meshes, &mut materials);
-                    }
-                }
+                // for road_id in new_road_ids {
+                //     if let Some(road) = road_network.roads.get(&road_id) {
+                //         // println!("DEBUG: Spawning road entity for road {} at start {:?} with type {:?}", road_id, road.evaluate(0.0), road.road_type);
+                //         spawn_road_entity(&mut commands, road_id, road, &mut meshes, &mut materials);
+                //     }
+                // }
             }
         }
     }
 }
 
+#[allow(dead_code)]
 fn spawn_road_entity(
     commands: &mut Commands,
     road_id: u32,
@@ -168,6 +129,7 @@ fn spawn_road_entity(
     }
 }
 
+#[allow(dead_code)]
 fn create_road_collider(road: &crate::systems::world::road_network::RoadSpline) -> Collider {
     let width = road.road_type.width();
     let length = road.length();
@@ -177,6 +139,7 @@ fn create_road_collider(road: &crate::systems::world::road_network::RoadSpline) 
     Collider::cuboid(width * 0.5, 0.02, length * 0.5)  // Very thin (4cm): road surface only
 }
 
+#[allow(dead_code)]
 fn create_road_material(road_type: &crate::systems::world::road_network::RoadType, materials: &mut ResMut<Assets<StandardMaterial>>) -> Handle<StandardMaterial> {
     use crate::systems::world::road_network::RoadType;
     
@@ -197,6 +160,7 @@ fn create_road_material(road_type: &crate::systems::world::road_network::RoadTyp
     })
 }
 
+#[allow(dead_code)]
 fn create_marking_material(materials: &mut ResMut<Assets<StandardMaterial>>) -> Handle<StandardMaterial> {
     materials.add(StandardMaterial {
         base_color: Color::srgb(0.95, 0.95, 0.95), // Bright white for lane lines
@@ -208,16 +172,12 @@ fn create_marking_material(materials: &mut ResMut<Assets<StandardMaterial>>) -> 
     })
 }
 
-// Enhanced road detection for vehicles and NPCs
+// Enhanced road detection for vehicles and NPCs - updated for new RoadNetwork
 pub fn is_on_road_spline(position: Vec3, road_network: &RoadNetwork, tolerance: f32) -> bool {
-    for road in road_network.roads.values() {
-        if is_point_on_road_spline(position, road, tolerance) {
-            return true;
-        }
-    }
-    false
+    road_network.is_near_road(position, tolerance)
 }
 
+#[allow(dead_code)]
 fn is_point_on_road_spline(position: Vec3, road: &crate::systems::world::road_network::RoadSpline, tolerance: f32) -> bool {
     let samples = 50;
     let width = road.road_type.width();
@@ -264,24 +224,8 @@ pub fn update_road_dependent_systems(
 }
 
 fn find_nearest_road_position(position: Vec3, road_network: &RoadNetwork) -> Option<Vec3> {
-    let mut nearest_pos = None;
-    let mut nearest_distance = f32::INFINITY;
-    
-    for road in road_network.roads.values() {
-        let samples = 20;
-        for i in 0..samples {
-            let t = i as f32 / (samples - 1) as f32;
-            let road_point = road.evaluate(t);
-            let distance = position.distance(road_point);
-            
-            if distance < nearest_distance {
-                nearest_distance = distance;
-                nearest_pos = Some(road_point);
-            }
-        }
-    }
-    
-    nearest_pos
+    // Use new RoadNetwork's get_nearest_road_point method
+    road_network.get_nearest_road_point(position)
 }
 
 

@@ -9,7 +9,7 @@ use crate::events::world::validation_events::{
     RequestRoadValidation, RoadValidationResult,
 };
 use crate::events::world::content_events::ContentType;
-use crate::systems::world::road_network::RoadNetwork;
+use crate::world::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
 
 use std::collections::HashMap;
@@ -68,7 +68,7 @@ pub fn handle_road_validation_request(
     road_network: Res<RoadNetwork>,
 ) {
     for request in road_request_reader.read() {
-        let on_road = is_on_road_spline(request.pos, &road_network, 25.0);
+        let on_road = is_on_road_spline(request.pos, &*road_network, 25.0);
         let distance_to_road = if on_road { 0.0 } else { 25.0 }; // Simplified distance
         
         road_result_writer.write(RoadValidationResult::new(

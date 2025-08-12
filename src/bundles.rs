@@ -74,7 +74,7 @@ pub struct VehicleBundle {
 /// Complete NPC bundle with physics and state  
 #[derive(Bundle)]
 pub struct NPCBundle {
-    pub npc_marker: NPCState,
+    pub npc_marker: NPCCore,
     pub npc_behavior: NPCBehaviorComponent,
     pub npc_appearance: NPCAppearance,
     pub movement_controller: MovementController,

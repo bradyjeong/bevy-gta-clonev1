@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::components::{
-    NPCState, NPCRendering, NPCLOD, NPCAppearance, ActiveEntity,
+    NPCCore, NPCRendering, NPCLOD, NPCAppearance, ActiveEntity,
     NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart,
     NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE
 };
@@ -16,7 +16,7 @@ pub fn npc_lod_system(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut timing_service: ResMut<TimingService>,
     active_query: Query<(Entity, &Transform), With<ActiveEntity>>,
-    mut npc_query: Query<(Entity, &mut NPCState, Option<&NPCRendering>, &Transform, Option<&ManagedTiming>)>,
+    mut npc_query: Query<(Entity, &mut NPCCore, Option<&NPCRendering>, &Transform, Option<&ManagedTiming>)>,
     mut distance_cache: ResMut<DistanceCache>,
 ) {
     // Use unified timing service instead of manual timing checks
@@ -79,7 +79,7 @@ fn determine_npc_lod(distance: f32) -> NPCLOD {
 /// Update NPC rendering based on new LOD level
 fn update_npc_lod(
     entity: Entity,
-    npc_state: &mut NPCState,
+    npc_state: &mut NPCCore,
     current_rendering: Option<&NPCRendering>,
     new_lod: NPCLOD,
     commands: &mut Commands,
@@ -96,13 +96,16 @@ fn update_npc_lod(
     // Add new rendering based on LOD level
     match new_lod {
         NPCLOD::Full => {
-            spawn_npc_full_lod(entity, &npc_state.appearance, commands, meshes, materials);
+            let default_appearance = NPCAppearance::random();
+            spawn_npc_full_lod(entity, &default_appearance, commands, meshes, materials);
         },
         NPCLOD::Medium => {
-            spawn_npc_medium_lod(entity, &npc_state.appearance, commands, meshes, materials);
+            let default_appearance = NPCAppearance::random();
+            spawn_npc_medium_lod(entity, &default_appearance, commands, meshes, materials);
         },
         NPCLOD::Low => {
-            spawn_npc_low_lod(entity, &npc_state.appearance, commands, meshes, materials);
+            let default_appearance = NPCAppearance::random();
+            spawn_npc_low_lod(entity, &default_appearance, commands, meshes, materials);
         },
         NPCLOD::StateOnly => {
             // No rendering - just ensure component is removed

@@ -1,5 +1,7 @@
 use bevy::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
+use rustc_hash::FxHashMap as HashMap;
+use smallvec::SmallVec;
 use crate::components::ContentType;
 
 
@@ -74,63 +76,123 @@ pub struct SpawnRegistry {
     spatial_grid: SpatialGrid,
 }
 
+// Precomputed neighbor offsets for different cell ranges
+const NEIGHBOR_OFFSETS_1: &[(i32, i32)] = &[
+    (0, 0)
+];
+
+const NEIGHBOR_OFFSETS_2: &[(i32, i32)] = &[
+    (-1, -1), (0, -1), (1, -1),
+    (-1, 0), (0, 0), (1, 0),
+    (-1, 1), (0, 1), (1, 1),
+];
+
+const NEIGHBOR_OFFSETS_3: &[(i32, i32)] = &[
+    (-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2),
+    (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1),
+    (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0),
+    (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1),
+    (-2, 2), (-1, 2), (0, 2), (1, 2), (2, 2),
+];
+
+const NEIGHBOR_OFFSETS_4: &[(i32, i32)] = &[
+    (-3, -3), (-2, -3), (-1, -3), (0, -3), (1, -3), (2, -3), (3, -3),
+    (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2),
+    (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1),
+    (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0),
+    (-3, 1), (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1), (3, 1),
+    (-3, 2), (-2, 2), (-1, 2), (0, 2), (1, 2), (2, 2), (3, 2),
+    (-3, 3), (-2, 3), (-1, 3), (0, 3), (1, 3), (2, 3), (3, 3),
+];
+
+const NEIGHBOR_OFFSETS: [&[(i32, i32)]; 4] = [
+    NEIGHBOR_OFFSETS_1,
+    NEIGHBOR_OFFSETS_2,
+    NEIGHBOR_OFFSETS_3,
+    NEIGHBOR_OFFSETS_4,
+];
+
 /// Spatial grid for efficient proximity queries
 #[derive(Debug, Default)]
 struct SpatialGrid {
+    #[allow(dead_code)] // Kept for debug output
     grid_size: f32,
-    cells: HashMap<(i32, i32), Vec<Entity>>,
+    inv_grid_size: f32, // Reciprocal for faster division
+    cells: HashMap<u64, SmallVec<[Entity; 8]>>,
 }
 
 impl SpatialGrid {
     fn new(grid_size: f32) -> Self {
         Self {
             grid_size,
-            cells: HashMap::new(),
+            inv_grid_size: 1.0 / grid_size,
+            cells: HashMap::default(),
         }
     }
     
-    fn get_cell_coord(&self, position: Vec3) -> (i32, i32) {
+    #[inline]
+    fn pack_key(ix: i32, iz: i32) -> u64 {
+        // Swap axes for better hash distribution (both axes affect low bits)
+        ((iz as u64) << 32) | (ix as u32 as u64)
+    }
+    
+    #[inline]
+    fn get_cell_key(&self, position: Vec3) -> u64 {
+        let ix = (position.x * self.inv_grid_size).floor() as i32;
+        let iz = (position.z * self.inv_grid_size).floor() as i32;
+        Self::pack_key(ix, iz)
+    }
+    
+    #[inline]
+    fn get_cell_coords(&self, position: Vec3) -> (i32, i32) {
         (
-            (position.x / self.grid_size).floor() as i32,
-            (position.z / self.grid_size).floor() as i32,
+            (position.x * self.inv_grid_size).floor() as i32,
+            (position.z * self.inv_grid_size).floor() as i32,
         )
     }
     
     fn add_entity(&mut self, entity: Entity, position: Vec3) {
-        let coord = self.get_cell_coord(position);
-        self.cells.entry(coord).or_default().push(entity);
+        let key = self.get_cell_key(position);
+        self.cells.entry(key).or_default().push(entity);
     }
     
     fn remove_entity(&mut self, entity: Entity, position: Vec3) {
-        let coord = self.get_cell_coord(position);
-        if let Some(entities) = self.cells.get_mut(&coord) {
-            entities.retain(|&e| e != entity);
+        let key = self.get_cell_key(position);
+        if let Some(entities) = self.cells.get_mut(&key) {
+            entities.retain(|e| *e != entity);
+        }
+    }
+    
+    /// Visit nearby entities without allocation
+    fn visit_nearby_entities<F>(&self, position: Vec3, radius: f32, mut visitor: F)
+    where
+        F: FnMut(Entity) -> bool,  // Return false to stop early
+    {
+        let (cx, cz) = self.get_cell_coords(position);
+        let cell_range = ((radius * self.inv_grid_size).ceil() as i32).clamp(1, 4);
+        
+        // Use precomputed offsets
+        let offsets = NEIGHBOR_OFFSETS[(cell_range - 1) as usize];
+        
+        for &(dx, dz) in offsets {
+            let key = Self::pack_key(cx + dx, cz + dz);
+            if let Some(entities) = self.cells.get(&key) {
+                for &entity in entities {
+                    if !visitor(entity) {
+                        return; // Early exit if visitor returns false
+                    }
+                }
+            }
         }
     }
     
     fn get_nearby_entities(&self, position: Vec3, radius: f32) -> Vec<Entity> {
         // Pre-allocate with estimated capacity to reduce reallocations
         let mut result = Vec::with_capacity(32);
-        let center_coord = self.get_cell_coord(position);
-        let cell_range = ((radius / self.grid_size).ceil() as i32).max(1);
-        
-        // Early exit for single cell case
-        if cell_range == 1 {
-            if let Some(entities) = self.cells.get(&center_coord) {
-                result.extend(entities);
-            }
-            return result;
-        }
-        
-        for dx in -cell_range..=cell_range {
-            for dz in -cell_range..=cell_range {
-                let coord = (center_coord.0 + dx, center_coord.1 + dz);
-                if let Some(entities) = self.cells.get(&coord) {
-                    result.extend(entities);
-                }
-            }
-        }
-        
+        self.visit_nearby_entities(position, radius, |entity| {
+            result.push(entity);
+            true // Continue collecting
+        });
         result
     }
 }
@@ -138,8 +200,8 @@ impl SpatialGrid {
 impl SpawnRegistry {
     pub fn new() -> Self {
         Self {
-            entities: HashMap::new(),
-            spatial_grid: SpatialGrid::new(20.0), // 20 unit grid cells
+            entities: HashMap::default(),
+            spatial_grid: SpatialGrid::new(40.0), // 40 unit grid cells (fewer neighbor checks)
         }
     }
     
@@ -178,29 +240,42 @@ impl SpawnRegistry {
     /// Check if a position is safe for spawning the given entity type
     pub fn is_position_safe(&self, position: Vec3, entity_type: SpawnableType) -> bool {
         let search_radius = entity_type.clearance_radius() + 15.0; // Extended search
-        let nearby_entities = self.spatial_grid.get_nearby_entities(position, search_radius);
         
-        debug!("🔍 SPAWN CHECK: Checking {:?} at {:?} against {} nearby entities", entity_type, position, nearby_entities.len());
+        let mut is_safe = true;
+        let mut entity_count = 0;
         
-        for &nearby_entity in &nearby_entities {
+        // Use visitor pattern for early exit without allocation
+        self.spatial_grid.visit_nearby_entities(position, search_radius, |nearby_entity| {
+            entity_count += 1;
+            
             if let Some(spawned_entity) = self.entities.get(&nearby_entity) {
                 let required_distance = entity_type.minimum_spacing(&spawned_entity.entity_type);
-                // Use distance_squared for more efficient comparison when possible
+                // Use distance_squared for more efficient comparison
                 let actual_distance_sq = position.distance_squared(spawned_entity.position);
                 let required_distance_sq = required_distance * required_distance;
                 
                 if actual_distance_sq < required_distance_sq {
-                    let actual_distance = actual_distance_sq.sqrt();
-                    debug!("❌ COLLISION: {:?} at {:?} too close to {:?} at {:?} (distance: {:.1} < {:.1})",
-                          entity_type, position, spawned_entity.entity_type, spawned_entity.position,
-                          actual_distance, required_distance);
-                    return false;
+                    #[cfg(debug_assertions)]
+                    {
+                        let actual_distance = actual_distance_sq.sqrt();
+                        debug!("❌ COLLISION: {:?} at {:?} too close to {:?} at {:?} (distance: {:.1} < {:.1})",
+                              entity_type, position, spawned_entity.entity_type, spawned_entity.position,
+                              actual_distance, required_distance);
+                    }
+                    is_safe = false;
+                    return false; // Stop checking, we found a collision
                 }
             }
+            true // Continue checking
+        });
+        
+        debug!("🔍 SPAWN CHECK: Checked {:?} at {:?} against {} nearby entities", entity_type, position, entity_count);
+        
+        if is_safe {
+            debug!("✅ SAFE: Position {:?} is safe for {:?}", position, entity_type);
         }
         
-        debug!("✅ SAFE: Position {:?} is safe for {:?}", position, entity_type);
-        true
+        is_safe
     }
     
     /// Find the nearest safe spawn position within a search area
@@ -251,14 +326,72 @@ impl SpawnRegistry {
     }
 }
 
+/// Spawn request queue for throttling validation
+#[derive(Resource, Default)]
+pub struct SpawnRequestQueue {
+    requests: Vec<SpawnRequest>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SpawnRequest {
+    pub position: Vec3,
+    pub entity_type: SpawnableType,
+    pub entity: Entity,
+}
+
 /// Plugin to add spawn validation system
 pub struct SpawnValidationPlugin;
 
 impl Plugin for SpawnValidationPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SpawnRegistry::new())
+            .insert_resource(SpawnRequestQueue::default())
+            .insert_resource(Time::<Fixed>::from_hz(10.0)) // Run at 10 Hz
+            .add_systems(FixedUpdate, process_spawn_requests)
             .add_systems(Update, cleanup_despawned_entities);
     }
+}
+
+/// Process spawn requests with frame cap to prevent stalls
+fn process_spawn_requests(
+    mut registry: ResMut<SpawnRegistry>,
+    mut queue: ResMut<SpawnRequestQueue>,
+    mut commands: Commands,
+) {
+    const MAX_VALIDATIONS_PER_FRAME: usize = 20;
+    
+    let mut processed = 0;
+    let mut remaining_requests = Vec::new();
+    
+    for request in queue.requests.drain(..) {
+        if processed >= MAX_VALIDATIONS_PER_FRAME {
+            remaining_requests.push(request);
+            continue;
+        }
+        
+        // Try to find safe position
+        if let Some(safe_position) = registry.find_safe_spawn_position(
+            request.position,
+            request.entity_type,
+            30.0, // Max search radius
+            10,   // Reduced attempts for performance
+        ) {
+            registry.register_entity(request.entity, safe_position, request.entity_type);
+            // Entity spawning handled by caller
+        } else {
+            warn!(
+                "Failed to find safe spawn position for {:?} near {:?}",
+                request.entity_type, request.position
+            );
+            // Despawn the entity if we can't place it
+            commands.entity(request.entity).despawn();
+        }
+        
+        processed += 1;
+    }
+    
+    // Put remaining requests back in queue
+    queue.requests = remaining_requests;
 }
 
 /// System to clean up registry when entities are despawned
@@ -269,6 +402,11 @@ fn cleanup_despawned_entities(
     time: Res<Time>,
     mut cleanup_timer: Local<f32>,
 ) {
+    // Early exit if registry is empty
+    if registry.entities.is_empty() {
+        return;
+    }
+    
     // Only run cleanup every 2 seconds to reduce overhead
     *cleanup_timer += time.delta_secs();
     if *cleanup_timer < 2.0 {

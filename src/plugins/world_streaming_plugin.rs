@@ -3,9 +3,10 @@ use bevy::prelude::*;
 // V2 imports (now default)
 use crate::systems::world::{
     layered_generation_coordinator,
-    query_dynamic_content,
-    handle_dynamic_spawn_request,
-    handle_chunk_load_request,
+    on_chunk_loaded,
+    cleanup_distant_content,
+    handle_request_dynamic_spawn,
+    handle_request_chunk_load,
     handle_chunk_unload_request,
     handle_validation_to_spawn_bridge,
 };
@@ -33,6 +34,7 @@ use crate::systems::world::event_handlers::content_despawn_handler::{
 use crate::systems::world::event_handlers::content_despawn_handler::handle_despawn_request_events;
 
 use crate::observers::content_observers::ContentObserverPlugin;
+use crate::systems::world::ChunkContentTracker;
 
 #[cfg(feature = "p1_1_decomp")]
 use crate::world::{ChunkTracker, ChunkTables, PlacementGrid, RoadNetwork, WorldCoordinator};
@@ -45,7 +47,12 @@ pub struct WorldStreamingPlugin;
 impl Plugin for WorldStreamingPlugin {
     fn build(&self, app: &mut App) {
         // Add observer plugin for content lifecycle
+        // Re-enable content observers with guardrails handled internally
         app.add_plugins(ContentObserverPlugin);
+        
+        // Initialize observer-based dynamic content system
+        app.init_resource::<ChunkContentTracker>()
+            .add_observer(on_chunk_loaded);
         
         // Initialize decomposed resources
         #[cfg(feature = "p1_1_decomp")]
@@ -71,13 +78,14 @@ impl Plugin for WorldStreamingPlugin {
                 update_chunk_states_v2,
                 layered_generation_coordinator,
                 
-                // World Event Flow - Dynamic Content Pipeline V2
-                query_dynamic_content.in_set(WorldEventFlow::SpawnQuery),
+                // Observer-based dynamic content spawning (replaces timer-based system)
+                // Content spawning now handled reactively via on_chunk_loaded observer
+                cleanup_distant_content.in_set(WorldEventFlow::SpawnQuery),
                 handle_spawn_validation_request_v2.in_set(WorldEventFlow::SpawnValidationTx),
                 handle_road_validation_request_v2.in_set(WorldEventFlow::RoadValidation),
                 handle_road_validation_result_v2.in_set(WorldEventFlow::SpawnValidationRx),
                 handle_validation_to_spawn_bridge.in_set(WorldEventFlow::SpawnEmit),
-                handle_dynamic_spawn_request.in_set(WorldEventFlow::SpawnExecute),
+                handle_request_dynamic_spawn.in_set(WorldEventFlow::SpawnExecute),
                 
                 // Additional V2 systems
                 validate_placement_system_v2,
@@ -85,8 +93,8 @@ impl Plugin for WorldStreamingPlugin {
                 pathfinding_system_v2,
                 road_validation_system_v2,
                 
-                // Phase 2: Chunk management
-                handle_chunk_load_request,
+                // Phase 2: Chunk management (ordered per architectural_shift.md §83)
+                handle_request_chunk_load.before(handle_request_dynamic_spawn),
                 handle_chunk_unload_request,
                 
                 // Observer-based despawn handling

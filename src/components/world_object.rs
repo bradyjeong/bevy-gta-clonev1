@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 /// Marker component for any object that exists in the world
 #[derive(Component, Debug, Default)]
+#[component(immutable)]  // Object type and radius are static after spawn
 pub struct WorldObject {
     /// Type of world object
     pub object_type: WorldObjectType,

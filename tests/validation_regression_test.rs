@@ -8,7 +8,7 @@
 use bevy::prelude::*;
 use gta_game::components::ContentType;
 use gta_game::factories::common::SpawnValidation;
-use gta_game::systems::RoadNetwork;
+use gta_game::world::RoadNetwork;
 
 /// Test vehicle water validation - vehicles should NOT spawn in water
 #[test]

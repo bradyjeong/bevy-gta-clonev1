@@ -5,7 +5,7 @@ use crate::components::*;
 use crate::bundles::DynamicPhysicsBundle;
 use crate::systems::{UnifiedCullable, MovementTracker};
 use crate::factories::common::{FocusedFactory, GroundHeightCache, SpawnValidation, PhysicsSetup, EntityPhysicsType};
-use crate::systems::RoadNetwork;
+use crate::world::RoadNetwork;
 use crate::GameConfig;
 
 /// Focused factory for NPC entities following AGENT.md simplicity principles

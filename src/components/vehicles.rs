@@ -68,6 +68,7 @@ pub struct Car;
 
 // SuperCar base specs - core performance characteristics
 #[derive(Component, Clone)]
+#[component(immutable)]  // Performance specs don't change after spawn
 pub struct SuperCarSpecs {
     pub max_speed: f32,
     pub acceleration: f32,
@@ -348,6 +349,7 @@ pub struct AircraftFlight {
 
 // F16-specific flight specifications (data-only following AGENT.md)
 #[derive(Component, Clone)]
+#[component(immutable)]  // Aircraft specs are static configuration
 pub struct F16Specs {
     // Physical properties
     pub mass: f32,              // kg

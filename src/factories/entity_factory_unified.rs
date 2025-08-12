@@ -5,7 +5,9 @@ use crate::factories::{
 };
 use crate::factories::common::GroundHeightCache;
 use crate::factories::generic_bundle::BundleError;
-use crate::systems::{RoadNetwork, is_on_road_spline};
+use crate::world::RoadNetwork;
+use crate::plugins::spawn_validation_plugin::SpawnValidation;
+use crate::systems::world::road_generation::is_on_road_spline;
 use crate::GameConfig;
 
 /// Thin coordinator that delegates to focused factories following AGENT.md simplicity principles
@@ -190,30 +192,20 @@ impl UnifiedEntityFactory {
             }
         }
         
-        // Check if in water area
-        if self.is_in_water_area(position) && !matches!(content_type, ContentType::Vehicle) {
+        // Check if in water area using new spawn validation plugin
+        if SpawnValidation::is_in_water_area(position) && !matches!(content_type, ContentType::Vehicle) {
             return false;
         }
         
         true
     }
-    
-    /// Check if position is in water area
-    fn is_in_water_area(&self, position: Vec3) -> bool {
-        // Lake position and size (must match water.rs setup)
-        let lake_center = Vec3::new(300.0, -2.0, 300.0);
-        let lake_size = 200.0;
-        let buffer = 20.0; // Extra buffer around lake
-        
-        let distance = Vec2::new(
-            position.x - lake_center.x,
-            position.z - lake_center.z,
-        ).length();
-        
-        distance < (lake_size / 2.0 + buffer)
-    }
+
     
     /// Check for content collision with existing entities
+    /// 
+    /// DEPRECATED: Use SpawnValidation::has_content_collision from spawn_validation_plugin instead.
+    /// This method is kept for backward compatibility.
+    #[deprecated(note = "Use SpawnValidation::has_content_collision from spawn_validation_plugin")]
     pub fn has_content_collision(
         &self,
         position: Vec3, 
@@ -253,8 +245,8 @@ impl UnifiedEntityFactory {
         // Validate position first
         let validated_position = self.validate_position(position)?;
         
-        // Check for collisions with existing content
-        if self.has_content_collision(validated_position, content_type, existing_content) {
+        // Check for collisions with existing content using new spawn validation plugin
+        if SpawnValidation::has_content_collision(validated_position, content_type, existing_content) {
             return Ok(None); // Collision detected, but no error
         }
         
@@ -374,7 +366,7 @@ impl UnifiedEntityFactory {
         let valid_positions: Vec<Vec3> = positions.into_iter()
             .filter_map(|pos| {
                 let validated_pos = self.validate_position(pos).ok()?;
-                if !self.has_content_collision(validated_pos, content_type, existing_content) {
+                if !SpawnValidation::has_content_collision(validated_pos, content_type, existing_content) {
                     Some(validated_pos)
                 } else {
                     None

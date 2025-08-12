@@ -2536,7 +2536,9 @@ dependencies = [
  "proptest",
  "rand 0.8.5",
  "ron",
+ "rustc-hash 1.1.0",
  "serde",
+ "smallvec",
  "static_assertions",
  "thiserror 2.0.12",
 ]

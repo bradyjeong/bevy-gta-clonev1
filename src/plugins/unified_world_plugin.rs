@@ -9,15 +9,10 @@ use crate::plugins::{
     VegetationInstancingPlugin,
 };
 use crate::factories::initialize_material_factory;
-
-#[cfg(feature = "p1_1_decomp")]
 use crate::world::{ChunkTables, ChunkTracker, PlacementGrid, RoadNetwork, WorldCoordinator};
-
-// Legacy world manager (to be removed after full P1.1 migration)
-use crate::systems::world::unified_world::UnifiedWorldManager;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-// Legacy road network used by some systems (to be migrated)
-use crate::systems::world::road_network::RoadNetwork as LegacyRoadNetwork;
+use crate::events::PlayerChunkChanged;
+use crate::systems::world::{PlayerChunkTracker, track_player_chunk_changes, handle_player_chunk_changed};
 
 /// Simplified unified world plugin that coordinates focused world sub-plugins.
 /// This follows the simplicity principle by delegating to specialized plugins
@@ -26,20 +21,20 @@ pub struct UnifiedWorldPlugin;
 
 impl Plugin for UnifiedWorldPlugin {
     fn build(&self, app: &mut App) {
-        // Register new decomposed resources (always enabled now)
-        #[cfg(feature = "p1_1_decomp")]
-        {
-            app.init_resource::<ChunkTracker>()
-                .init_resource::<ChunkTables>()
-                .init_resource::<PlacementGrid>()
-                .init_resource::<RoadNetwork>()
-                .init_resource::<WorldCoordinator>();
-        }
-
-        // Temporary: also provide legacy UnifiedWorldManager for systems not yet migrated
-        app.init_resource::<UnifiedWorldManager>()
+        // Register decomposed resources (P1.1 migration complete)
+        app.init_resource::<ChunkTracker>()
+            .init_resource::<ChunkTables>()
+            .init_resource::<PlacementGrid>()
+            .init_resource::<RoadNetwork>()
+            .init_resource::<WorldCoordinator>()
+            .init_resource::<crate::world::chunk_tracker::ChunkProgress>()
             .init_resource::<UnifiedEntityFactory>()
-            .init_resource::<LegacyRoadNetwork>();
+            .insert_resource(PlayerChunkTracker::new(400.0));
+        
+        // Register events and observers for player chunk tracking
+        app.add_event::<PlayerChunkChanged>()
+            .add_observer(handle_player_chunk_changed)
+            .add_observer(crate::systems::world::handle_culling_on_player_moved);
         
         app
             // Add focused world plugins
@@ -50,6 +45,9 @@ impl Plugin for UnifiedWorldPlugin {
             .add_plugins(WorldNpcPlugin)
             .add_plugins(WorldDebugPlugin)
             .add_plugins(VegetationInstancingPlugin)
+            
+            // Player chunk tracking system (runs early to trigger observers)
+            .add_systems(Update, track_player_chunk_changes)
             
             // Initialize material factory
             .add_systems(Startup, initialize_material_factory);

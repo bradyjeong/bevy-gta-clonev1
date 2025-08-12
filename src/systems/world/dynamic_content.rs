@@ -5,6 +5,7 @@ use crate::GlobalRng;
 use crate::components::world::EntityLimits;
 use crate::events::world::validation_events::{RequestSpawnValidation, ValidationId};
 use crate::events::world::content_events::{ContentType as EventContentType};
+use crate::events::world::chunk_events::{ChunkLoaded, ChunkCoord};
 use crate::components::world::ContentType;
 use std::collections::HashMap;
 
@@ -26,11 +27,25 @@ pub fn dynamic_terrain_system(
     }
 }
 
-// Add timer to reduce frequency of dynamic content checks
-#[derive(Default)]
-pub struct DynamicContentTimer {
-    timer: f32,
-    last_player_pos: Option<Vec3>,
+// Observer-based chunk tracking (replaces timer-based polling)
+#[derive(Resource, Default)]
+pub struct ChunkContentTracker {
+    loaded_chunks: std::collections::HashSet<ChunkCoord>,
+    last_player_chunk: Option<ChunkCoord>,
+}
+
+impl ChunkContentTracker {
+    pub fn new() -> Self {
+        Self::default()
+    }
+    
+    pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
+        self.loaded_chunks.contains(&coord)
+    }
+    
+    pub fn get_loaded_chunks(&self) -> &std::collections::HashSet<ChunkCoord> {
+        &self.loaded_chunks
+    }
 }
 
 // Track validation requests for dynamic content
@@ -48,56 +63,54 @@ impl DynamicValidationTracker {
     }
 }
 
-pub fn query_dynamic_content(
-    mut commands: Commands,
+/// Observer-based dynamic content spawning (replaces timer-based polling)
+/// Responds to ChunkLoaded events to spawn content reactively
+pub fn on_chunk_loaded(
+    trigger: Trigger<ChunkLoaded>,
+    _commands: Commands,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<DynamicContent>)>,
     content_query: Query<(Entity, &Transform, &DynamicContent)>,
     existing_vehicles_query: Query<&Transform, (With<Car>, Without<DynamicContent>)>,
     _entity_limits: ResMut<EntityLimits>,
-    time: Res<Time>,
-    mut timer: Local<DynamicContentTimer>,
     mut validation_tracker: Local<DynamicValidationTracker>,
     mut validation_writer: EventWriter<RequestSpawnValidation>,
+    mut chunk_tracker: ResMut<ChunkContentTracker>,
     mut rng: ResMut<GlobalRng>,
 ) {
+    let chunk_loaded = trigger.event();
+    let chunk_coord = chunk_loaded.coord;
+    
+    // Mark chunk as loaded for tracking
+    chunk_tracker.loaded_chunks.insert(chunk_coord);
+    
     if let Ok(active_transform) = active_query.single() {
         let active_pos = active_transform.translation;
+        let current_chunk = ChunkCoord::from_world_pos(active_pos, 200.0); // 200m chunk size
         
-        // Update timer
-        timer.timer += time.delta_secs();
-        
-        // PERFORMANCE: Frame time budgeting - max 3ms per frame
-        let frame_start_time = std::time::Instant::now();
-        
-        // CRITICAL PERFORMANCE OPTIMIZATION: Process every 8.0 seconds OR when player moves significantly
-        let movement_threshold = 100.0;
-        let player_moved = timer.last_player_pos
-            .map(|last_pos| active_pos.distance(last_pos) > movement_threshold)
-            .unwrap_or(true);
-        
-        let should_update = timer.timer >= 8.0 || player_moved;
-        
-        if !should_update {
+        // Only spawn content if player is in or near this chunk
+        let chunk_distance = ((chunk_coord.x - current_chunk.x).abs() + (chunk_coord.z - current_chunk.z).abs()) as f32;
+        if chunk_distance > 2.0 { // Only spawn in adjacent chunks
             return;
         }
         
-        timer.timer = 0.0;
-        timer.last_player_pos = Some(active_pos);
+        chunk_tracker.last_player_chunk = Some(current_chunk);
         
-        // EMERGENCY PERFORMANCE MODE - Drastically reduce entity spawning
-        let active_radius = 100.0;   // REDUCED: Minimal spawn radius from 150.0 to 100.0
-        let cleanup_radius = 2500.0;  // Match road cleanup radius to prevent premature despawning
-        let spawn_density = 120.0;   // INCREASED: Much higher spacing between entities
+        // PERFORMANCE: Frame time budgeting - max 2ms per chunk
+        let frame_start_time = std::time::Instant::now();
         
-        // Phase 1: Remove content outside cleanup radius (truly circular)
-        for (entity, content_transform, _) in content_query.iter() {
-            let distance = active_pos.distance(content_transform.translation);
-            if distance > cleanup_radius {
-                commands.entity(entity).despawn();
-            }
-        }
+        // Calculate chunk center for spawning
+        let chunk_center = Vec3::new(
+            (chunk_coord.x as f32) * 200.0 + 100.0,  // Chunk size 200m + half offset
+            0.0,
+            (chunk_coord.z as f32) * 200.0 + 100.0,
+        );
         
-        // Phase 2: Collect existing content for collision avoidance
+        // Reduced spawn parameters for observer-based system
+        let spawn_radius = 80.0;     // Smaller radius per chunk
+        let spawn_density = 150.0;   // Higher spacing between entities
+        let max_spawn_attempts = 10; // Limited per chunk
+        
+        // Collect existing content for collision avoidance
         let mut existing_content: Vec<(Vec3, ContentType, f32)> = content_query.iter()
             .map(|(_, transform, dynamic_content)| {
                 let radius = match dynamic_content.content_type {
@@ -111,33 +124,30 @@ pub fn query_dynamic_content(
             })
             .collect();
             
-        // Add existing vehicles (non-dynamic) to the collision avoidance list with larger radius
+        // Add existing vehicles to collision avoidance
         for vehicle_transform in existing_vehicles_query.iter() {
             existing_content.push((vehicle_transform.translation, ContentType::Vehicle, 25.0));
         }
         
-        // Phase 3: TRUE CIRCULAR SPAWNING using polar coordinates
-        // Generate content in concentric circles around the active entity
+        // Spawn content in circular pattern around chunk center
         let mut spawn_attempts = 0;
-        let max_spawn_attempts = 15; // REDUCED: From 50 to 15 for better performance
-        
-        for radius_step in (spawn_density as i32..active_radius as i32).step_by(spawn_density as usize) {
+        for radius_step in (spawn_density as i32..spawn_radius as i32).step_by(spawn_density as usize) {
             let radius = radius_step as f32;
             let circumference = 2.0 * std::f32::consts::PI * radius;
-            let points_on_circle = (circumference / spawn_density).max(8.0) as i32;
+            let points_on_circle = (circumference / spawn_density).max(6.0) as i32;
             
             for i in 0..points_on_circle {
                 spawn_attempts += 1;
                 if spawn_attempts > max_spawn_attempts { break; }
                 
                 // PERFORMANCE: Check frame time budget
-                if frame_start_time.elapsed().as_millis() > 3 {
+                if frame_start_time.elapsed().as_millis() > 2 {
                     break; // Exit early to maintain frame rate
                 }
                 
                 let angle = (i as f32 / points_on_circle as f32) * 2.0 * std::f32::consts::PI;
-                let spawn_x = active_pos.x + radius * angle.cos();
-                let spawn_z = active_pos.z + radius * angle.sin();
+                let spawn_x = chunk_center.x + radius * angle.cos();
+                let spawn_z = chunk_center.z + radius * angle.sin();
                 let spawn_pos = Vec3::new(spawn_x, 0.0, spawn_z);
                 
                 // Only spawn if no content exists nearby
@@ -146,14 +156,40 @@ pub fn query_dynamic_content(
                 }
             }
             if spawn_attempts > max_spawn_attempts { break; }
-            
-            // PERFORMANCE: Check frame time budget between radius loops
-            if frame_start_time.elapsed().as_millis() > 3 {
-                break; // Exit early to maintain frame rate
-            }
         }
+        
+        trace!("Observer spawned content for chunk {:?}, attempts: {}", chunk_coord, spawn_attempts);
     }
 }
+
+/// Legacy cleanup system for distant content (maintained for compatibility)
+/// Spawning is now handled by the on_chunk_loaded observer
+pub fn cleanup_distant_content(
+    mut commands: Commands,
+    active_query: Query<&Transform, (With<ActiveEntity>, Without<DynamicContent>)>,
+    content_query: Query<(Entity, &Transform, &DynamicContent)>,
+    mut chunk_tracker: ResMut<ChunkContentTracker>,
+) {
+    if let Ok(active_transform) = active_query.single() {
+        let active_pos = active_transform.translation;
+        let cleanup_radius = 2500.0;
+        
+        // Only cleanup - spawning is now handled by observers
+        for (entity, content_transform, _) in content_query.iter() {
+            let distance = active_pos.distance(content_transform.translation);
+            if distance > cleanup_radius {
+                commands.entity(entity).despawn();
+            }
+        }
+        
+        // Update current chunk tracking
+        let current_chunk = ChunkCoord::from_world_pos(active_pos, 200.0);
+        chunk_tracker.last_player_chunk = Some(current_chunk);
+    }
+}
+
+// Export the cleanup system for plugin registration
+pub use cleanup_distant_content as query_dynamic_content;
 
 fn has_content_at_position(position: Vec3, existing_content: &[(Vec3, ContentType, f32)], min_distance: f32) -> bool {
     existing_content.iter().any(|(existing_pos, _, radius)| {

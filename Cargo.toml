@@ -29,6 +29,8 @@ ron = "0.8"
 chrono = { version = "0.4", features = ["serde"] }
 static_assertions = "1.1"
 thiserror = "2.0"
+rustc-hash = "1.1"
+smallvec = "1.13"
 
 [dev-dependencies]
 criterion = "0.5"

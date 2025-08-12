@@ -8,10 +8,10 @@ use crate::GlobalRng;
 use crate::events::*;
 use crate::plugins::{
     InputPlugin, PlayerPlugin, VehiclePlugin, VegetationLODPlugin, 
-    PersistencePlugin, UIPlugin, WaterPlugin, UnifiedWorldPlugin
+    PersistencePlugin, UIPlugin, WaterPlugin, UnifiedWorldPlugin, SpawnValidationPlugin
 };
 use crate::systems::{
-    SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, 
+    DistanceCachePlugin, DistanceCacheDebugPlugin, 
     TransformSyncPlugin, UnifiedDistanceCalculatorPlugin, UnifiedPerformancePlugin
 };
 use crate::services::GroundDetectionPlugin;
@@ -28,7 +28,18 @@ impl Plugin for GameCorePlugin {
             // Core Bevy and Physics
             .add_plugins(DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
-                    present_mode: bevy::window::PresentMode::Fifo,
+                    title: "GTA Clone".into(),
+                    name: Some("gta_game_main_window".into()),
+                    resolution: (1280., 800.).into(),
+                    position: bevy::window::WindowPosition::Centered(bevy::window::MonitorSelection::Primary),
+                    resizable: true,
+                    decorations: true,
+                    canvas: None,
+                    transparent: false,
+                    focused: true,
+                    visible: true,
+                    mode: bevy::window::WindowMode::Windowed,
+                    present_mode: bevy::window::PresentMode::AutoVsync,
                     ..default()
                 }),
                 ..default()
@@ -115,5 +126,54 @@ impl Plugin for GameCorePlugin {
         // Debug and Instrumentation
         #[cfg(feature = "event-audit")]
         app.add_plugins(crate::debug::EventAuditPlugin);
+
+        // Ensure window is visible and focused on startup (macOS safety)
+        app.add_systems(Startup, ensure_window_visible)
+            // Extra activation nudge on macOS after startup
+            .add_systems(Startup, macos_activate_app)
+            // Add a heartbeat to validate the event loop isn't blocked
+            .add_systems(Update, heartbeat);
+    }
+}
+
+fn ensure_window_visible(
+    mut q: Query<&mut bevy::window::Window, With<bevy::window::PrimaryWindow>>,
+) {
+    if let Ok(mut w) = q.single_mut() {
+        w.visible = true;
+        w.focused = true;
+        // Force a sane windowed mode and ensure it's on-screen
+        w.mode = bevy::window::WindowMode::Windowed;
+        w.present_mode = bevy::window::PresentMode::AutoVsync;
+        // Nudge to a known on-screen location at a safe size
+        w.resolution.set(1280.0, 800.0);
+        w.position = bevy::window::WindowPosition::At(IVec2::new(100, 100));
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn macos_activate_app(
+    windows: NonSend<bevy::winit::WinitWindows>,
+    q: Query<Entity, With<bevy::window::PrimaryWindow>>,
+) {
+    if let Ok(entity) = q.single() {
+        if let Some(w) = windows.get_window(entity) {
+            // Ensure the window is definitely visible and focused
+            w.set_visible(true);
+            w.focus_window();
+            // Ask macOS to bring the app to the front just in case it launched unfocused
+            let _ = w.request_user_attention(None);
+        }
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn macos_activate_app() {}
+
+fn heartbeat(mut t: bevy::prelude::Local<f32>, time: bevy::prelude::Res<bevy::prelude::Time>) {
+    *t += time.delta_secs();
+    if *t >= 1.0 {
+        *t = 0.0;
+        bevy::prelude::info!("heartbeat: update is alive");
     }
 }

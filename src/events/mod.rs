@@ -8,6 +8,7 @@
 pub mod world;
 pub mod distance_events;
 pub mod ground_events;
+pub mod player_events;
 mod size_verification;
 
 #[cfg(feature = "debug-ui")]
@@ -23,6 +24,7 @@ pub use world::{
 // Re-export service coordination events
 pub use distance_events::*;
 pub use ground_events::*;
+pub use player_events::*;
 
 #[cfg(feature = "debug-ui")]
 pub use debug_instrumentation::*;

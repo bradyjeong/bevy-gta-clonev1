@@ -67,6 +67,7 @@ pub mod world_lod_plugin;
 pub mod world_npc_plugin;
 pub mod world_debug_plugin;
 pub mod timing_plugin;
+pub mod spawn_validation_plugin;
 
 pub use game_core::*;
 pub use game_setup::*;
@@ -87,4 +88,5 @@ pub use world_lod_plugin::*;
 pub use world_npc_plugin::*;
 pub use world_debug_plugin::*;
 pub use timing_plugin::*;
+pub use spawn_validation_plugin::*;
 

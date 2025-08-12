@@ -10,15 +10,18 @@ use crate::events::world::content_events::DynamicContentSpawned;
 use crate::components::world::ContentType;
 use crate::components::dynamic_content::DynamicContent;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
-use crate::systems::world::road_network::RoadNetwork;
+use crate::world::RoadNetwork;
 use crate::GlobalRng;
 
+#[cfg(feature = "debug-ui")]
+use crate::events::EventCounters;
+
 /// Handle dynamic content spawn requests using the unified factory
-/// Named: handle_dynamic_spawn_request (per Oracle requirements)
+/// Named: handle_request_dynamic_spawn (per architectural_shift.md §80)
 /// 
 /// This system now relies on the Observer pattern - adding DynamicContent
 /// component automatically triggers the on_dynamic_content_added observer
-pub fn handle_dynamic_spawn_request(
+pub fn handle_request_dynamic_spawn(
     mut commands: Commands,
     mut spawn_reader: EventReader<RequestDynamicSpawn>,
     #[cfg(feature = "legacy-events")]
@@ -29,8 +32,15 @@ pub fn handle_dynamic_spawn_request(
     road_network: Res<RoadNetwork>,
     time: Res<Time>,
     _rng: ResMut<GlobalRng>,
+    #[cfg(feature = "debug-ui")]
+    mut event_counters: Option<ResMut<EventCounters>>,
 ) {
     for request in spawn_reader.read() {
+        #[cfg(feature = "debug-ui")]
+        if let Some(ref mut counters) = event_counters {
+            counters.record_received("RequestDynamicSpawn");
+        }
+        
         // Convert event ContentType to components ContentType
         let component_content_type = convert_event_to_component_type(request.kind);
         
@@ -41,7 +51,7 @@ pub fn handle_dynamic_spawn_request(
             &mut materials,
             component_content_type,
             request.pos,
-            Some(&road_network),
+            Some(&*road_network),
             &[], // No existing content collision check here (handled by validation)
             time.elapsed_secs(),
         ) {
@@ -57,6 +67,11 @@ pub fn handle_dynamic_spawn_request(
                 request.pos,
                 request.kind,
             ));
+            
+            #[cfg(all(feature = "legacy-events", feature = "debug-ui"))]
+            if let Some(ref mut counters) = event_counters {
+                counters.record_sent("DynamicContentSpawned");
+            }
             
             trace!("DEBUG: Spawned {} using unified factory at {:?}", 
                 event_content_type_name(request.kind), request.pos);

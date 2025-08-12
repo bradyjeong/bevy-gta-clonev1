@@ -5,8 +5,9 @@ use crate::components::*;
 use crate::constants::*;
 use crate::resources::GlobalRng;
 
-use crate::systems::world::road_network::{RoadSpline, RoadNetwork};
+use crate::world::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
+use crate::systems::world::road_network::RoadSpline;
 use std::collections::HashMap;
 
 // Map chunk system for performance
@@ -397,7 +398,7 @@ fn generate_chunk_template(coord: IVec2, road_network: &RoadNetwork, global_rng:
         );
         
         // Skip if too close to roads using proper road detection
-        if is_on_road_spline(world_pos, road_network, 25.0) {
+        if is_on_road_spline(world_pos, &*road_network, 25.0) {
             println!("DEBUG: MAP_SYSTEM - Skipping building at {:?} - on road", world_pos);
             continue;
         }

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use gta_game::systems::world::unified_distance_culling::*;
 use gta_game::services::distance_cache::*;
 use gta_game::components::*;
+use gta_game::events::PlayerChunkChanged;
 
 #[cfg(test)]
 mod tests {
@@ -72,7 +73,7 @@ mod tests {
         // Test LOD update
         let changed = cullable.update(200.0, 1.0);
         assert!(changed); // Should detect change
-        assert_eq!(cullable.current_lod, 1); // Should be medium LOD
+        assert_eq!(cullable.current_lod, 2); // Should be low LOD (beyond 150+5=155)
         assert!(!cullable.is_culled);
         
         // Test culling update
@@ -101,10 +102,10 @@ mod tests {
     fn test_hysteresis_prevents_flickering() {
         let config = DistanceCullingConfig::vehicle();
         
-        // Test hysteresis at LOD boundary (150m)
-        assert_eq!(config.get_lod_level(148.0), 0); // Full LOD
-        assert_eq!(config.get_lod_level(152.0), 0); // Still full due to hysteresis
-        assert_eq!(config.get_lod_level(157.0), 1); // Now medium LOD
+        // Test hysteresis at LOD boundary (150m with 5.0 hysteresis)
+        assert_eq!(config.get_lod_level(148.0), 1); // Medium LOD (50+5=55)
+        assert_eq!(config.get_lod_level(152.0), 1); // Still medium LOD (within 150+5=155)
+        assert_eq!(config.get_lod_level(157.0), 2); // Now low LOD (beyond 155)
         
         // Test hysteresis at cull boundary (500m)
         assert!(!config.should_cull(503.0)); // Not culled due to hysteresis
@@ -159,13 +160,21 @@ mod tests {
         )).id();
         
         // Spawn active entity
-        app.world_mut().spawn((
+        let player = app.world_mut().spawn((
             ActiveEntity,
             Transform::from_xyz(0.0, 0.0, 0.0),
-        ));
+        )).id();
         
-        // Add the unified culling system manually for testing
-        app.add_systems(Update, new_unified_distance_culling_system);
+        // Add the observer for observer-based culling
+        app.add_observer(handle_unified_culling_on_player_moved);
+        
+        // Test observer by firing PlayerChunkChanged event
+        app.world_mut().send_event(PlayerChunkChanged::new(
+            player,
+            (0, 0),
+            None,
+            Vec3::ZERO,
+        ));
         
         // Run one update cycle
         app.update();
@@ -181,10 +190,10 @@ mod tests {
         let mut app = setup_test_app();
         
         // Spawn active entity
-        app.world_mut().spawn((
+        let player = app.world_mut().spawn((
             ActiveEntity,
             Transform::from_xyz(0.0, 0.0, 0.0),
-        ));
+        )).id();
         
         // Spawn many entities to test performance
         for i in 0..1000 {
@@ -196,11 +205,17 @@ mod tests {
             ));
         }
         
-        // Add the unified culling system manually for testing
-        app.add_systems(Update, new_unified_distance_culling_system);
+        // Add the observer for observer-based culling
+        app.add_observer(handle_unified_culling_on_player_moved);
         
-        // Run several update cycles
-        for _ in 0..10 {
+        // Test observer by firing PlayerChunkChanged events
+        for i in 0..10 {
+            app.world_mut().send_event(PlayerChunkChanged::new(
+                player,
+                (i, 0),
+                Some((i-1, 0)),
+                Vec3::new(i as f32 * 10.0, 0.0, 0.0),
+            ));
             app.update();
         }
         

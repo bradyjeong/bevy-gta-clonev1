@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::*;
-use crate::systems::world::road_network::RoadNetwork;
+// use crate::systems::world::road_network::RoadNetwork;
 use crate::events::world::chunk_events::{RequestChunkLoad, RequestChunkUnload, ChunkCoord as EventChunkCoord};
 
 // UNIFIED WORLD GENERATION SYSTEM
@@ -182,36 +182,78 @@ impl PlacementGrid {
     }
 }
 
-/// Central resource managing all world generation
+/// Split UnifiedWorldManager into focused resources per architectural_shift.md P1
+
+/// Legacy UnifiedWorldManager (deprecated - being split into focused resources)
 #[derive(Resource)]
 pub struct UnifiedWorldManager {
     pub chunks: HashMap<ChunkCoord, ChunkData>,
-    pub placement_grid: PlacementGrid,
-    pub road_network: RoadNetwork,
-    
-    // Streaming state
-    pub active_chunk: Option<ChunkCoord>,
     pub streaming_radius_chunks: i32,
     pub last_update: f32,
-    
-    // Performance tracking
-    pub chunks_loaded_this_frame: usize,
-    pub chunks_unloaded_this_frame: usize,
-    pub max_chunks_per_frame: usize,
+    pub chunks_loaded_this_frame: u32,
+    pub chunks_unloaded_this_frame: u32,
+    pub max_chunks_per_frame: u32,
+    pub active_chunk: Option<ChunkCoord>, // Added for compatibility
 }
 
 impl Default for UnifiedWorldManager {
     fn default() -> Self {
         Self {
             chunks: HashMap::new(),
-            placement_grid: PlacementGrid::new(),
-            road_network: RoadNetwork::default(),
+            streaming_radius_chunks: (UNIFIED_STREAMING_RADIUS / UNIFIED_CHUNK_SIZE).ceil() as i32,
+            last_update: 0.0,
+            chunks_loaded_this_frame: 0,
+            chunks_unloaded_this_frame: 0,
+            max_chunks_per_frame: 4,
+            active_chunk: None,
+        }
+    }
+}
+
+/// Hot-path streaming state - frequently accessed (≤64 bytes)
+#[derive(Resource)]
+pub struct WorldStreamingState {
+    pub active_chunk: Option<ChunkCoord>,  // 9 bytes (Option<8-byte struct>)
+    pub streaming_radius_chunks: i32,     // 4 bytes
+    pub last_update: f32,                 // 4 bytes
+    pub chunks_loaded_this_frame: u16,    // 2 bytes - reduced from usize
+    pub chunks_unloaded_this_frame: u16,  // 2 bytes - reduced from usize
+    pub max_chunks_per_frame: u8,         // 1 byte - max 255 is plenty
+    // Total: ~22 bytes (well under 64)
+}
+
+/// Cold-path chunk storage - large but infrequently accessed
+#[derive(Resource)]
+pub struct ChunkStorage {
+    pub chunks: HashMap<ChunkCoord, ChunkData>,
+}
+
+// Note: PlacementGrid and RoadNetwork are now separate resources
+// This eliminates duplication mentioned in architectural_shift.md
+
+// Compile-time size assertion for hot-path resource
+const _: () = assert!(
+    std::mem::size_of::<WorldStreamingState>() <= 64,
+    "WorldStreamingState exceeds 64-byte cache line"
+);
+
+impl Default for WorldStreamingState {
+    fn default() -> Self {
+        Self {
             active_chunk: None,
             streaming_radius_chunks: (UNIFIED_STREAMING_RADIUS / UNIFIED_CHUNK_SIZE).ceil() as i32,
             last_update: 0.0,
             chunks_loaded_this_frame: 0,
             chunks_unloaded_this_frame: 0,
             max_chunks_per_frame: 4, // Prevent frame drops
+        }
+    }
+}
+
+impl Default for ChunkStorage {
+    fn default() -> Self {
+        Self {
+            chunks: HashMap::new(),
         }
     }
 }

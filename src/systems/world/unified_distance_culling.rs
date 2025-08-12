@@ -154,36 +154,30 @@ impl UnifiedCullable {
     }
 }
 
-/// Timer resource for unified culling system
-#[derive(Resource, Default)]
-pub struct UnifiedCullingTimer {
-    pub elapsed: f32,
-}
-
-/// Main unified distance culling system (renamed to avoid conflicts)
-pub fn new_unified_distance_culling_system(
+/// Observer-based unified distance culling system (replaces timer-based polling)
+/// Reacts to PlayerChunkChanged events using Bevy 0.16 observer pattern
+pub fn handle_unified_culling_on_player_moved(
+    trigger: Trigger<crate::events::PlayerChunkChanged>,
     mut cullable_query: Query<(Entity, &mut UnifiedCullable, &Transform, &mut Visibility)>,
-    active_query: Query<(Entity, &Transform), (With<ActiveEntity>, Without<UnifiedCullable>)>,
     mut distance_cache: ResMut<DistanceCache>,
-    mut timer: ResMut<UnifiedCullingTimer>,
     time: Res<Time>,
     _commands: Commands,
     frame_counter: Res<FrameCounter>,
 ) {
-    let Ok((active_entity, active_transform)) = active_query.single() else { return };
-    let player_pos = active_transform.translation;
+    let event = trigger.event();
+    let player_pos = event.position;
+    let active_entity = event.entity;
     
-    timer.elapsed += time.delta_secs();
-    let current_time = timer.elapsed;
+    let current_time = time.elapsed_secs();
     let _current_frame = frame_counter.frame;
     
-    // Time budgeting - max 4ms per frame
+    // Time budgeting - max 4ms per frame for observer response
     let start_time = std::time::Instant::now();
     const MAX_FRAME_TIME: std::time::Duration = std::time::Duration::from_millis(4);
     
-    // Reduced entity processing per frame
+    // Process all entities since we're triggered by significant position changes
     let mut processed = 0;
-    const MAX_ENTITIES_PER_FRAME: usize = 15;
+    const MAX_ENTITIES_PER_OBSERVER: usize = 50; // Higher limit for observers
     
     for (entity, mut cullable, transform, mut visibility) in cullable_query.iter_mut() {
         // Early exit if time budget exceeded
@@ -191,7 +185,7 @@ pub fn new_unified_distance_culling_system(
             break;
         }
         
-        if processed >= MAX_ENTITIES_PER_FRAME {
+        if processed >= MAX_ENTITIES_PER_OBSERVER {
             break;
         }
         
@@ -205,35 +199,33 @@ pub fn new_unified_distance_culling_system(
         );
         let distance = distance_squared.sqrt();
         
-        // Only update if necessary
-        if cullable.needs_update(current_time, distance) {
-            let state_changed = cullable.update(distance, current_time);
+        // Since we're triggered by position changes, update all entities
+        let state_changed = cullable.update(distance, current_time);
+        
+        if state_changed {
+            // Update visibility
+            *visibility = if cullable.is_culled {
+                Visibility::Hidden
+            } else {
+                Visibility::Visible
+            };
             
-            if state_changed {
-                // Update visibility
-                *visibility = if cullable.is_culled {
-                    Visibility::Hidden
-                } else {
-                    Visibility::Visible
-                };
-                
-                // Mark entity as dirty for other systems to respond to LOD changes
-                // Batching system disabled
-                // commands.entity(entity).insert(DirtyLOD::new(
-                //     if distance < 100.0 { DirtyPriority::High } else { DirtyPriority::Normal },
-                //     current_frame,
-                // ));
-                
-                // Mark visibility as dirty if changed
-                // Batching system disabled
-                // commands.entity(entity).insert(DirtyVisibility::new(
-                //     DirtyPriority::Normal,
-                //     current_frame,
-                // ));
-            }
+            // Mark entity as dirty for other systems to respond to LOD changes
+            // Batching system disabled
+            // commands.entity(entity).insert(DirtyLOD::new(
+            //     if distance < 100.0 { DirtyPriority::High } else { DirtyPriority::Normal },
+            //     current_frame,
+            // ));
             
-            processed += 1;
+            // Mark visibility as dirty if changed
+            // Batching system disabled
+            // commands.entity(entity).insert(DirtyVisibility::new(
+            //     DirtyPriority::Normal,
+            //     current_frame,
+            // ));
         }
+        
+        processed += 1;
     }
 }
 
@@ -275,7 +267,7 @@ pub struct VehicleLODUpdate {
 
 /// System specifically for NPC LOD using unified culling
 pub fn unified_npc_lod_system(
-    npc_query: Query<(Entity, &UnifiedCullable, &NPCState), (With<DirtyLOD>, Changed<UnifiedCullable>)>,
+    npc_query: Query<(Entity, &UnifiedCullable, &NPCCore), (With<DirtyLOD>, Changed<UnifiedCullable>)>,
     mut commands: Commands,
 ) {
     for (entity, cullable, npc_state) in npc_query.iter() {
@@ -479,10 +471,9 @@ pub struct UnifiedDistanceCullingPlugin;
 impl Plugin for UnifiedDistanceCullingPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(UnifiedCullingTimer::default())
+            // Register observer for reactive culling on player movement
+            .add_observer(handle_unified_culling_on_player_moved)
             .add_systems(Update, (
-                // Main culling system runs first
-                new_unified_distance_culling_system,
                 
                 // Entity-specific LOD systems run after
                 unified_vehicle_lod_system,

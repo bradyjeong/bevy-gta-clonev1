@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::config::GameConfig;
 use crate::components::ContentType;
 use crate::factories::generic_bundle::BundleError;
-use crate::systems::world::road_network::RoadNetwork;
+use crate::world::RoadNetwork;
 use crate::systems::world::road_generation::is_on_road_spline;
 
 /// Position validator for entity spawning

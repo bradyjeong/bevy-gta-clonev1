@@ -276,3 +276,35 @@ static_assertions::const_assert!(std::mem::size_of::<ChunkTracker>() <= 64);
 
 // ChunkTables has unbounded size due to HashMaps (this is intentional)
 // No size constraint needed for ChunkTables as it's designed for dynamic data
+
+/// ChunkProgress - Tracks per-chunk layer generation state and timing (not hot-path)
+#[derive(Resource, Debug, Default)]
+pub struct ChunkProgress {
+    pub roads_generated: HashMap<ChunkCoord, bool>,
+    pub buildings_generated: HashMap<ChunkCoord, bool>,
+    pub vehicles_generated: HashMap<ChunkCoord, bool>,
+    pub vegetation_generated: HashMap<ChunkCoord, bool>,
+    pub last_update: HashMap<ChunkCoord, f32>,
+}
+
+impl ChunkProgress {
+    pub fn mark_layer(&mut self, coord: ChunkCoord, layer: crate::systems::world::unified_world::ContentLayer) {
+        match layer {
+            crate::systems::world::unified_world::ContentLayer::Roads => { self.roads_generated.insert(coord, true); }
+            crate::systems::world::unified_world::ContentLayer::Buildings => { self.buildings_generated.insert(coord, true); }
+            crate::systems::world::unified_world::ContentLayer::Vehicles => { self.vehicles_generated.insert(coord, true); }
+            crate::systems::world::unified_world::ContentLayer::Vegetation => { self.vegetation_generated.insert(coord, true); }
+            crate::systems::world::unified_world::ContentLayer::NPCs => {}
+        }
+    }
+    pub fn get_flags(&self, coord: ChunkCoord) -> (bool,bool,bool,bool) {
+        (
+            *self.roads_generated.get(&coord).unwrap_or(&false),
+            *self.buildings_generated.get(&coord).unwrap_or(&false),
+            *self.vehicles_generated.get(&coord).unwrap_or(&false),
+            *self.vegetation_generated.get(&coord).unwrap_or(&false),
+        )
+    }
+    pub fn set_last_update(&mut self, coord: ChunkCoord, t: f32) { self.last_update.insert(coord, t); }
+    pub fn get_last_update(&self, coord: ChunkCoord) -> f32 { self.last_update.get(&coord).copied().unwrap_or(0.0) }
+}

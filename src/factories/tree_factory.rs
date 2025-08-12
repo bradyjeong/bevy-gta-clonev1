@@ -5,7 +5,7 @@ use crate::components::*;
 use crate::bundles::VegetationBundle;
 use crate::systems::UnifiedCullable;
 use crate::factories::common::{FocusedFactory, GroundHeightCache, SpawnValidation, PhysicsSetup, EntityPhysicsType};
-use crate::systems::RoadNetwork;
+use crate::world::RoadNetwork;
 use crate::GameConfig;
 
 /// Focused factory for vegetation entities following AGENT.md simplicity principles

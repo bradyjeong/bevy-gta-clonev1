@@ -2,8 +2,9 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::*;
 use crate::systems::world::unified_world::{
-    UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkState, UNIFIED_STREAMING_RADIUS,
+    UnifiedChunkEntity, ContentLayer,
 };
+use crate::world::chunk_tracker::{ChunkTracker, ChunkTables, ChunkCoord};
 use crate::services::distance_cache::{DistanceCache, get_cached_distance};
 
 // MASTER UNIFIED LOD AND CULLING SYSTEM
@@ -127,14 +128,15 @@ impl LODPluginConfig {
 pub fn master_unified_lod_system(
     mut commands: Commands,
     mut lod_coordinator: ResMut<MasterLODCoordinator>,
-    mut world_manager: ResMut<UnifiedWorldManager>,
+    chunk_tracker: Res<ChunkTracker>,
+    mut chunk_tables: ResMut<ChunkTables>,
     active_query: Query<(Entity, &Transform), With<ActiveEntity>>,
     // Entity-specific queries - these replace individual LOD systems
     mut vehicle_query: Query<(Entity, &mut VehicleState, &Transform, Option<&VehicleRendering>), Without<ActiveEntity>>,
-    mut npc_query: Query<(Entity, &mut NPCState, &Transform, Option<&NPCRendering>), (Without<ActiveEntity>, Without<VehicleState>)>,
+    mut npc_query: Query<(Entity, &mut NPCCore, &Transform, Option<&NPCRendering>), (Without<ActiveEntity>, Without<VehicleState>)>,
     mut visibility_param_set: ParamSet<(
         Query<(Entity, &UnifiedChunkEntity, &mut Visibility)>,
-        Query<(Entity, &mut VegetationLOD, &Transform, &mut Visibility, &mut Mesh3d), (With<VegetationMeshLOD>, Without<ActiveEntity>, Without<VehicleState>, Without<NPCState>)>,
+        Query<(Entity, &mut VegetationLOD, &Transform, &mut Visibility, &mut Mesh3d), (With<VegetationMeshLOD>, Without<ActiveEntity>, Without<VehicleState>, Without<NPCCore>)>,
         Query<(&mut Cullable, &Transform, &mut Visibility)>,
     )>,
     
@@ -151,8 +153,8 @@ pub fn master_unified_lod_system(
     let start_time = std::time::Instant::now();
     const MAX_FRAME_TIME: std::time::Duration = std::time::Duration::from_millis(3);
     
-    // Update chunk LOD levels based on distance
-    update_chunk_lod_levels(&mut world_manager, active_pos);
+    // Update chunk LOD levels based on distance (store distances in tables for visibility decisions)
+    update_chunk_lod_levels(&chunk_tracker, &mut chunk_tables, active_pos);
     
     // Early exit if time budget exceeded
     if start_time.elapsed() > MAX_FRAME_TIME {
@@ -163,20 +165,16 @@ pub fn master_unified_lod_system(
     {
         let mut chunk_query = visibility_param_set.p0();
         for (_entity, chunk_entity, mut visibility) in chunk_query.iter_mut() {
-        if let Some(chunk) = world_manager.get_chunk(chunk_entity.coord) {
-            let should_be_visible = match chunk.state {
-                ChunkState::Loaded { lod_level } => {
-                    should_layer_be_visible(chunk_entity.layer, lod_level, chunk.distance_to_player)
-                }
-                _ => false,
-            };
-            
-            *visibility = if should_be_visible {
-                Visibility::Visible
+            let coord = chunk_entity.coord;
+            let is_loaded = chunk_tracker.is_chunk_loaded(ChunkCoord { x: coord.x, z: coord.z });
+            if is_loaded {
+                let distance = chunk_tables.get_chunk_distance(ChunkCoord { x: coord.x, z: coord.z }).unwrap_or(f32::MAX);
+                let lod_level = LODPluginConfig::chunk().get_lod_level(distance);
+                let should_be_visible = should_layer_be_visible(chunk_entity.layer, lod_level, distance);
+                *visibility = if should_be_visible { Visibility::Visible } else { Visibility::Hidden };
             } else {
-                Visibility::Hidden
-            };
-        }
+                *visibility = Visibility::Hidden;
+            }
         }
     }
     
@@ -195,26 +193,12 @@ pub fn master_unified_lod_system(
     }
 }
 
-fn update_chunk_lod_levels(world_manager: &mut UnifiedWorldManager, active_pos: Vec3) {
-    let chunks_to_update: Vec<_> = world_manager.chunks.iter()
-        .filter_map(|(coord, chunk)| {
-            if let ChunkState::Loaded { lod_level } = chunk.state {
-                let distance = active_pos.distance(chunk.coord.to_world_pos());
-                Some((*coord, distance, lod_level))
-            } else {
-                None
-            }
-        })
-        .collect();
-    
-    for (coord, distance, old_lod) in chunks_to_update {
-        let new_lod = world_manager.calculate_lod_level(distance);
-        if new_lod != old_lod {
-            if let Some(chunk) = world_manager.chunks.get_mut(&coord) {
-                chunk.distance_to_player = distance;
-                chunk.state = ChunkState::Loaded { lod_level: new_lod };
-            }
-        }
+fn update_chunk_lod_levels(chunk_tracker: &ChunkTracker, chunk_tables: &mut ChunkTables, active_pos: Vec3) {
+    // Compute and cache distances for loaded chunks; LOD level derived on the fly from distance
+    for coord in chunk_tracker.get_loaded_chunks() {
+        let world_pos = coord.to_world_pos();
+        let distance = active_pos.distance(world_pos);
+        chunk_tables.update_chunk_distance(coord, distance);
     }
 }
 
@@ -326,7 +310,7 @@ fn process_npc_lod(
     lod_coordinator: &mut MasterLODCoordinator,
     active_entity: Entity,
     active_pos: Vec3,
-    npc_query: &mut Query<(Entity, &mut NPCState, &Transform, Option<&NPCRendering>), (Without<ActiveEntity>, Without<VehicleState>)>,
+    npc_query: &mut Query<(Entity, &mut NPCCore, &Transform, Option<&NPCRendering>), (Without<ActiveEntity>, Without<VehicleState>)>,
     distance_cache: &mut ResMut<DistanceCache>,
     current_time: f32,
     start_time: std::time::Instant,
@@ -399,7 +383,7 @@ fn process_vegetation_lod(
     lod_coordinator: &mut MasterLODCoordinator,
     active_entity: Entity,
     active_pos: Vec3,
-    vegetation_query: &mut Query<(Entity, &mut VegetationLOD, &Transform, &mut Visibility, &mut Mesh3d), (With<VegetationMeshLOD>, Without<ActiveEntity>, Without<VehicleState>, Without<NPCState>)>,
+    vegetation_query: &mut Query<(Entity, &mut VegetationLOD, &Transform, &mut Visibility, &mut Mesh3d), (With<VegetationMeshLOD>, Without<ActiveEntity>, Without<VehicleState>, Without<NPCCore>)>,
     distance_cache: &mut ResMut<DistanceCache>,
     current_frame: u64,
     start_time: std::time::Instant,
@@ -513,10 +497,11 @@ pub fn initialize_master_lod_system(mut commands: Commands) {
 /// Enhanced performance monitoring system for the master LOD system
 pub fn master_lod_performance_monitor(
     lod_coordinator: Res<MasterLODCoordinator>,
-    world_manager: Res<UnifiedWorldManager>,
+    chunk_tracker: Res<ChunkTracker>,
+    chunk_tables: Option<Res<ChunkTables>>,
     _chunk_query: Query<&UnifiedChunkEntity>,
     vehicle_query: Query<&VehicleState>,
-    npc_query: Query<&NPCState>,
+    npc_query: Query<&NPCCore>,
     vegetation_query: Query<&VegetationLOD>,
     mut performance_stats: ResMut<PerformanceStats>,
     time: Res<Time>,
@@ -562,10 +547,8 @@ pub fn master_lod_performance_monitor(
         }
     }
     
-    let total_chunks = world_manager.chunks.len();
-    let loaded_chunks = world_manager.chunks.values()
-        .filter(|chunk| matches!(chunk.state, ChunkState::Loaded { .. }))
-        .count();
+    let loaded_chunks = chunk_tracker.get_loaded_chunks().len();
+    let total_chunks = if let Some(tables) = &chunk_tables { tables.loaded.len() + tables.loading.len() } else { loaded_chunks };
     
     let total_entities = lod_coordinator.performance_stats.total_entities;
     let culled_entities = lod_coordinator.performance_stats.culled_entities;
@@ -593,20 +576,19 @@ pub fn master_lod_performance_monitor(
 
 /// System to handle dynamic LOD adjustments based on performance
 pub fn adaptive_lod_system(
-    mut world_manager: ResMut<UnifiedWorldManager>,
+    mut chunk_tracker: ResMut<ChunkTracker>,
     _performance_stats: Res<PerformanceStats>,
     time: Res<Time>,
 ) {
-    // Simple adaptive LOD based on frame time
+    // Simple adaptive LOD radius tweak based on frame time
     let frame_time = time.delta_secs();
     let target_frame_time = 1.0 / 60.0; // 60 FPS target
-    
     if frame_time > target_frame_time * 1.5 {
-        // Performance is suffering, reduce max chunks per frame
-        world_manager.max_chunks_per_frame = (world_manager.max_chunks_per_frame.saturating_sub(1)).max(1);
+        // Performance is suffering, reduce LOD/streaming radius slightly (min 2)
+        chunk_tracker.lod_radius = (chunk_tracker.lod_radius - 1).max(2);
     } else if frame_time < target_frame_time * 0.8 {
-        // Performance is good, can increase load
-        world_manager.max_chunks_per_frame = (world_manager.max_chunks_per_frame + 1).min(8);
+        // Performance is good, increase within a safe bound
+        chunk_tracker.lod_radius = (chunk_tracker.lod_radius + 1).min(16);
     }
 }
 
@@ -640,7 +622,7 @@ pub fn unified_distance_culling_system(
 /// System to clean up entities that have been culled for too long
 pub fn unified_cleanup_system(
     mut commands: Commands,
-    world_manager: ResMut<UnifiedWorldManager>,
+    chunk_tracker: Res<ChunkTracker>,
     cullable_query: Query<(Entity, &Cullable, &Transform)>,
     time: Res<Time>,
 ) {
@@ -651,18 +633,17 @@ pub fn unified_cleanup_system(
         if cullable.is_culled {
             // In a full implementation, you'd track when entities were first culled
             // For now, we'll just clean up very distant entities immediately
-            let distance_to_any_chunk = world_manager
-                .chunks
-                .values()
-                .map(|chunk| transform.translation.distance(chunk.coord.to_world_pos()))
+            let distance_to_any_chunk = chunk_tracker
+                .get_loaded_chunks()
+                .into_iter()
+                .map(|coord| transform.translation.distance(coord.to_world_pos()))
                 .fold(f32::INFINITY, f32::min);
             
-            if distance_to_any_chunk > UNIFIED_STREAMING_RADIUS * 2.0 {
+            use crate::world::constants::{UNIFIED_CHUNK_SIZE, UNIFIED_STREAMING_RADIUS};
+            let max_distance = (UNIFIED_STREAMING_RADIUS as f32) * UNIFIED_CHUNK_SIZE * 2.0;
+            if distance_to_any_chunk > max_distance {
                 commands.entity(entity).despawn();
-                
-                // Remove from placement grid
-                // Note: In a full implementation, you'd need to track which entities
-                // are in the placement grid to remove them efficiently
+                // Placement grid cleanup is handled elsewhere in V2
             }
         }
     }

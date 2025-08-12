@@ -70,7 +70,15 @@ pub mod npc_optimized;
 
 pub use player::*;
 pub use vehicles::*;
-pub use world::*;
+pub use world::{
+    NPCBehaviorComponent, MovementController, BuildingType, NPC, NPCType, NPCLOD,
+    NPCCore, NPCVisuals, NPCAppearance, NPCGender, NPCBehaviorType, NPCRendering,
+    NPCHead, NPCTorso, NPCLeftArm, NPCRightArm, NPCLeftLeg, NPCRightLeg, NPCBodyPart,
+    NPC_LOD_FULL_DISTANCE, NPC_LOD_MEDIUM_DISTANCE, NPC_LOD_LOW_DISTANCE, NPC_LOD_CULL_DISTANCE,
+    Cullable, RoadEntity, IntersectionEntity, DynamicTerrain, DynamicContent, ContentType,
+    PerformanceCritical, Building, Landmark, Buildable, MainCamera, CullingSettings,
+    PerformanceStats, MeshCache, EntityLimits
+};
 pub use effects::*;
 pub use water::*;
 pub use lod::*;

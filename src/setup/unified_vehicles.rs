@@ -5,7 +5,7 @@ use crate::bundles::DynamicVehicleBundle;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
-use crate::systems::world::road_network::RoadNetwork;
+use crate::world::RoadNetwork;
 use crate::systems::world::unified_distance_culling::UnifiedCullable;
 use crate::services::distance_cache::MovementTracker;
 use crate::setup::vehicles::BugattiColorScheme;
