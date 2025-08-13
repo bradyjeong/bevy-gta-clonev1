@@ -29,24 +29,35 @@ impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app
             // Core Bevy and Physics
-            .add_plugins(DefaultPlugins.set(WindowPlugin {
-                primary_window: Some(Window {
-                    title: "GTA Clone".into(),
-                    name: Some("gta_game_main_window".into()),
-                    resolution: (1280., 800.).into(),
-                    position: bevy::window::WindowPosition::Centered(bevy::window::MonitorSelection::Primary),
-                    resizable: true,
-                    decorations: true,
-                    canvas: None,
-                    transparent: false,
-                    focused: true,
-                    visible: true,
-                    mode: bevy::window::WindowMode::Windowed,
-                    present_mode: bevy::window::PresentMode::AutoVsync,
+            .add_plugins(DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "GTA Clone".into(),
+                        name: Some("gta_game_main_window".into()),
+                        resolution: (1280., 800.).into(),
+                        position: bevy::window::WindowPosition::Centered(bevy::window::MonitorSelection::Primary),
+                        resizable: true,
+                        decorations: true,
+                        canvas: None,
+                        transparent: false,
+                        focused: true,
+                        visible: true,
+                        mode: bevy::window::WindowMode::Windowed,
+                        present_mode: bevy::window::PresentMode::AutoVsync,
+                        ..default()
+                    }),
                     ..default()
-                }),
-                ..default()
-            }))
+                })
+                .set(AssetPlugin {
+                    file_path: if cfg!(target_os = "macos") && std::env::current_exe()
+                        .map(|exe| exe.to_string_lossy().contains(".app/Contents/MacOS"))
+                        .unwrap_or(false) {
+                        "../Resources/assets".to_string()
+                    } else {
+                        "assets".to_string()
+                    },
+                    ..default()
+                }))
             .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
             .add_plugins(FrameTimeDiagnosticsPlugin::default())
             
