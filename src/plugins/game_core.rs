@@ -24,13 +24,24 @@ impl Plugin for GameCorePlugin {
     fn build(&self, app: &mut App) {
         app
             // Core Bevy and Physics
-            .add_plugins(DefaultPlugins.set(WindowPlugin {
-                primary_window: Some(Window {
-                    present_mode: bevy::window::PresentMode::Fifo,
+            .add_plugins(DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        present_mode: bevy::window::PresentMode::Fifo,
+                        ..default()
+                    }),
                     ..default()
-                }),
-                ..default()
-            }))
+                })
+                .set(AssetPlugin {
+                    file_path: if cfg!(target_os = "macos") && std::env::current_exe()
+                        .map(|exe| exe.to_string_lossy().contains(".app/Contents/MacOS"))
+                        .unwrap_or(false) {
+                        "../Resources/assets".to_string()
+                    } else {
+                        "assets".to_string()
+                    },
+                    ..default()
+                }))
             .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
             .add_plugins(FrameTimeDiagnosticsPlugin::default())
             
