@@ -4,7 +4,7 @@ use crate::components::*;
 use crate::world::RoadNetwork;
 use crate::components::RoadEntity;
 use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh};
-use crate::bundles::VisibleChildBundle;
+// Removed unused import
 use crate::events::PlayerChunkChanged;
 
 // MAIN ROAD GENERATION SYSTEM (Replaces old grid system)
@@ -108,24 +108,22 @@ fn spawn_road_entity(
     
     // Main road surface mesh
     let road_mesh = generate_road_mesh(road);
-    commands.spawn((
+    let mesh_entity = commands.spawn((
         Mesh3d(meshes.add(road_mesh)),
         MeshMaterial3d(road_material),
         Transform::from_translation(Vec3::new(-start_pos.x, 0.0, -start_pos.z)), // Road surface at ground level (y = 0.0)
-        ChildOf(road_entity),
-        VisibleChildBundle::default(),
-    ));
+    )).id();
+    commands.entity(road_entity).add_child(mesh_entity);
     
     // Road markings for visibility and realism
     let marking_meshes = generate_road_markings_mesh(road);
     for marking_mesh in marking_meshes {
-        commands.spawn((
+        let marking_entity = commands.spawn((
             Mesh3d(meshes.add(marking_mesh)),
             MeshMaterial3d(marking_material.clone()),
             Transform::from_translation(Vec3::new(-start_pos.x, 0.01, -start_pos.z)), // Road markings 1cm above road surface (y = 0.01)
-            ChildOf(road_entity),
-            VisibleChildBundle::default(),
-        ));
+        )).id();
+        commands.entity(road_entity).add_child(marking_entity);
     }
 }
 

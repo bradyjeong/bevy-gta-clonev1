@@ -4,7 +4,7 @@ use rand::Rng;
 use crate::components::*;
 use crate::bundles::DynamicPhysicsBundle;
 use crate::systems::{UnifiedCullable, MovementTracker};
-use crate::factories::common::{FocusedFactory, GroundHeightCache, SpawnValidation, PhysicsSetup, EntityPhysicsType};
+use crate::factories::common::{FocusedFactory, GroundHeightCache, PhysicsSetup, EntityPhysicsType};
 use crate::world::RoadNetwork;
 use crate::GameConfig;
 
@@ -43,15 +43,13 @@ impl NPCFactory {
         position: Vec3,
         config: &GameConfig,
         current_time: f32,
-        road_network: Option<&RoadNetwork>,
+        _road_network: Option<&RoadNetwork>,
         ground_cache: &mut GroundHeightCache,
     ) -> Result<Entity, String> {
         let mut rng = rand::thread_rng();
         
-        // Validate spawn position
-        if !SpawnValidation::is_position_valid(position, ContentType::NPC, road_network) {
-            return Err("Invalid position for NPC".to_string());
-        }
+        // NOTE: Position validation performed upstream in event-driven pipeline
+        // When called through RequestDynamicSpawn events, position is already validated
         
         // Position NPC on ground
         let ground_level = ground_cache.get_ground_height(Vec2::new(position.x, position.z));
@@ -94,7 +92,10 @@ impl NPCFactory {
             },
             // Visual mesh
             Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
-            MeshMaterial3d(materials.add(color)),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: color,
+                ..default()
+            })),
             Name::new(format!("NPC_{:.0}_{:.0}_{}", position.x, position.z, current_time)),
         )).id();
         

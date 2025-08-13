@@ -49,12 +49,12 @@ pub fn update_flame_colors(
     flame_query: Query<(&MeshMaterial3d<StandardMaterial>, &FlameEffect), With<JetFlame>>,
 ) {
     for (f16_entity, flight) in f16_query.iter() {
-        for (MeshMaterial3d(material_handle), flame_effect) in flame_query.iter() {
+        for (material_handle, flame_effect) in flame_query.iter() {
             if flame_effect.parent_vehicle != f16_entity {
                 continue;
             }
 
-            if let Some(material) = material_assets.get_mut(material_handle) {
+            if let Some(material) = material_assets.get_mut(&material_handle.0) {
                 // Calculate flame color based on throttle and afterburner (Oracle fix - use afterburner_active)
                 let base_intensity = flight.throttle;
                 let afterburner_active = flight.afterburner_active;

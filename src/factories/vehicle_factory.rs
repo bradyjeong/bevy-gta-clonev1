@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use crate::components::*;
-use crate::bundles::{DynamicPhysicsBundle, VisibleChildBundle};
+use crate::bundles::DynamicPhysicsBundle;
 use crate::systems::{UnifiedCullable, MovementTracker};
-use crate::factories::common::{FocusedFactory, GroundHeightCache, SpawnValidation, PhysicsSetup, EntityPhysicsType};
+use crate::factories::common::{FocusedFactory, GroundHeightCache, PhysicsSetup, EntityPhysicsType};
 use crate::world::RoadNetwork;
 use crate::GameConfig;
 
@@ -43,15 +43,13 @@ impl VehicleFactory {
         position: Vec3,
         config: &GameConfig,
         current_time: f32,
-        road_network: Option<&RoadNetwork>,
+        _road_network: Option<&RoadNetwork>,
         ground_cache: &mut GroundHeightCache,
     ) -> Result<Entity, String> {
         let mut rng = rand::thread_rng();
         
-        // Validate spawn position (vehicles need roads)
-        if !SpawnValidation::is_position_valid(position, ContentType::Vehicle, road_network) {
-            return Err("Invalid position for vehicle - not on road".to_string());
-        }
+        // NOTE: Position validation performed upstream in event-driven pipeline
+        // When called through RequestDynamicSpawn events, position is already validated
         
         // Position vehicle on ground surface
         let ground_level = ground_cache.get_ground_height(Vec2::new(position.x, position.z));
@@ -88,13 +86,17 @@ impl VehicleFactory {
         )).id();
         
         // Add car body as child entity
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
-            MeshMaterial3d(materials.add(color)),
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            ChildOf(vehicle_entity),
-            VisibleChildBundle::default(),
-        ));
+        commands.entity(vehicle_entity).with_children(|parent| {
+            parent.spawn((
+                Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: color,
+                    ..default()
+                })),
+                Transform::from_xyz(0.0, 0.0, 0.0),
+                Visibility::Inherited,
+            ));
+        });
         
         Ok(vehicle_entity)
     }

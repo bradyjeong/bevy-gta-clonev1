@@ -241,10 +241,6 @@ fn spawn_unified_road_entity_v2(
             Mesh3d(meshes.add(road_mesh)),
             MeshMaterial3d(road_material),
             Transform::from_translation(Vec3::ZERO),
-            GlobalTransform::default(),
-            Visibility::Visible,
-            InheritedVisibility::default(),
-            ViewVisibility::default(),
         ));
     });
     

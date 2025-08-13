@@ -68,6 +68,9 @@ pub mod world_object;
 pub mod dynamic_content;
 pub mod npc_optimized;
 
+// Re-export Bevy's ChildOf for hierarchy relationships
+pub use bevy::ecs::hierarchy::ChildOf;
+
 pub use player::*;
 pub use vehicles::*;
 pub use world::{

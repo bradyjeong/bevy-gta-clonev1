@@ -139,7 +139,7 @@ impl RenderingFactory {
                 }).id();
                 
                 if let Some(parent_id) = parent {
-                    commands.entity(entity).insert(ChildOf(parent_id));
+                    commands.entity(parent_id).add_child(entity);
                 }
                 entity
             },

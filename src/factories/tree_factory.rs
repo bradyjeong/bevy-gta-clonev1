@@ -179,15 +179,18 @@ impl VegetationFactory {
             _ => meshes.add(Cylinder::new(radius, height)),
         };
         
-        commands.spawn((
+        let entity = commands.spawn((
             Mesh3d(mesh),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: color,
                 ..default()
             })),
             Transform::from_xyz(0.0, height / 2.0, 0.0),
-            ChildOf(parent),
-        ));
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
+        )).id();
+        commands.entity(parent).add_child(entity);
     }
 }
 

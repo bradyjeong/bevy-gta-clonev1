@@ -35,3 +35,10 @@ smallvec = "1.13"
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.0"
+
+[package.metadata.bundle]
+name = "GTA Game"
+identifier = "com.bradyjeong.gta_game"
+version = "1.0.0"
+resources = ["assets"]
+category = "public.app-category.games"

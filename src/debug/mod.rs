@@ -14,4 +14,7 @@ pub mod size_measurements;
 pub mod component_size_audit;
 pub mod size_optimization;
 
+// Test modules
+pub mod test_spawning;
+
 pub use size_audit::{SizeAuditPlugin, SizeAuditReport};

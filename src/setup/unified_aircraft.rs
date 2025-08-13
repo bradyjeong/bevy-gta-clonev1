@@ -160,6 +160,9 @@ fn spawn_helicopter_unified(
                 ..default()
             })),
             Transform::from_xyz(0.0, 0.0, 0.0),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // Cockpit bubble - rounded cockpit
@@ -173,6 +176,9 @@ fn spawn_helicopter_unified(
                 ..default()
             })),
             Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // Tail boom - tapered cylinder
@@ -186,6 +192,9 @@ fn spawn_helicopter_unified(
                 ..default()
             })),
             Transform::from_xyz(0.0, 0.0, 4.5),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // Main rotor blades - thin and aerodynamic
@@ -201,6 +210,9 @@ fn spawn_helicopter_unified(
                 })),
                 Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
                 MainRotor,
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         }
         
@@ -215,6 +227,9 @@ fn spawn_helicopter_unified(
                     ..default()
                 })),
                 Transform::from_xyz(x, -1.0, 0.0).with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         }
     });
@@ -273,6 +288,9 @@ fn spawn_f16_unified(
             Mesh3d(fuselage_mesh),
             MeshMaterial3d(fuselage_material),
             Transform::from_xyz(0.0, 0.0, 0.0),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // F16 wings (left and right)
@@ -284,6 +302,9 @@ fn spawn_f16_unified(
             Mesh3d(wing_mesh.clone()),
             MeshMaterial3d(wing_material.clone()),
             Transform::from_xyz(-5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(0.2)), // Swept wing
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // Right wing (positioned relative to new Z-axis fuselage)
@@ -291,6 +312,9 @@ fn spawn_f16_unified(
             Mesh3d(wing_mesh),
             MeshMaterial3d(wing_material),
             Transform::from_xyz(5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(-0.2)), // Swept wing
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // F16 canopy (bubble cockpit)
@@ -301,6 +325,9 @@ fn spawn_f16_unified(
             Mesh3d(canopy_mesh),
             MeshMaterial3d(canopy_material),
             Transform::from_xyz(0.0, 0.8, 3.0), // Forward position along +Z, raised
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // F16 vertical tail
@@ -311,6 +338,9 @@ fn spawn_f16_unified(
             Mesh3d(tail_mesh),
             MeshMaterial3d(tail_material),
             Transform::from_xyz(0.0, 1.0, -5.0), // Rear position along -Z, raised
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // Engine nozzle for visual effect
@@ -321,6 +351,9 @@ fn spawn_f16_unified(
             Mesh3d(engine_mesh),
             MeshMaterial3d(engine_material),
             Transform::from_xyz(0.0, 0.0, -8.0), // Rear nozzle along -Z
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
     });
     

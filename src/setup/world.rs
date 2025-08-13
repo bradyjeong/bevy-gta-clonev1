@@ -65,12 +65,50 @@ pub fn setup_basic_world(
     commands.spawn((
         DynamicTerrain,
         Mesh3d(meshes.add(Plane3d::default().mesh().size(4000.0, 4000.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.85, 0.75, 0.6),
+            ..default()
+        })),
         Transform::from_xyz(0.0, -0.15, 0.0), // 15cm below road surface at y=0.0
         RigidBody::Fixed,
         Collider::cuboid(2000.0, 0.05, 2000.0), // Terrain collider: -0.2 to -0.1
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
     ));
+
+    // TEST: Spawn a simple visible cube to verify rendering
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(2.0, 2.0, 4.0))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(1.0, 0.0, 0.0), // Bright red
+            ..default()
+        })),
+        Transform::from_xyz(5.0, 2.0, 0.0), // Close to player, elevated
+        Visibility::Visible,
+        InheritedVisibility::VISIBLE,
+        ViewVisibility::default(),
+        Name::new("TestCube"),
+    ));
+
+    // TEST: Spawn a simple test vehicle manually
+    let test_vehicle = commands.spawn((
+        Transform::from_xyz(8.0, 1.0, 0.0),
+        Visibility::Visible,
+        InheritedVisibility::VISIBLE,
+        ViewVisibility::default(),
+        Name::new("TestVehicle"),
+    )).id();
+    
+    commands.entity(test_vehicle).with_children(|parent| {
+        parent.spawn((
+            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.0, 0.0, 1.0), // Blue car
+                ..default()
+            })),
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            Visibility::Inherited,
+        ));
+    });
 
     // Calculate proper ground position for player spawn
     let player_spawn_pos = Vec2::new(0.0, 0.0);
@@ -122,7 +160,10 @@ pub fn setup_basic_world(
         // Torso
         parent.spawn((
             Mesh3d(meshes.add(Cuboid::new(0.6, 0.8, 0.3))),
-            MeshMaterial3d(materials.add(Color::srgb(0.2, 0.4, 0.8))), // Blue shirt
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.2, 0.4, 0.8), // Blue shirt
+                ..default()
+            })),
             Transform::from_xyz(0.0, 0.6, 0.0),
             PlayerTorso,
             BodyPart {
@@ -134,10 +175,13 @@ pub fn setup_basic_world(
             VisibleChildBundle::default(),
         ));
 
-        // Head
+        // Head  
         parent.spawn((
             Mesh3d(meshes.add(Sphere::new(0.2))),
-            MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.9, 0.7, 0.5), // Skin tone
+                ..default()
+            })),
             Transform::from_xyz(0.0, 1.2, 0.0),
             PlayerHead,
             BodyPart {
@@ -152,7 +196,10 @@ pub fn setup_basic_world(
         // Left Arm
         parent.spawn((
             Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
-            MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.9, 0.7, 0.5), // Skin tone
+                ..default()
+            })),
             Transform::from_xyz(-0.4, 0.7, 0.0),
             PlayerLeftArm,
             BodyPart {
@@ -167,7 +214,10 @@ pub fn setup_basic_world(
         // Right Arm
         parent.spawn((
             Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
-            MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.5))), // Skin tone
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.9, 0.7, 0.5), // Skin tone
+                ..default()
+            })),
             Transform::from_xyz(0.4, 0.7, 0.0),
             PlayerRightArm,
             BodyPart {
@@ -182,7 +232,10 @@ pub fn setup_basic_world(
         // Left Leg
         parent.spawn((
             Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
-            MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.6))), // Dark blue pants
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.3, 0.3, 0.6), // Dark blue pants
+                ..default()
+            })),
             Transform::from_xyz(-0.15, 0.0, 0.0),
             PlayerLeftLeg,
             BodyPart {
@@ -197,7 +250,10 @@ pub fn setup_basic_world(
         // Right Leg
         parent.spawn((
             Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
-            MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.6))), // Dark blue pants
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.3, 0.3, 0.6), // Dark blue pants
+                ..default()
+            })),
             Transform::from_xyz(0.15, 0.0, 0.0),
             PlayerRightLeg,
             BodyPart {
@@ -212,7 +268,10 @@ pub fn setup_basic_world(
         // Feet (Left)
         parent.spawn((
             Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
-            MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))), // Black shoes
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.1, 0.1, 0.1), // Black shoes
+                ..default()
+            })),
             Transform::from_xyz(-0.15, -0.4, 0.1),
             VisibleChildBundle::default(),
         ));
@@ -220,7 +279,10 @@ pub fn setup_basic_world(
         // Feet (Right)
         parent.spawn((
             Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
-            MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))), // Black shoes
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.1, 0.1, 0.1), // Black shoes
+                ..default()
+            })),
             Transform::from_xyz(0.15, -0.4, 0.1),
             VisibleChildBundle::default(),
         ));

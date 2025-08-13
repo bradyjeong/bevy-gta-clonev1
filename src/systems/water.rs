@@ -66,6 +66,9 @@ pub fn setup_lake(
         Mesh3d(meshes.add(Plane3d::default().mesh().size(lake_size * 0.9, lake_size * 0.9))),
         MeshMaterial3d(MaterialFactory::create_water_bottom_material(&mut materials, Color::srgb(0.2, 0.15, 0.1))),
         Transform::from_xyz(lake_position.x, lake_position.y - lake_depth, lake_position.z),
+        Visibility::Visible,
+        InheritedVisibility::VISIBLE,
+        ViewVisibility::default(),
         Name::new("Lake Bottom"),
     ));
 }
@@ -106,21 +109,24 @@ pub fn setup_yacht(
         Name::new("Yacht"),
     ));
 
-    // Yacht cabin
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(6.0, 3.0, 8.0))),
-        MeshMaterial3d(MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.8, 0.8, 0.9), 0.3, 0.4)),
-        Transform::from_xyz(0.0, 3.5, -2.0),
-        Name::new("Yacht Cabin"),
-    )).insert(ChildOf(yacht_id));
+    // Yacht cabin and mast as children
+    commands.entity(yacht_id).with_children(|parent| {
+        // Yacht cabin
+        parent.spawn((
+            Mesh3d(meshes.add(Cuboid::new(6.0, 3.0, 8.0))),
+            MeshMaterial3d(MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.8, 0.8, 0.9), 0.3, 0.4)),
+            Transform::from_xyz(0.0, 3.5, -2.0),
+            Name::new("Yacht Cabin"),
+        ));
 
-    // Yacht mast
-    commands.spawn((
-        Mesh3d(meshes.add(Cylinder::new(0.2, 15.0))),
-        MeshMaterial3d(MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.6, 0.4, 0.2), 0.1, 0.8)),
-        Transform::from_xyz(0.0, 9.5, 2.0),
-        Name::new("Yacht Mast"),
-    )).insert(ChildOf(yacht_id));
+        // Yacht mast
+        parent.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.2, 15.0))),
+            MeshMaterial3d(MaterialFactory::create_metallic_material(&mut materials, Color::srgb(0.6, 0.4, 0.2), 0.1, 0.8)),
+            Transform::from_xyz(0.0, 9.5, 2.0),
+            Name::new("Yacht Mast"),
+        ));
+    });
 }
 
 pub fn yacht_movement_system(

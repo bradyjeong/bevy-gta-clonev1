@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::constants::*;
-use crate::bundles::VisibleChildBundle;
+// Removed unused import
 use crate::components::world::Cullable;
 
 // NOTE: Roads are now fully dynamic - no static setup needed
@@ -50,9 +50,14 @@ pub fn setup_palm_trees(
             // Simple trunk - single brown cylinder
             parent.spawn((
                 Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
-                MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.4, 0.25, 0.15), // Brown trunk
+                    ..default()
+                })),
                 Transform::from_xyz(0.0, 4.0, 0.0),
-                VisibleChildBundle::default(),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
 
             // Simple fronds - just 4 green rectangles arranged in a cross
@@ -61,7 +66,10 @@ pub fn setup_palm_trees(
                 
                 parent.spawn((
                     Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
-                    MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))), // Green fronds
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                        base_color: Color::srgb(0.2, 0.6, 0.25), // Green fronds
+                        ..default()
+                    })),
                     Transform::from_xyz(
                         angle.cos() * 1.2, 
                         7.5, 
@@ -70,7 +78,9 @@ pub fn setup_palm_trees(
                         Quat::from_rotation_y(angle) * 
                         Quat::from_rotation_z(-0.2) // Slight droop
                     ),
-                    VisibleChildBundle::default(),
+                    Visibility::Visible,
+                    InheritedVisibility::VISIBLE,
+                    ViewVisibility::default(),
                 ));
             }
 

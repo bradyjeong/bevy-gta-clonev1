@@ -152,7 +152,10 @@ fn setup_starter_vehicles_unified(
         commands.entity(vehicle_entity).with_children(|parent| {
             parent.spawn((
                 Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
-                MeshMaterial3d(materials.add(color)),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: color,
+                    ..default()
+                })),
                 Transform::from_xyz(0.0, 0.0, 0.0),
             ));
         });
@@ -252,6 +255,9 @@ fn setup_supercar_unified(
             Mesh3d(meshes.add(Cuboid::new(2.0, 1.0, 4.5))),
             MeshMaterial3d(materials.add(color_scheme.get_material())),
             Transform::from_xyz(0.0, 0.0, 0.0),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
         
         // Add carbon fiber accents
@@ -265,6 +271,9 @@ fn setup_supercar_unified(
                     ..default()
                 })),
                 Transform::from_xyz(side * 1.0, 0.0, 0.0),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         }
     });
@@ -387,6 +396,9 @@ fn setup_luxury_cars_unified(
                     ..default()
                 })),
                 Transform::from_xyz(0.0, 0.0, 0.0),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         });
         

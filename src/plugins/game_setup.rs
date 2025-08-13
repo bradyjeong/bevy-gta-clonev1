@@ -197,22 +197,28 @@ fn spawn_palm_trees_over_time(
                 ))
                 .id();
 
-            commands.spawn((
+            let trunk = commands.spawn((
                 Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
-                MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.4, 0.25, 0.15),
+                    ..default()
+                })),
                 Transform::from_xyz(0.0, 4.0, 0.0),
-                ChildOf(palm),
-            ));
+            )).id();
+            commands.entity(palm).add_child(trunk);
 
             for i in 0..2 {
                 let angle = (i as f32) * std::f32::consts::PI;
-                commands.spawn((
+                let leaf = commands.spawn((
                     Mesh3d(meshes.add(Cuboid::new(2.5, 0.1, 0.8))),
-                    MeshMaterial3d(materials.add(Color::srgb(0.2, 0.6, 0.25))),
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.2, 0.6, 0.25),
+                    ..default()
+                })),
                     Transform::from_xyz(angle.cos() * 1.2, 7.5, angle.sin() * 1.2)
                         .with_rotation(Quat::from_rotation_y(angle) * Quat::from_rotation_z(-0.2)),
-                    ChildOf(palm),
-                ));
+                )).id();
+                commands.entity(palm).add_child(leaf);
             }
         }
         progress.trees_spawned += 1;

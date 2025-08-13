@@ -105,6 +105,9 @@ pub fn setup_luxury_bugatti_chiron(
             Mesh3d(meshes.add(Cuboid::new(2.0, 1.0, 4.5))),
             MeshMaterial3d(materials.add(color_scheme.get_material())),
             Transform::from_xyz(0.0, 0.0, 0.0),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
 
         // Premium carbon fiber side panels
@@ -121,6 +124,9 @@ pub fn setup_luxury_bugatti_chiron(
                     ..default()
                 })),
                 Transform::from_xyz(side * 1.0, 0.0, 0.0),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         }
 
@@ -138,6 +144,9 @@ pub fn setup_luxury_bugatti_chiron(
                 })),
                 Transform::from_xyz(*x_pos, -0.2, -2.4)
                     .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         }
 
@@ -153,6 +162,9 @@ pub fn setup_luxury_bugatti_chiron(
                     ..default()
                 })),
                 Transform::from_xyz(side, 0.3, 2.0),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         }
 
@@ -168,6 +180,9 @@ pub fn setup_luxury_bugatti_chiron(
                     ..default()
                 })),
                 Transform::from_xyz(side, 0.2, -2.0),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         }
 
@@ -182,8 +197,11 @@ pub fn setup_luxury_bugatti_chiron(
                 clearcoat: 0.95,
                 clearcoat_perceptual_roughness: 0.03,
                 ..default()
-            })),
-            Transform::from_xyz(0.0, 0.65, -1.8),
+                })),
+                Transform::from_xyz(0.0, 0.65, -1.8),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
 
         // Premium tinted windshield
@@ -195,9 +213,12 @@ pub fn setup_luxury_bugatti_chiron(
                 perceptual_roughness: 0.02,
                 alpha_mode: AlphaMode::Blend,
                 ..default()
-            })),
-            Transform::from_xyz(0.0, 0.42, 0.9)
+                })),
+                Transform::from_xyz(0.0, 0.42, 0.9)
                 .with_rotation(Quat::from_rotation_x(-0.25)),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
 
         // Side mirrors with LED indicators
@@ -212,6 +233,9 @@ pub fn setup_luxury_bugatti_chiron(
                     ..default()
                 })),
                 Transform::from_xyz(side * 1.1, 0.4, 1.2),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             ));
         }
 
@@ -224,8 +248,11 @@ pub fn setup_luxury_bugatti_chiron(
                 perceptual_roughness: 0.05,
                 reflectance: 0.85,
                 ..default()
-            })),
-            Transform::from_xyz(0.0, -0.4, 2.3),
+                })),
+                Transform::from_xyz(0.0, -0.4, 2.3),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
         ));
     });
 }

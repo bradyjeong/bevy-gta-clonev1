@@ -106,8 +106,8 @@ pub fn on_chunk_loaded(
         );
         
         // Reduced spawn parameters for observer-based system
-        let spawn_radius = 80.0;     // Smaller radius per chunk
-        let spawn_density = 150.0;   // Higher spacing between entities
+        let spawn_radius = 150.0;    // Radius per chunk
+        let spawn_density = 80.0;    // Spacing between entities
         let max_spawn_attempts = 10; // Limited per chunk
         
         // Collect existing content for collision avoidance

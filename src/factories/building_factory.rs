@@ -4,7 +4,7 @@ use rand::Rng;
 use crate::components::*;
 use crate::bundles::DynamicContentBundle;
 use crate::systems::UnifiedCullable;
-use crate::factories::common::{FocusedFactory, GroundHeightCache, SpawnValidation, PhysicsSetup, EntityPhysicsType};
+use crate::factories::common::{FocusedFactory, GroundHeightCache, PhysicsSetup, EntityPhysicsType};
 use crate::world::RoadNetwork;
 use crate::GameConfig;
 
@@ -43,15 +43,13 @@ impl BuildingsFactory {
         position: Vec3,
         config: &GameConfig,
         current_time: f32,
-        road_network: Option<&RoadNetwork>,
+        _road_network: Option<&RoadNetwork>,
         ground_cache: &mut GroundHeightCache,
     ) -> Result<Entity, String> {
         let mut rng = rand::thread_rng();
         
-        // Validate spawn position with real road network
-        if !SpawnValidation::is_position_valid(position, ContentType::Building, road_network) {
-            return Err("Invalid position for building".to_string());
-        }
+        // NOTE: Position validation performed upstream in event-driven pipeline
+        // When called through RequestDynamicSpawn events, position is already validated
         
         // Generate building properties
         let height = rng.gen_range(8.0..30.0);

@@ -203,7 +203,7 @@ fn spawn_chunk(
     // Spawn buildings with LOD
     for building in &template.buildings {
         let building_entity = spawn_building(commands, meshes, materials, building, lod_level);
-        commands.entity(building_entity).insert(ChildOf(chunk_entity));
+        commands.entity(chunk_entity).add_child(building_entity);
         entities.push(building_entity);
     }
     
@@ -211,7 +211,7 @@ fn spawn_chunk(
     for vegetation in &template.vegetation {
         if should_spawn_at_lod(lod_level, &EntityType::Vegetation) {
             let veg_entity = spawn_vegetation(commands, meshes, materials, vegetation, lod_level);
-            commands.entity(veg_entity).insert(ChildOf(chunk_entity));
+            commands.entity(chunk_entity).add_child(veg_entity);
             entities.push(veg_entity);
         }
     }
@@ -220,7 +220,7 @@ fn spawn_chunk(
     for landmark in &template.landmarks {
         if lod_level <= 1 {
             let landmark_entity = spawn_landmark(commands, meshes, materials, landmark);
-            commands.entity(landmark_entity).insert(ChildOf(chunk_entity));
+            commands.entity(chunk_entity).add_child(landmark_entity);
             entities.push(landmark_entity);
         }
     }
@@ -312,7 +312,10 @@ fn spawn_vegetation(
         
         let veg_entity = commands.spawn((
             Mesh3d(mesh),
-            MeshMaterial3d(materials.add(color)),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: color,
+                ..default()
+            })),
             Transform::from_translation(offset),
             Cullable {
                 max_distance: 200.0,
@@ -320,7 +323,7 @@ fn spawn_vegetation(
             },
         )).id();
         
-        commands.entity(veg_entity).insert(ChildOf(parent));
+        commands.entity(parent).add_child(veg_entity);
     }
     
     parent
@@ -357,7 +360,10 @@ fn spawn_landmark(
     
     commands.spawn((
         Mesh3d(mesh),
-        MeshMaterial3d(materials.add(color)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: color,
+            ..default()
+        })),
         Transform::from_translation(landmark.position).with_scale(Vec3::splat(landmark.scale)),
         RigidBody::Fixed,
         Collider::cuboid(2.0, 2.0, 2.0),

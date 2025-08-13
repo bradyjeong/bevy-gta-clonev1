@@ -22,13 +22,13 @@ pub fn handle_exhaust_effect_request_system(
         } else {
             // Create new exhaust effect
             let effect_entity = commands.spawn((
-                Mesh3d(meshes.add(Cone::new(0.2, 1.0))),
-                MeshMaterial3d(materials.add(StandardMaterial {
+                meshes.add(Cone::new(0.2, 1.0)),
+                materials.add(StandardMaterial {
                     base_color: Color::srgba(0.5, 0.5, 0.5, 0.7),
                     alpha_mode: AlphaMode::Blend,
                     emissive: Color::srgb(0.3, 0.3, 0.3).into(),
                     ..default()
-                })),
+                }),
                 Transform::from_translation(event.position)
                     .looking_at(event.position + event.direction, Vec3::Y),
                 ExhaustEffect {
@@ -65,8 +65,8 @@ pub fn handle_jet_flame_request_system(
         } else if event.throttle > 0.1 {
             // Create new jet flame
             let flame_entity = commands.spawn((
-                Mesh3d(meshes.add(Cylinder::new(0.5, 3.0))),
-                MeshMaterial3d(materials.add(StandardMaterial {
+                meshes.add(Cylinder::new(0.5, 3.0)),
+                materials.add(StandardMaterial {
                     base_color: if event.afterburner {
                         Color::srgb(0.0, 0.5, 1.0)
                     } else {
@@ -75,7 +75,7 @@ pub fn handle_jet_flame_request_system(
                     emissive: Color::srgb(1.0, 0.3, 0.0).into(),
                     alpha_mode: AlphaMode::Blend,
                     ..default()
-                })),
+                }),
                 Transform::from_scale(Vec3::splat(event.throttle)),
                 JetFlame {
                     owner: event.entity,

@@ -81,20 +81,15 @@ impl UnifiedEntityFactory {
         content_type: ContentType,
         position: Vec3,
         road_network: Option<&RoadNetwork>,
-        existing_content: &[(Vec3, ContentType, f32)],
+        _existing_content: &[(Vec3, ContentType, f32)],
         current_time: f32,
     ) -> Result<Option<Entity>, BundleError> {
-        // Use SpawnValidation for all validation logic
-        if !SpawnValidation::is_spawn_position_valid(
-            position, 
-            content_type, 
-            self.config.gameplay.physics.max_world_coord,
-            road_network
-        ) {
-            return Ok(None);
-        }
-        
-        if SpawnValidation::has_content_collision(position, content_type, existing_content) {
+        // NOTE: Validation is performed upstream in the event-driven pipeline
+        // When called through RequestDynamicSpawn events, position is already validated
+        // Only perform basic bounds checking for safety
+        if position.x.abs() > self.config.gameplay.physics.max_world_coord ||
+           position.z.abs() > self.config.gameplay.physics.max_world_coord {
+            debug!("Factory rejected {:?} at {:?} (out of bounds)", content_type, position);
             return Ok(None);
         }
         

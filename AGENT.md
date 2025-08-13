@@ -39,6 +39,53 @@ CORE PRINCIPLE: Simplicity is the key to this codebase.
 - Is the data flow still easy to follow?
 - Would a new developer understand this quickly?
 
+### Wrapper Anti-Pattern
+**AVOID WRAPPERS** - They violate simplicity and ECS best practices.
+
+#### Why Wrappers Break Simplicity
+- **Query Complexity**: `Query<&Wrapper<Data>>` vs clean `Query<&Data>`
+- **Debug Opacity**: Hides actual data in debuggers and Bevy inspector
+- **Performance Cost**: Extra indirection, potential allocations (Box/Arc)
+- **Breaks Bevy Tools**: Component reflection, change detection, observers
+
+#### When Wrappers Are Actually Needed (Rare)
+- **FFI Boundaries**: Wrapping unsafe C/C++ types
+- **Invariant Enforcement**: When type system alone can't guarantee safety
+- **Third-party isolation**: Wrapping external crate types you might replace
+
+#### What We Do Instead
+- **Direct Components**: Plain structs with `#[derive(Component)]`
+- **Newtype for Semantics**: `struct Velocity(Vec3)` - not a wrapper, just type safety
+- **Events for Coordination**: Not wrapper objects with callbacks
+- **Resources for Shared State**: Not wrapped singletons
+
+#### Good Example (Current Codebase)
+```rust
+// GOOD: Direct component
+#[derive(Component, Default)]
+pub struct ControlState {
+    pub throttle: f32,
+    pub steering: f32,
+}
+
+// GOOD: Newtype for type safety
+#[derive(Component)]
+pub struct Speed(pub f32);
+```
+
+#### Bad Example (Avoid)
+```rust
+// BAD: Unnecessary wrapper
+pub struct InputWrapper {
+    inner: Box<ControlState>,
+    callbacks: Vec<Box<dyn Fn()>>,
+}
+
+// BAD: Over-abstraction
+pub struct AbstractVehicleController<T> {
+    data: Arc<Mutex<T>>,
+}
+
 ## Event-Driven Architecture & Module Communication
 CORE PRINCIPLE: Events decouple systems while maintaining explicit data flow.
 
@@ -184,6 +231,14 @@ fn on_vehicle_spawned(trigger: Trigger<OnAdd, VehicleComponent>) {
 - Components: `#[derive(Component)]` + `Default`, systems in subdirs
 - Safety: Validate physics values, clamp positions/dimensions, use collision groups
 - Comments: `//` style, 4-space indent, trailing commas
+
+### Best Practices Verification
+When implementing new features or refactoring:
+- **Bevy Documentation**: Check https://docs.rs/bevy/latest/bevy/ for current patterns and APIs
+- **Rust Guidelines**: Follow https://rust-lang.github.io/api-guidelines/ for idiomatic Rust
+- **Bevy Examples**: Reference https://github.com/bevyengine/bevy/tree/main/examples for canonical implementations
+- **Performance Guide**: Consult https://bevyengine.org/learn/book/gpu-performance/ for optimization patterns
+- **ECS Best Practices**: Review https://bevyengine.org/learn/book/ecs/ for entity-component patterns
 
 
 

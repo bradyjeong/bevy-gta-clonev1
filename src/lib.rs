@@ -40,7 +40,7 @@ pub mod services;
 
 #[cfg(test)]
 mod tests; // Private - only used internally
-pub mod render_primitives;
+pub mod render_components; // Re-exports Bevy's official components (not wrappers)
 pub mod system_sets;
 pub mod shared; // Shared types to break circular dependencies
 pub mod resources;
@@ -70,7 +70,7 @@ pub use config::GameConfig;
 pub use plugins::UnifiedWorldPlugin;
 pub use setup::setup_basic_world;
 pub use constants::*;
-pub use render_primitives::{Mesh3d, MeshMaterial3d};
+pub use render_components::{Mesh3d, MeshMaterial3d}; // Re-export Bevy's official components
 pub use resources::GlobalRng;
 pub use systems::input::{InputAction, VehicleControlConfig, VehicleType, ControlCategory};
 

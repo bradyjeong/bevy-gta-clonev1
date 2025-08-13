@@ -136,6 +136,11 @@ fn spawn_npc_full_lod(
     let mut body_entities = Vec::new();
     
     // Head
+    let (head_mesh, head_material) = RenderingFactory::create_mesh_and_material(
+        meshes, 
+        materials, 
+        &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
+    );
     let head_entity = commands.spawn((
         NPCHead,
         NPCBodyPart {
@@ -144,23 +149,8 @@ fn spawn_npc_full_lod(
             animation_offset: Vec3::ZERO,
             animation_rotation: Quat::IDENTITY,
         },
-        // FACTORY PATTERN: Head creation using rendering factory
-        {
-            let (mesh, material) = RenderingFactory::create_mesh_and_material(
-                meshes, 
-                materials, 
-                &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
-            );
-            (Mesh3d(mesh), MeshMaterial3d(material))
-        }.0,
-        {
-            let (mesh, material) = RenderingFactory::create_mesh_and_material(
-                meshes, 
-                materials, 
-                &StandardRenderingPattern::NPCHead { build_factor: appearance.build }
-            );
-            (Mesh3d(mesh), MeshMaterial3d(material))
-        }.1,
+        Mesh3d(head_mesh),
+        MeshMaterial3d(head_material),
         Transform::from_xyz(0.0, appearance.height * 0.85, 0.0),
     )).id();
     body_entities.push(head_entity);
@@ -175,7 +165,10 @@ fn spawn_npc_full_lod(
             animation_rotation: Quat::IDENTITY,
         },
         Mesh3d(meshes.add(Cuboid::new(0.4 * appearance.build, 0.6 * appearance.height, 0.2 * appearance.build))),
-        MeshMaterial3d(materials.add(appearance.shirt_color)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: appearance.shirt_color,
+            ..default()
+        })),
         Transform::from_xyz(0.0, appearance.height * 0.5, 0.0),
     )).id();
     body_entities.push(torso_entity);
@@ -193,7 +186,10 @@ fn spawn_npc_full_lod(
             animation_rotation: Quat::IDENTITY,
         },
         Mesh3d(meshes.add(Capsule3d::new(arm_radius, arm_length))),
-        MeshMaterial3d(materials.add(appearance.skin_tone)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: appearance.skin_tone,
+            ..default()
+        })),
         Transform::from_xyz(-0.25 * appearance.build, appearance.height * 0.65, 0.0),
     )).id();
     body_entities.push(left_arm);
@@ -207,7 +203,10 @@ fn spawn_npc_full_lod(
             animation_rotation: Quat::IDENTITY,
         },
         Mesh3d(meshes.add(Capsule3d::new(arm_radius, arm_length))),
-        MeshMaterial3d(materials.add(appearance.skin_tone)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: appearance.skin_tone,
+            ..default()
+        })),
         Transform::from_xyz(0.25 * appearance.build, appearance.height * 0.65, 0.0),
     )).id();
     body_entities.push(right_arm);
@@ -225,7 +224,10 @@ fn spawn_npc_full_lod(
             animation_rotation: Quat::IDENTITY,
         },
         Mesh3d(meshes.add(Capsule3d::new(leg_radius, leg_length))),
-        MeshMaterial3d(materials.add(appearance.pants_color)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: appearance.pants_color,
+            ..default()
+        })),
         Transform::from_xyz(-0.1 * appearance.build, appearance.height * 0.2, 0.0),
     )).id();
     body_entities.push(left_leg);
@@ -239,7 +241,10 @@ fn spawn_npc_full_lod(
             animation_rotation: Quat::IDENTITY,
         },
         Mesh3d(meshes.add(Capsule3d::new(leg_radius, leg_length))),
-        MeshMaterial3d(materials.add(appearance.pants_color)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: appearance.pants_color,
+            ..default()
+        })),
         Transform::from_xyz(0.1 * appearance.build, appearance.height * 0.2, 0.0),
     )).id();
     body_entities.push(right_leg);
@@ -269,7 +274,10 @@ fn spawn_npc_medium_lod(
     // Single simplified body mesh
     let body_entity = commands.spawn((
         Mesh3d(meshes.add(Capsule3d::new(0.3 * appearance.build, appearance.height * 0.8))),
-        MeshMaterial3d(materials.add(appearance.shirt_color)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: appearance.shirt_color,
+            ..default()
+        })),
         Transform::from_xyz(0.0, appearance.height * 0.4, 0.0),
     )).id();
     body_entities.push(body_entity);
@@ -277,7 +285,10 @@ fn spawn_npc_medium_lod(
     // Simple head
     let head_entity = commands.spawn((
         Mesh3d(meshes.add(Sphere::new(0.1 * appearance.build))),
-        MeshMaterial3d(materials.add(appearance.skin_tone)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: appearance.skin_tone,
+            ..default()
+        })),
         Transform::from_xyz(0.0, appearance.height * 0.85, 0.0),
     )).id();
     body_entities.push(head_entity);

@@ -1,0 +1,1 @@
+(bevy::prelude::Entity, &mut components::lod::VegetationLOD, &bevy::prelude::Transform, &mut bevy::prelude::Visibility, &mut bevy::prelude::Handle<bevy::prelude::Mesh>)

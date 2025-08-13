@@ -3,7 +3,7 @@ use crate::components::{
     VehicleState, VehicleRendering, VehicleLOD, VehicleType, ActiveEntity,
     LOD_FULL_DISTANCE, LOD_MEDIUM_DISTANCE, LOD_LOW_DISTANCE, LOD_CULL_DISTANCE
 };
-use crate::bundles::VisibleChildBundle;
+// Removed unused import
 // Simplified without timing service
 use crate::services::distance_cache::{DistanceCache, get_cached_distance};
 use crate::factories::{MaterialFactory, MeshFactory, TransformFactory};
@@ -134,9 +134,8 @@ fn spawn_full_vehicle_mesh(
                 Mesh3d(MeshFactory::create_sports_car_body(meshes)),
                 MeshMaterial3d(MaterialFactory::create_vehicle_metallic(materials, vehicle_state.color)),
                 TransformFactory::vehicle_chassis(),
-                ChildOf(parent_entity),
-                VisibleChildBundle::default(),
             )).id();
+            commands.entity(parent_entity).add_child(body);
             mesh_entities.push(body);
             
             // Wheels
@@ -145,9 +144,8 @@ fn spawn_full_vehicle_mesh(
                     Mesh3d(MeshFactory::create_standard_wheel(meshes)),
                     MeshMaterial3d(MaterialFactory::create_wheel_material(materials)),
                     TransformFactory::wheel_with_rotation(x, -0.35, z),
-                    ChildOf(parent_entity),
-                    VisibleChildBundle::default(),
                 )).id();
+                commands.entity(parent_entity).add_child(wheel);
                 mesh_entities.push(wheel);
             }
         },
@@ -156,9 +154,8 @@ fn spawn_full_vehicle_mesh(
                 Mesh3d(MeshFactory::create_car_body(meshes)),
                 MeshMaterial3d(MaterialFactory::create_simple_material(materials, vehicle_state.color)),
                 TransformFactory::vehicle_body_center(),
-                ChildOf(parent_entity),
-                VisibleChildBundle::default(),
             )).id();
+            commands.entity(parent_entity).add_child(body);
             mesh_entities.push(body);
         },
         VehicleType::Helicopter => {
@@ -167,9 +164,9 @@ fn spawn_full_vehicle_mesh(
                 Mesh3d(MeshFactory::create_helicopter_body(meshes)),
                 MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.25, 0.28, 0.3))),
                 TransformFactory::helicopter_body(),
-                ChildOf(parent_entity),
-                VisibleChildBundle::default(),
+                ViewVisibility::default(),
             )).id();
+            commands.entity(parent_entity).add_child(body);
             mesh_entities.push(body);
             
             // Cockpit bubble
@@ -177,9 +174,8 @@ fn spawn_full_vehicle_mesh(
                 Mesh3d(MeshFactory::create_helicopter_cockpit(meshes)),
                 MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgba(0.05, 0.05, 0.08, 0.3))),
                 Transform::from_xyz(0.0, 0.2, 1.0),
-                ChildOf(parent_entity),
-                VisibleChildBundle::default(),
             )).id();
+            commands.entity(parent_entity).add_child(cockpit);
             mesh_entities.push(cockpit);
             
             // Tail boom
@@ -187,9 +183,8 @@ fn spawn_full_vehicle_mesh(
                 Mesh3d(MeshFactory::create_helicopter_tail_boom(meshes)),
                 MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.25, 0.28, 0.3))),
                 Transform::from_xyz(0.0, 0.0, 4.0),
-                ChildOf(parent_entity),
-                VisibleChildBundle::default(),
             )).id();
+            commands.entity(parent_entity).add_child(tail);
             mesh_entities.push(tail);
             
             // Main rotor blades - realistic shape
@@ -199,9 +194,11 @@ fn spawn_full_vehicle_mesh(
                     Mesh3d(MeshFactory::create_rotor_blade(meshes)),
                     MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.08, 0.08, 0.08))),
                     Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
-                    ChildOf(parent_entity),
-                    VisibleChildBundle::default(),
+                    Visibility::Visible,
+                    InheritedVisibility::VISIBLE,
+                    ViewVisibility::default(),
                 )).id();
+                commands.entity(parent_entity).add_child(blade);
                 mesh_entities.push(blade);
             }
             
@@ -211,9 +208,11 @@ fn spawn_full_vehicle_mesh(
                     Mesh3d(MeshFactory::create_landing_skid(meshes)),
                     MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.35, 0.35, 0.35))),
                     Transform::from_xyz(x, -1.0, 0.0),
-                    ChildOf(parent_entity),
-                    VisibleChildBundle::default(),
+                    Visibility::Visible,
+                    InheritedVisibility::VISIBLE,
+                    ViewVisibility::default(),
                 )).id();
+                commands.entity(parent_entity).add_child(skid);
                 mesh_entities.push(skid);
             }
         },
@@ -223,9 +222,11 @@ fn spawn_full_vehicle_mesh(
                 Mesh3d(MeshFactory::create_truck_body(meshes)),
                 MeshMaterial3d(MaterialFactory::create_aircraft_material(materials, Color::srgb(0.4, 0.4, 0.5))),
                 TransformFactory::helicopter_body(),
-                ChildOf(parent_entity),
-                VisibleChildBundle::default(),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             )).id();
+            commands.entity(parent_entity).add_child(body);
             mesh_entities.push(body);
             
             // Wings
@@ -233,9 +234,11 @@ fn spawn_full_vehicle_mesh(
                 Mesh3d(MeshFactory::create_helicopter_body(meshes)),
                 MeshMaterial3d(MaterialFactory::create_aircraft_material(materials, Color::srgb(0.4, 0.4, 0.5))),
                 TransformFactory::landing_skid_left(),
-                ChildOf(parent_entity),
-                VisibleChildBundle::default(),
+                Visibility::Visible,
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
             )).id();
+            commands.entity(parent_entity).add_child(wings);
             mesh_entities.push(wings);
         }
     }
@@ -262,10 +265,12 @@ fn spawn_medium_vehicle_mesh(
         Mesh3d(MeshFactory::create_custom_cuboid(meshes, size.x, size.y, size.z)),
         MeshMaterial3d(MaterialFactory::create_simple_material(materials, color)),
         TransformFactory::vehicle_body_center(),
-        ChildOf(parent_entity),
-        VisibleChildBundle::default(),
+        Visibility::Visible,
+        InheritedVisibility::VISIBLE,
+        ViewVisibility::default(),
     )).id();
     
+    commands.entity(parent_entity).add_child(body);
     vec![body]
 }
 
@@ -287,9 +292,11 @@ fn spawn_low_vehicle_mesh(
         Mesh3d(MeshFactory::create_custom_cuboid(meshes, size.x, size.y, size.z)),
         MeshMaterial3d(MaterialFactory::create_low_detail_material(materials, vehicle_state.color)),
         TransformFactory::vehicle_body_center(),
-        ChildOf(parent_entity),
-        VisibleChildBundle::default(),
+        Visibility::Visible,
+        InheritedVisibility::VISIBLE,
+        ViewVisibility::default(),
     )).id();
     
+    commands.entity(parent_entity).add_child(body);
     vec![body]
 }
