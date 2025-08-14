@@ -29,6 +29,7 @@ pub enum ContentType {
     Vehicle,
     Vegetation,
     Prop,
+    Road,
 }
 
 /// Placement mode (1 byte enum)

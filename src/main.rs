@@ -1,5 +1,8 @@
 #![deny(unsafe_code)]
-#![warn(clippy::expect_used)] // Warn for now, will deny after fixing remaining uses
+#![deny(clippy::expect_used)]
+#![deny(clippy::unwrap_used)]
+#![deny(clippy::result_unwrap_used)]
+#![deny(clippy::panic)]
 
 use bevy::prelude::*;
 use gta_game::plugins::{GameCorePlugin, GameSetupPlugin};

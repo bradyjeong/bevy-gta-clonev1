@@ -47,6 +47,9 @@ pub fn handle_request_chunk_load(
             // Emit completion event
             loaded_writer.write(ChunkLoaded::new(coord, content_count));
             
+            // CRITICAL FIX: Trigger observer for dynamic content spawning
+            commands.trigger(ChunkLoaded::new(coord, content_count));
+            
             #[cfg(feature = "debug-ui")]
             if let Some(ref mut counters) = event_counters {
                 counters.record_sent("ChunkLoaded");

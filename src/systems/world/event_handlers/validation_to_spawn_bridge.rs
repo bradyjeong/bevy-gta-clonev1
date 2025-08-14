@@ -20,8 +20,15 @@ pub fn handle_validation_to_spawn_bridge(
     mut validation_reader: EventReader<SpawnValidationResult>,
     mut spawn_writer: EventWriter<RequestDynamicSpawn>,
 ) {
-    for result in validation_reader.read().filter(|r| r.valid) {
-        spawn_writer.write(RequestDynamicSpawn::new(result.position, result.content_type));
+    for result in validation_reader.read() {
+        println!("🎯 SPAWN EVENT: Received SpawnValidationResult valid={} for {:?} at {:?}", 
+            result.valid, result.content_type, result.position);
+        
+        if result.valid {
+            spawn_writer.write(RequestDynamicSpawn::new(result.position, result.content_type));
+            println!("🎯 SPAWN EVENT: Sent RequestDynamicSpawn for {:?} at {:?}", 
+                result.content_type, result.position);
+        }
     }
 }
 

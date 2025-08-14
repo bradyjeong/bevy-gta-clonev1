@@ -26,6 +26,7 @@ use crate::systems::world::event_handlers::spawn_validation_handler_v2::{
     handle_spawn_validation_request_v2,
     handle_road_validation_result_v2,
     handle_road_validation_request_v2,
+    ValidationTracker,
 };
 
 use crate::systems::world::event_handlers::content_despawn_handler::{
@@ -54,6 +55,7 @@ impl Plugin for WorldStreamingPlugin {
         
         // Initialize observer-based dynamic content system
         app.init_resource::<ChunkContentTracker>()
+            .init_resource::<ValidationTracker>()
             .add_observer(on_chunk_loaded);
         
         // Initialize decomposed resources

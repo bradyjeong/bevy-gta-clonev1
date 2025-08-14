@@ -25,7 +25,10 @@
 
 #![deny(dead_code, unused_imports, unused_mut)]
 #![deny(unsafe_code)]
-#![warn(clippy::expect_used)] // Warn for now, will deny after fixing remaining uses
+#![deny(clippy::expect_used)]
+#![deny(clippy::unwrap_used)]
+#![deny(clippy::result_unwrap_used)]
+#![deny(clippy::panic)]
 
 pub mod components;
 pub mod config;

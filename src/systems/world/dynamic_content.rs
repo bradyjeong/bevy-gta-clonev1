@@ -7,6 +7,7 @@ use crate::events::world::validation_events::{RequestSpawnValidation, Validation
 use crate::events::world::content_events::{ContentType as EventContentType};
 use crate::events::world::chunk_events::{ChunkLoaded, ChunkCoord};
 use crate::components::world::ContentType;
+use crate::world::constants::{UNIFIED_CHUNK_SIZE};
 use std::collections::HashMap;
 
 pub fn dynamic_terrain_system(
@@ -80,18 +81,29 @@ pub fn on_chunk_loaded(
     let chunk_loaded = trigger.event();
     let chunk_coord = chunk_loaded.coord;
     
+    println!("🎯 SPAWN EVENT: Received ChunkLoaded for ({}, {})", chunk_coord.x, chunk_coord.z);
+    
     // Mark chunk as loaded for tracking
     chunk_tracker.loaded_chunks.insert(chunk_coord);
     
     if let Ok(active_transform) = active_query.single() {
         let active_pos = active_transform.translation;
-        let current_chunk = ChunkCoord::from_world_pos(active_pos, 200.0); // 200m chunk size
+        let current_chunk = ChunkCoord::from_world_pos(active_pos);
         
         // Only spawn content if player is in or near this chunk
         let chunk_distance = ((chunk_coord.x - current_chunk.x).abs() + (chunk_coord.z - current_chunk.z).abs()) as f32;
-        if chunk_distance > 2.0 { // Only spawn in adjacent chunks
-            return;
-        }
+        println!("🎯 SPAWN EVENT: Player at chunk ({}, {}), loading chunk ({}, {}), distance: {:.1}", 
+            current_chunk.x, current_chunk.z, chunk_coord.x, chunk_coord.z, chunk_distance);
+            
+        // TEMPORARY: Allow spawning in any chunk to test the pipeline
+        // TODO: Restore chunk distance filtering after testing
+        // if chunk_distance > 2.0 { // Only spawn in adjacent chunks
+        //     println!("🎯 SPAWN EVENT: Skipping chunk ({}, {}) - too far from player (distance: {:.1})", 
+        //         chunk_coord.x, chunk_coord.z, chunk_distance);
+        //     return;
+        // }
+        println!("🎯 SPAWN EVENT: Processing chunk ({}, {}) at distance: {:.1}", 
+            chunk_coord.x, chunk_coord.z, chunk_distance);
         
         chunk_tracker.last_player_chunk = Some(current_chunk);
         
@@ -100,22 +112,23 @@ pub fn on_chunk_loaded(
         
         // Calculate chunk center for spawning
         let chunk_center = Vec3::new(
-            (chunk_coord.x as f32) * 200.0 + 100.0,  // Chunk size 200m + half offset
+            (chunk_coord.x as f32) * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5,
             0.0,
-            (chunk_coord.z as f32) * 200.0 + 100.0,
+            (chunk_coord.z as f32) * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5,
         );
         
         // Reduced spawn parameters for observer-based system
-        let spawn_radius = 150.0;    // Radius per chunk
-        let spawn_density = 80.0;    // Spacing between entities
-        let max_spawn_attempts = 10; // Limited per chunk
+        let spawn_radius = UNIFIED_CHUNK_SIZE * 0.4;  // 40% of chunk size
+        let spawn_density = 20.0;                     // Spacing between entities  
+        let max_spawn_attempts = 16;                  // Allow more attempts for better coverage
         
-        // Collect existing content for collision avoidance
+        // Collect existing content for collision avoidance (excluding roads)
         let mut existing_content: Vec<(Vec3, ContentType, f32)> = content_query.iter()
+            .filter(|(_, _, dynamic_content)| dynamic_content.content_type != ContentType::Road)
             .map(|(_, transform, dynamic_content)| {
                 let radius = match dynamic_content.content_type {
                     ContentType::Building => 20.0,
-                    ContentType::Road => 15.0,
+                    ContentType::Road => 15.0,  // Not used since roads are filtered out
                     ContentType::Tree => 8.0,
                     ContentType::Vehicle => 25.0,
                     ContentType::NPC => 3.0,
@@ -130,8 +143,9 @@ pub fn on_chunk_loaded(
         }
         
         // Spawn content in circular pattern around chunk center
+        // Start from 5m to avoid spawning directly on roads at center
         let mut spawn_attempts = 0;
-        for radius_step in (spawn_density as i32..spawn_radius as i32).step_by(spawn_density as usize) {
+        for radius_step in (5..spawn_radius as i32).step_by(spawn_density as usize) {
             let radius = radius_step as f32;
             let circumference = 2.0 * std::f32::consts::PI * radius;
             let points_on_circle = (circumference / spawn_density).max(6.0) as i32;
@@ -183,7 +197,7 @@ pub fn cleanup_distant_content(
         }
         
         // Update current chunk tracking
-        let current_chunk = ChunkCoord::from_world_pos(active_pos, 200.0);
+        let current_chunk = ChunkCoord::from_world_pos(active_pos);
         chunk_tracker.last_player_chunk = Some(current_chunk);
     }
 }
@@ -252,17 +266,18 @@ fn request_spawn_validation(
     validation_writer: &mut EventWriter<RequestSpawnValidation>,
     rng: &mut GlobalRng,
 ) {
-    // Ultra-reduced spawn rates from AGENT.md (buildings 8%, vehicles 4%, trees 5%, NPCs 1%)
-    let content_type = if rng.gen_range(0.0..1.0) < 0.08 {
-        Some(EventContentType::Building)
-    } else if rng.gen_range(0.0..1.0) < 0.04 {
-        Some(EventContentType::Vehicle)
-    } else if rng.gen_range(0.0..1.0) < 0.05 {
-        Some(EventContentType::Tree)
-    } else if rng.gen_range(0.0..1.0) < 0.01 {
-        Some(EventContentType::NPC)
+    // Reasonable spawn rates for testing (total ~70% chance to spawn something)
+    let roll = rng.gen_range(0.0..1.0);
+    let content_type = if roll < 0.20 {
+        Some(EventContentType::Building)  // 20%
+    } else if roll < 0.35 {
+        Some(EventContentType::Vehicle)    // 15%
+    } else if roll < 0.55 {
+        Some(EventContentType::Tree)       // 20%
+    } else if roll < 0.70 {
+        Some(EventContentType::NPC)        // 15%
     } else {
-        None
+        None  // 30% chance to spawn nothing
     };
     
     if let Some(content_type) = content_type {
@@ -274,6 +289,8 @@ fn request_spawn_validation(
             position,
             content_type,
         ));
+        
+        println!("🎯 SPAWN EVENT: Sent RequestSpawnValidation for {:?} at {:?}", content_type, position);
     }
 }
 

@@ -12,8 +12,8 @@ use crate::world::{PlacementGrid, RoadNetwork};
 
 use std::collections::HashMap;
 
-/// Track pending validation requests
-#[derive(Default)]
+/// Track pending validation requests - MUST be a shared Resource, not Local
+#[derive(Default, Resource)]
 pub struct ValidationTracker {
     pending_requests: HashMap<u32, RequestSpawnValidation>,
     next_id: u32,
@@ -31,14 +31,18 @@ impl ValidationTracker {
 pub fn handle_spawn_validation_request_v2(
     mut validation_reader: EventReader<RequestSpawnValidation>,
     mut road_validation_writer: EventWriter<RequestRoadValidation>,
-    mut tracker: Local<ValidationTracker>,
+    mut tracker: ResMut<ValidationTracker>,
 ) {
     for request in validation_reader.read() {
+        println!("🎯 SPAWN EVENT: Received RequestSpawnValidation for {:?} at {:?}", request.content_type, request.pos);
+        
         // Store the original request for later response
         tracker.pending_requests.insert(request.id.0, *request);
         
         // Request road validation from roads plugin
         road_validation_writer.write(RequestRoadValidation::new(request.id, request.pos));
+        
+        println!("🎯 SPAWN EVENT: Sent RequestRoadValidation for {:?}", request.pos);
     }
 }
 
@@ -46,10 +50,13 @@ pub fn handle_spawn_validation_request_v2(
 pub fn handle_road_validation_result_v2(
     mut road_validation_reader: EventReader<RoadValidationResult>,
     mut spawn_validation_writer: EventWriter<SpawnValidationResult>,
-    mut tracker: Local<ValidationTracker>,
+    mut tracker: ResMut<ValidationTracker>,
     placement_grid: Res<PlacementGrid>,
 ) {
     for road_result in road_validation_reader.read() {
+        println!("🎯 SPAWN EVENT: Received RoadValidationResult on_road={} for {:?}", 
+            road_result.on_road, road_result.pos);
+        
         if let Some(original_request) = tracker.pending_requests.remove(&road_result.id.0) {
             let validation_result = determine_spawn_validity_v2(
                 original_request,
@@ -57,6 +64,12 @@ pub fn handle_road_validation_result_v2(
                 &placement_grid,
             );
             spawn_validation_writer.write(validation_result);
+            
+            println!("🎯 SPAWN EVENT: Sent SpawnValidationResult valid={} for {:?} at {:?}", 
+                validation_result.valid, validation_result.content_type, validation_result.position);
+        } else {
+            println!("🎯 SPAWN EVENT: ERROR - No pending request found for ID {:?} (have {} pending)", 
+                road_result.id.0, tracker.pending_requests.len());
         }
     }
 }
@@ -68,6 +81,8 @@ pub fn handle_road_validation_request_v2(
     road_network: Res<RoadNetwork>,
 ) {
     for request in road_request_reader.read() {
+        println!("🎯 SPAWN EVENT: Received RequestRoadValidation for {:?}", request.pos);
+        
         // Use RoadNetwork methods directly
         let on_road = road_network.is_near_road(request.pos, 25.0);
         let distance_to_road = if on_road { 
@@ -84,6 +99,9 @@ pub fn handle_road_validation_request_v2(
             on_road,
             distance_to_road,
         ));
+        
+        println!("🎯 SPAWN EVENT: Sent RoadValidationResult on_road={} distance={:.1} for {:?}", 
+            on_road, distance_to_road, request.pos);
     }
 }
 
@@ -118,7 +136,9 @@ fn determine_spawn_validity_v2(
             }
         }
         ContentType::Vehicle => {
-            if !on_road {
+            // Vehicles should spawn on or near roads (within 50 meters)
+            // This allows parking lots, driveways, and roadside spawning
+            if !on_road && road_result.distance_to_road > 50.0 {
                 SpawnValidationResult::invalid(request.id, request.pos, request.content_type, ValidationReason::OutOfBounds)
             } else {
                 SpawnValidationResult::valid(request.id, request.pos, request.content_type)

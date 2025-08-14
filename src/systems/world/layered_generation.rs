@@ -157,13 +157,13 @@ fn generate_roads_for_chunk(
     };
     
     // Create a simple grid of road nodes
-    let node_spacing = 100.0;
-    let nodes_per_side = (UNIFIED_CHUNK_SIZE / node_spacing) as u8;
+    let node_spacing = 50.0; // Proper spacing for road network
+    let nodes_per_side = ((UNIFIED_CHUNK_SIZE / node_spacing) + 1.0) as u8;
     
     for i in 0..nodes_per_side {
         for j in 0..nodes_per_side {
-            let x = (chunk_center.x - half_size + i as f32 * node_spacing) as u16;
-            let z = (chunk_center.z - half_size + j as f32 * node_spacing) as u16;
+            let x = chunk_center.x - half_size + i as f32 * node_spacing;
+            let z = chunk_center.z - half_size + j as f32 * node_spacing;
             
             let node_id = v2_roads.add_node(x, z);
             
@@ -177,7 +177,7 @@ fn generate_roads_for_chunk(
                 v2_roads.connect_nodes(above_id, node_id);
             }
             
-            let world_pos = Vec3::new(x as f32, 0.0, z as f32);
+            let world_pos = Vec3::new(x, 0.0, z);
             
             // Create road entity for this node
             let legacy_coord = ChunkCoord { x: coord.x, z: coord.z };
@@ -194,7 +194,7 @@ fn generate_roads_for_chunk(
             // Add road to placement grid
             v2_grid.add_entity(
                 world_pos,
-                crate::world::placement_grid::ContentType::Prop,
+                crate::world::placement_grid::ContentType::Road,
                 road_type.width() * 0.5,
             );
         }

@@ -5,26 +5,8 @@
 
 use bevy::prelude::*;
 
-/// 2D chunk coordinate for world grid (8 bytes)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[repr(C)]
-pub struct ChunkCoord {
-    pub x: i32,
-    pub z: i32,
-}
-
-impl ChunkCoord {
-    pub fn new(x: i32, z: i32) -> Self {
-        Self { x, z }
-    }
-    
-    pub fn from_world_pos(pos: Vec3, chunk_size: f32) -> Self {
-        Self {
-            x: (pos.x / chunk_size).floor() as i32,
-            z: (pos.z / chunk_size).floor() as i32,
-        }
-    }
-}
+// Re-export ChunkCoord from the canonical location
+pub use crate::world::chunk_coord::ChunkCoord;
 
 /// Request to load a specific chunk (8 bytes)
 /// Sent by: world streaming system

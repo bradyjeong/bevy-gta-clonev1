@@ -29,13 +29,15 @@ pub fn handle_request_dynamic_spawn(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut unified_factory: ResMut<UnifiedEntityFactory>,
-    road_network: Res<RoadNetwork>,
+    mut road_network: ResMut<RoadNetwork>,
     time: Res<Time>,
     _rng: ResMut<GlobalRng>,
     #[cfg(feature = "debug-ui")]
     mut event_counters: Option<ResMut<EventCounters>>,
 ) {
     for request in spawn_reader.read() {
+        println!("🎯 SPAWN EVENT: Received RequestDynamicSpawn for {:?} at {:?}", request.kind, request.pos);
+        
         #[cfg(feature = "debug-ui")]
         if let Some(ref mut counters) = event_counters {
             counters.record_received("RequestDynamicSpawn");
@@ -44,17 +46,18 @@ pub fn handle_request_dynamic_spawn(
         // Convert event ContentType to components ContentType
         let component_content_type = convert_event_to_component_type(request.kind);
         
-        // Use unified factory to spawn the entity
-        if let Ok(Some(entity)) = unified_factory.spawn_entity_consolidated(
+        // Use unified factory to spawn the entity  
+        match unified_factory.spawn_entity_consolidated(
             &mut commands,
             &mut meshes,
             &mut materials,
             component_content_type,
             request.pos,
-            Some(&*road_network),
+            Some(&mut *road_network),
             &[], // No existing content collision check here (handled by validation)
             time.elapsed_secs(),
         ) {
+        Ok(Some(entity)) => {
             // Add DynamicContent component to trigger observer
             commands.entity(entity).insert(DynamicContent::new(
                 crate::components::dynamic_content::ContentType::from(component_content_type)
@@ -75,6 +78,15 @@ pub fn handle_request_dynamic_spawn(
             
             trace!("DEBUG: Spawned {} using unified factory at {:?}", 
                 event_content_type_name(request.kind), request.pos);
+        }
+        Ok(None) => {
+            error!("Factory failed to create {:?} at {:?} - returned None", 
+                request.kind, request.pos);
+        }
+        Err(e) => {
+            error!("Factory error creating {:?} at {:?}: {:?}", 
+                request.kind, request.pos, e);
+        }
         }
     }
 }
