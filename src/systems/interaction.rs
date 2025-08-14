@@ -4,7 +4,7 @@ use crate::components::{Player, Car, Helicopter, F16, ActiveEntity, InCar, Contr
 use crate::game_state::GameState;
 
 pub fn interaction_system(
-    input: Res<ButtonInput<KeyCode>>,
+
     mut commands: Commands,
     mut state: ResMut<NextState<GameState>>,
     current_state: Res<State<GameState>>,
@@ -15,7 +15,28 @@ pub fn interaction_system(
     vehicle_control_query: Query<(Option<&ControlState>, Option<&PlayerControlled>, Option<&VehicleControlType>), (Or<(With<Car>, With<Helicopter>, With<F16>)>, Without<Player>)>,
     active_query: Query<Entity, With<ActiveEntity>>,
 ) {
-    if !input.just_pressed(KeyCode::KeyF) {
+    // Check ControlState.interact from active entity (player when walking, vehicle when driving)
+    let interact_pressed = match **current_state {
+        GameState::Walking => {
+            player_query.iter().any(|(_, _, _, control_state, _, _)| {
+                control_state.map_or(false, |cs| cs.interact)
+            })
+        }
+        _ => {
+            // When in vehicle, check the active entity's ControlState
+            if let Ok(active_entity) = active_query.single() {
+                if let Ok((Some(control_state), _, _)) = vehicle_control_query.get(active_entity) {
+                    control_state.interact
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        }
+    };
+    
+    if !interact_pressed {
         return;
     }
     
@@ -37,6 +58,7 @@ pub fn interaction_system(
                     commands.entity(player_entity)
                         .remove::<ActiveEntity>()
                         .remove::<PlayerControlled>()
+                        .remove::<ControlState>()
                         .insert(Visibility::Hidden);
                     
                     // Make player a child of the car
@@ -78,6 +100,7 @@ pub fn interaction_system(
                     commands.entity(player_entity)
                         .remove::<ActiveEntity>()
                         .remove::<PlayerControlled>()
+                        .remove::<ControlState>()
                         .insert(Visibility::Hidden);
                     
                     // Make player a child of the helicopter
@@ -119,6 +142,7 @@ pub fn interaction_system(
                     commands.entity(player_entity)
                         .remove::<ActiveEntity>()
                         .remove::<PlayerControlled>()
+                        .remove::<ControlState>()
                         .insert(Visibility::Hidden);
                     
                     // Make player a child of the F16

@@ -106,8 +106,8 @@ pub use world::{
     unified_distance_culling::UnifiedCullable,
 };
 
-// Input system types
-pub use input::{InputManager, InputConfig, InputAction};
+// Asset-based input system types only
+pub use input::{LoadedVehicleControls, VehicleControlsConfig};
 
 // Physics utilities
 pub use physics_utils::{PhysicsUtilities, InputProcessor, MovementInputs, CollisionGroupHelper, PhysicsBodySetup, apply_universal_physics_safeguards};

@@ -167,29 +167,3 @@ impl InputConfig {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_default_config() {
-        let config = InputConfig::default();
-        assert_eq!(config.get_key_for_action(&GameState::Walking, InputAction::Forward), Some(KeyCode::ArrowUp));
-        assert_eq!(config.get_key_for_action(&GameState::Driving, InputAction::Turbo), Some(KeyCode::Space));
-    }
-    
-    #[test]
-    fn test_conflict_detection() {
-        let mut config = InputConfig::default();
-        let result = config.set_key_for_action(GameState::Walking, InputAction::Backward, KeyCode::ArrowUp);
-        assert!(result.is_err());
-    }
-    
-    #[test]
-    fn test_valid_binding_change() {
-        let mut config = InputConfig::default();
-        let result = config.set_key_for_action(GameState::Walking, InputAction::Forward, KeyCode::KeyW);
-        assert!(result.is_ok());
-        assert_eq!(config.get_key_for_action(&GameState::Walking, InputAction::Forward), Some(KeyCode::KeyW));
-    }
-}

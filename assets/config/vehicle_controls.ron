@@ -42,24 +42,7 @@ VehicleControlsConfig(
             ],
         ),
         
-        SuperCar: VehicleControls(
-            name: "SuperCar",
-            description: "High-performance vehicle controls",
-            primary_controls: [
-                (action: Forward, key: ArrowUp, description: "Accelerate (High Performance)"),
-                (action: Backward, key: ArrowDown, description: "Brake / Reverse (Racing Brakes)"),
-                (action: TurnLeft, key: ArrowLeft, description: "Steer left (Precision Steering)"),
-                (action: TurnRight, key: ArrowRight, description: "Steer right (Precision Steering)"),
-            ],
-            secondary_controls: [
-                (action: Turbo, key: Space, description: "Nitrous Boost"),
-            ],
-            meta_controls: [
-                (action: Interact, key: KeyF, description: "Exit vehicle"),
-                (action: DebugInfo, key: F1, description: "Toggle debug info"),
-                (action: EmergencyReset, key: F2, description: "Emergency reset"),
-            ],
-        ),
+
         
         Helicopter: VehicleControls(
             name: "Helicopter",

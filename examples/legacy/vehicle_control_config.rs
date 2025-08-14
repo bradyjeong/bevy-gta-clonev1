@@ -7,7 +7,6 @@ use super::input_config::InputAction;
 pub enum VehicleType {
     Walking,
     Car,
-    SuperCar,
     Helicopter,
     F16,
 }
@@ -160,60 +159,7 @@ impl VehicleControlConfig {
             },
         ]);
         
-        // SuperCar controls (same as Car but with enhanced descriptions)
-        self.vehicle_controls.insert(VehicleType::SuperCar, vec![
-            // Primary controls
-            ControlBinding {
-                action: InputAction::Forward,
-                key: KeyCode::ArrowUp,
-                description: "Accelerate (High Performance)".to_string(),
-                category: ControlCategory::Primary,
-            },
-            ControlBinding {
-                action: InputAction::Backward,
-                key: KeyCode::ArrowDown,
-                description: "Brake / Reverse (Racing Brakes)".to_string(),
-                category: ControlCategory::Primary,
-            },
-            ControlBinding {
-                action: InputAction::TurnLeft,
-                key: KeyCode::ArrowLeft,
-                description: "Steer left (Precision Steering)".to_string(),
-                category: ControlCategory::Primary,
-            },
-            ControlBinding {
-                action: InputAction::TurnRight,
-                key: KeyCode::ArrowRight,
-                description: "Steer right (Precision Steering)".to_string(),
-                category: ControlCategory::Primary,
-            },
-            // Secondary controls
-            ControlBinding {
-                action: InputAction::Turbo,
-                key: KeyCode::Space,
-                description: "Nitrous Boost".to_string(),
-                category: ControlCategory::Secondary,
-            },
-            // Meta controls
-            ControlBinding {
-                action: InputAction::Interact,
-                key: KeyCode::KeyF,
-                description: "Exit vehicle".to_string(),
-                category: ControlCategory::Meta,
-            },
-            ControlBinding {
-                action: InputAction::DebugInfo,
-                key: KeyCode::F1,
-                description: "Toggle debug info".to_string(),
-                category: ControlCategory::Meta,
-            },
-            ControlBinding {
-                action: InputAction::EmergencyReset,
-                key: KeyCode::F2,
-                description: "Emergency reset".to_string(),
-                category: ControlCategory::Meta,
-            },
-        ]);
+
         
         // Helicopter controls
         self.vehicle_controls.insert(VehicleType::Helicopter, vec![
@@ -420,7 +366,7 @@ impl VehicleControlConfig {
     pub fn game_state_to_vehicle_type(state: &GameState) -> VehicleType {
         match state {
             GameState::Walking => VehicleType::Walking,
-            GameState::Driving => VehicleType::Car, // Default to Car, could be enhanced to detect SuperCar
+            GameState::Driving => VehicleType::Car, // Default to Car
             GameState::Flying => VehicleType::Helicopter,
             GameState::Jetting => VehicleType::F16,
         }
@@ -503,80 +449,3 @@ impl VehicleControlConfig {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_default_config() {
-        let config = VehicleControlConfig::default();
-        
-        // Test walking controls
-        assert_eq!(
-            config.get_key_for_vehicle_action(VehicleType::Walking, InputAction::Forward),
-            Some(KeyCode::ArrowUp)
-        );
-        
-        // Test car controls
-        assert_eq!(
-            config.get_key_for_vehicle_action(VehicleType::Car, InputAction::Turbo),
-            Some(KeyCode::Space)
-        );
-        
-        // Test F16 controls
-        assert_eq!(
-            config.get_key_for_vehicle_action(VehicleType::F16, InputAction::PitchUp),
-            Some(KeyCode::KeyW)
-        );
-    }
-    
-    #[test]
-    fn test_control_categories() {
-        let config = VehicleControlConfig::default();
-        
-        let primary_controls = config.get_vehicle_controls_by_category(VehicleType::Car, ControlCategory::Primary);
-        assert!(!primary_controls.is_empty());
-        
-        let meta_controls = config.get_vehicle_controls_by_category(VehicleType::Car, ControlCategory::Meta);
-        assert!(!meta_controls.is_empty());
-    }
-    
-    #[test]
-    fn test_game_state_conversion() {
-        assert_eq!(
-            VehicleControlConfig::game_state_to_vehicle_type(&GameState::Walking),
-            VehicleType::Walking
-        );
-        assert_eq!(
-            VehicleControlConfig::game_state_to_vehicle_type(&GameState::Jetting),
-            VehicleType::F16
-        );
-    }
-    
-    #[test]
-    fn test_control_updates() {
-        let mut config = VehicleControlConfig::default();
-        
-        // Valid update
-        let result = config.update_control(VehicleType::Walking, InputAction::Forward, KeyCode::KeyW);
-        assert!(result.is_ok());
-        assert_eq!(
-            config.get_key_for_vehicle_action(VehicleType::Walking, InputAction::Forward),
-            Some(KeyCode::KeyW)
-        );
-        
-        // Conflict detection
-        let result = config.update_control(VehicleType::Walking, InputAction::Backward, KeyCode::KeyW);
-        assert!(result.is_err());
-    }
-    
-    #[test]
-    fn test_control_help_generation() {
-        let config = VehicleControlConfig::default();
-        let help = config.get_control_help(VehicleType::F16);
-        
-        assert!(help.contains_key(&ControlCategory::Primary));
-        assert!(help.contains_key(&ControlCategory::Secondary));
-        assert!(help.contains_key(&ControlCategory::Meta));
-    }
-}

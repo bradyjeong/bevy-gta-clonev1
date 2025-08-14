@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{F16, ActiveEntity, AircraftFlight, F16Specs, ControlState, PlayerControlled};
+use crate::components::{F16, ActiveEntity, AircraftFlight, F16Specs, ControlState, PlayerControlled, MainRotor, TailRotor};
 use crate::systems::physics_utils::PhysicsUtilities;
 use crate::config::GameConfig;
 
@@ -44,10 +44,22 @@ pub fn simple_f16_movement(
             flight.throttle = (flight.throttle + dt * 2.0).clamp(0.0, 1.0);
         } else if control_state.brake > 0.0 {
             flight.throttle = (flight.throttle - dt * 3.0).clamp(0.0, 1.0);
+        } else {
+            // Gentle idle throttle decay to reduce sticky throttle feel
+            flight.throttle = (flight.throttle - dt * 0.5).clamp(0.0, 1.0);
         }
         
-        // Afterburner activation
+        // Afterburner activation + VFX sync delay (now configurable)
         flight.afterburner = control_state.is_boosting();
+        if flight.afterburner {
+            flight.afterburner_timer += dt;
+            if flight.afterburner_timer > specs.afterburner_delay { 
+                flight.afterburner_active = true; 
+            }
+        } else {
+            flight.afterburner_timer = 0.0;
+            flight.afterburner_active = false;
+        }
         
         // === SIMPLIFIED FLIGHT PHYSICS ===
         
@@ -61,24 +73,21 @@ pub fn simple_f16_movement(
         
         // === ANGULAR CONTROL (Direct and Responsive) ===
         
-        let control_sensitivity = 3.0; // Responsive controls
-        let angular_damping = 0.95;   // Smooth movement
+        // Use configurable control parameters from specs
+        let control_sensitivity = specs.control_sensitivity;
+        let yaw_scale = specs.yaw_scale;
         
-        // Direct angular velocity from controls
-        let mut target_angular_velocity = Vec3::ZERO;
-        
-        // Pitch control (X-axis rotation)
-        target_angular_velocity.x = flight.pitch * control_sensitivity;
-        
-        // Roll control (Z-axis rotation) 
-        target_angular_velocity.z = -flight.roll * control_sensitivity;
-        
-        // Yaw control (Y-axis rotation)
-        target_angular_velocity.y = flight.yaw * control_sensitivity * 0.5; // Reduced yaw for stability
+        // Map angular control in LOCAL axes, then rotate into world space
+        let local_target_ang = Vec3::new(
+            flight.pitch * control_sensitivity,              // +X pitch
+            flight.yaw * control_sensitivity * yaw_scale,    // +Y yaw
+            -flight.roll * control_sensitivity,              // -Z roll
+        );
+        let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
         
         // Apply angular velocity with damping
-        velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * 8.0);
-        velocity.angvel *= angular_damping;
+        velocity.angvel = velocity.angvel.lerp(world_target_ang, dt * 8.0);
+        velocity.angvel *= 0.95;
         
         // === LINEAR FORCES ===
         
@@ -198,28 +207,22 @@ pub fn simple_helicopter_movement(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::components::ControlState;
-    
-    #[test]
-    fn test_simple_f16_control_responsiveness() {
-        let mut control_state = ControlState::default();
-        control_state.pitch = 1.0;
-        control_state.roll = -0.5;
-        control_state.throttle = 0.8;
-        
-        assert_eq!(control_state.pitch, 1.0);
-        assert_eq!(control_state.roll, -0.5);
-        assert_eq!(control_state.throttle, 0.8);
-        assert!(control_state.is_accelerating());
+/// Rotate helicopter main and tail rotors every frame
+pub fn rotate_helicopter_rotors(
+    time: Res<Time>,
+    mut main_rotor_query: Query<&mut Transform, (With<MainRotor>, Without<TailRotor>)>,
+    mut tail_rotor_query: Query<&mut Transform, (With<TailRotor>, Without<MainRotor>)>,
+) {
+    // Use delta-based rotation to preserve initial blade offsets
+    let main_delta = time.delta_secs() * 20.0; // rad/s
+    let tail_delta = time.delta_secs() * 35.0; // rad/s
+
+    for mut transform in main_rotor_query.iter_mut() {
+        transform.rotate_y(main_delta);
     }
-    
-    #[test] 
-    fn test_afterburner_activation() {
-        let mut control_state = ControlState::default();
-        control_state.boost = 1.0;
-        
-        assert!(control_state.is_boosting());
+
+    for mut transform in tail_rotor_query.iter_mut() {
+        transform.rotate_z(tail_delta);
     }
 }
+

@@ -660,10 +660,7 @@ impl UnifiedEntityFactory {
             MovementTracker::new(safe_position, 10.0), // Track vehicle movement with 10m threshold
         ));
         
-        // Add SuperCar components if needed
-        if vehicle_type == RealisticVehicleType::SuperCar {
-            commands.entity(vehicle_entity).insert(SuperCarBundle::default());
-        }
+
         
         // Create vehicle wheels with individual physics
         self.create_realistic_vehicle_wheels(commands, meshes, materials, vehicle_entity, &vehicle_type)?;
@@ -849,42 +846,7 @@ impl UnifiedEntityFactory {
                     ..default()
                 },
             },
-            RealisticVehicleType::SuperCar => VehicleConfiguration {
-                body_size: self.config.vehicles.super_car.body_size,
-                mass: self.config.vehicles.super_car.mass,
-                linear_damping: self.config.vehicles.super_car.linear_damping,
-                angular_damping: self.config.vehicles.super_car.angular_damping,
-                default_color: self.config.vehicles.super_car.default_color,
-                dynamics: VehicleDynamics {
-                    total_mass: self.config.vehicles.super_car.mass,
-                    front_weight_ratio: 0.45,
-                    center_of_gravity: Vec3::new(0.0, 0.25, -0.1),
-                    drag_coefficient: 0.28,
-                    frontal_area: 1.9,
-                    downforce_coefficient: 0.3,
-                    ..default()
-                },
-                engine: EnginePhysics {
-                    max_torque: 400.0,
-                    max_rpm: 8500.0,
-                    gear_ratios: vec![-3.2, 4.0, 2.4, 1.6, 1.2, 0.9, 0.7],
-                    ..default()
-                },
-                suspension: VehicleSuspension {
-                    spring_strength: 35000.0,
-                    damping_ratio: 0.7,
-                    max_compression: 0.2,
-                    rest_length: 0.4,
-                    ..default()
-                },
-                tire_physics: TirePhysics {
-                    dry_grip: 1.4,
-                    wet_grip: 0.9,
-                    lateral_grip: 1.3,
-                    rolling_resistance: 0.012,
-                    ..default()
-                },
-            },
+
             RealisticVehicleType::Truck => VehicleConfiguration {
                 body_size: Vec3::new(2.5, 2.0, 8.0),
                 mass: 8000.0,
@@ -938,7 +900,7 @@ impl UnifiedEntityFactory {
         vehicle_type: &RealisticVehicleType,
     ) -> Result<(), BundleError> {
         let wheel_positions = match vehicle_type {
-            RealisticVehicleType::BasicCar | RealisticVehicleType::SuperCar => {
+            RealisticVehicleType::BasicCar => {
                 vec![
                     Vec3::new(-0.8, -0.2, 1.2),  // Front left
                     Vec3::new(0.8, -0.2, 1.2),   // Front right
@@ -976,10 +938,7 @@ impl UnifiedEntityFactory {
                     index,
                     position: *position,
                     max_steering_angle: if index < 2 { 0.6 } else { 0.0 }, // Front wheels steer
-                    is_drive_wheel: match vehicle_type {
-                        RealisticVehicleType::SuperCar => index >= 2, // RWD
-                        _ => true, // AWD for others
-                    },
+                    is_drive_wheel: true, // AWD for all vehicles
                     is_brake_wheel: true,
                     radius: if matches!(vehicle_type, RealisticVehicleType::Truck) { 0.5 } else { 0.35 },
                     width: if matches!(vehicle_type, RealisticVehicleType::Truck) { 0.3 } else { 0.2 },
@@ -1425,24 +1384,7 @@ pub fn setup_unified_entity_factory_basic(mut commands: Commands) {
     commands.insert_resource(UnifiedEntityFactory::default());
 }
 
-/// System to convert legacy vehicles to new component-based system
-pub fn convert_legacy_vehicles_system(
-    mut commands: Commands,
-    legacy_vehicles: Query<(Entity, &Transform, &VehicleState, Has<SuperCarSpecs>), With<Car>>,
-) {
-    for (entity, transform, vehicle_state, has_supercar_specs) in legacy_vehicles.iter() {
-        // If this vehicle already has the new component system, skip it
-        if has_supercar_specs && vehicle_state.vehicle_type == VehicleType::SuperCar {
-            continue;
-        }
-        
-        // For SuperCars without the new bundle, add the component bundle
-        if vehicle_state.vehicle_type == VehicleType::SuperCar && !has_supercar_specs {
-            commands.entity(entity).insert(SuperCarBundle::default());
-            info!("Added SuperCarBundle to vehicle at {:?}", transform.translation);
-        }
-    }
-}
+
 
 /// Performance monitoring for unified entity factory
 pub fn unified_entity_factory_performance_system(

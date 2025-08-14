@@ -121,7 +121,6 @@ pub struct RealisticVehicle {
 #[derive(Debug, Clone, PartialEq)]
 pub enum RealisticVehicleType {
     BasicCar,
-    SuperCar,
     Truck,
     Motorcycle,
     SUV,

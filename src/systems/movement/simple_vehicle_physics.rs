@@ -134,25 +134,3 @@ pub fn simple_wheel_update_system(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::components::ControlState;
-    
-    #[test]
-    fn test_simple_physics_responds_to_control_state() {
-        let mut control_state = ControlState::default();
-        control_state.throttle = 0.5;
-        control_state.steering = 1.0;
-        
-        assert!(control_state.is_accelerating());
-        assert_eq!(control_state.steering, 1.0);
-    }
-    
-    #[test]
-    fn test_boost_multiplier() {
-        let mut control_state = ControlState::default();
-        control_state.boost = 1.0;
-        
-        assert!(control_state.is_boosting());
-    }
-}

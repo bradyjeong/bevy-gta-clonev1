@@ -128,29 +128,7 @@ fn spawn_full_vehicle_mesh(
     let mut mesh_entities = Vec::new();
     
     match vehicle_state.vehicle_type {
-        VehicleType::SuperCar => {
-            // Main body - USING MATERIAL FACTORY
-            let body = commands.spawn((
-                Mesh3d(MeshFactory::create_sports_car_body(meshes)),
-                MeshMaterial3d(MaterialFactory::create_vehicle_metallic(materials, vehicle_state.color)),
-                TransformFactory::vehicle_chassis(),
-                ChildOf(parent_entity),
-                VisibleChildBundle::default(),
-            )).id();
-            mesh_entities.push(body);
-            
-            // Wheels
-            for (x, z) in [(-1.0, 1.2), (1.0, 1.2), (-1.0, -1.2), (1.0, -1.2)] {
-                let wheel = commands.spawn((
-                    Mesh3d(MeshFactory::create_standard_wheel(meshes)),
-                    MeshMaterial3d(MaterialFactory::create_wheel_material(materials)),
-                    TransformFactory::wheel_with_rotation(x, -0.35, z),
-                    ChildOf(parent_entity),
-                    VisibleChildBundle::default(),
-                )).id();
-                mesh_entities.push(wheel);
-            }
-        },
+
         VehicleType::BasicCar => {
             let body = commands.spawn((
                 Mesh3d(MeshFactory::create_car_body(meshes)),
@@ -216,6 +194,17 @@ fn spawn_full_vehicle_mesh(
                 )).id();
                 mesh_entities.push(skid);
             }
+
+            // Tail rotor (visual) at end of tail boom
+            let tail_rotor = commands.spawn((
+                Mesh3d(MeshFactory::create_tail_rotor(meshes)),
+                MeshMaterial3d(MaterialFactory::create_simple_material(materials, Color::srgb(0.08, 0.08, 0.08))),
+                Transform::from_xyz(0.0, 1.0, 6.2),
+                ChildOf(parent_entity),
+                VisibleChildBundle::default(),
+                crate::components::TailRotor,
+            )).id();
+            mesh_entities.push(tail_rotor);
         },
         VehicleType::F16 => {
             // Fuselage
@@ -252,7 +241,6 @@ fn spawn_medium_vehicle_mesh(
 ) -> Vec<Entity> {
     // Single simplified mesh for all vehicle types
     let (size, color) = match vehicle_state.vehicle_type {
-        VehicleType::SuperCar => (Vec3::new(1.8, 0.6, 4.0), vehicle_state.color),
         VehicleType::BasicCar => (Vec3::new(1.8, 0.6, 3.6), vehicle_state.color),
         VehicleType::Helicopter => (Vec3::new(2.5, 1.5, 5.0), Color::srgb(0.9, 0.9, 0.9)),
         VehicleType::F16 => (Vec3::new(15.0, 1.6, 1.5), Color::srgb(0.35, 0.37, 0.40)),
@@ -278,7 +266,7 @@ fn spawn_low_vehicle_mesh(
 ) -> Vec<Entity> {
     // Very basic box representation
     let size = match vehicle_state.vehicle_type {
-        VehicleType::SuperCar | VehicleType::BasicCar => Vec3::new(2.0, 1.0, 4.0),
+        VehicleType::BasicCar => Vec3::new(2.0, 1.0, 4.0),
         VehicleType::Helicopter => Vec3::new(3.0, 2.0, 5.0),
         VehicleType::F16 => Vec3::new(15.0, 1.6, 1.5),
     };

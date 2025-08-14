@@ -90,7 +90,6 @@ impl BundleSpec for VehicleBundleSpec {
         // Get vehicle type configuration
         let vehicle_config = match self.vehicle_type {
             VehicleType::BasicCar => &config.vehicles.basic_car,
-            VehicleType::SuperCar => &config.vehicles.super_car,
             VehicleType::Helicopter => &config.vehicles.helicopter,
             VehicleType::F16 => &config.vehicles.f16,
         };

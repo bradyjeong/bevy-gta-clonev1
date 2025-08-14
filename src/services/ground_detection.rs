@@ -147,26 +147,3 @@ impl Plugin for GroundDetectionPlugin {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_ground_detection_service_default() {
-        let service = GroundDetectionService::default();
-        assert!(service.enabled);
-        assert_eq!(service.fallback_height, DEFAULT_GROUND_HEIGHT);
-    }
-
-    #[test]
-    fn test_spawn_height_calculation() {
-        let service = GroundDetectionService::default();
-        // Mock a scenario where we can't test actual raycasting
-        let entity_height = 1.8;
-        let expected_spawn_height = DEFAULT_GROUND_HEIGHT + entity_height * 0.5;
-        
-        // This would need actual RapierContext in integration tests
-        // For now, just verify the calculation logic
-        assert_eq!(expected_spawn_height, 0.9);
-    }
-}

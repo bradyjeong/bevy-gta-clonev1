@@ -220,6 +220,20 @@ fn spawn_helicopter_unified(
             ChildOf(helicopter_entity),
         ));
     }
+
+    // Tail rotor at end of tail boom
+    commands.spawn((
+        Mesh3d(MeshFactory::create_tail_rotor(meshes)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.08, 0.08, 0.08),
+            metallic: 0.2,
+            perceptual_roughness: 0.9,
+            ..default()
+        })),
+        Transform::from_xyz(0.0, 1.0, 6.2),
+        ChildOf(helicopter_entity),
+        TailRotor,
+    ));
     
     helicopter_entity
 }

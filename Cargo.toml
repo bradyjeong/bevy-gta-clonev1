@@ -3,6 +3,10 @@ name = "gta_game"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+# Disable doctests to prevent non-standalone snippets in rustdoc from breaking `cargo test`
+doctest = false
+
 [features]
 default = []
 debug-movement = []

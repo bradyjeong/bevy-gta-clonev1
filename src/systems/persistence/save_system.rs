@@ -87,7 +87,7 @@ pub struct SerializableVehicle {
     pub velocity: SerializableVelocity,
     pub is_active: bool,
     pub vehicle_state: SerializableVehicleState,
-    pub super_car_bundle: Option<SerializableSuperCarBundle>,
+
     pub aircraft_flight_data: Option<SerializableAircraftFlight>,
 }
 
@@ -130,40 +130,9 @@ impl Into<VehicleState> for SerializableVehicleState {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SerializableSuperCarBundle {
-    pub specs: SerializableSuperCarSpecs,
-    pub suspension: SerializableSuperCarSuspension,
-    pub turbo: SerializableTurboSystem,
-    pub engine: SerializableEngineState,
-    pub transmission: SerializableTransmission,
-    pub driving_modes: SerializableDrivingModes,
-    pub aerodynamics: SerializableAerodynamicsSystem,
-    pub performance: SerializablePerformanceMetrics,
-    pub exhaust: SerializableExhaustSystem,
-}
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SerializableSuperCarSpecs {
-    pub max_speed: f32,
-    pub acceleration: f32,
-    pub weight: f32,
-    pub power: f32,
-    pub torque: f32,
-    pub drag_coefficient: f32,
-    pub exhaust_timer: f32,
-}
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SerializableSuperCarSuspension {
-    pub stiffness: f32,
-    pub damping: f32,
-    pub front_weight_bias: f32,
-    pub traction_control: bool,
-    pub stability_control: bool,
-    pub wheel_spin_threshold: f32,
-    pub current_traction: f32,
-}
+
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SerializableTurboSystem {
@@ -235,61 +204,6 @@ pub struct SerializableExhaustSystem {
 }
 
 // Component conversion implementations
-impl From<SuperCarSpecs> for SerializableSuperCarSpecs {
-    fn from(specs: SuperCarSpecs) -> Self {
-        Self {
-            max_speed: specs.max_speed,
-            acceleration: specs.acceleration,
-            weight: specs.weight,
-            power: specs.power,
-            torque: specs.torque,
-            drag_coefficient: specs.drag_coefficient,
-            exhaust_timer: specs.exhaust_timer,
-        }
-    }
-}
-
-impl Into<SuperCarSpecs> for SerializableSuperCarSpecs {
-    fn into(self) -> SuperCarSpecs {
-        SuperCarSpecs {
-            max_speed: self.max_speed,
-            acceleration: self.acceleration,
-            weight: self.weight,
-            power: self.power,
-            torque: self.torque,
-            drag_coefficient: self.drag_coefficient,
-            exhaust_timer: self.exhaust_timer,
-        }
-    }
-}
-
-impl From<SuperCarSuspension> for SerializableSuperCarSuspension {
-    fn from(suspension: SuperCarSuspension) -> Self {
-        Self {
-            stiffness: suspension.stiffness,
-            damping: suspension.damping,
-            front_weight_bias: suspension.front_weight_bias,
-            traction_control: suspension.traction_control,
-            stability_control: suspension.stability_control,
-            wheel_spin_threshold: suspension.wheel_spin_threshold,
-            current_traction: suspension.current_traction,
-        }
-    }
-}
-
-impl Into<SuperCarSuspension> for SerializableSuperCarSuspension {
-    fn into(self) -> SuperCarSuspension {
-        SuperCarSuspension {
-            stiffness: self.stiffness,
-            damping: self.damping,
-            front_weight_bias: self.front_weight_bias,
-            traction_control: self.traction_control,
-            stability_control: self.stability_control,
-            wheel_spin_threshold: self.wheel_spin_threshold,
-            current_traction: self.current_traction,
-        }
-    }
-}
 
 impl From<TurboSystem> for SerializableTurboSystem {
     fn from(turbo: TurboSystem) -> Self {
@@ -591,17 +505,7 @@ pub fn save_game_system(
     player_query: Query<(Entity, &Transform, &Velocity, Option<&InCar>), With<Player>>,
     active_query: Query<Entity, With<ActiveEntity>>,
     car_query: Query<(Entity, &Transform, &Velocity, &VehicleState), With<Car>>,
-    supercar_query: Query<(
-        &SuperCarSpecs,
-        &SuperCarSuspension,
-        &TurboSystem,
-        &EngineState,
-        &Transmission,
-        &DrivingModes,
-        &AerodynamicsSystem,
-        &PerformanceMetrics,
-        &ExhaustSystem,
-    )>,
+
     helicopter_query: Query<(Entity, &Transform, &Velocity, &VehicleState), With<Helicopter>>,
     f16_query: Query<(Entity, &Transform, &Velocity, &VehicleState, &AircraftFlight), With<F16>>,
 ) {
@@ -636,24 +540,7 @@ pub fn save_game_system(
     for (entity, transform, velocity, vehicle_state) in car_query.iter() {
         let is_active = active_query.get(entity).is_ok();
         
-        // Check if this car has SuperCar components
-        let super_car_bundle = if vehicle_state.vehicle_type == VehicleType::SuperCar {
-            supercar_query.get(entity).ok().map(|(specs, suspension, turbo, engine, transmission, driving_modes, aerodynamics, performance, exhaust)| {
-                SerializableSuperCarBundle {
-                    specs: specs.clone().into(),
-                    suspension: suspension.clone().into(),
-                    turbo: turbo.clone().into(),
-                    engine: engine.clone().into(),
-                    transmission: transmission.clone().into(),
-                    driving_modes: driving_modes.clone().into(),
-                    aerodynamics: aerodynamics.clone().into(),
-                    performance: performance.clone().into(),
-                    exhaust: exhaust.clone().into(),
-                }
-            })
-        } else {
-            None
-        };
+
         
         vehicles.push(SerializableVehicle {
             entity_id: entity.index(),
@@ -662,7 +549,7 @@ pub fn save_game_system(
             velocity: (*velocity).into(),
             is_active,
             vehicle_state: vehicle_state.clone().into(),
-            super_car_bundle,
+
             aircraft_flight_data: None,
         });
     }
@@ -677,7 +564,6 @@ pub fn save_game_system(
             velocity: (*velocity).into(),
             is_active,
             vehicle_state: vehicle_state.clone().into(),
-            super_car_bundle: None,
             aircraft_flight_data: None,
         });
     }
@@ -692,7 +578,6 @@ pub fn save_game_system(
             velocity: (*velocity).into(),
             is_active,
             vehicle_state: vehicle_state.clone().into(),
-            super_car_bundle: None,
             aircraft_flight_data: Some(aircraft_flight.clone().into()),
         });
     }

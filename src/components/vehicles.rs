@@ -66,29 +66,7 @@ pub enum ExhaustMode {
 #[derive(Component)]
 pub struct Car;
 
-// SuperCar base specs - core performance characteristics
-#[derive(Component, Clone)]
-pub struct SuperCarSpecs {
-    pub max_speed: f32,
-    pub acceleration: f32,
-    pub weight: f32,
-    pub power: f32,
-    pub torque: f32,
-    pub drag_coefficient: f32,
-    pub exhaust_timer: f32,
-}
 
-// Suspension and handling dynamics
-#[derive(Component, Clone)]
-pub struct SuperCarSuspension {
-    pub stiffness: f32,
-    pub damping: f32,
-    pub front_weight_bias: f32,
-    pub traction_control: bool,
-    pub stability_control: bool,
-    pub wheel_spin_threshold: f32,
-    pub current_traction: f32,
-}
 
 // Turbo system state
 #[derive(Component, Clone)]
@@ -168,66 +146,11 @@ pub struct ExhaustSystem {
 
 
 
-// Bundle for creating SuperCar entities with all components
-#[derive(Bundle)]
-pub struct SuperCarBundle {
-    pub specs: SuperCarSpecs,
-    pub suspension: SuperCarSuspension,
-    pub turbo: TurboSystem,
-    pub engine: EngineState,
-    pub transmission: Transmission,
-    pub driving_modes: DrivingModes,
-    pub aerodynamics: AerodynamicsSystem,
-    pub performance: PerformanceMetrics,
-    pub exhaust: ExhaustSystem,
-}
 
-impl Default for SuperCarBundle {
-    fn default() -> Self {
-        Self {
-            specs: SuperCarSpecs::default(),
-            suspension: SuperCarSuspension::default(),
-            turbo: TurboSystem::default(),
-            engine: EngineState::default(),
-            transmission: Transmission::default(),
-            driving_modes: DrivingModes::default(),
-            aerodynamics: AerodynamicsSystem::default(),
-            performance: PerformanceMetrics::default(),
-            exhaust: ExhaustSystem::default(),
-        }
-    }
-}
 
 // Removed: Default implementation moved to #[derive(Default)] for marker struct
 
 // Component-specific Default implementations
-impl Default for SuperCarSpecs {
-    fn default() -> Self {
-        Self {
-            max_speed: 261.0,
-            acceleration: 180.0,
-            weight: 1995.0,
-            power: 1500.0,
-            torque: 1180.0,
-            drag_coefficient: 0.35,
-            exhaust_timer: 0.0,
-        }
-    }
-}
-
-impl Default for SuperCarSuspension {
-    fn default() -> Self {
-        Self {
-            stiffness: 9.2,
-            damping: 4.8,
-            front_weight_bias: 0.43,
-            traction_control: true,
-            stability_control: true,
-            wheel_spin_threshold: 0.12,
-            current_traction: 1.0,
-        }
-    }
-}
 
 impl Default for TurboSystem {
     fn default() -> Self {
@@ -367,6 +290,8 @@ pub struct F16Specs {
     
     // Control characteristics
     pub control_sensitivity: f32,
+    pub yaw_scale: f32,             // Yaw sensitivity multiplier
+    pub afterburner_delay: f32,     // Seconds before afterburner VFX activates
     pub spool_rate_normal: f32,
     pub spool_rate_afterburner: f32,
     
@@ -420,6 +345,8 @@ impl Default for F16Specs {
             
             // Control characteristics
             control_sensitivity: 3.0,  // Rad/s per control input
+            yaw_scale: 0.5,            // Reduced yaw for stability
+            afterburner_delay: 0.2,    // Seconds before VFX activates
             spool_rate_normal: 2.5,    // Engine spool-up rate
             spool_rate_afterburner: 1.5, // Faster spool with afterburner
             
@@ -442,7 +369,6 @@ pub struct TailRotor;
 #[derive(Component, Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum VehicleType {
     BasicCar,
-    SuperCar,
     Helicopter,
     F16,
 }
@@ -472,7 +398,6 @@ impl VehicleState {
     pub fn new(vehicle_type: VehicleType) -> Self {
         let (max_speed, acceleration) = match vehicle_type {
             VehicleType::BasicCar => (60.0, 20.0),
-            VehicleType::SuperCar => (261.0, 150.0),
             VehicleType::Helicopter => (80.0, 25.0),
             VehicleType::F16 => (300.0, 100.0),
         };

@@ -135,10 +135,11 @@ pub fn process_loaded_controls_system(
 /// Asset-based input mapping system
 /// 
 /// This system uses loaded control configurations instead of hardcoded mappings
+/// Only processes entities with ActiveEntity to prevent state conflicts
 pub fn asset_based_input_mapping_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     loaded_controls: Res<LoadedVehicleControls>,
-    mut query: Query<(&mut ControlState, &VehicleControlType)>,
+    mut query: Query<(&mut ControlState, &VehicleControlType), With<crate::components::ActiveEntity>>,
 ) {
     // Skip if controls haven't loaded yet
     let Some(ref config) = loaded_controls.config else {

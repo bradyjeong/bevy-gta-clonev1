@@ -13,7 +13,7 @@ fn main() {
     // Test different vehicle types
     test_vehicle_controls(&config, VehicleType::Walking);
     test_vehicle_controls(&config, VehicleType::Car);
-    test_vehicle_controls(&config, VehicleType::SuperCar);
+
     test_vehicle_controls(&config, VehicleType::Helicopter);
     test_vehicle_controls(&config, VehicleType::F16);
     
