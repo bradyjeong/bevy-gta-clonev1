@@ -172,6 +172,7 @@ fn on_vehicle_spawned(trigger: Trigger<OnAdd, VehicleComponent>) {
 
 
 ## Code Style
+- Follow Rust and Bevy best practices
 - snake_case for variables/functions, PascalCase for structs/components
 - Import order: external crates, std, bevy prelude, local crate
 - Prefer `if let`/`match` over unwrap(), use Bevy constants (Vec3::ZERO)
