@@ -178,9 +178,9 @@ pub fn simple_helicopter_movement(
             target_linear_velocity -= transform.forward() * speed * control_state.pitch.abs();
         }
         
-        // Rotation using steering/yaw
-        if control_state.steering.abs() > 0.1 {
-            target_angular_velocity.y = control_state.steering * rotation_speed;
+        // Rotation using yaw (invert sign for correct direction)
+        if control_state.yaw.abs() > 0.1 {
+            target_angular_velocity.y = -control_state.yaw * rotation_speed;
         }
         
         // Vertical movement (collective)

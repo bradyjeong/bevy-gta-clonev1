@@ -185,8 +185,8 @@ fn apply_control_action(action: &AssetControlAction, control_state: &mut Control
         AssetControlAction::PitchDown | AssetControlAction::PitchBackward => control_state.pitch = -1.0,
         AssetControlAction::RollLeft => control_state.roll = -1.0,
         AssetControlAction::RollRight => control_state.roll = 1.0,
-        AssetControlAction::YawLeft => control_state.yaw = 1.0,  // Yaw left = positive rotation
-        AssetControlAction::YawRight => control_state.yaw = -1.0, // Yaw right = negative rotation
+        AssetControlAction::YawLeft => control_state.yaw = -1.0,  // Yaw left = negative rotation (follows control_state.rs docs)
+        AssetControlAction::YawRight => control_state.yaw = 1.0,  // Yaw right = positive rotation
         
         AssetControlAction::VerticalUp => control_state.vertical = 1.0,
         AssetControlAction::VerticalDown => control_state.vertical = -1.0,
