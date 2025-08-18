@@ -356,8 +356,8 @@ impl Default for NPCConfig {
             default_build: 1.0,
             capsule_radius: 0.4,
             capsule_height: 0.8,
-            walk_speed: 1.5,
-            run_speed: 3.0,
+            walk_speed: 2.5,  // Increased from 1.5 to match faster player walking
+            run_speed: 5.0,   // Increased from 3.0 to match faster player running
             avoidance_distance: 5.0,
         }
     }

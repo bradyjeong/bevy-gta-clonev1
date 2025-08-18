@@ -80,7 +80,7 @@ pub fn velocity_apply_system(
     };
 
     let base_speed = if input_data.is_running && movement.stamina > 10.0 {
-        movement.max_speed * 1.8
+        movement.max_speed * 2.5  // Increased from 1.8 for faster sprinting
     } else {
         movement.max_speed
     };
@@ -202,66 +202,66 @@ pub fn human_player_animation(
     // Animate arms swinging
     if let Ok(mut left_arm_transform) = left_arm_query.single_mut() {
         let arm_swing = if animation.is_walking {
-            walk_cycle * 0.5 // Arms swing opposite to legs
+            walk_cycle * 0.8 // Increased from 0.5 for more pronounced arm swing
         } else {
             idle_sway * 0.05
         };
 
         left_arm_transform.translation.x = -0.4;
         left_arm_transform.translation.y = 0.7;
-        left_arm_transform.translation.z = arm_swing * 0.2;
+        left_arm_transform.translation.z = arm_swing * 0.35;  // Increased from 0.2 for more movement
         left_arm_transform.rotation = Quat::from_rotation_x(arm_swing);
     }
 
     if let Ok(mut right_arm_transform) = right_arm_query.single_mut() {
         let arm_swing = if animation.is_walking {
-            -walk_cycle * 0.5 // Opposite swing from left arm
+            -walk_cycle * 0.8 // Increased from 0.5 for more pronounced arm swing
         } else {
             -idle_sway * 0.05
         };
 
         right_arm_transform.translation.x = 0.4;
         right_arm_transform.translation.y = 0.7;
-        right_arm_transform.translation.z = arm_swing * 0.2;
+        right_arm_transform.translation.z = arm_swing * 0.35;  // Increased from 0.2 for more movement
         right_arm_transform.rotation = Quat::from_rotation_x(arm_swing);
     }
 
     // Animate legs walking
     if let Ok(mut left_leg_transform) = left_leg_query.single_mut() {
         let leg_swing = if animation.is_walking {
-            walk_cycle * 0.4
+            walk_cycle * 0.7  // Increased from 0.4 for more pronounced leg swing
         } else {
             0.0
         };
 
         let leg_lift = if animation.is_walking {
-            (walk_cycle * 0.5).max(0.0) * 0.1
+            (walk_cycle * 0.5).max(0.0) * 0.15  // Increased from 0.1 for higher leg lift
         } else {
             0.0
         };
 
         left_leg_transform.translation.x = -0.15;
         left_leg_transform.translation.y = 0.0 + leg_lift;
-        left_leg_transform.translation.z = leg_swing * 0.15;
+        left_leg_transform.translation.z = leg_swing * 0.25;  // Increased from 0.15 for more forward/back movement
         left_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
     }
 
     if let Ok(mut right_leg_transform) = right_leg_query.single_mut() {
         let leg_swing = if animation.is_walking {
-            walk_cycle_offset * 0.4 // Opposite phase from left leg
+            walk_cycle_offset * 0.7 // Increased from 0.4 for more pronounced leg swing
         } else {
             0.0
         };
 
         let leg_lift = if animation.is_walking {
-            (walk_cycle_offset * 0.5).max(0.0) * 0.1
+            (walk_cycle_offset * 0.5).max(0.0) * 0.15  // Increased from 0.1 for higher leg lift
         } else {
             0.0
         };
 
         right_leg_transform.translation.x = 0.15;
         right_leg_transform.translation.y = 0.0 + leg_lift;
-        right_leg_transform.translation.z = leg_swing * 0.15;
+        right_leg_transform.translation.z = leg_swing * 0.25;  // Increased from 0.15 for more forward/back movement
         right_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
     }
 }

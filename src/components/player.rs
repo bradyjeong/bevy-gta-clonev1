@@ -34,7 +34,7 @@ impl Default for HumanMovement {
         Self {
             acceleration: 32.0,
             deceleration: 50.0,
-            max_speed: 4.5,
+            max_speed: 7.0,  // Increased from 4.5 for faster walking
             current_speed: 0.0,
             target_velocity: Vec3::ZERO,
             stamina: 100.0,
@@ -63,7 +63,7 @@ impl Default for HumanAnimation {
     fn default() -> Self {
         Self {
             walk_cycle_time: 0.0,
-            step_frequency: 3.0,
+            step_frequency: 5.0,  // Increased from 3.0 for faster arm/leg movement
             head_bob_amplitude: 0.025,
             body_sway_amplitude: 0.015,
             breathing_rate: 1.4,
