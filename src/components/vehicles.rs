@@ -1,7 +1,7 @@
 //! # Vehicle Components - Simplified Architecture
 //!
 //! This module defines all vehicle-related components following AGENT.md principles.
-//! The architecture was completely refactored from a monolithic SuperCar struct 
+//! The architecture was completely refactored from a monolithic SuperCar struct
 //! to focused, single-responsibility components.
 //!
 //! ## Component-Based Architecture
@@ -34,7 +34,7 @@
 //! ```
 //!
 //! ## Migration Notes:
-//! 
+//!
 //! The old monolithic `SuperCar` struct (36 fields) has been replaced with
 //! focused components. This improves:
 //! - **Maintainability**: Each component can be modified independently
@@ -46,27 +46,25 @@ use bevy::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 pub enum DrivingMode {
-    Comfort,    // Reduced power, softer suspension
+    Comfort, // Reduced power, softer suspension
     #[default]
-    Sport,      // Enhanced response, firmer suspension
-    Track,      // Maximum performance, no limits
-    Custom,     // User-defined settings
+    Sport, // Enhanced response, firmer suspension
+    Track,   // Maximum performance, no limits
+    Custom,  // User-defined settings
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 pub enum ExhaustMode {
-    Quiet,      // Minimal exhaust noise
-    Normal,     // Standard exhaust note
+    Quiet,  // Minimal exhaust noise
+    Normal, // Standard exhaust note
     #[default]
-    Sport,      // Enhanced exhaust sounds
-    Track,      // Maximum exhaust intensity
+    Sport, // Enhanced exhaust sounds
+    Track,  // Maximum exhaust intensity
 }
 
 // Legacy marker components (kept for compatibility)
 #[derive(Component)]
 pub struct Car;
-
-
 
 // Turbo system state
 #[derive(Component, Clone)]
@@ -143,10 +141,6 @@ pub struct ExhaustSystem {
     pub backfire_timer: f32,
     pub pops_and_bangs: bool,
 }
-
-
-
-
 
 // Removed: Default implementation moved to #[derive(Default)] for marker struct
 
@@ -252,20 +246,20 @@ pub struct F16;
 #[derive(Component, Clone)]
 pub struct AircraftFlight {
     // Flight control surfaces (normalized -1.0 to 1.0)
-    pub pitch: f32,      // Elevator control (nose up/down)
-    pub roll: f32,       // Aileron control (bank left/right)
-    pub yaw: f32,        // Rudder control (nose left/right)
-    pub throttle: f32,   // Engine power (0.0 to 1.0)
-    
+    pub pitch: f32,    // Elevator control (nose up/down)
+    pub roll: f32,     // Aileron control (bank left/right)
+    pub yaw: f32,      // Rudder control (nose left/right)
+    pub throttle: f32, // Engine power (0.0 to 1.0)
+
     // Flight state
     pub airspeed: f32,
     pub angle_of_attack: f32,
     pub current_thrust: f32,
-    
+
     // Engine state
     pub afterburner: bool,
-    pub afterburner_active: bool,  // Actual afterburner status (with delay)
-    pub afterburner_timer: f32,    // Time since afterburner request
+    pub afterburner_active: bool, // Actual afterburner status (with delay)
+    pub afterburner_timer: f32,   // Time since afterburner request
     pub engine_spool_time: f32,
 }
 
@@ -273,32 +267,37 @@ pub struct AircraftFlight {
 #[derive(Component, Clone)]
 pub struct F16Specs {
     // Physical properties
-    pub mass: f32,              // kg
-    pub wing_area: f32,         // m²
-    pub max_thrust: f32,        // Newtons
+    pub mass: f32,               // kg
+    pub wing_area: f32,          // m²
+    pub max_thrust: f32,         // Newtons
     pub afterburner_thrust: f32, // Newtons
-    
+
     // Flight envelope
-    pub stall_speed: f32,       // m/s
-    pub max_speed: f32,         // m/s
+    pub stall_speed: f32,         // m/s
+    pub max_speed: f32,           // m/s
     pub max_angle_of_attack: f32, // radians
-    
+
     // Aerodynamic coefficients
-    pub lift_coefficient_0: f32,  // CL0 (base lift)
+    pub lift_coefficient_0: f32,     // CL0 (base lift)
     pub lift_coefficient_alpha: f32, // CLα (lift per AoA)
-    pub drag_coefficient: f32,    // CD
-    
+    pub drag_coefficient: f32,       // CD
+
     // Control characteristics
     pub control_sensitivity: f32,
-    pub yaw_scale: f32,             // Yaw sensitivity multiplier
-    pub afterburner_delay: f32,     // Seconds before afterburner VFX activates
+    pub yaw_scale: f32,         // Yaw sensitivity multiplier
+    pub afterburner_delay: f32, // Seconds before afterburner VFX activates
     pub spool_rate_normal: f32,
     pub spool_rate_afterburner: f32,
     
+    // Realistic control rates per axis
+    pub roll_rate_max: f32,     // Maximum roll rate (rad/s)
+    pub pitch_rate_max: f32,    // Maximum pitch rate (rad/s)
+    pub yaw_rate_max: f32,      // Maximum yaw rate (rad/s)
+
     // Inertia tensor components (kg⋅m²)
-    pub inertia_roll: f32,    // Ixx - roll axis
-    pub inertia_pitch: f32,   // Iyy - pitch axis  
-    pub inertia_yaw: f32,     // Izz - yaw axis
+    pub inertia_roll: f32,  // Ixx - roll axis
+    pub inertia_pitch: f32, // Iyy - pitch axis
+    pub inertia_yaw: f32,   // Izz - yaw axis
 }
 
 impl Default for AircraftFlight {
@@ -309,12 +308,12 @@ impl Default for AircraftFlight {
             roll: 0.0,
             yaw: 0.0,
             throttle: 0.0,
-            
+
             // Flight state
             airspeed: 0.0,
             angle_of_attack: 0.0,
             current_thrust: 0.0,
-            
+
             // Engine starts cold
             afterburner: false,
             afterburner_active: false,
@@ -328,32 +327,37 @@ impl Default for F16Specs {
     fn default() -> Self {
         Self {
             // F-16C Fighting Falcon realistic specifications
-            mass: 12000.0,              // kg (empty weight ~8,500 kg + fuel/equipment)
-            wing_area: 27.87,           // m² (300 sq ft)
-            max_thrust: 130000.0,       // Newtons (~29,000 lbf F100-PW-229)
+            mass: 12000.0,        // kg (empty weight ~8,500 kg + fuel/equipment)
+            wing_area: 27.87,     // m² (300 sq ft)
+            max_thrust: 130000.0, // Newtons (~29,000 lbf F100-PW-229)
             afterburner_thrust: 176000.0, // Newtons (~39,500 lbf with afterburner)
-            
+
             // Flight envelope
             stall_speed: 40.0,          // m/s (~80 knots clean config)
             max_speed: 616.0,           // m/s (Mach 2.0 at altitude)
             max_angle_of_attack: 0.436, // radians (25 degrees)
-            
+
             // Aerodynamic coefficients (simplified but realistic)
-            lift_coefficient_0: 0.2,   // Base lift coefficient
+            lift_coefficient_0: 0.2,     // Base lift coefficient
             lift_coefficient_alpha: 5.0, // Lift curve slope (per radian)
-            drag_coefficient: 0.03,    // Clean configuration drag
-            
-            // Control characteristics
-            control_sensitivity: 3.0,  // Rad/s per control input
-            yaw_scale: 0.5,            // Reduced yaw for stability
-            afterburner_delay: 0.2,    // Seconds before VFX activates
-            spool_rate_normal: 2.5,    // Engine spool-up rate
+            drag_coefficient: 0.03,      // Clean configuration drag
+
+            // Control characteristics - realistic F-16 rates
+            control_sensitivity: 3.5,    // Pitch rate (rad/s per control input)
+            yaw_scale: 0.3,              // Reduced yaw for stability (1.05 rad/s)
+            afterburner_delay: 0.2,      // Seconds before VFX activates
+            spool_rate_normal: 2.5,      // Engine spool-up rate
             spool_rate_afterburner: 1.5, // Faster spool with afterburner
             
+            // Separate control rates for each axis
+            roll_rate_max: 6.3,          // Real F-16 roll rate (rad/s)
+            pitch_rate_max: 3.5,         // Real F-16 pitch rate (rad/s)
+            yaw_rate_max: 1.05,          // Real F-16 yaw rate (rad/s)
+
             // Inertia tensor (realistic F-16 values)
-            inertia_roll: 9000.0,      // kg⋅m² - roll axis (slender body)
-            inertia_pitch: 165000.0,   // kg⋅m² - pitch axis (longer moment arm)
-            inertia_yaw: 175000.0,     // kg⋅m² - yaw axis (similar to pitch)
+            inertia_roll: 9000.0,    // kg⋅m² - roll axis (slender body)
+            inertia_pitch: 165000.0, // kg⋅m² - pitch axis (longer moment arm)
+            inertia_yaw: 175000.0,   // kg⋅m² - yaw axis (similar to pitch)
         }
     }
 }
@@ -401,7 +405,7 @@ impl VehicleState {
             VehicleType::Helicopter => (80.0, 25.0),
             VehicleType::F16 => (300.0, 100.0),
         };
-        
+
         Self {
             vehicle_type,
             color: Color::srgb(0.8, 0.0, 0.0),

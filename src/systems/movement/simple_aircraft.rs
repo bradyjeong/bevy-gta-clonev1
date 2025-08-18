@@ -71,21 +71,20 @@ pub fn simple_f16_movement(
         // Forward thrust along aircraft direction
         let forward_force = transform.forward() * thrust_force;
         
-        // === ANGULAR CONTROL (Direct and Responsive) ===
+        // === ANGULAR CONTROL (Simple and Direct) ===
         
-        // Use configurable control parameters from specs
-        let control_sensitivity = specs.control_sensitivity;
-        let yaw_scale = specs.yaw_scale;
+        // Use realistic control rates per axis (following AGENT.md simplicity)
+        let yaw_input = -flight.yaw; // Fix yaw sign: positive = nose right
         
-        // Map angular control in LOCAL axes, then rotate into world space
+        // Direct angular velocity mapping in LOCAL axes
         let local_target_ang = Vec3::new(
-            flight.pitch * control_sensitivity,              // +X pitch
-            flight.yaw * control_sensitivity * yaw_scale,    // +Y yaw
-            -flight.roll * control_sensitivity,              // -Z roll
+            flight.pitch * specs.pitch_rate_max,   // +X pitch
+            yaw_input * specs.yaw_rate_max,        // +Y yaw (corrected sign)
+            -flight.roll * specs.roll_rate_max,    // -Z roll
         );
         let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
         
-        // Apply angular velocity with damping
+        // Apply angular velocity with smooth response
         velocity.angvel = velocity.angvel.lerp(world_target_ang, dt * 8.0);
         velocity.angvel *= 0.95;
         
@@ -167,6 +166,8 @@ pub fn simple_helicopter_movement(
         let speed = 30.0;
         let rotation_speed = 4.0;
         let vertical_speed = 15.0;
+        let roll_speed = 2.0; // Gentler than yaw
+        let lateral_speed = 15.0; // Lateral movement when banking
         
         let mut target_linear_velocity = Vec3::ZERO;
         let mut target_angular_velocity = Vec3::ZERO;
@@ -188,6 +189,16 @@ pub fn simple_helicopter_movement(
             target_linear_velocity.y += vertical_speed * control_state.vertical;
         } else if control_state.vertical < -0.1 {
             target_linear_velocity.y -= vertical_speed * control_state.vertical.abs();
+        }
+        
+        // Roll controls (Q/E keys) - banking and lateral movement
+        if control_state.roll.abs() > 0.1 {
+            // Roll angular velocity (banking around Z-axis)
+            target_angular_velocity.z = -control_state.roll * roll_speed;
+            
+            // Lateral movement when rolling (helicopter banks into turn)  
+            let lateral_force = transform.right() * -control_state.roll * lateral_speed;
+            target_linear_velocity += lateral_force;
         }
         
         // Apply forces with smooth interpolation
