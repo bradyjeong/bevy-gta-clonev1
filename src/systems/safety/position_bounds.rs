@@ -38,7 +38,6 @@ pub fn world_bounds_safety_system(
             // Reset flight controls to prevent continued acceleration
             flight.throttle *= 0.5;
             flight.afterburner_active = false;
-            flight.afterburner = false;
             
             info!("F16 emergency reset: moved from {:?} to {:?}", pos, safe_position);
         }

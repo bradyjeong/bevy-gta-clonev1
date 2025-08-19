@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::systems::movement::{car_movement, simple_f16_movement, simple_helicopter_movement, rotate_helicopter_rotors};
+use crate::systems::movement::{car_movement, simple_f16_movement, simple_helicopter_movement, rotate_helicopter_rotors, apply_f16_damping};
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames, update_flame_colors};
 use crate::systems::safety::{world_bounds_safety_system, position_monitor_system};
@@ -18,6 +18,9 @@ impl Plugin for VehiclePlugin {
             // CRITICAL PHYSICS SAFEGUARDS: World bounds safety to prevent Rapier crashes
             world_bounds_safety_system,
             position_monitor_system,
+            
+            // F16 damping setup (runs once when specs are added)
+            apply_f16_damping,
             
             // LOD system runs after safeguards
             vehicle_lod_system,

@@ -1,8 +1,21 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{F16, ActiveEntity, AircraftFlight, F16Specs, ControlState, PlayerControlled, MainRotor, TailRotor};
-use crate::systems::physics_utils::PhysicsUtilities;
+use crate::components::{F16, ActiveEntity, AircraftFlight, SimpleF16Specs, ControlState, PlayerControlled, MainRotor, TailRotor};
+use crate::systems::physics_utils::{PhysicsUtilities, InputProcessor};
 use crate::config::GameConfig;
+
+/// Apply damping from SimpleF16Specs to newly spawned F16s
+pub fn apply_f16_damping(
+    mut commands: Commands,
+    f16_query: Query<(Entity, &SimpleF16Specs), (With<F16>, Added<SimpleF16Specs>)>,
+) {
+    for (entity, specs) in f16_query.iter() {
+        commands.entity(entity).insert(Damping {
+            linear_damping: specs.linear_damping,
+            angular_damping: specs.angular_damping,
+        });
+    }
+}
 
 /// Simplified F16 flight system following AGENT.md simplicity principles
 /// 
@@ -24,7 +37,7 @@ pub fn simple_f16_movement(
         &mut Velocity,
         &mut Transform,
         &mut AircraftFlight,
-        &F16Specs,
+        &SimpleF16Specs,
         &ControlState,
     ), (With<F16>, With<ActiveEntity>, With<PlayerControlled>)>,
 ) {
@@ -39,33 +52,26 @@ pub fn simple_f16_movement(
         flight.roll = control_state.roll.clamp(-1.0, 1.0);
         flight.yaw = control_state.yaw.clamp(-1.0, 1.0);
         
-        // Simple throttle response
-        if control_state.throttle > 0.0 {
-            flight.throttle = (flight.throttle + dt * 2.0).clamp(0.0, 1.0);
-        } else if control_state.brake > 0.0 {
-            flight.throttle = (flight.throttle - dt * 3.0).clamp(0.0, 1.0);
-        } else {
-            // Gentle idle throttle decay to reduce sticky throttle feel
-            flight.throttle = (flight.throttle - dt * 0.5).clamp(0.0, 1.0);
-        }
+        // Use specs for consistent throttle processing
+        let target_throttle = if control_state.throttle > 0.0 { 
+            control_state.throttle 
+        } else if control_state.brake > 0.0 { 
+            0.0 
+        } else { 
+            0.0 
+        };
+        flight.throttle = InputProcessor::process_acceleration_input(
+            flight.throttle, target_throttle, specs.throttle_increase_rate, specs.throttle_decrease_rate, dt
+        );
         
-        // Afterburner activation + VFX sync delay (now configurable)
-        flight.afterburner = control_state.is_boosting();
-        if flight.afterburner {
-            flight.afterburner_timer += dt;
-            if flight.afterburner_timer > specs.afterburner_delay { 
-                flight.afterburner_active = true; 
-            }
-        } else {
-            flight.afterburner_timer = 0.0;
-            flight.afterburner_active = false;
-        }
+        // Simplified afterburner (direct from control input)
+        flight.afterburner_active = control_state.is_boosting();
         
         // === SIMPLIFIED FLIGHT PHYSICS ===
         
         // Basic flight parameters
         let base_thrust = specs.max_thrust * 0.7; // Simplified thrust calculation
-        let boost_multiplier = if flight.afterburner { 1.5 } else { 1.0 };
+        let boost_multiplier = if flight.afterburner_active { 1.5 } else { 1.0 };
         let thrust_force = base_thrust * flight.throttle * boost_multiplier;
         
         // Forward thrust along aircraft direction
@@ -84,27 +90,20 @@ pub fn simple_f16_movement(
         );
         let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
         
-        // Apply angular velocity with smooth response
+        // Apply angular velocity with smooth response (angular damping handled by Rapier Damping component)
         velocity.angvel = velocity.angvel.lerp(world_target_ang, dt * 8.0);
-        velocity.angvel *= 0.95;
         
         // === LINEAR FORCES ===
         
         // Apply forward thrust
         velocity.linvel += forward_force * dt / specs.mass.max(1000.0);
         
-        // Simple drag (air resistance)
-        let drag_factor = 0.98 - (velocity.linvel.length() * 0.00001); // Speed-dependent drag
-        velocity.linvel *= drag_factor.clamp(0.90, 0.99);
-        
         // Gravity
         velocity.linvel += Vec3::new(0.0, -9.81, 0.0) * dt;
         
-        // Basic lift when moving forward (simplified)
-        let forward_speed = transform.forward().dot(velocity.linvel);
-        if forward_speed > 20.0 {
-            let lift_force = Vec3::Y * forward_speed * 0.1; // Simple lift
-            velocity.linvel += lift_force * dt;
+        // Simple lift assistance (replaces complex lift calculations)
+        if flight.throttle > 0.1 {
+            velocity.linvel.y += flight.throttle * specs.lift_per_throttle * dt;
         }
         
         // === FLIGHT STATE TRACKING ===
@@ -112,39 +111,16 @@ pub fn simple_f16_movement(
         flight.airspeed = velocity.linvel.length();
         flight.current_thrust = thrust_force;
         
-        // Simple stall detection
-        if flight.airspeed < 15.0 {
-            // Add some instability at low speeds
-            let stall_turbulence = Vec3::new(
-                (time.elapsed_secs() * 2.0).sin() * 2.0,
-                (time.elapsed_secs() * 1.5).cos() * 1.0,
-                (time.elapsed_secs() * 3.0).sin() * 1.5,
-            );
-            velocity.linvel += stall_turbulence * dt;
-            velocity.angvel += stall_turbulence * 0.5 * dt;
-        }
-        
         // === SAFETY SYSTEMS ===
         
-        // Use unified physics utilities for safety
-        PhysicsUtilities::validate_velocity(&mut velocity, &config);
-        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 2.0, 10.0);
-        
-        // Aircraft-specific safety bounds
-        let max_aircraft_speed = 300.0; // Reasonable max speed
-        if velocity.linvel.length() > max_aircraft_speed {
-            velocity.linvel = velocity.linvel.normalize() * max_aircraft_speed;
-        }
-        
-        let max_angular_velocity = 5.0; // Prevent excessive spinning
-        if velocity.angvel.length() > max_angular_velocity {
-            velocity.angvel = velocity.angvel.normalize() * max_angular_velocity;
-        }
+        // Direct velocity clamping (simplified from PhysicsUtilities)
+        velocity.linvel = velocity.linvel.clamp_length_max(config.physics.max_velocity);
+        velocity.angvel = velocity.angvel.clamp_length_max(config.physics.max_angular_velocity);
         
         // Keep aircraft above minimum altitude (simple terrain avoidance)
-        if transform.translation.y < 5.0 {
+        if transform.translation.y < specs.min_altitude {
             // Emergency pull-up
-            velocity.linvel.y += 20.0 * dt;
+            velocity.linvel.y += specs.emergency_pullup_force * dt;
             velocity.angvel.x = -1.0; // Pitch up
         }
     }

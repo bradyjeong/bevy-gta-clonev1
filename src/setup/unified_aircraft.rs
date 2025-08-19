@@ -250,25 +250,16 @@ fn spawn_f16_unified(
         // Core aircraft components
         F16,
         AircraftFlight::default(),
-        F16Specs::default(),
+        SimpleF16Specs::default(),
         VehicleState::new(VehicleType::F16),
         
-        // Physics components - Compound collider for better physics (Oracle feedback)
+        // Physics components - Simple capsule collider (following AGENT.md simplicity principles)
         RigidBody::Dynamic,
-        Collider::compound(vec![
-            (Vec3::new(0.0, 0.0, 0.0), Quat::IDENTITY, Collider::cuboid(1.5, 1.5, 8.0)), // Main fuselage (aligned with Z-axis)
-            (Vec3::new(-4.0, 0.0, -2.0), Quat::IDENTITY, Collider::cuboid(4.0, 0.1, 1.0)), // Left wing
-            (Vec3::new(4.0, 0.0, -2.0), Quat::IDENTITY, Collider::cuboid(4.0, 0.1, 1.0)),  // Right wing
-            (Vec3::new(0.0, 1.0, -5.0), Quat::IDENTITY, Collider::cuboid(0.2, 2.0, 1.5)),  // Vertical tail
-        ]),
+        Collider::capsule_y(1.5, 7.0), // Simple capsule representing aircraft hull
         LockedAxes::empty(),
         Velocity::zero(),
         ExternalForce::default(), // For proper force-based physics
-        AdditionalMassProperties::MassProperties(MassProperties {
-            local_center_of_mass: Vec3::new(0.0, 0.0, 1.0), // Center of mass slightly forward (30% of chord)
-            principal_inertia: Vec3::new(9000.0, 165000.0, 175000.0), // Realistic F-16 inertia values
-            ..default()
-        }),
+        // Let Rapier compute mass properties from collider (following simplicity principles)
         Transform::from_translation(position),
         
         // Collision and culling

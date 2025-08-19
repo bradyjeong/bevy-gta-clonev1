@@ -251,54 +251,33 @@ pub struct AircraftFlight {
     pub yaw: f32,      // Rudder control (nose left/right)
     pub throttle: f32, // Engine power (0.0 to 1.0)
 
-    // Flight state
+    // Flight state (simplified)
     pub airspeed: f32,
-    pub angle_of_attack: f32,
     pub current_thrust: f32,
 
-    // Engine state
-    pub afterburner: bool,
-    pub afterburner_active: bool, // Actual afterburner status (with delay)
-    pub afterburner_timer: f32,   // Time since afterburner request
-    pub engine_spool_time: f32,
+    // Engine state (simplified)
+    pub afterburner_active: bool, // Single afterburner state
 }
 
-// F16-specific flight specifications (data-only following AGENT.md)
-#[derive(Component, Clone)]
-pub struct F16Specs {
-    // Physical properties
+// Simplified F16 specifications for simple physics (following AGENT.md simplicity principles)
+#[derive(Component, Clone, serde::Serialize, serde::Deserialize)]
+pub struct SimpleF16Specs {
     pub mass: f32,               // kg
-    pub wing_area: f32,          // m²
-    pub max_thrust: f32,         // Newtons
-    pub afterburner_thrust: f32, // Newtons
-
-    // Flight envelope
-    pub stall_speed: f32,         // m/s
-    pub max_speed: f32,           // m/s
-    pub max_angle_of_attack: f32, // radians
-
-    // Aerodynamic coefficients
-    pub lift_coefficient_0: f32,     // CL0 (base lift)
-    pub lift_coefficient_alpha: f32, // CLα (lift per AoA)
-    pub drag_coefficient: f32,       // CD
-
-    // Control characteristics
-    pub control_sensitivity: f32,
-    pub yaw_scale: f32,         // Yaw sensitivity multiplier
-    pub afterburner_delay: f32, // Seconds before afterburner VFX activates
-    pub spool_rate_normal: f32,
-    pub spool_rate_afterburner: f32,
-    
-    // Realistic control rates per axis
-    pub roll_rate_max: f32,     // Maximum roll rate (rad/s)
-    pub pitch_rate_max: f32,    // Maximum pitch rate (rad/s)
-    pub yaw_rate_max: f32,      // Maximum yaw rate (rad/s)
-
-    // Inertia tensor components (kg⋅m²)
-    pub inertia_roll: f32,  // Ixx - roll axis
-    pub inertia_pitch: f32, // Iyy - pitch axis
-    pub inertia_yaw: f32,   // Izz - yaw axis
+    pub max_thrust: f32,         // Newtons  
+    pub afterburner_delay: f32,  // Seconds before afterburner VFX activates
+    pub roll_rate_max: f32,      // Maximum roll rate (rad/s)
+    pub pitch_rate_max: f32,     // Maximum pitch rate (rad/s)
+    pub yaw_rate_max: f32,       // Maximum yaw rate (rad/s)
+    pub throttle_increase_rate: f32,
+    pub throttle_decrease_rate: f32,
+    pub linear_damping: f32,
+    pub angular_damping: f32,
+    pub lift_per_throttle: f32,
+    pub min_altitude: f32,
+    pub emergency_pullup_force: f32,
 }
+
+
 
 impl Default for AircraftFlight {
     fn default() -> Self {
@@ -311,56 +290,35 @@ impl Default for AircraftFlight {
 
             // Flight state
             airspeed: 0.0,
-            angle_of_attack: 0.0,
             current_thrust: 0.0,
 
             // Engine starts cold
-            afterburner: false,
             afterburner_active: false,
-            afterburner_timer: 0.0,
-            engine_spool_time: 0.0,
         }
     }
 }
 
-impl Default for F16Specs {
+impl Default for SimpleF16Specs {
     fn default() -> Self {
         Self {
-            // F-16C Fighting Falcon realistic specifications
-            mass: 12000.0,        // kg (empty weight ~8,500 kg + fuel/equipment)
-            wing_area: 27.87,     // m² (300 sq ft)
-            max_thrust: 130000.0, // Newtons (~29,000 lbf F100-PW-229)
-            afterburner_thrust: 176000.0, // Newtons (~39,500 lbf with afterburner)
-
-            // Flight envelope
-            stall_speed: 40.0,          // m/s (~80 knots clean config)
-            max_speed: 616.0,           // m/s (Mach 2.0 at altitude)
-            max_angle_of_attack: 0.436, // radians (25 degrees)
-
-            // Aerodynamic coefficients (simplified but realistic)
-            lift_coefficient_0: 0.2,     // Base lift coefficient
-            lift_coefficient_alpha: 5.0, // Lift curve slope (per radian)
-            drag_coefficient: 0.03,      // Clean configuration drag
-
-            // Control characteristics - realistic F-16 rates
-            control_sensitivity: 3.5,    // Pitch rate (rad/s per control input)
-            yaw_scale: 0.3,              // Reduced yaw for stability (1.05 rad/s)
-            afterburner_delay: 0.2,      // Seconds before VFX activates
-            spool_rate_normal: 2.5,      // Engine spool-up rate
-            spool_rate_afterburner: 1.5, // Faster spool with afterburner
-            
-            // Separate control rates for each axis
-            roll_rate_max: 6.3,          // Real F-16 roll rate (rad/s)
-            pitch_rate_max: 3.5,         // Real F-16 pitch rate (rad/s)
-            yaw_rate_max: 1.05,          // Real F-16 yaw rate (rad/s)
-
-            // Inertia tensor (realistic F-16 values)
-            inertia_roll: 9000.0,    // kg⋅m² - roll axis (slender body)
-            inertia_pitch: 165000.0, // kg⋅m² - pitch axis (longer moment arm)
-            inertia_yaw: 175000.0,   // kg⋅m² - yaw axis (similar to pitch)
+            mass: 12000.0,        // kg
+            max_thrust: 130000.0, // Newtons
+            afterburner_delay: 0.2, // Seconds before VFX activates
+            roll_rate_max: 6.3,    // rad/s
+            pitch_rate_max: 3.5,   // rad/s
+            yaw_rate_max: 1.05,    // rad/s
+            throttle_increase_rate: 2.0,
+            throttle_decrease_rate: 3.0,
+            linear_damping: 0.15,
+            angular_damping: 0.05,
+            lift_per_throttle: 3.0,
+            min_altitude: 5.0,
+            emergency_pullup_force: 20.0,
         }
     }
 }
+
+
 
 #[derive(Component)]
 pub struct MainRotor;

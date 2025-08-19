@@ -392,9 +392,7 @@ pub struct SerializableAircraftFlight {
     pub yaw: f32,
     pub throttle: f32,
     pub airspeed: f32,
-    pub angle_of_attack: f32,
     pub afterburner: bool,
-    pub engine_spool_time: f32,
     pub current_thrust: f32,
 }
 
@@ -406,9 +404,7 @@ impl From<AircraftFlight> for SerializableAircraftFlight {
             yaw: flight.yaw,
             throttle: flight.throttle,
             airspeed: flight.airspeed,
-            angle_of_attack: flight.angle_of_attack,
-            afterburner: flight.afterburner,
-            engine_spool_time: flight.engine_spool_time,
+            afterburner: flight.afterburner_active,
             current_thrust: flight.current_thrust,
         }
     }
@@ -422,11 +418,7 @@ impl Into<AircraftFlight> for SerializableAircraftFlight {
             yaw: self.yaw,
             throttle: self.throttle,
             airspeed: self.airspeed,
-            angle_of_attack: self.angle_of_attack,
-            afterburner: self.afterburner,
-            afterburner_active: false, // Reset afterburner state on load
-            afterburner_timer: 0.0,    // Reset timer on load
-            engine_spool_time: self.engine_spool_time,
+            afterburner_active: self.afterburner, // Use saved afterburner state
             current_thrust: self.current_thrust,
         }
     }
