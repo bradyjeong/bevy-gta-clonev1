@@ -141,14 +141,17 @@ pub fn asset_based_input_mapping_system(
     loaded_controls: Res<LoadedVehicleControls>,
     mut query: Query<(&mut ControlState, &VehicleControlType), With<crate::components::ActiveEntity>>,
 ) {
-    // Skip if controls haven't loaded yet
+    // Always reset control state each frame, even if assets aren't loaded yet
+    for (mut control_state, _vehicle_type) in query.iter_mut() {
+        control_state.reset();
+    }
+    
+    // Skip input mapping if controls haven't loaded yet
     let Some(ref config) = loaded_controls.config else {
         return;
     };
     
     for (mut control_state, vehicle_type) in query.iter_mut() {
-        // Reset control state each frame
-        control_state.reset();
         
         // Get vehicle controls from loaded config
         let Some(vehicle_controls) = config.vehicle_types.get(vehicle_type) else {

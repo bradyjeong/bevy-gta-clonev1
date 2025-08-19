@@ -43,7 +43,7 @@ pub fn human_emotional_state_system(
         (With<Player>, With<ActiveEntity>),
     >,
 ) {
-    let Ok((mut emotions, mut behavior, mut movement, animation)) = player_query.single_mut() else {
+    let Ok((mut emotions, mut behavior, _movement, animation)) = player_query.single_mut() else {
         return;
     };
 
@@ -89,7 +89,7 @@ pub fn human_emotional_state_system(
             behavior.personality_speed_modifier = 0.7;
             behavior.reaction_time = BEHAVIOR_RNG.with(|rng| rng.borrow_mut().gen_range(0.15..0.25));
             behavior.confidence_level = 0.6;
-            movement.tired_speed_modifier = 0.5;
+
         }
         Mood::Anxious => {
             behavior.personality_speed_modifier = 1.3;

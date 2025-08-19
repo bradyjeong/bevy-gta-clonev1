@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation, HumanBehavior};
+use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation};
 use crate::components::ControlState;
 
 #[derive(Resource)]
@@ -41,53 +41,24 @@ pub fn read_input_system(
     input_data.is_running = control_state.run;
 }
 
-pub fn stamina_system(
-    time: Res<Time>,
-    input_data: Res<PlayerInputData>,
-    mut player_query: Query<&mut HumanMovement, (With<Player>, With<ActiveEntity>)>,
-) {
-    let Ok(mut movement) = player_query.single_mut() else {
-        return;
-    };
 
-    let dt = time.delta_secs();
-    let is_moving = input_data.input_direction.length() > 0.0;
-    
-    if is_moving && input_data.is_running {
-        movement.stamina -= movement.stamina_drain_rate * dt;
-        movement.stamina = movement.stamina.max(0.0);
-    } else if !is_moving || !input_data.is_running {
-        movement.stamina += movement.stamina_recovery_rate * dt;
-        movement.stamina = movement.stamina.min(movement.max_stamina);
-    }
-}
 
 pub fn velocity_apply_system(
     input_data: Res<PlayerInputData>,
     mut player_query: Query<
-        (&mut Velocity, &mut HumanMovement, &HumanBehavior),
+        (&mut Velocity, &mut HumanMovement),
         (With<Player>, With<ActiveEntity>),
     >,
 ) {
-    let Ok((mut velocity, mut movement, behavior)) = player_query.single_mut() else {
+    let Ok((mut velocity, mut movement)) = player_query.single_mut() else {
         return;
     };
 
-    let stamina_factor = if movement.stamina < 20.0 {
-        movement.tired_speed_modifier
+    let effective_max_speed = if input_data.is_running {
+        movement.max_speed * 2.5  // Sprint speed
     } else {
-        1.0
+        movement.max_speed  // Walk speed
     };
-
-    let base_speed = if input_data.is_running && movement.stamina > 10.0 {
-        movement.max_speed * 2.5  // Increased from 1.8 for faster sprinting
-    } else {
-        movement.max_speed
-    };
-
-    let effective_max_speed = base_speed * stamina_factor * 
-                             behavior.personality_speed_modifier * 
-                             behavior.movement_variation;
 
     let target_linear_velocity = if input_data.input_direction.length() > 0.0 {
         let normalized_input = input_data.input_direction.normalize();
@@ -121,7 +92,7 @@ pub fn animation_flag_system(
     };
 
     animation.is_walking = movement.current_speed > 0.3;
-    animation.is_running = input_data.is_running && movement.current_speed > movement.max_speed * 1.0;
+    animation.is_running = input_data.is_running;
 }
 
 pub fn human_player_animation(

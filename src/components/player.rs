@@ -22,11 +22,6 @@ pub struct HumanMovement {
     pub max_speed: f32,
     pub current_speed: f32,
     pub target_velocity: Vec3,
-    pub stamina: f32,
-    pub max_stamina: f32,
-    pub stamina_drain_rate: f32,
-    pub stamina_recovery_rate: f32,
-    pub tired_speed_modifier: f32,
 }
 
 impl Default for HumanMovement {
@@ -37,11 +32,6 @@ impl Default for HumanMovement {
             max_speed: 7.0,  // Increased from 4.5 for faster walking
             current_speed: 0.0,
             target_velocity: Vec3::ZERO,
-            stamina: 100.0,
-            max_stamina: 100.0,
-            stamina_drain_rate: 12.0,
-            stamina_recovery_rate: 30.0,
-            tired_speed_modifier: 0.7,
         }
     }
 }

@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 use crate::systems::movement::{
-    read_input_system, stamina_system, velocity_apply_system, 
+    read_input_system, velocity_apply_system, 
     animation_flag_system, human_player_animation, PlayerInputData
 };
 use crate::systems::input::asset_based_input_mapping_system;
 use crate::systems::camera::camera_follow_system;
 use crate::systems::interaction::interaction_system;
 use crate::systems::audio::{footstep_system, cleanup_footstep_sounds};
-use crate::systems::human_behavior::{human_emotional_state_system, human_fidget_system};
+
 use crate::systems::debug::debug_game_state;
 use crate::systems::player_collision_resolution::{player_collision_resolution_system, player_movement_validation_system};
 use crate::game_state::GameState;
@@ -20,12 +20,10 @@ impl Plugin for PlayerPlugin {
            .add_systems(Update, (
                asset_based_input_mapping_system.before(read_input_system),
                read_input_system.run_if(in_state(GameState::Walking)),
-               stamina_system.after(read_input_system).run_if(in_state(GameState::Walking)),
-               velocity_apply_system.after(stamina_system).run_if(in_state(GameState::Walking)),
+               velocity_apply_system.after(read_input_system).run_if(in_state(GameState::Walking)),
                animation_flag_system.after(velocity_apply_system).run_if(in_state(GameState::Walking)),
                human_player_animation.after(animation_flag_system).run_if(in_state(GameState::Walking)),
-               human_emotional_state_system.run_if(in_state(GameState::Walking)),
-               human_fidget_system.run_if(in_state(GameState::Walking)),
+
                footstep_system.run_if(in_state(GameState::Walking)),
                cleanup_footstep_sounds,
                camera_follow_system,
