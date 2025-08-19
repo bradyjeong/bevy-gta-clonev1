@@ -10,7 +10,12 @@ use crate::plugins::{
 };
 use crate::systems::{
     SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, 
-    TransformSyncPlugin, UnifiedDistanceCalculatorPlugin, UnifiedPerformancePlugin
+    TransformSyncPlugin, UnifiedDistanceCalculatorPlugin, UnifiedPerformancePlugin,
+    
+    // Coordinate safety systems
+    WorldOffset, FloatingOriginConfig,
+    ActiveEntityTransferred, active_transfer_executor_system, active_entity_integrity_check,
+    validate_streaming_position
 };
 use crate::services::GroundDetectionPlugin;
 use crate::GameState;
@@ -53,6 +58,12 @@ impl Plugin for GameCorePlugin {
             .init_resource::<DirtyFlagsMetrics>()
             .init_resource::<MeshCache>()
             .init_resource::<EntityLimits>()
+            
+            // Coordinate safety resources (disabled by default for safety)
+            .init_resource::<WorldOffset>()
+            .init_resource::<FloatingOriginConfig>()
+            .add_event::<ActiveEntityTransferred>()
+            
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
             .insert_resource(AmbientLight {
                 color: Color::srgb(1.0, 0.9, 0.7),
@@ -91,6 +102,23 @@ impl Plugin for GameCorePlugin {
             .add_plugins((
                 PersistencePlugin,
                 UIPlugin,
-            ));
+            ))
+            
+            // Coordinate safety systems (foundation only - floating origin disabled for stability)
+            .add_systems(Update, (
+                // Input validation catches bad positions early
+                validate_streaming_position,
+                
+                // ActiveEntity safety ensures exactly one active entity  
+                active_transfer_executor_system,
+                active_entity_integrity_check,
+                
+                // Floating origin system available but disabled for now
+                // To enable infinite worlds: uncomment these lines
+                // floating_origin_system.after(active_transfer_executor_system),
+                // floating_origin_diagnostics,
+            ).chain());
+        
+        info!("✅ Game Core Plugin loaded with coordinate safety foundation");
     }
 }
