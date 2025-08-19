@@ -138,6 +138,7 @@ fn setup_starter_vehicles_unified(
             },
             MovementTracker::new(validated_position, 10.0),
             Name::new(format!("StarterVehicle_{}", i)),
+            SimpleCarSpecs::default(),
         )).id();
         
         // Add car body as child entity
@@ -263,6 +264,7 @@ fn setup_luxury_cars_unified(
             },
             MovementTracker::new(validated_position, 10.0),
             Name::new(format!("LuxuryCar_{}", i)),
+            SimpleCarSpecs::default(),
         )).id();
         
         // Add luxury car body with premium materials

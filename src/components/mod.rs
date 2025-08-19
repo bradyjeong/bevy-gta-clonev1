@@ -60,7 +60,7 @@ pub mod effects;
 pub mod water;
 pub mod lod;
 
-pub mod realistic_vehicle;
+
 pub mod dirty_flags;
 pub mod instanced_vegetation;
 pub mod control_state;
@@ -74,7 +74,7 @@ pub use effects::*;
 pub use water::*;
 pub use lod::*;
 
-pub use realistic_vehicle::*;
+
 pub use dirty_flags::*;
 pub use instanced_vegetation::*;
 pub use control_state::*;

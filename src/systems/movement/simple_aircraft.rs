@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{F16, ActiveEntity, AircraftFlight, SimpleF16Specs, ControlState, PlayerControlled, MainRotor, TailRotor};
+use crate::components::{F16, ActiveEntity, AircraftFlight, SimpleF16Specs, ControlState, PlayerControlled, MainRotor, TailRotor, Helicopter, SimpleHelicopterSpecs};
 use crate::systems::physics_utils::PhysicsUtilities;
 use crate::systems::movement::simple_flight_common::SimpleFlightCommon;
 use crate::config::GameConfig;
@@ -108,59 +108,52 @@ pub fn simple_f16_movement(
 pub fn simple_helicopter_movement(
     time: Res<Time>,
     config: Res<GameConfig>,
-    mut helicopter_query: Query<(&mut Velocity, &Transform, &ControlState), 
-        (With<crate::components::Helicopter>, With<ActiveEntity>, With<PlayerControlled>)>,
+    mut helicopter_query: Query<(&mut Velocity, &Transform, &ControlState, &SimpleHelicopterSpecs), 
+        (With<Helicopter>, With<ActiveEntity>, With<PlayerControlled>)>,
 ) {
     let dt = time.delta_secs().clamp(0.001, 0.05);
     
-    for (mut velocity, transform, control_state) in helicopter_query.iter_mut() {
-        
-        // Basic helicopter parameters
-        let speed = 30.0;
-        let rotation_speed = 4.0;
-        let vertical_speed = 15.0;
-        let roll_speed = 2.0; // Gentler than yaw
-        let lateral_speed = 15.0; // Lateral movement when banking
+    for (mut velocity, transform, control_state, specs) in helicopter_query.iter_mut() {
         
         let mut target_linear_velocity = Vec3::ZERO;
         let mut target_angular_velocity = Vec3::ZERO;
         
         // Forward/backward movement using pitch
         if control_state.pitch > 0.1 {
-            target_linear_velocity += transform.forward() * speed * control_state.pitch;
+            target_linear_velocity += transform.forward() * specs.forward_speed * control_state.pitch;
         } else if control_state.pitch < -0.1 {
-            target_linear_velocity -= transform.forward() * speed * control_state.pitch.abs();
+            target_linear_velocity -= transform.forward() * specs.forward_speed * control_state.pitch.abs();
         }
         
         // Rotation using yaw (invert sign for correct direction)
         if control_state.yaw.abs() > 0.1 {
-            target_angular_velocity.y = -control_state.yaw * rotation_speed;
+            target_angular_velocity.y = -control_state.yaw * specs.yaw_rate;
         }
         
         // Vertical movement (collective)
         if control_state.vertical > 0.1 {
-            target_linear_velocity.y += vertical_speed * control_state.vertical;
+            target_linear_velocity.y += specs.vertical_speed * control_state.vertical;
         } else if control_state.vertical < -0.1 {
-            target_linear_velocity.y -= vertical_speed * control_state.vertical.abs();
+            target_linear_velocity.y -= specs.vertical_speed * control_state.vertical.abs();
         }
         
         // Roll controls (Q/E keys) - banking and lateral movement
         if control_state.roll.abs() > 0.1 {
             // Roll angular velocity (banking around Z-axis)
-            target_angular_velocity.z = -control_state.roll * roll_speed;
+            target_angular_velocity.z = -control_state.roll * specs.roll_rate;
             
             // Lateral movement when rolling (helicopter banks into turn)  
-            let lateral_force = transform.right() * -control_state.roll * lateral_speed;
+            let lateral_force = transform.right() * -control_state.roll * specs.lateral_speed;
             target_linear_velocity += lateral_force;
         }
         
         // Apply forces with smooth interpolation
-        velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * 4.0);
-        velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * 6.0);
+        velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
+        velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
         
         // Use shared physics utilities (no manual damping, no gravity duplication)
         SimpleFlightCommon::apply_velocity_clamps(&mut velocity, &config);
-        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 1.0, 5.0);
+        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, specs.min_height, specs.ground_bounce);
     }
 }
 

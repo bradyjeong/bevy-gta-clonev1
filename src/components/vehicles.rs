@@ -380,3 +380,62 @@ pub const LOD_FULL_DISTANCE: f32 = 50.0;
 pub const LOD_MEDIUM_DISTANCE: f32 = 100.0;
 pub const LOD_LOW_DISTANCE: f32 = 125.0;
 pub const LOD_CULL_DISTANCE: f32 = 150.0;
+
+// Simple vehicle physics configurations (asset-driven)
+#[derive(Component, Debug, Clone, serde::Deserialize)]
+pub struct SimpleCarSpecs {
+    pub base_speed: f32,
+    pub rotation_speed: f32,
+    pub emergency_brake_linear: f32,
+    pub emergency_brake_angular: f32,
+    pub min_height: f32,
+    pub ground_bounce: f32,
+    pub max_processing_time: f32,
+}
+
+impl Default for SimpleCarSpecs {
+    fn default() -> Self {
+        Self {
+            base_speed: 25.0,
+            rotation_speed: 2.0,
+            emergency_brake_linear: 0.1,
+            emergency_brake_angular: 0.5,
+            min_height: 0.1,
+            ground_bounce: 1.0,
+            max_processing_time: 1.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone, serde::Deserialize)]
+pub struct SimpleHelicopterSpecs {
+    pub lateral_speed: f32,
+    pub vertical_speed: f32,
+    pub forward_speed: f32,
+    pub yaw_rate: f32,
+    pub pitch_rate: f32,
+    pub roll_rate: f32,
+    pub angular_lerp_factor: f32,
+    pub linear_lerp_factor: f32,
+    pub min_height: f32,
+    pub ground_bounce: f32,
+    pub max_processing_time: f32,
+}
+
+impl Default for SimpleHelicopterSpecs {
+    fn default() -> Self {
+        Self {
+            lateral_speed: 20.0,
+            vertical_speed: 15.0,
+            forward_speed: 25.0,
+            yaw_rate: 1.5,
+            pitch_rate: 1.0,
+            roll_rate: 1.0,
+            angular_lerp_factor: 4.0,
+            linear_lerp_factor: 6.0,
+            min_height: 1.0,
+            ground_bounce: 5.0,
+            max_processing_time: 1.0,
+        }
+    }
+}

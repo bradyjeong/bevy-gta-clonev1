@@ -131,6 +131,7 @@ fn spawn_helicopter_unified(
     let helicopter_entity = commands.spawn((
         // Core aircraft components
         Helicopter,
+        SimpleHelicopterSpecs::default(),
         
         // Physics components
         RigidBody::Dynamic,

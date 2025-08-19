@@ -1,0 +1,18 @@
+// Simple Car Physics Configuration
+// Data-driven constants for car movement (eliminates magic numbers)
+SimpleCarConfig(
+    // Core movement specs
+    base_speed: 25.0,           // Base acceleration/movement speed
+    rotation_speed: 2.0,        // Steering rotation rate (rad/s)
+    
+    // Emergency systems
+    emergency_brake_linear: 0.1,  // Linear velocity multiplier during emergency brake
+    emergency_brake_angular: 0.5, // Angular velocity multiplier during emergency brake
+    
+    // Ground collision
+    min_height: 0.1,            // Minimum height above ground (wheel clearance)
+    ground_bounce: 1.0,         // Bounce force when hitting ground
+    
+    // Performance monitoring
+    max_processing_time: 1.0,   // Maximum milliseconds per frame
+)

@@ -1,0 +1,24 @@
+// Simple Helicopter Physics Configuration  
+// Data-driven constants for helicopter movement (eliminates magic numbers)
+SimpleHelicopterConfig(
+    // Movement speeds
+    lateral_speed: 20.0,        // Side-to-side movement speed
+    vertical_speed: 15.0,       // Up/down movement speed
+    forward_speed: 25.0,        // Forward/backward movement speed
+    
+    // Rotation rates
+    yaw_rate: 1.5,             // Rotation around Y axis (rad/s)
+    pitch_rate: 1.0,           // Forward/backward tilt (rad/s)
+    roll_rate: 1.0,            // Side tilt (rad/s)
+    
+    // Physics smoothing
+    angular_lerp_factor: 4.0,   // Angular velocity smoothing rate
+    linear_lerp_factor: 6.0,    // Linear velocity smoothing rate
+    
+    // Ground collision
+    min_height: 1.0,            // Minimum height above ground (landing gear)
+    ground_bounce: 5.0,         // Bounce force when hitting ground
+    
+    // Performance monitoring  
+    max_processing_time: 1.0,   // Maximum milliseconds per frame
+)

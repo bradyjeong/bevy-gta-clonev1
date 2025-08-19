@@ -283,13 +283,14 @@ Primary control configuration using RON (Rusty Object Notation) files.
 
 ## Simplified Physics Systems
 
-### Vehicle Physics Options
-- **Simple Vehicle Physics**: `src/systems/movement/simple_vehicle_physics.rs` - Direct force application (DEFAULT)
-- **Realistic Vehicle Physics**: `src/systems/movement/realistic_vehicle_physics.rs` - Complex tire/aerodynamics (AVAILABLE)
+### Vehicle Physics (Unified Simple System)
+- **Car Movement**: `src/systems/movement/vehicles.rs` - Direct velocity control with asset-driven specs
+- **Aircraft Movement**: `src/systems/movement/simple_aircraft.rs` - F16 and helicopter physics with RON configs
 
-### Aircraft Physics Options
-- **Simple Aircraft**: `src/systems/movement/simple_aircraft.rs` - Direct control mapping (DEFAULT)
-- **Complex Aircraft**: `src/systems/movement/aircraft.rs` - Advanced aerodynamics (AVAILABLE)
+### Physics Configuration
+- **Car Specs**: `assets/config/simple_car.ron` - Speed, rotation, emergency brake settings
+- **Helicopter Specs**: `assets/config/simple_helicopter.ron` - Movement speeds and rotation rates  
+- **F16 Specs**: `assets/config/simple_f16.ron` - Thrust, lift, and flight parameters
 
 ### Benefits
 - **Easy to Understand**: Linear force/rotation mapping instead of complex formulas
