@@ -93,6 +93,7 @@ CORE PRINCIPLE: Keep communication simple and direct.
 - Components: `#[derive(Component)]` + `Default`, systems in subdirs
 - Safety: Validate physics values, clamp positions/dimensions, use collision groups
 - Comments: `//` style, 4-space indent, trailing commas
+- **No emojis allowed** in code, comments, or documentation
 
 
 
