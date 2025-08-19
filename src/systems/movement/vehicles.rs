@@ -4,6 +4,7 @@ use crate::components::{Car, ActiveEntity, SimpleCarSpecs};
 use crate::components::ControlState;
 use crate::systems::physics::PhysicsUtilities;
 use crate::config::GameConfig;
+use crate::util::safe_math::safe_lerp;
 
 pub fn car_movement(
     config: Res<GameConfig>,
@@ -45,8 +46,8 @@ pub fn car_movement(
         
         // Always apply interpolation and safety checks (dynamic bodies handle gravity)
         let dt = PhysicsUtilities::stable_dt(&time);
-        velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
-        velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
+        velocity.linvel = safe_lerp(velocity.linvel, target_linear_velocity, dt * specs.linear_lerp_factor);
+        velocity.angvel = safe_lerp(velocity.angvel, target_angular_velocity, dt * specs.angular_lerp_factor);
         
         // Emergency brake affects current velocity (more effective than target velocity)
         if control_state.emergency_brake {

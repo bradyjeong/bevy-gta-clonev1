@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;
 use crate::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
+use crate::util::safe_math::{sanitize_velocity, sanitize_transform};
 
 /// Essential physics utilities for movement systems
 #[derive(Default)]
@@ -9,19 +10,18 @@ pub struct PhysicsUtilities;
 
 impl PhysicsUtilities {
     /// Validate and clamp velocity to safe ranges for physics stability
-    /// Unified method that replaces both validate_velocity and apply_velocity_clamps
+    /// Enhanced with safe math to prevent all corruption sources
     pub fn clamp_velocity(velocity: &mut Velocity, config: &GameConfig) {
-        // Clamp linear velocity to prevent physics instability
+        // Use safe math utilities for comprehensive validation
+        let was_corrupt = sanitize_velocity(velocity);
+        
+        if was_corrupt {
+            warn!("Detected and fixed corrupted velocity");
+        }
+        
+        // Additional game-specific limits
         velocity.linvel = velocity.linvel.clamp_length_max(config.physics.max_velocity);
         velocity.angvel = velocity.angvel.clamp_length_max(config.physics.max_angular_velocity);
-        
-        // Ensure all values are finite
-        if !velocity.linvel.is_finite() {
-            velocity.linvel = Vec3::ZERO;
-        }
-        if !velocity.angvel.is_finite() {
-            velocity.angvel = Vec3::ZERO;
-        }
     }
     
     /// Legacy alias for backward compatibility - use clamp_velocity instead
@@ -86,28 +86,22 @@ impl CollisionGroupHelper {
     }
 }
 
-/// Comprehensive physics safety system
+/// Enhanced comprehensive physics safety system
+/// Runs AFTER physics step to catch any corruption before other systems see it
 pub fn apply_universal_physics_safeguards(
     mut query: Query<(Entity, &mut Velocity, &mut Transform), With<RigidBody>>,
     config: Res<GameConfig>,
 ) {
-    for (_entity, mut velocity, mut transform) in query.iter_mut() {
-        // Apply all safety measures
-        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
+    for (entity, mut velocity, mut transform) in query.iter_mut() {
+        // Use safe math utilities for comprehensive validation
+        let velocity_corrupt = sanitize_velocity(&mut velocity);
+        let transform_corrupt = sanitize_transform(&mut transform);
+        
+        if velocity_corrupt || transform_corrupt {
+            warn!("Entity {:?} had corrupted physics data, fixed", entity);
+        }
+        
+        // Apply game-specific bounds
         PhysicsUtilities::apply_world_bounds(&mut transform, &mut velocity, &config);
-        
-        // Additional safety checks
-        if !transform.translation.is_finite() {
-            warn!("Entity had invalid position, resetting to origin");
-            transform.translation = Vec3::ZERO;
-            velocity.linvel = Vec3::ZERO;
-            velocity.angvel = Vec3::ZERO;
-        }
-        
-        if !transform.rotation.is_finite() {
-            warn!("Entity had invalid rotation, resetting to identity");
-            transform.rotation = Quat::IDENTITY;
-            velocity.angvel = Vec3::ZERO;
-        }
     }
 }

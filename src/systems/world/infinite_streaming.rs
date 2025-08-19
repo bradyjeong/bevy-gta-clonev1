@@ -256,6 +256,20 @@ impl Default for WorldLODManager {
 
 impl WorldLODManager {
     pub fn update_active_position(&mut self, position: Vec3, current_time: f32) {
+        // Input validation to prevent coordinate explosions
+        const MAX_STREAMING_DISTANCE: f32 = 100_000.0; // 100km reasonable limit
+        
+        if !position.is_finite() {
+            warn!("Streaming system received non-finite position: {:?}, keeping last valid position", position);
+            return;
+        }
+        
+        if position.length() > MAX_STREAMING_DISTANCE {
+            warn!("Streaming system received extreme position: {:?} (distance: {:.1}km), keeping last valid position", 
+                  position, position.length() / 1000.0);
+            return;
+        }
+        
         self.active_position = position;
         self.last_update_time = current_time;
         
@@ -377,7 +391,16 @@ impl WorldLODManager {
         while let Some((coord, _priority)) = self.generation_queue.pop_front() {
             if let Some(chunk) = self.chunks.get(&coord) {
                 if matches!(chunk.state, ChunkState::Unloaded) {
-                    return Some(coord);
+                    // Re-validate that chunk is still within streaming radius
+                    let chunk_pos = coord.to_world_pos();
+                    let distance = self.active_position.distance(chunk_pos);
+                    
+                    if distance <= coord.get_streaming_radius() {
+                        return Some(coord);
+                    } else {
+                        // Skip chunks that are now too far away (stale from old position)
+                        continue;
+                    }
                 }
             }
         }

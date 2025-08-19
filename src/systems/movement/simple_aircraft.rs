@@ -5,6 +5,7 @@ use crate::components::{F16, ActiveEntity, AircraftFlight, SimpleF16Specs, Contr
 use crate::systems::movement::simple_flight_common::SimpleFlightCommon;
 use crate::systems::physics::PhysicsUtilities;
 use crate::config::GameConfig;
+use crate::util::safe_math::safe_lerp;
 
 
 
@@ -66,7 +67,7 @@ pub fn simple_f16_movement(
         let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
         
         // Apply angular velocity (lerp factor from specs)
-        velocity.angvel = velocity.angvel.lerp(world_target_ang, dt * specs.angular_lerp_factor);
+        velocity.angvel = safe_lerp(velocity.angvel, world_target_ang, dt * specs.angular_lerp_factor);
         
         // === DIRECT VELOCITY CONTROL ===
         
@@ -81,7 +82,7 @@ pub fn simple_f16_movement(
         }
         
         // Apply direct velocity interpolation (no force/mass calculations)
-        velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
+        velocity.linvel = safe_lerp(velocity.linvel, target_linear_velocity, dt * specs.linear_lerp_factor);
         
         // === MINIMAL STATE TRACKING ===
         
@@ -146,8 +147,8 @@ pub fn simple_helicopter_movement(
         }
         
         // Always apply interpolation and safety checks every frame (dynamic bodies handle gravity)
-        velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
-        velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
+        velocity.linvel = safe_lerp(velocity.linvel, target_linear_velocity, dt * specs.linear_lerp_factor);
+        velocity.angvel = safe_lerp(velocity.angvel, target_angular_velocity, dt * specs.angular_lerp_factor);
         
         // Apply velocity validation every frame (critical for preventing physics panics)
         PhysicsUtilities::clamp_velocity(&mut velocity, &config);

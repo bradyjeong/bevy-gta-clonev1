@@ -84,6 +84,8 @@ pub mod vegetation_instancing_integration;
 pub mod player_collision_resolution;
 
 pub mod parallel_physics;
+pub mod safe_active_entity;
+pub mod floating_origin;
 
 pub mod performance_monitor;
 // pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
@@ -113,6 +115,18 @@ pub use input::{LoadedVehicleControls, VehicleControlsConfig};
 
 // Physics utilities
 pub use physics::PhysicsUtilities;
+
+// Safe ActiveEntity system
+pub use safe_active_entity::{
+    ActiveTransferRequest, ActiveEntityTransferred, active_transfer_executor_system,
+    active_entity_integrity_check, queue_active_transfer
+};
+
+// Floating origin system
+pub use floating_origin::{
+    WorldOffset, IgnoreWorldShift, WorldOriginShifted, FloatingOriginConfig,
+    floating_origin_system, validate_streaming_position, floating_origin_diagnostics
+};
 
 // Simple service examples
 pub use simple_service_example::{
