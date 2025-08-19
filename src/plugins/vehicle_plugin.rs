@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use crate::systems::movement::{car_movement, simple_f16_movement, simple_helicopter_movement, rotate_helicopter_rotors, apply_f16_damping};
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames_unified};
-use crate::systems::safety::{world_bounds_safety_system, position_monitor_system};
+use crate::systems::safety::{bounds_safety_system, bounds_diagnostics_system, validate_physics_config};
+use crate::components::safety::WorldBounds;
 use crate::systems::vehicles::vehicle_lod_system;
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
 use crate::game_state::GameState;
@@ -12,12 +13,14 @@ pub struct VehiclePlugin;
 impl Plugin for VehiclePlugin {
     fn build(&self, app: &mut App) {
         app
+        // Initialize safety resources
+        .init_resource::<WorldBounds>()
         // CRITICAL SAFEGUARDS: Run configuration validation at startup
-        // .add_systems(Startup, configuration_validation_system) // DISABLED - conflicts with Rapier
+        .add_systems(Startup, validate_physics_config)
         .add_systems(Update, (
-            // CRITICAL PHYSICS SAFEGUARDS: World bounds safety to prevent Rapier crashes
-            world_bounds_safety_system,
-            position_monitor_system,
+            // CRITICAL PHYSICS SAFEGUARDS: Unified bounds safety with NaN protection
+            bounds_safety_system,
+            bounds_diagnostics_system,
             
             // F16 damping setup (runs once when specs are added)
             apply_f16_damping,

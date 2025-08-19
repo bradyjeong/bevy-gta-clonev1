@@ -91,7 +91,7 @@ pub mod batching;
 pub use crate::services::{DistanceCache, get_cached_distance, get_cached_distance_squared, MovementTracker, DistanceCachePlugin};
 pub use crate::services::{TimingService, SystemType, EntityTimerType, ManagedTiming, TimingStats};
 pub use spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType, SpawnValidationPlugin};
-pub use safety::{world_bounds_safety_system, position_monitor_system};
+pub use safety::{bounds_safety_system, bounds_diagnostics_system, validate_physics_config};
 pub use batching::frame_counter_system;
 pub use performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory, UnifiedPerformancePlugin};
 pub use distance_cache_debug::DistanceCacheDebugPlugin;

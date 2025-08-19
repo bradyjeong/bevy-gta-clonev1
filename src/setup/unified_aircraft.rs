@@ -253,6 +253,12 @@ fn spawn_f16_unified(
         SimpleF16Specs::default(),
         VehicleState::new(VehicleType::F16),
         
+        // Safety components - critical for high-speed aircraft
+        HighSpeed {
+            max_safe_speed: 500.0,
+            bounds_check_interval: 0.5,
+        },
+        
         // Physics components - Simple capsule collider (following AGENT.md simplicity principles)
         RigidBody::Dynamic,
         Collider::capsule_y(1.5, 7.0), // Simple capsule representing aircraft hull

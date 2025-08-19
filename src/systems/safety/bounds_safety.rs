@@ -4,9 +4,9 @@ use crate::components::safety::{HighSpeed, WorldBounds};
 use crate::components::ActiveEntity;
 
 /// Generic bounds safety system for all high-speed entities
-/// Replaces F-16 specific position_bounds.rs
+/// Replaces F-16 specific position_bounds.rs with NaN protection
 pub fn bounds_safety_system(
-    time: Res<Time>,
+    mut commands: Commands,
     bounds: Res<WorldBounds>,
     mut high_speed_query: Query<(
         Entity,
@@ -15,9 +15,16 @@ pub fn bounds_safety_system(
         &HighSpeed
     ), (With<RigidBody>, With<ActiveEntity>)>,
 ) {
-    for (entity, mut transform, mut velocity, high_speed) in high_speed_query.iter_mut() {
+    for (entity, mut transform, mut velocity, _high_speed) in high_speed_query.iter_mut() {
         let pos = transform.translation;
         let max_coord = bounds.max_coordinate;
+        
+        // Critical: Check for NaN/Inf coordinates that cause Rapier panics
+        if !pos.is_finite() || !velocity.linvel.is_finite() || !velocity.angvel.is_finite() {
+            error!("Entity {:?} has invalid coordinates/velocity - despawning to prevent Rapier panic", entity);
+            commands.entity(entity).despawn();
+            continue;
+        }
         
         // Check if any coordinate exceeds bounds
         if pos.x.abs() > max_coord || pos.y.abs() > max_coord || pos.z.abs() > max_coord {

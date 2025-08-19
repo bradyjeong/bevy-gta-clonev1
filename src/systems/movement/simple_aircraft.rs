@@ -161,15 +161,8 @@ pub fn simple_helicopter_movement(
         velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * 4.0);
         velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * 6.0);
         
-        // Simple physics
-        velocity.linvel *= 0.95; // Air resistance
-        velocity.angvel *= 0.90; // Angular damping
-        
-        // Gravity
-        velocity.linvel += Vec3::new(0.0, -9.81, 0.0) * dt;
-        
-        // Safety systems
-        PhysicsUtilities::validate_velocity(&mut velocity, &config);
+        // Use shared physics utilities (no manual damping, no gravity duplication)
+        SimpleFlightCommon::apply_velocity_clamps(&mut velocity, &config);
         PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 1.0, 5.0);
     }
 }
