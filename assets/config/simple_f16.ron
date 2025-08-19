@@ -2,8 +2,7 @@
 // All tuning constants data-driven (eliminates magic numbers from code)
 SimpleF16Config(
     // Core aircraft specs
-    mass: 12000.0,           // kg
-    max_thrust: 130000.0,    // Newtons
+    max_forward_speed: 200.0, // Max forward velocity (m/s)
     roll_rate_max: 6.3,      // rad/s
     pitch_rate_max: 3.5,     // rad/s  
     yaw_rate_max: 1.05,      // rad/s
@@ -19,12 +18,11 @@ SimpleF16Config(
     // Lift assistance (orientation-aware)
     lift_per_throttle: 3.0,  // Upward force per throttle unit
     
-    // Safety limits  
-    min_altitude: 0.5,       // Minimum height above ground (allow ground landing)
-    emergency_pullup_force: 20.0, // Upward force when below min altitude
+    // (Removed unused fields: min_altitude, emergency_pullup_force)
     
     // Formerly magic numbers in code
-    afterburner_multiplier: 1.5,   // Thrust multiplier for afterburner
+    afterburner_multiplier: 1.5,   // Speed multiplier for afterburner
+    linear_lerp_factor: 4.0,       // Linear velocity smoothing rate
     angular_lerp_factor: 8.0,      // Angular velocity smoothing rate
     throttle_deadzone: 0.1,        // Minimum throttle for lift activation
 )

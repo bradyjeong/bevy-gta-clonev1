@@ -18,11 +18,4 @@ SimpleHelicopterConfig(
     // Rotor animation speeds
     main_rotor_rpm: 20.0,       // Main rotor rotation speed (rad/s)
     tail_rotor_rpm: 35.0,       // Tail rotor rotation speed (rad/s)
-    
-    // Ground collision
-    min_height: 1.0,            // Minimum height above ground (landing gear)
-    ground_bounce: 5.0,         // Bounce force when hitting ground
-    
-    // Performance monitoring  
-    max_processing_time: 1.0,   // Maximum milliseconds per frame
 )

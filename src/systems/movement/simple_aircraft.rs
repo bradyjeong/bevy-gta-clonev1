@@ -30,7 +30,7 @@ pub fn simple_f16_movement(
         &mut AircraftFlight,
         &SimpleF16Specs,
         &ControlState,
-    ), (With<F16>, With<ActiveEntity>, With<PlayerControlled>, Changed<ControlState>)>,
+    ), (With<F16>, With<ActiveEntity>, With<PlayerControlled>)>,
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
     
@@ -52,10 +52,8 @@ pub fn simple_f16_movement(
         
         // === MINIMAL FLIGHT PHYSICS ===
         
-        // Calculate thrust (all values from specs, no magic numbers)
+        // Calculate boost multiplier (all values from specs, no magic numbers)
         let boost_multiplier = if flight.afterburner_active { specs.afterburner_multiplier } else { 1.0 };
-        let thrust_force = specs.max_thrust * flight.throttle * boost_multiplier;
-        let forward_force = transform.forward() * thrust_force;
         
         // === DIRECT ANGULAR CONTROL ===
         
@@ -70,15 +68,20 @@ pub fn simple_f16_movement(
         // Apply angular velocity (lerp factor from specs)
         velocity.angvel = velocity.angvel.lerp(world_target_ang, dt * specs.angular_lerp_factor);
         
-        // === LINEAR FORCES ===
+        // === DIRECT VELOCITY CONTROL ===
         
-        // Apply forward thrust (no magic mass clamp)
-        velocity.linvel += forward_force * dt / specs.mass;
+        // Calculate target forward speed from throttle (consistent with other vehicles)
+        let target_forward_speed = specs.max_forward_speed * flight.throttle * boost_multiplier;
+        let target_forward_velocity = transform.forward() * target_forward_speed;
         
         // Orientation-aware lift assistance (deadzone from specs)
+        let mut target_linear_velocity = target_forward_velocity;
         if flight.throttle > specs.throttle_deadzone {
-            velocity.linvel += transform.up() * flight.throttle * specs.lift_per_throttle * dt;
+            target_linear_velocity += transform.up() * flight.throttle * specs.lift_per_throttle;
         }
+        
+        // Apply direct velocity interpolation (no force/mass calculations)
+        velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
         
         // === MINIMAL STATE TRACKING ===
         
@@ -98,49 +101,55 @@ pub fn simple_helicopter_movement(
     time: Res<Time>,
     config: Res<GameConfig>,
     mut helicopter_query: Query<(&mut Velocity, &Transform, &ControlState, &SimpleHelicopterSpecs), 
-        (With<Helicopter>, With<ActiveEntity>, With<PlayerControlled>, Changed<ControlState>)>,
+        (With<Helicopter>, With<ActiveEntity>, With<PlayerControlled>)>,
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
     
     for (mut velocity, transform, control_state, specs) in helicopter_query.iter_mut() {
+        // Early exit check for input, but always run lerp and safety checks
+        let has_input = control_state.pitch.abs() > 0.1 || control_state.yaw.abs() > 0.1 || 
+                       control_state.vertical.abs() > 0.1 || control_state.roll.abs() > 0.1;
         
         let mut target_linear_velocity = Vec3::ZERO;
         let mut target_angular_velocity = Vec3::ZERO;
         
-        // Forward/backward movement using pitch
-        if control_state.pitch > 0.1 {
-            target_linear_velocity += transform.forward() * specs.forward_speed * control_state.pitch;
-        } else if control_state.pitch < -0.1 {
-            target_linear_velocity -= transform.forward() * specs.forward_speed * control_state.pitch.abs();
-        }
-        
-        // Rotation using yaw (invert sign for correct direction)
-        if control_state.yaw.abs() > 0.1 {
-            target_angular_velocity.y = -control_state.yaw * specs.yaw_rate;
-        }
-        
-        // Vertical movement (collective)
-        if control_state.vertical > 0.1 {
-            target_linear_velocity.y += specs.vertical_speed * control_state.vertical;
-        } else if control_state.vertical < -0.1 {
-            target_linear_velocity.y -= specs.vertical_speed * control_state.vertical.abs();
-        }
-        
-        // Roll controls (Q/E keys) - banking and lateral movement
-        if control_state.roll.abs() > 0.1 {
-            // Roll angular velocity (banking around Z-axis)
-            target_angular_velocity.z = -control_state.roll * specs.roll_rate;
+        // Only calculate target velocities when there's meaningful input
+        if has_input {
+            // Forward/backward movement using pitch
+            if control_state.pitch > 0.1 {
+                target_linear_velocity += transform.forward() * specs.forward_speed * control_state.pitch;
+            } else if control_state.pitch < -0.1 {
+                target_linear_velocity -= transform.forward() * specs.forward_speed * control_state.pitch.abs();
+            }
             
-            // Lateral movement when rolling (helicopter banks into turn)  
-            let lateral_force = transform.right() * -control_state.roll * specs.lateral_speed;
-            target_linear_velocity += lateral_force;
+            // Rotation using yaw (invert sign for correct direction)
+            if control_state.yaw.abs() > 0.1 {
+                target_angular_velocity.y = -control_state.yaw * specs.yaw_rate;
+            }
+            
+            // Vertical movement (collective)
+            if control_state.vertical > 0.1 {
+                target_linear_velocity.y += specs.vertical_speed * control_state.vertical;
+            } else if control_state.vertical < -0.1 {
+                target_linear_velocity.y -= specs.vertical_speed * control_state.vertical.abs();
+            }
+            
+            // Roll controls (Q/E keys) - banking and lateral movement
+            if control_state.roll.abs() > 0.1 {
+                // Roll angular velocity (banking around Z-axis)
+                target_angular_velocity.z = -control_state.roll * specs.roll_rate;
+                
+                // Lateral movement when rolling (helicopter banks into turn)  
+                let lateral_force = transform.right() * -control_state.roll * specs.lateral_speed;
+                target_linear_velocity += lateral_force;
+            }
         }
         
-        // Apply forces with smooth interpolation (dynamic bodies handle gravity)
+        // Always apply interpolation and safety checks every frame (dynamic bodies handle gravity)
         velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
         velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
         
-        // === SHARED PHYSICS SAFETY ===
+        // Apply velocity validation every frame (critical for preventing physics panics)
         PhysicsUtilities::clamp_velocity(&mut velocity, &config);
     }
 }
@@ -151,12 +160,10 @@ pub fn rotate_helicopter_rotors(
     mut rotor_query: Query<(&mut Transform, Option<&MainRotor>, Option<&TailRotor>)>,
     helicopter_query: Query<&SimpleHelicopterSpecs, With<Helicopter>>,
 ) {
-    // Get rotor speeds from helicopter specs (fallback to defaults if no helicopter present)
-    let (main_rpm, tail_rpm) = if let Ok(specs) = helicopter_query.single() {
-        (specs.main_rotor_rpm, specs.tail_rotor_rpm)
-    } else {
-        (20.0, 35.0) // fallback defaults
-    };
+    // Get rotor speeds from helicopter specs (safe iteration, no panic)
+    let (main_rpm, tail_rpm) = helicopter_query.iter().next()
+        .map(|specs| (specs.main_rotor_rpm, specs.tail_rotor_rpm))
+        .unwrap_or((20.0, 35.0)); // fallback defaults
     
     let dt = PhysicsUtilities::stable_dt(&time);
     let main_delta = dt * main_rpm;

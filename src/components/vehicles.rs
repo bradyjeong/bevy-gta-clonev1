@@ -47,8 +47,7 @@ pub struct AircraftFlight {
 // Simplified F16 specifications - all tuning constants data-driven
 #[derive(Component, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SimpleF16Specs {
-    pub mass: f32,               // kg
-    pub max_thrust: f32,         // Newtons  
+    pub max_forward_speed: f32,  // Maximum forward velocity (m/s)
     pub roll_rate_max: f32,      // Maximum roll rate (rad/s)
     pub pitch_rate_max: f32,     // Maximum pitch rate (rad/s)
     pub yaw_rate_max: f32,       // Maximum yaw rate (rad/s)
@@ -57,13 +56,12 @@ pub struct SimpleF16Specs {
     pub linear_damping: f32,
     pub angular_damping: f32,
     pub lift_per_throttle: f32,
-    pub min_altitude: f32,
-    pub emergency_pullup_force: f32,
     
     // Previously magic numbers in code
-    pub afterburner_multiplier: f32,  // Was 1.5
-    pub angular_lerp_factor: f32,     // Was 8.0
-    pub throttle_deadzone: f32,       // Was 0.1
+    pub afterburner_multiplier: f32,  // Speed multiplier for afterburner
+    pub linear_lerp_factor: f32,      // Linear velocity smoothing rate
+    pub angular_lerp_factor: f32,     // Angular velocity smoothing rate
+    pub throttle_deadzone: f32,       // Minimum throttle for lift activation
 }
 
 
@@ -81,8 +79,7 @@ impl Default for AircraftFlight {
 impl Default for SimpleF16Specs {
     fn default() -> Self {
         Self {
-            mass: 12000.0_f32.clamp(1000.0, 50000.0),        // kg - reasonable aircraft mass
-            max_thrust: 130000.0_f32.clamp(10000.0, 500000.0), // Newtons - realistic jet thrust
+            max_forward_speed: 200.0_f32.clamp(50.0, 500.0),  // m/s - realistic fighter jet speed
             roll_rate_max: 6.3_f32.clamp(0.1, 10.0),          // rad/s - prevent excessive rotation
             pitch_rate_max: 3.5_f32.clamp(0.1, 10.0),         // rad/s
             yaw_rate_max: 1.05_f32.clamp(0.1, 5.0),           // rad/s
@@ -91,13 +88,12 @@ impl Default for SimpleF16Specs {
             linear_damping: 0.15_f32.clamp(0.01, 5.0),
             angular_damping: 0.05_f32.clamp(0.01, 5.0),
             lift_per_throttle: 3.0_f32.clamp(0.1, 50.0),
-            min_altitude: 0.5_f32.clamp(0.0, 10.0),
-            emergency_pullup_force: 20.0_f32.clamp(1.0, 100.0),
             
             // Formerly magic numbers - with safety limits
-            afterburner_multiplier: 1.5_f32.clamp(1.0, 3.0),  // Prevent excessive thrust
-            angular_lerp_factor: 8.0_f32.clamp(1.0, 20.0),
-            throttle_deadzone: 0.1_f32.clamp(0.0, 0.5),
+            afterburner_multiplier: 1.5_f32.clamp(1.0, 3.0),  // Speed multiplier for afterburner
+            linear_lerp_factor: 4.0_f32.clamp(1.0, 20.0),     // Linear velocity smoothing
+            angular_lerp_factor: 8.0_f32.clamp(1.0, 20.0),    // Angular velocity smoothing
+            throttle_deadzone: 0.1_f32.clamp(0.0, 0.5),       // Minimum throttle for lift
         }
     }
 }
@@ -183,9 +179,6 @@ pub struct SimpleCarSpecs {
     pub angular_lerp_factor: f32,
     pub emergency_brake_linear: f32,
     pub emergency_brake_angular: f32,
-    pub min_height: f32,
-    pub ground_bounce: f32,
-    pub max_processing_time: f32,
 }
 
 impl Default for SimpleCarSpecs {
@@ -197,9 +190,6 @@ impl Default for SimpleCarSpecs {
             angular_lerp_factor: 6.0_f32.clamp(1.0, 20.0),       // Smooth rotation response
             emergency_brake_linear: 0.1_f32.clamp(0.01, 1.0),    // Multiplier - keep some movement
             emergency_brake_angular: 0.5_f32.clamp(0.01, 1.0),   // Multiplier
-            min_height: 0.1_f32.clamp(0.0, 5.0),                 // m - ground level
-            ground_bounce: 1.0_f32.clamp(0.1, 20.0),             // Force - prevent excessive bounce
-            max_processing_time: 1.0_f32.clamp(0.1, 10.0),       // ms - performance budget
         }
     }
 }
@@ -216,9 +206,6 @@ pub struct SimpleHelicopterSpecs {
     pub linear_lerp_factor: f32,
     pub main_rotor_rpm: f32,
     pub tail_rotor_rpm: f32,
-    pub min_height: f32,
-    pub ground_bounce: f32,
-    pub max_processing_time: f32,
 }
 
 impl Default for SimpleHelicopterSpecs {
@@ -234,9 +221,6 @@ impl Default for SimpleHelicopterSpecs {
             linear_lerp_factor: 6.0_f32.clamp(1.0, 20.0),        // Smooth movement response
             main_rotor_rpm: 20.0_f32.clamp(1.0, 100.0),          // rad/s - main rotor speed
             tail_rotor_rpm: 35.0_f32.clamp(1.0, 100.0),          // rad/s - tail rotor speed  
-            min_height: 1.0_f32.clamp(0.0, 10.0),                // m - ground clearance
-            ground_bounce: 5.0_f32.clamp(0.1, 50.0),             // Force - prevent excessive bounce
-            max_processing_time: 1.0_f32.clamp(0.1, 10.0),       // ms - performance budget
         }
     }
 }

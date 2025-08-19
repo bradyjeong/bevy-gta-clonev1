@@ -30,9 +30,9 @@ pub fn validate_physics_config(
     
     // Validate vehicle specs against physics limits to prevent Rapier panics
     for specs in f16_query.iter() {
-        let max_thrust_vel = specs.max_thrust * specs.afterburner_multiplier / specs.mass;
-        if max_thrust_vel > max_vel {
-            panic!("F16 config error: max_thrust * afterburner_multiplier / mass ({:.1}) exceeds max_velocity ({}). Reduce thrust or increase mass.", max_thrust_vel, max_vel);
+        let max_f16_vel = specs.max_forward_speed * specs.afterburner_multiplier;
+        if max_f16_vel > max_vel {
+            panic!("F16 config error: max_forward_speed * afterburner_multiplier ({:.1}) exceeds max_velocity ({}). Reduce speed limits.", max_f16_vel, max_vel);
         }
         
         if specs.roll_rate_max > max_ang_vel || specs.pitch_rate_max > max_ang_vel || specs.yaw_rate_max > max_ang_vel {
