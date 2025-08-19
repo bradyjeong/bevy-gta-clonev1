@@ -4,7 +4,7 @@ use crate::components::{Player, Car, Helicopter, F16, ActiveEntity, InCar, Contr
 use crate::game_state::GameState;
 
 pub fn interaction_system(
-
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
     mut state: ResMut<NextState<GameState>>,
     current_state: Res<State<GameState>>,
@@ -15,26 +15,8 @@ pub fn interaction_system(
     vehicle_control_query: Query<(Option<&ControlState>, Option<&PlayerControlled>, Option<&VehicleControlType>), (Or<(With<Car>, With<Helicopter>, With<F16>)>, Without<Player>)>,
     active_query: Query<Entity, With<ActiveEntity>>,
 ) {
-    // Check ControlState.interact from active entity (player when walking, vehicle when driving)
-    let interact_pressed = match **current_state {
-        GameState::Walking => {
-            player_query.iter().any(|(_, _, _, control_state, _, _)| {
-                control_state.map_or(false, |cs| cs.interact)
-            })
-        }
-        _ => {
-            // When in vehicle, check the active entity's ControlState
-            if let Ok(active_entity) = active_query.single() {
-                if let Ok((Some(control_state), _, _)) = vehicle_control_query.get(active_entity) {
-                    control_state.interact
-                } else {
-                    false
-                }
-            } else {
-                false
-            }
-        }
-    };
+    // Check for F key press directly from keyboard input
+    let interact_pressed = keyboard_input.just_pressed(KeyCode::KeyF);
     
     if !interact_pressed {
         return;
