@@ -3,20 +3,10 @@ use bevy_rapier3d::prelude::*;
 use crate::components::{F16, ActiveEntity, AircraftFlight, SimpleF16Specs, ControlState, PlayerControlled, MainRotor, TailRotor, Helicopter, SimpleHelicopterSpecs};
 
 use crate::systems::movement::simple_flight_common::SimpleFlightCommon;
+use crate::systems::physics::PhysicsUtilities;
 use crate::config::GameConfig;
 
-/// Apply damping from SimpleF16Specs to newly spawned F16s
-pub fn apply_f16_damping(
-    mut commands: Commands,
-    f16_query: Query<(Entity, &SimpleF16Specs), (With<F16>, Added<SimpleF16Specs>)>,
-) {
-    for (entity, specs) in f16_query.iter() {
-        commands.entity(entity).insert(Damping {
-            linear_damping: specs.linear_damping,
-            angular_damping: specs.angular_damping,
-        });
-    }
-}
+
 
 /// Simplified F16 flight system following AGENT.md simplicity principles
 /// 
@@ -96,7 +86,7 @@ pub fn simple_f16_movement(
         
         // === SHARED PHYSICS (NO GRAVITY DUPLICATION) ===
         
-        SimpleFlightCommon::apply_velocity_clamps(&mut velocity, &config);
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
         
         // Kinematic bodies handle ground collision through Rapier
     }
@@ -150,8 +140,8 @@ pub fn simple_helicopter_movement(
         velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
         velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
         
-        // Use shared physics utilities (kinematic bodies handle collision)
-        SimpleFlightCommon::apply_velocity_clamps(&mut velocity, &config);
+        // Use shared physics utilities (dynamic bodies handle collision)
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
     }
 }
 

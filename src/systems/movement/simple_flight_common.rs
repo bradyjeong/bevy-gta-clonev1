@@ -1,6 +1,4 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
-use crate::config::GameConfig;
 use crate::components::ControlState;
 
 /// Shared flight physics utilities to eliminate boilerplate between helicopter and F-16
@@ -12,24 +10,7 @@ impl SimpleFlightCommon {
         time.delta_secs().min(0.05) // Cap at 20 FPS minimum
     }
     
-    /// Apply safety clamps only - let Rapier handle gravity to avoid duplication
-    pub fn apply_velocity_clamps(
-        velocity: &mut Velocity,
-        config: &GameConfig,
-    ) {
-        // Safety clamps to prevent physics solver issues
-        let max_vel = config.physics.max_velocity;
-        velocity.linvel = velocity.linvel.clamp(
-            Vec3::splat(-max_vel),
-            Vec3::splat(max_vel)
-        );
-        
-        let max_ang_vel = config.physics.max_angular_velocity;
-        velocity.angvel = velocity.angvel.clamp(
-            Vec3::splat(-max_ang_vel),
-            Vec3::splat(max_ang_vel)
-        );
-    }
+
     
     /// Process throttle input with brake-to-zero logic
     pub fn process_throttle(

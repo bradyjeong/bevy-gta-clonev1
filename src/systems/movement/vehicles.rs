@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Car, ActiveEntity, SimpleCarSpecs};
 use crate::components::ControlState;
-use crate::systems::physics_utils::PhysicsUtilities;
+use crate::systems::physics::PhysicsUtilities;
 use crate::config::GameConfig;
 
 pub fn car_movement(
@@ -10,6 +10,7 @@ pub fn car_movement(
     mut car_query: Query<(&mut Velocity, &Transform, &ControlState, &SimpleCarSpecs), (With<Car>, With<ActiveEntity>)>,
     time: Res<Time>,
 ) {
+    #[cfg(feature = "debug-movement")]
     let start_time = std::time::Instant::now();
     
     for (mut velocity, transform, control_state, specs) in car_query.iter_mut() {
@@ -46,13 +47,16 @@ pub fn car_movement(
     velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * 4.0);
     velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * 6.0);
     
-        // Apply velocity validation (kinematic bodies handle their own collision)
-        PhysicsUtilities::validate_velocity(&mut velocity, &config);
+        // Apply velocity validation (dynamic bodies handle their own collision)
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
     }
     
-    // Performance monitoring
-    let processing_time = start_time.elapsed().as_millis() as f32;
-    if processing_time > 1.0 {
-        warn!("Car movement took {:.2}ms (> 1ms budget)", processing_time);
+    // Performance monitoring (debug feature only)
+    #[cfg(feature = "debug-movement")]
+    {
+        let processing_time = start_time.elapsed().as_millis() as f32;
+        if processing_time > 1.0 {
+            warn!("Car movement took {:.2}ms (> 1ms budget)", processing_time);
+        }
     }
 }

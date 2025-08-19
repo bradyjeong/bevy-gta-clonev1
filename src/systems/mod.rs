@@ -57,8 +57,9 @@ pub mod camera;
 pub mod effects;
 pub mod audio;
 pub mod human_behavior;
-pub mod physics_utils;
+
 pub mod physics;
+pub mod setup;
 
 pub mod vehicles;
 pub mod ui;
@@ -111,7 +112,7 @@ pub use world::{
 pub use input::{LoadedVehicleControls, VehicleControlsConfig};
 
 // Physics utilities
-pub use physics_utils::{PhysicsUtilities, apply_universal_physics_safeguards};
+pub use physics::PhysicsUtilities;
 
 // Simple service examples
 pub use simple_service_example::{

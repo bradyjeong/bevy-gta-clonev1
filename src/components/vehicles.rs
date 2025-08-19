@@ -81,23 +81,23 @@ impl Default for AircraftFlight {
 impl Default for SimpleF16Specs {
     fn default() -> Self {
         Self {
-            mass: 12000.0,        // kg
-            max_thrust: 130000.0, // Newtons
-            roll_rate_max: 6.3,    // rad/s
-            pitch_rate_max: 3.5,   // rad/s
-            yaw_rate_max: 1.05,    // rad/s
-            throttle_increase_rate: 2.0,
-            throttle_decrease_rate: 3.0,
-            linear_damping: 0.15,
-            angular_damping: 0.05,
-            lift_per_throttle: 3.0,
-            min_altitude: 0.5,
-            emergency_pullup_force: 20.0,
+            mass: 12000.0_f32.clamp(1000.0, 50000.0),        // kg - reasonable aircraft mass
+            max_thrust: 130000.0_f32.clamp(10000.0, 500000.0), // Newtons - realistic jet thrust
+            roll_rate_max: 6.3_f32.clamp(0.1, 10.0),          // rad/s - prevent excessive rotation
+            pitch_rate_max: 3.5_f32.clamp(0.1, 10.0),         // rad/s
+            yaw_rate_max: 1.05_f32.clamp(0.1, 5.0),           // rad/s
+            throttle_increase_rate: 2.0_f32.clamp(0.1, 10.0),
+            throttle_decrease_rate: 3.0_f32.clamp(0.1, 10.0),
+            linear_damping: 0.15_f32.clamp(0.01, 5.0),
+            angular_damping: 0.05_f32.clamp(0.01, 5.0),
+            lift_per_throttle: 3.0_f32.clamp(0.1, 50.0),
+            min_altitude: 0.5_f32.clamp(0.0, 10.0),
+            emergency_pullup_force: 20.0_f32.clamp(1.0, 100.0),
             
-            // Formerly magic numbers
-            afterburner_multiplier: 1.5,
-            angular_lerp_factor: 8.0,
-            throttle_deadzone: 0.1,
+            // Formerly magic numbers - with safety limits
+            afterburner_multiplier: 1.5_f32.clamp(1.0, 3.0),  // Prevent excessive thrust
+            angular_lerp_factor: 8.0_f32.clamp(1.0, 20.0),
+            throttle_deadzone: 0.1_f32.clamp(0.0, 0.5),
         }
     }
 }
@@ -189,13 +189,13 @@ pub struct SimpleCarSpecs {
 impl Default for SimpleCarSpecs {
     fn default() -> Self {
         Self {
-            base_speed: 25.0,
-            rotation_speed: 2.0,
-            emergency_brake_linear: 0.1,
-            emergency_brake_angular: 0.5,
-            min_height: 0.1,
-            ground_bounce: 1.0,
-            max_processing_time: 1.0,
+            base_speed: 25.0_f32.clamp(1.0, 100.0),              // m/s - reasonable car speeds
+            rotation_speed: 2.0_f32.clamp(0.1, 10.0),            // rad/s - prevent excessive turning
+            emergency_brake_linear: 0.1_f32.clamp(0.01, 1.0),    // Multiplier - keep some movement
+            emergency_brake_angular: 0.5_f32.clamp(0.01, 1.0),   // Multiplier
+            min_height: 0.1_f32.clamp(0.0, 5.0),                 // m - ground level
+            ground_bounce: 1.0_f32.clamp(0.1, 20.0),             // Force - prevent excessive bounce
+            max_processing_time: 1.0_f32.clamp(0.1, 10.0),       // ms - performance budget
         }
     }
 }
@@ -218,17 +218,17 @@ pub struct SimpleHelicopterSpecs {
 impl Default for SimpleHelicopterSpecs {
     fn default() -> Self {
         Self {
-            lateral_speed: 20.0,
-            vertical_speed: 15.0,
-            forward_speed: 25.0,
-            yaw_rate: 1.5,
-            pitch_rate: 1.0,
-            roll_rate: 1.0,
-            angular_lerp_factor: 4.0,
-            linear_lerp_factor: 6.0,
-            min_height: 1.0,
-            ground_bounce: 5.0,
-            max_processing_time: 1.0,
+            lateral_speed: 20.0_f32.clamp(1.0, 100.0),           // m/s - reasonable helicopter speeds
+            vertical_speed: 15.0_f32.clamp(1.0, 50.0),           // m/s - vertical flight limits
+            forward_speed: 25.0_f32.clamp(1.0, 100.0),           // m/s
+            yaw_rate: 1.5_f32.clamp(0.1, 5.0),                   // rad/s - prevent excessive rotation
+            pitch_rate: 1.0_f32.clamp(0.1, 5.0),                 // rad/s
+            roll_rate: 1.0_f32.clamp(0.1, 5.0),                  // rad/s
+            angular_lerp_factor: 4.0_f32.clamp(1.0, 20.0),       // Smooth control response
+            linear_lerp_factor: 6.0_f32.clamp(1.0, 20.0),        // Smooth movement response
+            min_height: 1.0_f32.clamp(0.0, 10.0),                // m - ground clearance
+            ground_bounce: 5.0_f32.clamp(0.1, 50.0),             // Force - prevent excessive bounce
+            max_processing_time: 1.0_f32.clamp(0.1, 10.0),       // ms - performance budget
         }
     }
 }

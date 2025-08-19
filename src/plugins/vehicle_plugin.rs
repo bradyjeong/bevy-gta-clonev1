@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use crate::systems::movement::{car_movement, simple_f16_movement, simple_helicopter_movement, rotate_helicopter_rotors, apply_f16_damping};
+use crate::systems::movement::{car_movement, simple_f16_movement, simple_helicopter_movement, rotate_helicopter_rotors};
+use crate::systems::setup::on_f16_spawned;
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames_unified};
 use crate::systems::safety::{bounds_safety_system, bounds_diagnostics_system, validate_physics_config};
@@ -17,13 +18,14 @@ impl Plugin for VehiclePlugin {
         .init_resource::<WorldBounds>()
         // CRITICAL SAFEGUARDS: Run configuration validation at startup
         .add_systems(Startup, validate_physics_config)
+        // Observer for F16 setup when specs are added
+        .add_observer(on_f16_spawned)
         .add_systems(Update, (
             // CRITICAL PHYSICS SAFEGUARDS: Unified bounds safety with NaN protection
             bounds_safety_system,
             bounds_diagnostics_system,
             
-            // F16 damping setup (runs once when specs are added)
-            apply_f16_damping,
+
             
             // LOD system runs after safeguards
             vehicle_lod_system,

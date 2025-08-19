@@ -1,3 +1,2 @@
-pub mod kinematic_gravity;
-
-pub use kinematic_gravity::apply_kinematic_gravity;
+pub mod physics_utils;
+pub use physics_utils::PhysicsUtilities;

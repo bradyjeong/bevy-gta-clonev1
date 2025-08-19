@@ -9,7 +9,8 @@ pub struct PhysicsUtilities;
 
 impl PhysicsUtilities {
     /// Validate and clamp velocity to safe ranges for physics stability
-    pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+    /// Unified method that replaces both validate_velocity and apply_velocity_clamps
+    pub fn clamp_velocity(velocity: &mut Velocity, config: &GameConfig) {
         // Clamp linear velocity to prevent physics instability
         velocity.linvel = velocity.linvel.clamp_length_max(config.physics.max_velocity);
         velocity.angvel = velocity.angvel.clamp_length_max(config.physics.max_angular_velocity);
@@ -23,22 +24,13 @@ impl PhysicsUtilities {
         }
     }
     
-    /// Prevent entity from going underground with soft collision
-    pub fn apply_ground_collision(
-        velocity: &mut Velocity,
-        transform: &Transform,
-        min_height: f32,
-        bounce_force: f32
-    ) {
-        if transform.translation.y < min_height {
-            // Stop downward movement
-            if velocity.linvel.y < 0.0 {
-                velocity.linvel.y = 0.0;
-            }
-            // Add upward force to keep entity above ground
-            velocity.linvel.y += bounce_force;
-        }
+    /// Legacy alias for backward compatibility - use clamp_velocity instead
+    #[deprecated(note = "Use clamp_velocity instead")]
+    pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
+        Self::clamp_velocity(velocity, config);
     }
+    
+
     
     /// Clamp entity position to world bounds
     pub fn apply_world_bounds(
@@ -95,7 +87,7 @@ pub fn apply_universal_physics_safeguards(
 ) {
     for (_entity, mut velocity, mut transform) in query.iter_mut() {
         // Apply all safety measures
-        PhysicsUtilities::validate_velocity(&mut velocity, &config);
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
         PhysicsUtilities::apply_world_bounds(&mut transform, &mut velocity, &config);
         
         // Additional safety checks
