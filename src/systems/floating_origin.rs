@@ -45,9 +45,9 @@ pub struct FloatingOriginConfig {
 impl Default for FloatingOriginConfig {
     fn default() -> Self {
         Self {
-            shift_threshold: 1_000.0,  // 1km
-            nearby_radius: 5_000.0,    // 5km  
-            min_shift_interval: 0.1,   // 100ms
+            shift_threshold: 5_000.0,  // 5km (conservative for testing)
+            nearby_radius: 10_000.0,   // 10km (shift everything nearby)
+            min_shift_interval: 1.0,   // 1s (prevent rapid shifts)
         }
     }
 }

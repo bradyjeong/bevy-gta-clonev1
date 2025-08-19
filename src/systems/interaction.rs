@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Player, Car, Helicopter, F16, ActiveEntity, InCar, ControlState, PlayerControlled, VehicleControlType};
 use crate::game_state::GameState;
+use crate::systems::queue_active_transfer;
 
 pub fn interaction_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -36,9 +37,14 @@ pub fn interaction_system(
             for (car_entity, car_transform) in car_query.iter() {
                 let distance = player_transform.translation.distance(car_transform.translation);
                 if distance < 3.0 {
-                    // Remove ActiveEntity and control components from player and hide them
+                    // Disable vehicle physics temporarily to prevent explosions
+                    commands.entity(car_entity).insert(RigidBodyDisabled);
+                    
+                    // Queue atomic ActiveEntity transfer (prevents gaps)
+                    queue_active_transfer(&mut commands, player_entity, car_entity);
+                    
+                    // Remove control components from player and hide them
                     commands.entity(player_entity)
-                        .remove::<ActiveEntity>()
                         .remove::<PlayerControlled>()
                         .remove::<ControlState>()
                         .insert(Visibility::Hidden);
@@ -46,9 +52,8 @@ pub fn interaction_system(
                     // Make player a child of the car
                     commands.entity(player_entity).insert(ChildOf(car_entity));
                     
-                    // Add ActiveEntity and control components to car
+                    // Add control components to car (ActiveEntity handled by transfer system)
                     let mut car_commands = commands.entity(car_entity);
-                    car_commands.insert(ActiveEntity);
                     
                     // Transfer control components to car with appropriate vehicle type
                     if let Some(control_state) = control_state {
@@ -67,6 +72,9 @@ pub fn interaction_system(
                     // Store which car the player is in
                     commands.entity(player_entity).insert(InCar(car_entity));
                     
+                    // Re-enable vehicle physics after setup is complete (prevents physics explosions)
+                    commands.entity(car_entity).remove::<RigidBodyDisabled>();
+                    
                     // Switch to driving state
                     state.set(GameState::Driving);
                     info!("🚗 ActiveEntity transferred from Player({:?}) to Car({:?})", player_entity, car_entity);
@@ -78,9 +86,14 @@ pub fn interaction_system(
             for (helicopter_entity, helicopter_transform) in helicopter_query.iter() {
                 let distance = player_transform.translation.distance(helicopter_transform.translation);
                 if distance < 5.0 { // Larger range for helicopters
-                    // Remove ActiveEntity and control components from player and hide them
+                    // Disable helicopter physics temporarily to prevent explosions
+                    commands.entity(helicopter_entity).insert(RigidBodyDisabled);
+                    
+                    // Queue atomic ActiveEntity transfer (prevents gaps)
+                    queue_active_transfer(&mut commands, player_entity, helicopter_entity);
+                    
+                    // Remove control components from player and hide them
                     commands.entity(player_entity)
-                        .remove::<ActiveEntity>()
                         .remove::<PlayerControlled>()
                         .remove::<ControlState>()
                         .insert(Visibility::Hidden);
@@ -88,9 +101,8 @@ pub fn interaction_system(
                     // Make player a child of the helicopter
                     commands.entity(player_entity).insert(ChildOf(helicopter_entity));
                     
-                    // Add ActiveEntity and control components to helicopter
+                    // Add control components to helicopter (ActiveEntity handled by transfer system)
                     let mut helicopter_commands = commands.entity(helicopter_entity);
-                    helicopter_commands.insert(ActiveEntity);
                     
                     // Transfer control components to helicopter with appropriate vehicle type
                     if let Some(control_state) = control_state {
@@ -109,6 +121,9 @@ pub fn interaction_system(
                     // Store which helicopter the player is in
                     commands.entity(player_entity).insert(InCar(helicopter_entity)); // Reuse InCar for vehicles
                     
+                    // Re-enable helicopter physics after setup is complete (prevents physics explosions)
+                    commands.entity(helicopter_entity).remove::<RigidBodyDisabled>();
+                    
                     // Switch to flying state
                     state.set(GameState::Flying);
                     info!("Entered helicopter!");
@@ -120,9 +135,14 @@ pub fn interaction_system(
             for (f16_entity, f16_transform) in f16_query.iter() {
                 let distance = player_transform.translation.distance(f16_transform.translation);
                 if distance < 8.0 { // Larger range for F16s
-                    // Remove ActiveEntity and control components from player and hide them
+                    // Disable F16 physics temporarily to prevent explosions
+                    commands.entity(f16_entity).insert(RigidBodyDisabled);
+                    
+                    // Queue atomic ActiveEntity transfer (prevents gaps)
+                    queue_active_transfer(&mut commands, player_entity, f16_entity);
+                    
+                    // Remove control components from player and hide them
                     commands.entity(player_entity)
-                        .remove::<ActiveEntity>()
                         .remove::<PlayerControlled>()
                         .remove::<ControlState>()
                         .insert(Visibility::Hidden);
@@ -130,9 +150,8 @@ pub fn interaction_system(
                     // Make player a child of the F16
                     commands.entity(player_entity).insert(ChildOf(f16_entity));
                     
-                    // Add ActiveEntity and control components to F16
+                    // Add control components to F16 (ActiveEntity handled by transfer system)
                     let mut f16_commands = commands.entity(f16_entity);
-                    f16_commands.insert(ActiveEntity);
                     
                     // Transfer control components to F16 with appropriate vehicle type
                     if let Some(control_state) = control_state {
@@ -151,6 +170,9 @@ pub fn interaction_system(
                     // Store which F16 the player is in
                     commands.entity(player_entity).insert(InCar(f16_entity)); // Reuse InCar for vehicles
                     
+                    // Re-enable F16 physics after setup is complete (prevents physics explosions)
+                    commands.entity(f16_entity).remove::<RigidBodyDisabled>();
+                    
                     // Switch to jetting state
                     state.set(GameState::Jetting);
                     info!("Entered F16 Fighter Jet!");
@@ -166,17 +188,19 @@ pub fn interaction_system(
                     // Get control components from the car
                     let vehicle_control_components = vehicle_control_query.get(active_car).ok();
                     
-                    // Remove ActiveEntity and control components from car
-                    commands.entity(active_car)
-                        .remove::<ActiveEntity>()
-                        .remove::<ControlState>()
-                        .remove::<PlayerControlled>()
-                        .remove::<VehicleControlType>();
-                    
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
                         // Calculate exit position next to the car
                         let exit_position = car_transform.translation + car_transform.right() * 3.0;
+                        
+                        // Queue atomic ActiveEntity transfer back to player
+                        queue_active_transfer(&mut commands, active_car, player_entity);
+                        
+                        // Remove control components from car (ActiveEntity handled by transfer system)
+                        commands.entity(active_car)
+                            .remove::<ControlState>()
+                            .remove::<PlayerControlled>()
+                            .remove::<VehicleControlType>();
                         
                         // Remove the child relationship and position the player in world space
                         let mut player_commands = commands.entity(player_entity);
@@ -185,8 +209,7 @@ pub fn interaction_system(
                             .remove::<InCar>()
                             .insert(Transform::from_translation(exit_position).with_rotation(car_transform.rotation))
                             .insert(Velocity::zero())
-                            .insert(Visibility::Visible)
-                            .insert(ActiveEntity);
+                            .insert(Visibility::Visible);
                         
                         // Transfer control components back to player
                         if let Some((control_state, player_controlled, _)) = vehicle_control_components {
@@ -220,17 +243,19 @@ pub fn interaction_system(
                     // Get control components from the helicopter
                     let vehicle_control_components = vehicle_control_query.get(active_helicopter).ok();
                     
-                    // Remove ActiveEntity and control components from helicopter
-                    commands.entity(active_helicopter)
-                        .remove::<ActiveEntity>()
-                        .remove::<ControlState>()
-                        .remove::<PlayerControlled>()
-                        .remove::<VehicleControlType>();
-                    
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
+                        // Queue atomic ActiveEntity transfer back to player
+                        queue_active_transfer(&mut commands, active_helicopter, player_entity);
+                        
                         // Calculate exit position next to the helicopter (a bit further away)
                         let exit_position = helicopter_transform.translation + helicopter_transform.right() * 4.0 + Vec3::new(0.0, -1.0, 0.0); // Drop to ground level
+                        
+                        // Remove control components from helicopter
+                        commands.entity(active_helicopter)
+                            .remove::<ControlState>()
+                            .remove::<PlayerControlled>()
+                            .remove::<VehicleControlType>();
                         
                         // Remove the child relationship and position the player in world space
                         let mut player_commands = commands.entity(player_entity);
@@ -239,8 +264,7 @@ pub fn interaction_system(
                             .remove::<InCar>()
                             .insert(Transform::from_translation(exit_position).with_rotation(helicopter_transform.rotation))
                             .insert(Velocity::zero())
-                            .insert(Visibility::Visible)
-                            .insert(ActiveEntity);
+                            .insert(Visibility::Visible);
                         
                         // Transfer control components back to player
                         if let Some((control_state, player_controlled, _)) = vehicle_control_components {
@@ -275,17 +299,19 @@ pub fn interaction_system(
                     // Get control components from the F16
                     let vehicle_control_components = vehicle_control_query.get(active_f16).ok();
                     
-                    // Remove ActiveEntity and control components from F16
-                    commands.entity(active_f16)
-                        .remove::<ActiveEntity>()
-                        .remove::<ControlState>()
-                        .remove::<PlayerControlled>()
-                        .remove::<VehicleControlType>();
-                    
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
+                        // Queue atomic ActiveEntity transfer back to player
+                        queue_active_transfer(&mut commands, active_f16, player_entity);
+                        
                         // Calculate exit position next to the F16 (further away)
                         let exit_position = f16_transform.translation + f16_transform.right() * 6.0 + Vec3::new(0.0, -2.0, 0.0); // Drop to ground level
+                        
+                        // Remove control components from F16
+                        commands.entity(active_f16)
+                            .remove::<ControlState>()
+                            .remove::<PlayerControlled>()
+                            .remove::<VehicleControlType>();
                         
                         // Remove the child relationship and position the player in world space
                         let mut player_commands = commands.entity(player_entity);
@@ -294,8 +320,7 @@ pub fn interaction_system(
                             .remove::<InCar>()
                             .insert(Transform::from_translation(exit_position).with_rotation(f16_transform.rotation))
                             .insert(Velocity::zero())
-                            .insert(Visibility::Visible)
-                            .insert(ActiveEntity);
+                            .insert(Visibility::Visible);
                         
                         // Transfer control components back to player
                         if let Some((control_state, player_controlled, _)) = vehicle_control_components {
