@@ -6,6 +6,7 @@
 - [ECS Patterns](#ecs-patterns)
 - [Performance Optimization](#performance-optimization)
 - [Commands](#commands)
+- [Git Safety & Pre-commit Rules](#git-safety--pre-commit-rules)
 - [Project Structure](#project-structure)
 - [Code Style](#code-style)
 - [Testing Guidelines](#testing-guidelines)
@@ -71,6 +72,25 @@ CORE PRINCIPLE: Keep communication simple and direct.
 - Lint: `cargo clippy` | Format: `cargo fmt` | Run: `cargo run`
 - Features: `cargo run --features debug-movement,debug-audio,debug-ui`
 
+## Git Safety & Pre-commit Rules
+CRITICAL safety rules for version control and code quality.
+
+### Git Safety Rules
+- **CRITICAL: NEVER use `git push --force` on main branch**
+- **CRITICAL: NEVER auto-commit on main without explicit user instruction**
+- Use `git push --force-with-lease` only on feature branches after verification
+- Always verify current branch with `git branch` before any force push operation
+
+### Pre-commit Verification
+**ALWAYS run before any commit:**
+```bash
+cargo check && cargo clippy -- -D warnings && cargo test
+```
+- Fix all compilation errors and warnings before committing
+- Run tests when code changes affect functionality
+- Use `git status` to verify only intended files are staged
+- Never commit broken or unformatted code
+
 ## Project Structure
 - Bevy 0.16.1 game using Rust 2024 edition, bevy_rapier3d 0.30.0 physics
 - Core dependencies: bevy 0.16.1, bevy_rapier3d 0.30.0, bytemuck 1.18, rand 0.8, serde 1.0
@@ -94,6 +114,12 @@ CORE PRINCIPLE: Keep communication simple and direct.
 - Safety: Validate physics values, clamp positions/dimensions, use collision groups
 - Comments: `//` style, 4-space indent, trailing commas
 - **No emojis allowed** in code, comments, or documentation
+
+### Code Formatting Discipline
+- **ALWAYS run `cargo fmt` after any code modification**
+- **NEVER commit unformatted code** - formatting inconsistencies cause merge conflicts
+- Format all modified files before staging changes
+- Use consistent indentation and spacing throughout the codebase
 
 
 
