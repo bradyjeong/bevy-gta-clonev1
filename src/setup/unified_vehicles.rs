@@ -123,7 +123,7 @@ fn setup_starter_vehicles_unified(
                 visibility: Visibility::default(),
                 inherited_visibility: InheritedVisibility::VISIBLE,
                 view_visibility: ViewVisibility::default(),
-                rigid_body: RigidBody::Dynamic,
+                rigid_body: RigidBody::KinematicVelocityBased,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
                     entity_factory.config.physics.vehicle_group,
@@ -249,7 +249,7 @@ fn setup_luxury_cars_unified(
                 visibility: Visibility::default(),
                 inherited_visibility: InheritedVisibility::VISIBLE,
                 view_visibility: ViewVisibility::default(),
-                rigid_body: RigidBody::Dynamic,
+                rigid_body: RigidBody::KinematicVelocityBased,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
                     entity_factory.config.physics.vehicle_group,

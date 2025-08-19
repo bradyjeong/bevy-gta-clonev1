@@ -283,7 +283,13 @@ Primary control configuration using RON (Rusty Object Notation) files.
 
 ## Simplified Physics Systems
 
-### Vehicle Physics (Unified Simple System)
+### Kinematic Vehicle Physics (Option 2: Arcade Control)
+- **Physics Model**: `RigidBody::KinematicVelocityBased` for all vehicles (cars, helicopters, F16)
+- **Control Method**: Direct velocity manipulation without fighting physics solver
+- **Collision**: Handled automatically by Rapier for kinematic bodies
+- **Ground Detection**: Uses existing `GroundDetectionService` for spawning
+
+### Vehicle Movement Systems
 - **Car Movement**: `src/systems/movement/vehicles.rs` - Direct velocity control with asset-driven specs
 - **Aircraft Movement**: `src/systems/movement/simple_aircraft.rs` - F16 and helicopter physics with RON configs
 
@@ -292,11 +298,18 @@ Primary control configuration using RON (Rusty Object Notation) files.
 - **Helicopter Specs**: `assets/config/simple_helicopter.ron` - Movement speeds and rotation rates  
 - **F16 Specs**: `assets/config/simple_f16.ron` - Thrust, lift, and flight parameters
 
+### Key Design Decisions
+- **No Dynamic Bodies**: Eliminated Rapier solver conflicts and velocity panics
+- **No Manual Ground Collision**: Removed `PhysicsUtilities::apply_ground_collision` calls
+- **Direct Velocity Control**: Maintains arcade feel without physics solver interference
+- **Collision Handling**: Relies on Rapier's kinematic collision detection
+
 ### Benefits
-- **Easy to Understand**: Linear force/rotation mapping instead of complex formulas
+- **No Physics Panics**: Eliminated all Rapier velocity/solver conflicts  
+- **Easy to Understand**: Linear velocity mapping instead of complex force calculations
 - **Maintainable**: No advanced physics calculations requiring aerospace knowledge
-- **Performant**: Fewer calculations per frame
-- **Flight Feel Preserved**: Responsive controls maintain aircraft experience
+- **Performant**: Fewer calculations per frame, no solver overhead
+- **Reliable Landing**: F16 and helicopters can land without minimum height restrictions
 
 
 

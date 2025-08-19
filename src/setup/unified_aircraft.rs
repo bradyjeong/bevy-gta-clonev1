@@ -134,7 +134,7 @@ fn spawn_helicopter_unified(
         SimpleHelicopterSpecs::default(),
         
         // Physics components
-        RigidBody::Dynamic,
+        RigidBody::KinematicVelocityBased,
         Collider::cuboid(1.5, 1.0, 3.0),  // Half-height = 1.0, total height = 2.0
         Velocity::zero(),
         Transform::from_translation(position),
@@ -261,7 +261,7 @@ fn spawn_f16_unified(
         },
         
         // Physics components - Simple capsule collider (following AGENT.md simplicity principles)
-        RigidBody::Dynamic,
+        RigidBody::KinematicVelocityBased,
         Collider::capsule_z(7.5, 1.0), // Fighter jet shape: 15m long, 2m diameter
         LockedAxes::empty(),
         Velocity::zero(),

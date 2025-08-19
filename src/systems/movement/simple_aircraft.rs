@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{F16, ActiveEntity, AircraftFlight, SimpleF16Specs, ControlState, PlayerControlled, MainRotor, TailRotor, Helicopter, SimpleHelicopterSpecs};
-use crate::systems::physics_utils::PhysicsUtilities;
+
 use crate::systems::movement::simple_flight_common::SimpleFlightCommon;
 use crate::config::GameConfig;
 
@@ -98,8 +98,7 @@ pub fn simple_f16_movement(
         
         SimpleFlightCommon::apply_velocity_clamps(&mut velocity, &config);
         
-        // Use standard ground collision like other vehicles for proper landing
-        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.5, 2.0);
+        // Kinematic bodies handle ground collision through Rapier
     }
 }
 
@@ -151,9 +150,8 @@ pub fn simple_helicopter_movement(
         velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
         velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
         
-        // Use shared physics utilities (no manual damping, no gravity duplication)
+        // Use shared physics utilities (kinematic bodies handle collision)
         SimpleFlightCommon::apply_velocity_clamps(&mut velocity, &config);
-        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, specs.min_height, specs.ground_bounce);
     }
 }
 

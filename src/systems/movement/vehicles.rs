@@ -46,9 +46,8 @@ pub fn car_movement(
     velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * 4.0);
     velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * 6.0);
     
-        // Apply unified physics safety systems
+        // Apply velocity validation (kinematic bodies handle their own collision)
         PhysicsUtilities::validate_velocity(&mut velocity, &config);
-        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, specs.min_height, specs.ground_bounce);
     }
     
     // Performance monitoring
