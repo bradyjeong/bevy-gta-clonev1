@@ -261,7 +261,7 @@ fn spawn_f16_unified(
         
         // Physics components - Simple capsule collider (following AGENT.md simplicity principles)
         RigidBody::Dynamic,
-        Collider::capsule_y(1.5, 7.0), // Simple capsule representing aircraft hull
+        Collider::capsule_z(7.5, 1.0), // Fighter jet shape: 15m long, 2m diameter
         LockedAxes::empty(),
         Velocity::zero(),
         ExternalForce::default(), // For proper force-based physics

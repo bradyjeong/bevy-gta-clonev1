@@ -98,11 +98,8 @@ pub fn simple_f16_movement(
         
         SimpleFlightCommon::apply_velocity_clamps(&mut velocity, &config);
         
-        // Keep aircraft above minimum altitude (simple terrain avoidance)
-        if transform.translation.y < specs.min_altitude {
-            // One-shot upward impulse instead of hard override
-            velocity.linvel.y += specs.emergency_pullup_force * dt;
-        }
+        // Use standard ground collision like other vehicles for proper landing
+        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, 0.5, 2.0);
     }
 }
 
