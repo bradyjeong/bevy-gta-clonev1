@@ -1,240 +1,33 @@
-//! # Vehicle Components - Simplified Architecture
+//! # Vehicle Components - Asset-Driven Architecture
 //!
-//! This module defines all vehicle-related components following AGENT.md principles.
-//! The architecture was completely refactored from a monolithic SuperCar struct
-//! to focused, single-responsibility components.
+//! This module defines all vehicle-related components following AGENT.md "simplicity first" principles.
+//! The architecture prioritizes clean, asset-driven configuration over complex runtime components.
 //!
-//! ## Component-Based Architecture
+//! ## Essential Components
 //!
-//! ### Core Design Principles:
-//! - **Single Responsibility**: Each component handles one specific aspect
-//! - **Clear Boundaries**: No tangled interdependencies between components
-//! - **Data-Only**: Components contain no logic, only data
-//! - **Composable**: Components can be mixed and matched as needed
+//! ### Marker Components:
+//! - [`Car`] - Basic car marker
+//! - [`Helicopter`] - Helicopter marker  
+//! - [`F16`] - F16 fighter jet marker
 //!
-//! ### SuperCar System Components:
-//! - [`SuperCarSpecs`] - Performance specifications (max speed, acceleration)
-//! - [`EngineState`] - Engine data (RPM, power band, torque)
-//! - [`TurboSystem`] - Turbo-specific data and staging
-//! - [`SuperCarSuspension`] - Suspension and weight distribution
-//! - [`TractionControl`] - Stability and traction systems
-//! - [`DrivingModes`] - Driving mode selection and launch control
-//! - [`ExhaustSystem`] - Exhaust effects and audio
-//! - [`Transmission`] - Gear ratios and transmission data
+//! ### Asset-Driven Specs:
+//! - [`SimpleCarSpecs`] - Car physics loaded from RON files
+//! - [`SimpleHelicopterSpecs`] - Helicopter physics loaded from RON files
+//! - [`SimpleF16Specs`] - F16 physics loaded from RON files
 //!
-//! ### Bundle Usage:
-//! ```rust
-//! // Create a complete SuperCar entity
-//! let supercar_entity = commands.spawn((
-//!     Car,
-//!     SuperCarBundle::default(),
-//!     Transform::default(),
-//!     // ... other standard components
-//! )).id();
-//! ```
-//!
-//! ## Migration Notes:
-//!
-//! The old monolithic `SuperCar` struct (36 fields) has been replaced with
-//! focused components. This improves:
-//! - **Maintainability**: Each component can be modified independently
-//! - **Performance**: Bevy ECS optimizations work better with smaller components
-//! - **Testing**: Individual components can be unit tested in isolation
-//! - **Understanding**: Clear separation of concerns makes code easier to follow
+//! ### Core Vehicle System:
+//! - [`VehicleType`] - Vehicle classification enum
+//! - [`VehicleState`] - Lightweight runtime state
+//! - [`VehicleRendering`] - LOD rendering management
+//! - [`AircraftFlight`] - Minimal flight state for aircraft
 
 use bevy::prelude::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]
-pub enum DrivingMode {
-    Comfort, // Reduced power, softer suspension
-    #[default]
-    Sport, // Enhanced response, firmer suspension
-    Track,   // Maximum performance, no limits
-    Custom,  // User-defined settings
-}
 
-#[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]
-pub enum ExhaustMode {
-    Quiet,  // Minimal exhaust noise
-    Normal, // Standard exhaust note
-    #[default]
-    Sport, // Enhanced exhaust sounds
-    Track,  // Maximum exhaust intensity
-}
 
-// Legacy marker components (kept for compatibility)
+// Essential marker components
 #[derive(Component)]
 pub struct Car;
-
-// Turbo system state
-#[derive(Component, Clone)]
-pub struct TurboSystem {
-    pub turbo_boost: bool,
-    pub pressure: f32,
-    pub lag: f32,
-    pub cooldown: f32,
-    pub max_time: f32,
-    pub current_time: f32,
-    pub stage: u8,
-    pub pressure_buildup: f32,
-}
-
-// Engine state and characteristics
-#[derive(Component, Clone)]
-pub struct EngineState {
-    pub rpm: f32,
-    pub max_rpm: f32,
-    pub idle_rpm: f32,
-    pub power_band_start: f32,
-    pub power_band_end: f32,
-    pub temperature: f32,
-    pub oil_pressure: f32,
-    pub fuel_consumption_rate: f32,
-    pub rev_limiter_active: bool,
-}
-
-// Transmission and gear management
-#[derive(Component, Clone)]
-pub struct Transmission {
-    pub gear: u8,
-    pub gear_ratios: Vec<f32>,
-    pub shift_rpm: f32,
-    pub downshift_rpm: f32,
-}
-
-// Driving modes and launch control
-#[derive(Component, Clone)]
-pub struct DrivingModes {
-    pub mode: DrivingMode,
-    pub launch_control: bool,
-    pub launch_control_engaged: bool,
-    pub launch_rpm_limit: f32,
-    pub sport_mode_active: bool,
-    pub track_mode_active: bool,
-}
-
-// Aerodynamics system
-#[derive(Component, Clone)]
-pub struct AerodynamicsSystem {
-    pub downforce: f32,
-    pub active_aero: bool,
-    pub rear_wing_angle: f32,
-    pub front_splitter_level: f32,
-}
-
-// Performance metrics and telemetry
-#[derive(Component, Clone)]
-pub struct PerformanceMetrics {
-    pub g_force_lateral: f32,
-    pub g_force_longitudinal: f32,
-    pub performance_timer: f32,
-    pub zero_to_sixty_time: f32,
-    pub is_timing_launch: bool,
-}
-
-// Audio and exhaust system
-#[derive(Component, Clone)]
-pub struct ExhaustSystem {
-    pub note_mode: ExhaustMode,
-    pub engine_note_intensity: f32,
-    pub turbo_whistle_intensity: f32,
-    pub backfire_timer: f32,
-    pub pops_and_bangs: bool,
-}
-
-// Removed: Default implementation moved to #[derive(Default)] for marker struct
-
-// Component-specific Default implementations
-
-impl Default for TurboSystem {
-    fn default() -> Self {
-        Self {
-            turbo_boost: false,
-            pressure: 0.0,
-            lag: 0.6,
-            cooldown: 0.0,
-            max_time: 18.0,
-            current_time: 0.0,
-            stage: 0,
-            pressure_buildup: 1.2,
-        }
-    }
-}
-
-impl Default for EngineState {
-    fn default() -> Self {
-        Self {
-            rpm: 800.0,
-            max_rpm: 6700.0,
-            idle_rpm: 800.0,
-            power_band_start: 2000.0,
-            power_band_end: 6000.0,
-            temperature: 0.7,
-            oil_pressure: 0.8,
-            fuel_consumption_rate: 22.5,
-            rev_limiter_active: false,
-        }
-    }
-}
-
-impl Default for Transmission {
-    fn default() -> Self {
-        Self {
-            gear: 1,
-            gear_ratios: vec![3.6, 2.4, 1.8, 1.4, 1.1, 0.9, 0.75],
-            shift_rpm: 6200.0,
-            downshift_rpm: 3500.0,
-        }
-    }
-}
-
-impl Default for DrivingModes {
-    fn default() -> Self {
-        Self {
-            mode: DrivingMode::Sport,
-            launch_control: true,
-            launch_control_engaged: false,
-            launch_rpm_limit: 3500.0,
-            sport_mode_active: true,
-            track_mode_active: false,
-        }
-    }
-}
-
-impl Default for AerodynamicsSystem {
-    fn default() -> Self {
-        Self {
-            downforce: 0.0,
-            active_aero: true,
-            rear_wing_angle: 0.0,
-            front_splitter_level: 0.0,
-        }
-    }
-}
-
-impl Default for PerformanceMetrics {
-    fn default() -> Self {
-        Self {
-            g_force_lateral: 0.0,
-            g_force_longitudinal: 0.0,
-            performance_timer: 0.0,
-            zero_to_sixty_time: 0.0,
-            is_timing_launch: false,
-        }
-    }
-}
-
-impl Default for ExhaustSystem {
-    fn default() -> Self {
-        Self {
-            note_mode: ExhaustMode::Sport,
-            engine_note_intensity: 0.8,
-            turbo_whistle_intensity: 0.6,
-            backfire_timer: 0.0,
-            pops_and_bangs: true,
-        }
-    }
-}
 
 #[derive(Component)]
 pub struct Helicopter;

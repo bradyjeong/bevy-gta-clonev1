@@ -110,7 +110,7 @@ pub use world::{
 pub use input::{LoadedVehicleControls, VehicleControlsConfig};
 
 // Physics utilities
-pub use physics_utils::{PhysicsUtilities, InputProcessor, MovementInputs, CollisionGroupHelper, PhysicsBodySetup, apply_universal_physics_safeguards};
+pub use physics_utils::{PhysicsUtilities, apply_universal_physics_safeguards};
 
 // Simple service examples
 pub use simple_service_example::{

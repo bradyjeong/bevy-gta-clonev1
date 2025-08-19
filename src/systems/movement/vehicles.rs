@@ -8,12 +8,11 @@ use crate::config::GameConfig;
 pub fn car_movement(
     config: Res<GameConfig>,
     mut car_query: Query<(&mut Velocity, &Transform, &ControlState, &SimpleCarSpecs), (With<Car>, With<ActiveEntity>)>,
-    _time: Res<Time>,
+    time: Res<Time>,
 ) {
     let start_time = std::time::Instant::now();
-    let Ok((mut velocity, transform, control_state, specs)) = car_query.single_mut() else {
-        return;
-    };
+    
+    for (mut velocity, transform, control_state, specs) in car_query.iter_mut() {
     
     let mut target_linear_velocity = Vec3::ZERO;
     let mut target_angular_velocity = Vec3::ZERO;
@@ -42,17 +41,19 @@ pub fn car_movement(
         target_angular_velocity *= specs.emergency_brake_angular;
     }
     
-    // Set velocity directly
-    velocity.linvel = target_linear_velocity;
-    velocity.angvel = target_angular_velocity;
+    // Apply forces with smooth interpolation (consistent with aircraft)
+    let dt = time.delta_secs().clamp(0.001, 0.05);
+    velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * 4.0);
+    velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * 6.0);
     
-    // Apply unified physics safety systems
-    PhysicsUtilities::validate_velocity(&mut velocity, &config);
-    PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, specs.min_height, specs.ground_bounce);
+        // Apply unified physics safety systems
+        PhysicsUtilities::validate_velocity(&mut velocity, &config);
+        PhysicsUtilities::apply_ground_collision(&mut velocity, &transform, specs.min_height, specs.ground_bounce);
+    }
     
     // Performance monitoring
     let processing_time = start_time.elapsed().as_millis() as f32;
-    if processing_time > specs.max_processing_time {
-        warn!("Car movement took {:.2}ms (> {}ms budget)", processing_time, specs.max_processing_time);
+    if processing_time > 1.0 {
+        warn!("Car movement took {:.2}ms (> 1ms budget)", processing_time);
     }
 }
