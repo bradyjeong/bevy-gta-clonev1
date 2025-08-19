@@ -2,16 +2,14 @@
 
 ## Table of Contents
 - [Code Philosophy: Simplicity First](#code-philosophy-simplicity-first)
-- [Event-Driven Architecture: First Principles](#event-driven-architecture-first-principles)
-- [Modern ECS Patterns (Bevy 0.16+)](#modern-ecs-patterns-bevy-016)
-- [Performance Optimization (Bevy 0.16+)](#performance-optimization-bevy-016)
+- [Module Communication](#module-communication)
+- [ECS Patterns](#ecs-patterns)
+- [Performance Optimization](#performance-optimization)
 - [Commands](#commands)
 - [Project Structure](#project-structure)
 - [Code Style](#code-style)
 - [Testing Guidelines](#testing-guidelines)
 - [Debugging & Error Handling](#debugging--error-handling)
-- [Subagent Context Protocol](#subagent-context-protocol)
-
 - [Asset-Driven Control System](#asset-driven-control-system)
 - [Simplified Physics Systems](#simplified-physics-systems)
 
@@ -39,117 +37,34 @@ CORE PRINCIPLE: Simplicity is the key to this codebase.
 - Is the data flow still easy to follow?
 - Would a new developer understand this quickly?
 
-## Event-Driven Architecture & Module Communication
-CORE PRINCIPLE: Events decouple systems while maintaining explicit data flow.
+## Module Communication
+CORE PRINCIPLE: Keep communication simple and direct.
 
-### Communication Rules
-- **Cross-Plugin Communication**: Use events for coordination, direct access for computation
-- **Plugins communicate via events for coordination, direct access for computation**
-- **No direct system-to-system calls** across plugin boundaries
-- **Resources for shared state**, not global variables
+### Basic Guidelines
+- **Use judgment**: Direct calls when simpler, events when needed for decoupling
+- **Resources for shared state**, not global variables  
 - **Each plugin owns its components**
-- **Direct access allowed within plugins** for high-frequency operations
-- **Utility modules** (math, data structures) can be directly imported anywhere
+- **Utility modules** can be directly imported anywhere
 
-### Event Guidelines
-- **Explicit Data Flow**: Every message visible in schedule with clear ordering
-- **Lightweight Events**: Keep events small (≤128 bytes), Copy/Clone, no world references
-- **One Event Per Concern**: Avoid kitchen-sink generic events requiring runtime casting
-- **Documentation**: Each event group in dedicated module with clear purpose
+### When to Use Events
+- **One-to-many notifications** (damage → multiple handlers)
+- **Decoupled game logic** (input → multiple system responses)
+- **Entity lifecycle events** (spawn, despawn, state changes)
 
-### When to Use Events vs Direct Access
-**ALWAYS USE EVENTS FOR:**
-- **Cross-plugin boundaries** (architectural enforcement)
-- **Entity lifecycle events** (spawn, despawn, state transitions)
-- **One-to-many notifications** (damage → multiple UI/audio/effect handlers)
-- **Decoupled game logic** (player input → multiple system responses)
-- **Error propagation** between plugins
+### Event Design
+- Keep events simple and focused
+- Use descriptive names for events and handlers
+- Avoid overly generic events requiring runtime casting
 
-**USE DIRECT ACCESS FOR:**
-- **Tight performance loops** (>1000 entities/frame)
-- **Single-frame calculations** (transform updates, physics steps)
-- **Shared resources** (configs, caches, lookup tables)
-- **Utility functions** (math, validation, data structures)
-- **Same-plugin high-frequency ops** (animation, movement within vehicle systems)
+## ECS Patterns
+- Use Bevy's `commands.spawn().with_children()` for hierarchies
+- Create helper functions for complex entity spawning
+- Use `expect()` with descriptive messages over `unwrap()`
+- Handle errors locally with `tracing::error!` for logging
 
-### Event Implementation Rules
-- Events cleared every frame (O(n) performance)
-- Multiple readers can consume same event concurrently
-- Name systems after events: `handle_spawn_car_event`
-- Use `.before()/.after()` for explicit system ordering
-- Add debug instrumentation for event counts under debug-ui feature
-- Keep stateless builder functions as helpers inside event handlers
-
-### Event Naming Conventions
-```rust
-// Good: Specific, actionable events
-pub struct VehicleEngineStarted { entity: Entity, engine_type: EngineType }
-pub struct PlayerEnteredVehicle { player: Entity, vehicle: Entity }
-pub struct WeaponFired { weapon: Entity, target: Option<Vec3> }
-
-// Avoid: Generic, kitchen-sink events
-pub struct GameEvent { event_type: String, data: HashMap<String, Value> }
-```
-
-## Modern ECS Patterns (Bevy 0.16+)
-CORE PRINCIPLE: Leverage Bevy's latest ECS features for performance and maintainability.
-
-### Component Design Best Practices
-- **Immutable Components**: Use `#[component(immutable)]` for data that shouldn't change after spawn
-- **Component Size**: Keep components under 64 bytes for cache efficiency
-- **Data-Oriented Design**: Group related data together, avoid complex nested structures
-- **Entity Relationships**: Use Bevy's relationship system instead of manual entity references
-
-### Query Optimization
-- **Specific Queries**: Use `With<T>` and `Without<T>` to minimize entity iteration
-- **Query Filters**: Leverage `Changed<T>`, `Added<T>`, `AssetChanged<T>` for targeted updates
-- **Entity Disabling**: Use `Disabled` component for inactive entities vs despawning
-
-### Unified ECS Error Handling
-- **System Results**: Return `Result<(), BevyError>` from systems instead of panicking
-- **Error Propagation**: Bubble errors up rather than handling immediately
-- **Global Handler**: Configure `GLOBAL_ERROR_HANDLER` for development vs production
-- **Location Tracking**: Leverage Bevy's enhanced location tracking for debugging
-
-### Entity Spawning Patterns
-- **Spawn API**: Use `children!` and `related!` macros for hierarchical spawning
-- **Entity Cloning**: Implement `#[derive(Clone)]` on components for entity duplication
-- **Relationship Components**: Define bidirectional relationships with `Relationship` and `RelationshipTarget`
-
-### Observer Pattern (New in 0.16)
-```rust
-// Better than global events for entity-specific logic
-app.add_observer(on_vehicle_spawned);
-
-fn on_vehicle_spawned(trigger: Trigger<OnAdd, VehicleComponent>) {
-    // Automatic cleanup, validation, initialization
-}
-```
-
-### Hybrid Event Approaches
-- **Observers**: Use for entity-specific events instead of global events
-- **Relationships**: Direct entity links for hierarchies (Parent/Child)
-- **Query Filters**: `Changed<T>`, `AssetChanged<T>` for reactive updates
-- **Commands**: Entity modification requests (better than events for spawning)
-
-### Performance Considerations
-- Events are O(n) cleared every frame
-- Direct queries with `With<T>` filters are more cache-friendly
-- Resource access has no per-frame overhead
-- Observer pattern scales better than global events for entity-specific logic
-
-## Performance Optimization (Bevy 0.16+)
-
-### Key Optimizations
-- GPU-driven rendering for complex scenes (3x+ performance gains)
-- Faster transform propagation with dirty bit optimization
-- Distance-based culling (buildings 300m, vehicles 150m, NPCs 100m)
-- Asset processing with hot-reloading using `AssetChanged<T>` filters
+## Performance Optimization
 - `MeshCache` resource for shared geometry
-
-### Performance Targets
-- 60+ FPS target with system timing intervals (road gen 0.5s, culling 0.5s)
-- Distance caching with 5-frame cache, 2048 entry limit
+- 60+ FPS target
 
 ## Commands
 - Build: `cargo build` | Check: `cargo check` | Test: `cargo test test_name`
@@ -160,14 +75,13 @@ fn on_vehicle_spawned(trigger: Trigger<OnAdd, VehicleComponent>) {
 - Bevy 0.16.1 game using Rust 2024 edition, bevy_rapier3d 0.30.0 physics
 - Core dependencies: bevy 0.16.1, bevy_rapier3d 0.30.0, bytemuck 1.18, rand 0.8, serde 1.0
 - Plugin-based: components/, systems/, plugins/, setup/, factories/
-- **Bevy 0.16+ Features**: Entity relationships, observers, immutable components, unified error handling
 
-### Architectural Boundaries
-- **components/**: Pure data structures, no logic (includes relationships, immutable components)
-- **systems/**: Pure functions that operate on components (return `Result<(), BevyError>`)
-- **plugins/**: Self-contained modules with clear interfaces (use observers for entity lifecycle)
-- **setup/**: One-time initialization, no ongoing state
-- **factories/**: Entity creation patterns, stateless (use `children!`/`related!` macros)
+### Directories
+- **components/**: Data structures
+- **systems/**: Game logic functions  
+- **plugins/**: Self-contained modules
+- **setup/**: Initialization
+- **factories/**: Entity creation helpers
 
 
 
@@ -184,71 +98,18 @@ fn on_vehicle_spawned(trigger: Trigger<OnAdd, VehicleComponent>) {
 
 ### Simplicity Rules
 - Prefer explicit over implicit (no magic)
-- Max 4-5 function parameters (use structs for more)
-- Avoid nested Option/Result chains
-- Keep structs under 10 fields
 - Single responsibility per function
 - Clear, descriptive names over clever ones
-
-### Dependency Guidelines
-- **Event-First**: Use events for coordination, direct access for computation
-- **Direct Import Exceptions**: Core engine (Bevy systems), utilities (math, data structures), performance-critical intra-plugin code
-- **Avoid circular dependencies** between modules
-- **Prefer local imports** over glob imports
-- **Keep external dependencies minimal**
-- **One module per event group** for discoverability
 
 ## Testing Guidelines
 - **Framework**: Rust built-in testing with Bevy test utilities
 - **Pattern**: Use `App::new().add_plugins(MinimalPlugins)` for Bevy tests
-- **Types**: Unit tests (inline modules), integration tests (tests/ dir), performance tests
 - **Run**: `cargo test test_name` for specific tests, `cargo test` for all
-- **Focus**: Component validation, LOD/culling behavior, physics integration, performance
-
-### ECS Testing Patterns (Enhanced)
-- **Component Testing**: Test component data validation and defaults
-- **System Testing**: Use `App::new().add_plugins(MinimalPlugins)` for isolated system tests
-- **Integration Testing**: Test plugin communication via events and shared resources
-- **Performance Testing**: Include frame time and memory usage assertions
-- **Observer Testing**: Test entity lifecycle hooks and component change reactions
-
-### Test Organization
-- **Unit tests**: Inline `#[cfg(test)]` modules in component/system files
-- **Integration tests**: `tests/` directory for cross-plugin scenarios
-- **Performance tests**: Separate feature flag `cargo test --features perf-tests`
-- **Mock Components**: Create lightweight test doubles for expensive operations
 
 ## Debugging & Error Handling
-- Clear error messages with context
 - Use `expect()` with descriptive messages over `unwrap()`
-- Simple debug tools: visual overlays, console output
-- Fail fast and clearly, don't hide errors
 - Debug features toggleable via features flags
-
-### Development vs Production
-- Use `#[cfg(debug_assertions)]` for debug-only code
-- Configure `GLOBAL_ERROR_HANDLER` differently for dev/prod
-- Feature flags for debug UI, wireframes, performance overlays
-- Hot reloading enabled in development builds only
-
-## Subagent Context Protocol
-CRITICAL: Always pass AGENT.md context to subagents for consistency.
-
-### When Using Task Tool
-- Always include this AGENT.md file in the context parameter
-- Reference specific sections relevant to the subagent's task
-- Ensure subagents follow the same protocols (version verification, commands, architecture)
-- Include any recent changes or updates that affect the task
-
-### Example Task Call
-Task tool with context: "Read AGENT.md for project structure, commands, and protocols. Follow the version management protocol strictly."
-
-This ensures all subagents maintain consistency with:
-- Version management protocols
-- Architectural boundaries
-- Code philosophy
-- Command usage
-- Project structure understanding
+- Fail fast and clearly, don't hide errors
 
 
 
@@ -256,7 +117,7 @@ This ensures all subagents maintain consistency with:
 Primary control configuration using RON (Rusty Object Notation) files.
 
 ### System Architecture
-- **Asset Configuration**: `assets/config/vehicle_controls.ron` - Single source of truth for ALL controls
+- **Asset Configuration**: Split RON files in `assets/config/controls/` - Vehicle-specific control configs
 - **Asset Processing**: `src/systems/input/asset_based_controls.rs` - Loads RON → ControlState component
 - **Control State**: `src/components/control_state.rs` - Pure data component for all input
 - **Plugin Registration**: `src/plugins/input_plugin.rs` - Single asset-based input system
@@ -303,7 +164,7 @@ Primary control configuration using RON (Rusty Object Notation) files.
 - **High Damping**: Arcade feel with `linear_damping: 2.0-3.0, angular_damping: 8.0-10.0`
 - **Direct Velocity Control**: Instant response without force calculations
 - **No Manual Physics**: Removed `PhysicsUtilities::apply_ground_collision` - let Rapier handle it
-- **Velocity Clamping**: Use `PhysicsUtilities::validate_velocity` to prevent solver panics
+- **Velocity Clamping**: Use `PhysicsUtilities::clamp_velocity` to prevent solver panics
 
 ### Benefits
 - **No Physics Panics**: Proper velocity clamping prevents solver conflicts
