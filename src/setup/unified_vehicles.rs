@@ -123,7 +123,7 @@ fn setup_starter_vehicles_unified(
                 visibility: Visibility::default(),
                 inherited_visibility: InheritedVisibility::VISIBLE,
                 view_visibility: ViewVisibility::default(),
-                rigid_body: RigidBody::KinematicVelocityBased,
+                rigid_body: RigidBody::Dynamic,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
                     entity_factory.config.physics.vehicle_group,
@@ -132,7 +132,7 @@ fn setup_starter_vehicles_unified(
                     entity_factory.config.physics.character_group
                 ),
                 velocity: Velocity::default(),
-                damping: Damping { linear_damping: 1.0, angular_damping: 5.0 },
+                damping: Damping { linear_damping: 2.0, angular_damping: 8.0 },
                 locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
                 cullable: UnifiedCullable::vehicle(),
             },
@@ -249,7 +249,7 @@ fn setup_luxury_cars_unified(
                 visibility: Visibility::default(),
                 inherited_visibility: InheritedVisibility::VISIBLE,
                 view_visibility: ViewVisibility::default(),
-                rigid_body: RigidBody::KinematicVelocityBased,
+                rigid_body: RigidBody::Dynamic,
                 collider: Collider::cuboid(1.0, 0.5, 2.0),
                 collision_groups: CollisionGroups::new(
                     entity_factory.config.physics.vehicle_group,
@@ -258,7 +258,7 @@ fn setup_luxury_cars_unified(
                     entity_factory.config.physics.character_group
                 ),
                 velocity: Velocity::default(),
-                damping: Damping { linear_damping: 1.0, angular_damping: 5.0 },
+                damping: Damping { linear_damping: 2.0, angular_damping: 8.0 },
                 locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
                 cullable: UnifiedCullable::vehicle(),
             },

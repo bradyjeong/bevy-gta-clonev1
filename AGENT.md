@@ -283,11 +283,11 @@ Primary control configuration using RON (Rusty Object Notation) files.
 
 ## Simplified Physics Systems
 
-### Kinematic Vehicle Physics (Option 2: Arcade Control)
-- **Physics Model**: `RigidBody::KinematicVelocityBased` for all vehicles (cars, helicopters, F16)
-- **Control Method**: Direct velocity manipulation without fighting physics solver
-- **Collision**: Handled automatically by Rapier for kinematic bodies
-- **Ground Detection**: Uses existing `GroundDetectionService` for spawning
+### Dynamic Arcade Physics (Final Solution)
+- **Physics Model**: `RigidBody::Dynamic` for all vehicles (cars, helicopters, F16)
+- **Control Method**: Direct velocity manipulation with automatic gravity/collision
+- **Collision**: Handled automatically by Rapier physics solver
+- **Ground Detection**: Automatic through Rapier gravity and contact resolution
 
 ### Vehicle Movement Systems
 - **Car Movement**: `src/systems/movement/vehicles.rs` - Direct velocity control with asset-driven specs
@@ -299,17 +299,19 @@ Primary control configuration using RON (Rusty Object Notation) files.
 - **F16 Specs**: `assets/config/simple_f16.ron` - Thrust, lift, and flight parameters
 
 ### Key Design Decisions
-- **No Dynamic Bodies**: Eliminated Rapier solver conflicts and velocity panics
-- **No Manual Ground Collision**: Removed `PhysicsUtilities::apply_ground_collision` calls
-- **Direct Velocity Control**: Maintains arcade feel without physics solver interference
-- **Collision Handling**: Relies on Rapier's kinematic collision detection
+- **Dynamic Bodies**: Use Rapier's automatic gravity, collision, and contact resolution
+- **High Damping**: Arcade feel with `linear_damping: 2.0-3.0, angular_damping: 8.0-10.0`
+- **Direct Velocity Control**: Instant response without force calculations
+- **No Manual Physics**: Removed `PhysicsUtilities::apply_ground_collision` - let Rapier handle it
+- **Velocity Clamping**: Use `PhysicsUtilities::validate_velocity` to prevent solver panics
 
 ### Benefits
-- **No Physics Panics**: Eliminated all Rapier velocity/solver conflicts  
-- **Easy to Understand**: Linear velocity mapping instead of complex force calculations
-- **Maintainable**: No advanced physics calculations requiring aerospace knowledge
-- **Performant**: Fewer calculations per frame, no solver overhead
-- **Reliable Landing**: F16 and helicopters can land without minimum height restrictions
+- **No Physics Panics**: Proper velocity clamping prevents solver conflicts
+- **Automatic Collision**: Vehicles properly land, collide, and stay on ground
+- **Easy to Understand**: Direct velocity control with automatic physics handling
+- **Maintainable**: No manual gravity, collision, or complex force calculations
+- **Performant**: Rapier handles optimization, minimal per-frame calculations
+- **Reliable Physics**: Vehicles behave predictably with proper collision response
 
 
 

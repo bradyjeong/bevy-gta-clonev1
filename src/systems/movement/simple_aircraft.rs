@@ -146,7 +146,7 @@ pub fn simple_helicopter_movement(
             target_linear_velocity += lateral_force;
         }
         
-        // Apply forces with smooth interpolation
+        // Apply forces with smooth interpolation (dynamic bodies handle gravity)
         velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
         velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
         

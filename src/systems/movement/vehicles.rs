@@ -41,7 +41,7 @@ pub fn car_movement(
         target_angular_velocity *= specs.emergency_brake_angular;
     }
     
-    // Apply forces with smooth interpolation (consistent with aircraft)
+    // Apply forces with smooth interpolation (dynamic bodies handle gravity)
     let dt = time.delta_secs().clamp(0.001, 0.05);
     velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * 4.0);
     velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * 6.0);

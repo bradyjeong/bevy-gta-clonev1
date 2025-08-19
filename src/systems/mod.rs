@@ -58,6 +58,7 @@ pub mod effects;
 pub mod audio;
 pub mod human_behavior;
 pub mod physics_utils;
+pub mod physics;
 
 pub mod vehicles;
 pub mod ui;

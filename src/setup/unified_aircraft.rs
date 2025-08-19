@@ -134,11 +134,11 @@ fn spawn_helicopter_unified(
         SimpleHelicopterSpecs::default(),
         
         // Physics components
-        RigidBody::KinematicVelocityBased,
+        RigidBody::Dynamic,
         Collider::cuboid(1.5, 1.0, 3.0),  // Half-height = 1.0, total height = 2.0
         Velocity::zero(),
         Transform::from_translation(position),
-        Damping { linear_damping: 2.0, angular_damping: 8.0 },
+        Damping { linear_damping: 3.0, angular_damping: 10.0 },
         
         // Collision and culling
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
@@ -261,7 +261,7 @@ fn spawn_f16_unified(
         },
         
         // Physics components - Simple capsule collider (following AGENT.md simplicity principles)
-        RigidBody::KinematicVelocityBased,
+        RigidBody::Dynamic,
         Collider::capsule_z(7.5, 1.0), // Fighter jet shape: 15m long, 2m diameter
         LockedAxes::empty(),
         Velocity::zero(),
