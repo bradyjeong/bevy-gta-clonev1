@@ -3,6 +3,7 @@ use crate::systems::movement::{
     read_input_system, stamina_system, velocity_apply_system, 
     animation_flag_system, human_player_animation, PlayerInputData
 };
+use crate::systems::input::asset_based_input_mapping_system;
 use crate::systems::camera::camera_follow_system;
 use crate::systems::interaction::interaction_system;
 use crate::systems::audio::{footstep_system, cleanup_footstep_sounds};
@@ -17,6 +18,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PlayerInputData>()
            .add_systems(Update, (
+               asset_based_input_mapping_system.before(read_input_system),
                read_input_system.run_if(in_state(GameState::Walking)),
                stamina_system.after(read_input_system).run_if(in_state(GameState::Walking)),
                velocity_apply_system.after(stamina_system).run_if(in_state(GameState::Walking)),
