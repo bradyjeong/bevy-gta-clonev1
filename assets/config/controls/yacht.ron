@@ -1,0 +1,21 @@
+// Yacht Controls
+// Split from monolithic vehicle_controls.ron for better maintainability
+
+VehicleControls(
+    name: "Yacht",
+    description: "Water vehicle controls",
+    primary_controls: [
+        (action: Forward, key: KeyI, description: "Move forward"),
+        (action: Backward, key: KeyK, description: "Move backward"),
+        (action: TurnLeft, key: KeyJ, description: "Turn left"),
+        (action: TurnRight, key: KeyL, description: "Turn right"),
+    ],
+    secondary_controls: [
+        (action: Turbo, key: Space, description: "Boost / Faster speed"),
+    ],
+    meta_controls: [
+        (action: Interact, key: KeyF, description: "Exit yacht"),
+        (action: DebugInfo, key: F1, description: "Toggle debug info"),
+        (action: EmergencyReset, key: F2, description: "Emergency reset"),
+    ],
+)

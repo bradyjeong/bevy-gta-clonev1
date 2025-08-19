@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::systems::movement::{car_movement, simple_f16_movement, simple_helicopter_movement, rotate_helicopter_rotors, apply_f16_damping};
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
-use crate::systems::effects::{exhaust_effects_system, update_jet_flames, update_flame_colors};
+use crate::systems::effects::{exhaust_effects_system, update_jet_flames_unified};
 use crate::systems::safety::{world_bounds_safety_system, position_monitor_system};
 use crate::systems::vehicles::vehicle_lod_system;
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
@@ -39,9 +39,8 @@ impl Plugin for VehiclePlugin {
             exhaust_effects_system,
         ))
         .add_systems(Update, (
-            // Visual effects  
-            update_jet_flames,
-            update_flame_colors,
+            // Visual effects - unified flame system
+            update_jet_flames_unified,
             
             // PERFORMANCE MONITORING: Temporarily disabled due to static mut issues
             // physics_performance_monitoring_system,

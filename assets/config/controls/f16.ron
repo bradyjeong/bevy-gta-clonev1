@@ -1,0 +1,24 @@
+// F16 Fighter Jet Controls
+// Split from monolithic vehicle_controls.ron for better maintainability
+
+VehicleControls(
+    name: "F16 Fighter Jet",
+    description: "Military jet fighter controls",
+    primary_controls: [
+        (action: PitchUp, key: ArrowUp, description: "Pitch up (Nose up)"),
+        (action: PitchDown, key: ArrowDown, description: "Pitch down (Nose down)"),
+        (action: RollLeft, key: ArrowLeft, description: "Roll left (Bank left)"),
+        (action: RollRight, key: ArrowRight, description: "Roll right (Bank right)"),
+        (action: ThrottleUp, key: KeyW, description: "Throttle up / Increase speed"),
+        (action: ThrottleDown, key: KeyS, description: "Throttle down / Decrease speed"),
+        (action: YawLeft, key: KeyA, description: "Rudder left / Yaw left"),
+        (action: YawRight, key: KeyD, description: "Rudder right / Yaw right"),
+    ],
+    secondary_controls: [
+        (action: Afterburner, key: Space, description: "Afterburner / Max thrust"),
+    ],
+    meta_controls: [
+        (action: Interact, key: KeyF, description: "Exit F16"),
+        (action: DebugInfo, key: F1, description: "Toggle debug info"),
+    ],
+)

@@ -1,10 +1,9 @@
 // Simple F16 Physics Configuration
-// Following AGENT.md asset-driven control system principles
+// All tuning constants data-driven (eliminates magic numbers from code)
 SimpleF16Config(
     // Core aircraft specs
     mass: 12000.0,           // kg
     max_thrust: 130000.0,    // Newtons
-    afterburner_delay: 0.2,  // Seconds before VFX activates
     roll_rate_max: 6.3,      // rad/s
     pitch_rate_max: 3.5,     // rad/s  
     yaw_rate_max: 1.05,      // rad/s
@@ -13,14 +12,19 @@ SimpleF16Config(
     throttle_increase_rate: 2.0,
     throttle_decrease_rate: 3.0,
     
-    // Damping (replaces custom drag calculations)
+    // Damping (applied via Rapier Damping component)
     linear_damping: 0.15,
     angular_damping: 0.05,
     
-    // Lift assistance (replaces complex lift calculations)
+    // Lift assistance (orientation-aware)
     lift_per_throttle: 3.0,  // Upward force per throttle unit
     
-    // Safety limits
-    min_altitude: 5.0,       // Minimum height above ground
+    // Safety limits  
+    min_altitude: 0.5,       // Minimum height above ground (allow ground landing)
     emergency_pullup_force: 20.0, // Upward force when below min altitude
+    
+    // Formerly magic numbers in code
+    afterburner_multiplier: 1.5,   // Thrust multiplier for afterburner
+    angular_lerp_factor: 8.0,      // Angular velocity smoothing rate
+    throttle_deadzone: 0.1,        // Minimum throttle for lift activation
 )

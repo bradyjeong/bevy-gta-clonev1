@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 
 use crate::components::*;
 use crate::game_state::GameState;
+use super::aircraft_persistence::SerializableAircraftFlight;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SerializableTransform {
@@ -385,44 +386,7 @@ impl Into<ExhaustSystem> for SerializableExhaustSystem {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SerializableAircraftFlight {
-    pub pitch: f32,
-    pub roll: f32,
-    pub yaw: f32,
-    pub throttle: f32,
-    pub airspeed: f32,
-    pub afterburner: bool,
-    pub current_thrust: f32,
-}
-
-impl From<AircraftFlight> for SerializableAircraftFlight {
-    fn from(flight: AircraftFlight) -> Self { 
-        Self {
-            pitch: flight.pitch,
-            roll: flight.roll,
-            yaw: flight.yaw,
-            throttle: flight.throttle,
-            airspeed: flight.airspeed,
-            afterburner: flight.afterburner_active,
-            current_thrust: flight.current_thrust,
-        }
-    }
-}
-
-impl Into<AircraftFlight> for SerializableAircraftFlight {
-    fn into(self) -> AircraftFlight {
-        AircraftFlight {
-            pitch: self.pitch,
-            roll: self.roll,
-            yaw: self.yaw,
-            throttle: self.throttle,
-            airspeed: self.airspeed,
-            afterburner_active: self.afterburner, // Use saved afterburner state
-            current_thrust: self.current_thrust,
-        }
-    }
-}
+// Use the new simplified aircraft persistence module
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SaveGameState {
@@ -570,7 +534,7 @@ pub fn save_game_system(
             velocity: (*velocity).into(),
             is_active,
             vehicle_state: vehicle_state.clone().into(),
-            aircraft_flight_data: Some(aircraft_flight.clone().into()),
+            aircraft_flight_data: Some((&*aircraft_flight).into()),
         });
     }
 

@@ -242,29 +242,20 @@ pub struct Helicopter;
 #[derive(Component)]
 pub struct F16;
 
-// Realistic aircraft flight dynamics component
+// Ultra-simplified aircraft flight state - minimal necessary data
 #[derive(Component, Clone)]
 pub struct AircraftFlight {
-    // Flight control surfaces (normalized -1.0 to 1.0)
-    pub pitch: f32,    // Elevator control (nose up/down)
-    pub roll: f32,     // Aileron control (bank left/right)
-    pub yaw: f32,      // Rudder control (nose left/right)
-    pub throttle: f32, // Engine power (0.0 to 1.0)
-
-    // Flight state (simplified)
-    pub airspeed: f32,
-    pub current_thrust: f32,
-
-    // Engine state (simplified)
-    pub afterburner_active: bool, // Single afterburner state
+    // Engine state only (eliminate derived data)
+    pub throttle: f32,        // 0.0-1.0, processed from controls
+    pub airspeed: f32,        // For UI/debugging only
+    pub afterburner_active: bool,
 }
 
-// Simplified F16 specifications for simple physics (following AGENT.md simplicity principles)
+// Simplified F16 specifications - all tuning constants data-driven
 #[derive(Component, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SimpleF16Specs {
     pub mass: f32,               // kg
     pub max_thrust: f32,         // Newtons  
-    pub afterburner_delay: f32,  // Seconds before afterburner VFX activates
     pub roll_rate_max: f32,      // Maximum roll rate (rad/s)
     pub pitch_rate_max: f32,     // Maximum pitch rate (rad/s)
     pub yaw_rate_max: f32,       // Maximum yaw rate (rad/s)
@@ -275,6 +266,11 @@ pub struct SimpleF16Specs {
     pub lift_per_throttle: f32,
     pub min_altitude: f32,
     pub emergency_pullup_force: f32,
+    
+    // Previously magic numbers in code
+    pub afterburner_multiplier: f32,  // Was 1.5
+    pub angular_lerp_factor: f32,     // Was 8.0
+    pub throttle_deadzone: f32,       // Was 0.1
 }
 
 
@@ -282,17 +278,8 @@ pub struct SimpleF16Specs {
 impl Default for AircraftFlight {
     fn default() -> Self {
         Self {
-            // Control inputs start at neutral
-            pitch: 0.0,
-            roll: 0.0,
-            yaw: 0.0,
             throttle: 0.0,
-
-            // Flight state
             airspeed: 0.0,
-            current_thrust: 0.0,
-
-            // Engine starts cold
             afterburner_active: false,
         }
     }
@@ -303,7 +290,6 @@ impl Default for SimpleF16Specs {
         Self {
             mass: 12000.0,        // kg
             max_thrust: 130000.0, // Newtons
-            afterburner_delay: 0.2, // Seconds before VFX activates
             roll_rate_max: 6.3,    // rad/s
             pitch_rate_max: 3.5,   // rad/s
             yaw_rate_max: 1.05,    // rad/s
@@ -312,8 +298,13 @@ impl Default for SimpleF16Specs {
             linear_damping: 0.15,
             angular_damping: 0.05,
             lift_per_throttle: 3.0,
-            min_altitude: 5.0,
+            min_altitude: 0.5,
             emergency_pullup_force: 20.0,
+            
+            // Formerly magic numbers
+            afterburner_multiplier: 1.5,
+            angular_lerp_factor: 8.0,
+            throttle_deadzone: 0.1,
         }
     }
 }

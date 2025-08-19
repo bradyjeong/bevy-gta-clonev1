@@ -1,0 +1,21 @@
+// Car Controls
+// Split from monolithic vehicle_controls.ron for better maintainability
+
+VehicleControls(
+    name: "Car",
+    description: "Standard vehicle controls",
+    primary_controls: [
+        (action: Forward, key: ArrowUp, description: "Accelerate / Drive forward"),
+        (action: Backward, key: ArrowDown, description: "Brake / Reverse"),
+        (action: TurnLeft, key: ArrowLeft, description: "Steer left"),
+        (action: TurnRight, key: ArrowRight, description: "Steer right"),
+    ],
+    secondary_controls: [
+        (action: Turbo, key: Space, description: "Turbo boost"),
+    ],
+    meta_controls: [
+        (action: Interact, key: KeyF, description: "Exit vehicle"),
+        (action: DebugInfo, key: F1, description: "Toggle debug info"),
+        (action: EmergencyReset, key: F2, description: "Emergency reset"),
+    ],
+)

@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{F16, ActiveEntity, AircraftFlight, SimpleF16Specs, ControlState, PlayerControlled, MainRotor, TailRotor};
-use crate::systems::physics_utils::{PhysicsUtilities, InputProcessor};
+use crate::systems::physics_utils::PhysicsUtilities;
+use crate::systems::movement::simple_flight_common::SimpleFlightCommon;
 use crate::config::GameConfig;
 
 /// Apply damping from SimpleF16Specs to newly spawned F16s
@@ -41,87 +42,66 @@ pub fn simple_f16_movement(
         &ControlState,
     ), (With<F16>, With<ActiveEntity>, With<PlayerControlled>)>,
 ) {
-    let dt = time.delta_secs().clamp(0.001, 0.05);
+    let dt = SimpleFlightCommon::stable_dt(&time);
     
     for (mut velocity, transform, mut flight, specs, control_state) in f16_query.iter_mut() {
         
-        // === SIMPLE INPUT PROCESSING ===
+        // === ULTRA-SIMPLIFIED INPUT PROCESSING ===
         
-        // Direct control mapping from ControlState
-        flight.pitch = control_state.pitch.clamp(-1.0, 1.0);
-        flight.roll = control_state.roll.clamp(-1.0, 1.0);
-        flight.yaw = control_state.yaw.clamp(-1.0, 1.0);
-        
-        // Use specs for consistent throttle processing
-        let target_throttle = if control_state.throttle > 0.0 { 
-            control_state.throttle 
-        } else if control_state.brake > 0.0 { 
-            0.0 
-        } else { 
-            0.0 
-        };
-        flight.throttle = InputProcessor::process_acceleration_input(
-            flight.throttle, target_throttle, specs.throttle_increase_rate, specs.throttle_decrease_rate, dt
+        // Direct throttle processing (no round-trip conversion)
+        flight.throttle = SimpleFlightCommon::process_throttle(
+            control_state,
+            flight.throttle,
+            specs.throttle_increase_rate,
+            specs.throttle_decrease_rate,
+            dt,
         );
         
-        // Simplified afterburner (direct from control input)
+        // Direct afterburner state
         flight.afterburner_active = control_state.is_boosting();
         
-        // === SIMPLIFIED FLIGHT PHYSICS ===
+        // === MINIMAL FLIGHT PHYSICS ===
         
-        // Basic flight parameters
-        let base_thrust = specs.max_thrust * 0.7; // Simplified thrust calculation
-        let boost_multiplier = if flight.afterburner_active { 1.5 } else { 1.0 };
-        let thrust_force = base_thrust * flight.throttle * boost_multiplier;
-        
-        // Forward thrust along aircraft direction
+        // Calculate thrust (all values from specs, no magic numbers)
+        let boost_multiplier = if flight.afterburner_active { specs.afterburner_multiplier } else { 1.0 };
+        let thrust_force = specs.max_thrust * flight.throttle * boost_multiplier;
         let forward_force = transform.forward() * thrust_force;
         
-        // === ANGULAR CONTROL (Simple and Direct) ===
+        // === DIRECT ANGULAR CONTROL ===
         
-        // Use realistic control rates per axis (following AGENT.md simplicity)
-        let yaw_input = -flight.yaw; // Fix yaw sign: positive = nose right
-        
-        // Direct angular velocity mapping in LOCAL axes
+        // Read controls directly (no state duplication)
         let local_target_ang = Vec3::new(
-            flight.pitch * specs.pitch_rate_max,   // +X pitch
-            yaw_input * specs.yaw_rate_max,        // +Y yaw (corrected sign)
-            -flight.roll * specs.roll_rate_max,    // -Z roll
+            control_state.pitch * specs.pitch_rate_max,   // +X pitch
+            control_state.yaw * specs.yaw_rate_max,       // +Y yaw
+            -control_state.roll * specs.roll_rate_max,    // -Z roll
         );
         let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
         
-        // Apply angular velocity with smooth response (angular damping handled by Rapier Damping component)
-        velocity.angvel = velocity.angvel.lerp(world_target_ang, dt * 8.0);
+        // Apply angular velocity (lerp factor from specs)
+        velocity.angvel = velocity.angvel.lerp(world_target_ang, dt * specs.angular_lerp_factor);
         
         // === LINEAR FORCES ===
         
-        // Apply forward thrust
-        velocity.linvel += forward_force * dt / specs.mass.max(1000.0);
+        // Apply forward thrust (no magic mass clamp)
+        velocity.linvel += forward_force * dt / specs.mass;
         
-        // Gravity
-        velocity.linvel += Vec3::new(0.0, -9.81, 0.0) * dt;
-        
-        // Simple lift assistance (replaces complex lift calculations)
-        if flight.throttle > 0.1 {
-            velocity.linvel.y += flight.throttle * specs.lift_per_throttle * dt;
+        // Orientation-aware lift assistance (deadzone from specs)
+        if flight.throttle > specs.throttle_deadzone {
+            velocity.linvel += transform.up() * flight.throttle * specs.lift_per_throttle * dt;
         }
         
-        // === FLIGHT STATE TRACKING ===
+        // === MINIMAL STATE TRACKING ===
         
         flight.airspeed = velocity.linvel.length();
-        flight.current_thrust = thrust_force;
         
-        // === SAFETY SYSTEMS ===
+        // === SHARED PHYSICS (NO GRAVITY DUPLICATION) ===
         
-        // Direct velocity clamping (simplified from PhysicsUtilities)
-        velocity.linvel = velocity.linvel.clamp_length_max(config.physics.max_velocity);
-        velocity.angvel = velocity.angvel.clamp_length_max(config.physics.max_angular_velocity);
+        SimpleFlightCommon::apply_velocity_clamps(&mut velocity, &config);
         
         // Keep aircraft above minimum altitude (simple terrain avoidance)
         if transform.translation.y < specs.min_altitude {
-            // Emergency pull-up
+            // One-shot upward impulse instead of hard override
             velocity.linvel.y += specs.emergency_pullup_force * dt;
-            velocity.angvel.x = -1.0; // Pitch up
         }
     }
 }

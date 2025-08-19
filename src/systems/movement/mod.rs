@@ -4,6 +4,7 @@ pub mod vehicles;
 pub mod realistic_vehicle_physics;
 pub mod simple_vehicle_physics;
 pub mod simple_aircraft;
+pub mod simple_flight_common;
 
 pub use player::*;
 pub use vehicles::*;

@@ -1,0 +1,13 @@
+// Data-driven spawn positions
+// Replaces hard-coded coordinates in unified_aircraft.rs
+
+SpawnConfig(
+    aircraft_positions: [
+        (position: (20.0, 0.0, 80.0), aircraft_type: Helicopter),
+        (position: (80.0, 0.0, 120.0), aircraft_type: F16),
+    ],
+    vehicle_positions: [
+        (position: (20.0, 0.0, 40.0), vehicle_type: Car),
+        (position: (60.0, 0.0, 40.0), vehicle_type: Yacht),
+    ],
+)
