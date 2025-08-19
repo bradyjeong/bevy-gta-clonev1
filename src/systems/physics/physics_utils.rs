@@ -32,6 +32,12 @@ impl PhysicsUtilities {
     
 
     
+    /// Unified stable delta-time for all vehicle systems
+    /// Prevents physics instability from frame rate spikes
+    pub fn stable_dt(time: &Time) -> f32 {
+        time.delta_secs().clamp(0.001, 0.05)
+    }
+    
     /// Clamp entity position to world bounds
     pub fn apply_world_bounds(
         transform: &mut Transform,

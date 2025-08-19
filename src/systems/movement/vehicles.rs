@@ -7,7 +7,7 @@ use crate::config::GameConfig;
 
 pub fn car_movement(
     config: Res<GameConfig>,
-    mut car_query: Query<(&mut Velocity, &Transform, &ControlState, &SimpleCarSpecs), (With<Car>, With<ActiveEntity>)>,
+    mut car_query: Query<(&mut Velocity, &Transform, &ControlState, &SimpleCarSpecs), (With<Car>, With<ActiveEntity>, Changed<ControlState>)>,
     time: Res<Time>,
 ) {
     #[cfg(feature = "debug-movement")]
@@ -43,9 +43,9 @@ pub fn car_movement(
     }
     
     // Apply forces with smooth interpolation (dynamic bodies handle gravity)
-    let dt = time.delta_secs().clamp(0.001, 0.05);
-    velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * 4.0);
-    velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * 6.0);
+    let dt = PhysicsUtilities::stable_dt(&time);
+    velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
+    velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
     
         // Apply velocity validation (dynamic bodies handle their own collision)
         PhysicsUtilities::clamp_velocity(&mut velocity, &config);

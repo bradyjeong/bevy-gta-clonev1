@@ -3,7 +3,7 @@
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use gta_game::systems::{PhysicsUtilities, CollisionGroupHelper, PhysicsBodySetup, InputProcessor};
+use gta_game::systems::physics::physics_utils::{PhysicsUtilities, CollisionGroupHelper, apply_universal_physics_safeguards};
 use gta_game::config::GameConfig;
 
 // Example system showing velocity validation usage
@@ -17,27 +17,12 @@ fn example_vehicle_physics_with_utilities(
     for mut velocity in vehicle_query.iter_mut() {
         // Apply common physics patterns using utilities
         
-        // 1. Validate velocity for safety
-        PhysicsUtilities::validate_velocity(&mut velocity, &config);
+        // 1. Clamp velocity for safety and gameplay limits
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
         
-        // 2. Apply natural deceleration when no input
-        PhysicsUtilities::apply_natural_deceleration(
-            &mut velocity,
-            config.physics.linear_damping,
-            config.physics.angular_damping,
-            dt
-        );
-        
-        // 3. Apply drag forces
-        let drag = PhysicsUtilities::calculate_drag_force(
-            &velocity,
-            0.3, // drag coefficient
-            1.225, // air density
-            2.5  // frontal area
-        );
-        
-        // Apply drag to velocity
-        velocity.linvel += drag * dt;
+        // 2. Apply simple damping (Rapier handles complex physics)
+        velocity.linvel *= 0.95; // Simple deceleration
+        velocity.angvel *= 0.90;
     }
 }
 
@@ -54,14 +39,13 @@ fn example_player_movement_with_utilities(
         let input_force = Vec3::new(1.0, 0.0, 0.0) * 50.0;
         let input_torque = Vec3::new(0.0, 1.0, 0.0) * 10.0;
         
-        // Use utilities for safe velocity-based movement
-        PhysicsUtilities::apply_force_safe(
-            &mut velocity,
-            input_force,
-            input_torque,
-            dt,
-            1000.0 // max force
-        );
+        // Apply forces directly to velocity (Dynamic Arcade Physics)
+        let dt = PhysicsUtilities::stable_dt(&time);
+        velocity.linvel += input_force * dt;
+        velocity.angvel += input_torque * dt;
+        
+        // Clamp for gameplay limits
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
         
         // Note: Ground collision would need velocity access in real implementation
         // This is just demonstrating the API pattern
@@ -74,72 +58,43 @@ fn spawn_example_entities(
     config: Res<GameConfig>,
 ) {
     // Vehicle with consistent collision groups
-    let vehicle_collision_groups = CollisionGroupHelper::vehicle_groups();
-    let (vehicle_body, vehicle_groups, vehicle_damping) = PhysicsBodySetup::create_dynamic_body(
-        vehicle_collision_groups,
-        config.physics.linear_damping,
-        config.physics.angular_damping
-    );
+    let vehicle_groups = CollisionGroupHelper::vehicle_groups();
     
     commands.spawn((
-        vehicle_body,
+        RigidBody::Dynamic,
         vehicle_groups,
-        vehicle_damping,
+        Damping {
+            linear_damping: config.physics.linear_damping,
+            angular_damping: config.physics.angular_damping,
+        },
+        Velocity::default(),
         ExampleVehicle,
-        // Add other components...
     ));
     
     // Character with consistent collision groups
-    let character_collision_groups = CollisionGroupHelper::character_groups();
-    let (character_body, character_groups, character_damping) = PhysicsBodySetup::create_dynamic_body(
-        character_collision_groups,
-        config.physics.linear_damping * 2.0, // Higher damping for characters
-        config.physics.angular_damping * 2.0
-    );
+    let character_groups = CollisionGroupHelper::character_groups();
     
     commands.spawn((
-        character_body,
-        character_groups, 
-        character_damping,
+        RigidBody::Dynamic,
+        character_groups,
+        Damping {
+            linear_damping: config.physics.linear_damping * 2.0,
+            angular_damping: config.physics.angular_damping * 2.0,
+        },
+        Velocity::default(),
         ExamplePlayer,
-        // Add other components...
     ));
 }
 
-// Example showing input processing utilities
-fn example_input_processing() {
-    let mut current_throttle = 0.5;
-    let target_throttle = 1.0;
-    let dt = 0.016; // 60 FPS
+// Example showing stable delta-time usage
+fn example_stable_timing() {
+    use bevy::time::Time;
+    let time = Time::default();
     
-    // Smooth input ramping
-    current_throttle = InputProcessor::process_acceleration_input(
-        current_throttle,
-        target_throttle,
-        3.0, // ramp up rate
-        2.0, // ramp down rate
-        dt
-    );
+    // Unified delta-time for all physics systems
+    let dt = PhysicsUtilities::stable_dt(&time);
     
-    // Speed-dependent steering
-    let steering_input = 1.0;
-    let current_speed = 30.0;
-    let adjusted_steering = InputProcessor::apply_speed_dependent_steering(
-        steering_input,
-        current_speed,
-        1.0, // base sensitivity
-        60.0 // speed threshold
-    );
-    
-    // Force calculation with power curve
-    let force = InputProcessor::calculate_force_from_input(
-        current_throttle,
-        1000.0, // base force
-        1.5     // power curve
-    );
-    
-    println!("Processed input - Throttle: {}, Steering: {}, Force: {}", 
-             current_throttle, adjusted_steering, force);
+    println!("Stable delta-time: {:.6}s (clamped 0.001-0.05)", dt);
 }
 
 // Example components for demonstration
@@ -152,7 +107,7 @@ struct ExamplePlayer;
 // Example showing the universal safety system usage
 fn setup_universal_safety_system(app: &mut App) {
     app.add_systems(Update, (
-        gta_game::systems::apply_universal_physics_safeguards,
+        apply_universal_physics_safeguards,
         example_vehicle_physics_with_utilities,
         example_player_movement_with_utilities,
     ));
@@ -161,5 +116,5 @@ fn setup_universal_safety_system(app: &mut App) {
 fn main() {
     // This is just an example - not meant to run as a standalone binary
     println!("Physics utilities integration example");
-    example_input_processing();
+    example_stable_timing();
 }

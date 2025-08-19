@@ -5,6 +5,10 @@ SimpleCarConfig(
     base_speed: 25.0,           // Base acceleration/movement speed
     rotation_speed: 2.0,        // Steering rotation rate (rad/s)
     
+    // Physics smoothing
+    linear_lerp_factor: 4.0,    // Linear velocity smoothing rate
+    angular_lerp_factor: 6.0,   // Angular velocity smoothing rate
+    
     // Emergency systems
     emergency_brake_linear: 0.1,  // Linear velocity multiplier during emergency brake
     emergency_brake_angular: 0.5, // Angular velocity multiplier during emergency brake

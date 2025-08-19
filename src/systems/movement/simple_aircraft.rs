@@ -26,13 +26,13 @@ pub fn simple_f16_movement(
     config: Res<GameConfig>,
     mut f16_query: Query<(
         &mut Velocity,
-        &mut Transform,
+        &Transform,
         &mut AircraftFlight,
         &SimpleF16Specs,
         &ControlState,
-    ), (With<F16>, With<ActiveEntity>, With<PlayerControlled>)>,
+    ), (With<F16>, With<ActiveEntity>, With<PlayerControlled>, Changed<ControlState>)>,
 ) {
-    let dt = SimpleFlightCommon::stable_dt(&time);
+    let dt = PhysicsUtilities::stable_dt(&time);
     
     for (mut velocity, transform, mut flight, specs, control_state) in f16_query.iter_mut() {
         
@@ -84,11 +84,11 @@ pub fn simple_f16_movement(
         
         flight.airspeed = velocity.linvel.length();
         
-        // === SHARED PHYSICS (NO GRAVITY DUPLICATION) ===
+        // === SHARED PHYSICS SAFETY ===
         
         PhysicsUtilities::clamp_velocity(&mut velocity, &config);
         
-        // Kinematic bodies handle ground collision through Rapier
+        // Dynamic bodies handle ground collision through Rapier
     }
 }
 
@@ -98,9 +98,9 @@ pub fn simple_helicopter_movement(
     time: Res<Time>,
     config: Res<GameConfig>,
     mut helicopter_query: Query<(&mut Velocity, &Transform, &ControlState, &SimpleHelicopterSpecs), 
-        (With<Helicopter>, With<ActiveEntity>, With<PlayerControlled>)>,
+        (With<Helicopter>, With<ActiveEntity>, With<PlayerControlled>, Changed<ControlState>)>,
 ) {
-    let dt = time.delta_secs().clamp(0.001, 0.05);
+    let dt = PhysicsUtilities::stable_dt(&time);
     
     for (mut velocity, transform, control_state, specs) in helicopter_query.iter_mut() {
         
@@ -140,7 +140,7 @@ pub fn simple_helicopter_movement(
         velocity.linvel = velocity.linvel.lerp(target_linear_velocity, dt * specs.linear_lerp_factor);
         velocity.angvel = velocity.angvel.lerp(target_angular_velocity, dt * specs.angular_lerp_factor);
         
-        // Use shared physics utilities (dynamic bodies handle collision)
+        // === SHARED PHYSICS SAFETY ===
         PhysicsUtilities::clamp_velocity(&mut velocity, &config);
     }
 }
@@ -148,19 +148,26 @@ pub fn simple_helicopter_movement(
 /// Rotate helicopter main and tail rotors every frame
 pub fn rotate_helicopter_rotors(
     time: Res<Time>,
-    mut main_rotor_query: Query<&mut Transform, (With<MainRotor>, Without<TailRotor>)>,
-    mut tail_rotor_query: Query<&mut Transform, (With<TailRotor>, Without<MainRotor>)>,
+    mut rotor_query: Query<(&mut Transform, Option<&MainRotor>, Option<&TailRotor>)>,
+    helicopter_query: Query<&SimpleHelicopterSpecs, With<Helicopter>>,
 ) {
-    // Use delta-based rotation to preserve initial blade offsets
-    let main_delta = time.delta_secs() * 20.0; // rad/s
-    let tail_delta = time.delta_secs() * 35.0; // rad/s
+    // Get rotor speeds from helicopter specs (fallback to defaults if no helicopter present)
+    let (main_rpm, tail_rpm) = if let Ok(specs) = helicopter_query.single() {
+        (specs.main_rotor_rpm, specs.tail_rotor_rpm)
+    } else {
+        (20.0, 35.0) // fallback defaults
+    };
+    
+    let dt = PhysicsUtilities::stable_dt(&time);
+    let main_delta = dt * main_rpm;
+    let tail_delta = dt * tail_rpm;
 
-    for mut transform in main_rotor_query.iter_mut() {
-        transform.rotate_y(main_delta);
-    }
-
-    for mut transform in tail_rotor_query.iter_mut() {
-        transform.rotate_z(tail_delta);
+    for (mut transform, main_rotor, tail_rotor) in rotor_query.iter_mut() {
+        if main_rotor.is_some() {
+            transform.rotate_y(main_delta);
+        } else if tail_rotor.is_some() {
+            transform.rotate_z(tail_delta);
+        }
     }
 }
 

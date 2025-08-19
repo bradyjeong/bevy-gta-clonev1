@@ -15,6 +15,10 @@ SimpleHelicopterConfig(
     angular_lerp_factor: 4.0,   // Angular velocity smoothing rate
     linear_lerp_factor: 6.0,    // Linear velocity smoothing rate
     
+    // Rotor animation speeds
+    main_rotor_rpm: 20.0,       // Main rotor rotation speed (rad/s)
+    tail_rotor_rpm: 35.0,       // Tail rotor rotation speed (rad/s)
+    
     // Ground collision
     min_height: 1.0,            // Minimum height above ground (landing gear)
     ground_bounce: 5.0,         // Bounce force when hitting ground

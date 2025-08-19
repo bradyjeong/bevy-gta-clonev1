@@ -6,6 +6,9 @@ use crate::components::safety::WorldBounds;
 pub fn validate_physics_config(
     config: Res<GameConfig>,
     bounds: Res<WorldBounds>,
+    f16_query: Query<&crate::components::SimpleF16Specs>,
+    helicopter_query: Query<&crate::components::SimpleHelicopterSpecs>,
+    car_query: Query<&crate::components::SimpleCarSpecs>,
 ) {
     // Critical: max_velocity must be reasonable to prevent coordinate explosion
     let max_vel = config.physics.max_velocity;
@@ -23,6 +26,39 @@ pub fn validate_physics_config(
     let max_ang_vel = config.physics.max_angular_velocity;
     if max_ang_vel > 100.0 {
         warn!("Physics config: max_angular_velocity ({}) is very high. Consider reducing to prevent rotation chaos.", max_ang_vel);
+    }
+    
+    // Validate vehicle specs against physics limits to prevent Rapier panics
+    for specs in f16_query.iter() {
+        let max_thrust_vel = specs.max_thrust * specs.afterburner_multiplier / specs.mass;
+        if max_thrust_vel > max_vel {
+            panic!("F16 config error: max_thrust * afterburner_multiplier / mass ({:.1}) exceeds max_velocity ({}). Reduce thrust or increase mass.", max_thrust_vel, max_vel);
+        }
+        
+        if specs.roll_rate_max > max_ang_vel || specs.pitch_rate_max > max_ang_vel || specs.yaw_rate_max > max_ang_vel {
+            panic!("F16 config error: rotation rates exceed max_angular_velocity ({})", max_ang_vel);
+        }
+    }
+    
+    for specs in helicopter_query.iter() {
+        let max_heli_vel = specs.forward_speed.max(specs.lateral_speed).max(specs.vertical_speed);
+        if max_heli_vel > max_vel {
+            panic!("Helicopter config error: movement speeds ({:.1}) exceed max_velocity ({})", max_heli_vel, max_vel);
+        }
+        
+        if specs.yaw_rate > max_ang_vel || specs.pitch_rate > max_ang_vel || specs.roll_rate > max_ang_vel {
+            panic!("Helicopter config error: rotation rates exceed max_angular_velocity ({})", max_ang_vel);
+        }
+    }
+    
+    for specs in car_query.iter() {
+        if specs.base_speed > max_vel {
+            panic!("Car config error: base_speed ({}) exceeds max_velocity ({})", specs.base_speed, max_vel);
+        }
+        
+        if specs.rotation_speed > max_ang_vel {
+            panic!("Car config error: rotation_speed ({}) exceeds max_angular_velocity ({})", specs.rotation_speed, max_ang_vel);
+        }
     }
     
     info!("Physics config validated: max_velocity={}, max_angular_velocity={}, world_bounds={}", 
