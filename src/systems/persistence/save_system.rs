@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 
 use crate::components::*;
 use crate::game_state::GameState;
+use crate::systems::floating_origin::WorldOffset;
 use super::aircraft_persistence::SerializableAircraftFlight;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -149,6 +150,8 @@ pub struct SaveGameState {
     pub vehicles: Vec<SerializableVehicle>,
     pub world_seed: Option<u64>,
     pub play_time: f64,
+    #[serde(default)]
+    pub world_offset: [f32; 3], // WorldOffset for floating origin system
 }
 
 impl SaveGameState {
@@ -209,6 +212,7 @@ pub fn save_game_system(
     input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     current_state: Res<State<GameState>>,
+    world_offset: Res<WorldOffset>,
     player_query: Query<(Entity, &Transform, &Velocity, Option<&InCar>), With<Player>>,
     active_query: Query<Entity, With<ActiveEntity>>,
     car_query: Query<(Entity, &Transform, &Velocity, &VehicleState), With<Car>>,
@@ -302,6 +306,7 @@ pub fn save_game_system(
         vehicles,
         world_seed: None, // TODO: Add world generation seed if needed
         play_time: time.elapsed_secs_f64(),
+        world_offset: world_offset.offset.to_array(),
     };
 
     // Validate save state

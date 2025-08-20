@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use crate::components::*;
 use crate::game_state::GameState;
+use crate::systems::floating_origin::WorldOffset;
 use super::save_system::*;
 
 #[derive(Resource, Default)]
@@ -18,6 +19,7 @@ pub fn load_game_system(
     mut load_state: ResMut<LoadState>,
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
+    mut world_offset: ResMut<WorldOffset>,
     // Queries for cleanup
     player_query: Query<Entity, With<Player>>,
     car_query: Query<Entity, With<Car>>,
@@ -51,6 +53,10 @@ pub fn load_game_system(
 
     // Clear entity mapping
     load_state.entity_mapping.clear();
+    
+    // Restore world offset for floating origin system
+    world_offset.offset = Vec3::from_array(save_data.world_offset);
+    info!("Restored world offset: {:?}", world_offset.offset);
     
     // Load player
     let player_entity = spawn_player(&mut commands, &save_data.player);

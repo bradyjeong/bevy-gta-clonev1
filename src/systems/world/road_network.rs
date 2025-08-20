@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
+use crate::util::safe_math::safe_lerp;
 
 // NEW GTA-STYLE ROAD NETWORK SYSTEM
 
@@ -69,7 +70,7 @@ impl RoadSpline {
         
         if self.control_points.len() == 2 {
             // Linear interpolation for simple roads
-            self.control_points[0].lerp(self.control_points[1], t)
+            safe_lerp(self.control_points[0], self.control_points[1], t)
         } else {
             // Catmull-Rom spline for curved roads
             self.catmull_rom_spline(t)
@@ -82,7 +83,7 @@ impl RoadSpline {
         
         if n < 4 {
             // Fall back to linear interpolation
-            return points[0].lerp(points[n-1], t);
+            return safe_lerp(points[0], points[n-1], t);
         }
         
         // Find the segment

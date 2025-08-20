@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::util::safe_math::{safe_lerp, safe_slerp};
 
 /// Single source of truth for entity positions - prevents fighting between systems
 #[derive(Component, Default, Reflect)]
@@ -27,13 +28,15 @@ pub fn sync_transforms_system(
     
     for (mut transform, sync) in query.iter_mut() {
         // Smooth position
-        transform.translation = transform.translation.lerp(
+        transform.translation = safe_lerp(
+            transform.translation,
             sync.target_translation, 
             sync.smoothing_speed * dt
         );
         
         // Smooth rotation
-        transform.rotation = transform.rotation.slerp(
+        transform.rotation = safe_slerp(
+            transform.rotation,
             sync.target_rotation,
             sync.smoothing_speed * dt
         );

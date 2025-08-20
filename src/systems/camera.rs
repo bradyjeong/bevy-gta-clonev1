@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::components::{MainCamera, ActiveEntity};
 use crate::config::GameConfig;
+use crate::util::safe_math::safe_lerp;
 
 pub fn camera_follow_system(
     mut camera_query: Query<&mut Transform, (With<MainCamera>, Without<ActiveEntity>)>,
@@ -37,7 +38,7 @@ pub fn camera_follow_system(
     }
     
     // Smooth camera movement using interpolation - much more responsive
-    camera_transform.translation = camera_transform.translation.lerp(target_pos, config.camera.lerp_speed);
+    camera_transform.translation = safe_lerp(camera_transform.translation, target_pos, config.camera.lerp_speed);
     
     // Camera looks toward the entity at player height (classic GTA style)
     let look_target = active_transform.translation + Vec3::Y * 1.0;
