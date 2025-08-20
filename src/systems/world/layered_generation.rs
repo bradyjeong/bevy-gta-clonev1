@@ -289,7 +289,8 @@ fn detect_and_spawn_intersections(
             
             // Check for intersection between road1 and road2
             if let Some(intersection_point) = find_road_intersection(road1, road2) {
-                println!("🚧 DEBUG: Intersection detected between road {} ({:?}) and road {} ({:?}) at {:?}", 
+                #[cfg(debug_assertions)]
+                println!("DEBUG: Intersection detected between road {} ({:?}) and road {} ({:?}) at {:?}", 
                     road1_id, road1.road_type, road2_id, road2.road_type, intersection_point);
                 // Only create intersection if it's within this chunk bounds
                 if intersection_point.x >= chunk_center.x - half_size &&
@@ -314,7 +315,8 @@ fn detect_and_spawn_intersections(
     
     // Create intersection entities
     for (position, connected_roads, intersection_type, road_type) in detected_intersections {
-        println!("🚧 DEBUG: Creating intersection entity at {:?} with type {:?} and road type {:?}", 
+        #[cfg(debug_assertions)]
+        println!("DEBUG: Creating intersection entity at {:?} with type {:?} and road type {:?}", 
             position, intersection_type, road_type);
         let intersection_id = world_manager.road_network.add_intersection(
             position,
@@ -323,7 +325,8 @@ fn detect_and_spawn_intersections(
         );
         
         if let Some(intersection) = world_manager.road_network.intersections.get(&intersection_id) {
-            println!("🚧 DEBUG: Successfully spawned intersection entity {}", intersection_id);
+            #[cfg(debug_assertions)]
+            println!("DEBUG: Successfully spawned intersection entity {}", intersection_id);
             let _intersection_entity = spawn_unified_intersection_entity(
                 commands,
                 coord,

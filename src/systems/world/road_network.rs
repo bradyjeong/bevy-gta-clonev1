@@ -209,6 +209,7 @@ impl Default for RoadNetwork {
 impl RoadNetwork {
     pub fn clear_cache(&mut self) {
         self.generated_chunks.clear();
+        #[cfg(debug_assertions)]
         println!("DEBUG: Road network cache cleared!");
     }
     
@@ -219,6 +220,7 @@ impl RoadNetwork {
         self.generated_chunks.clear();
         self.next_road_id = 0;
         self.next_intersection_id = 0;
+        #[cfg(debug_assertions)]
         println!("DEBUG: Road network completely reset!");
     }
 }
@@ -338,7 +340,8 @@ impl RoadNetwork {
             let road_id = self.add_curved_road(start, control, end, road_type);
             new_roads.push(road_id);
             roads_added.push("vertical");
-            println!("🛣️ DEBUG: Generated VERTICAL MainStreet in chunk ({}, {})", chunk_x, chunk_z);
+            #[cfg(debug_assertions)]
+            println!("DEBUG: Generated VERTICAL MainStreet in chunk ({}, {})", chunk_x, chunk_z);
         }
         
         if chunk_z % 2 == 0 && chunk_x % 2 != 0 {
@@ -352,7 +355,8 @@ impl RoadNetwork {
             let road_id = self.add_curved_road(start, control, end, road_type);
             new_roads.push(road_id);
             roads_added.push("horizontal");
-            println!("🛣️ DEBUG: Generated HORIZONTAL MainStreet in chunk ({}, {})", chunk_x, chunk_z);
+            #[cfg(debug_assertions)]
+            println!("DEBUG: Generated HORIZONTAL MainStreet in chunk ({}, {})", chunk_x, chunk_z);
         }
         
         // Add side streets only where no main roads exist
@@ -363,7 +367,8 @@ impl RoadNetwork {
             let end = Vec3::new(base_x + chunk_size * 0.8, height, base_z + chunk_size * 0.8);
             let road_id = self.add_road(start, end, road_type);
             new_roads.push(road_id);
-            println!("🛣️ DEBUG: Generated SideStreet in chunk ({}, {}) - no main roads", chunk_x, chunk_z);
+            #[cfg(debug_assertions)]
+            println!("DEBUG: Generated SideStreet in chunk ({}, {}) - no main roads", chunk_x, chunk_z);
         }
         
         // Generate side streets (much fewer)
@@ -466,7 +471,8 @@ impl RoadNetwork {
             }
         }
         
-        println!("🛣️ Generated {} premium roads within chunk (0,0) boundaries", spawn_roads.len());
+        #[cfg(debug_assertions)]
+        println!("DEBUG: Generated {} premium roads within chunk (0,0) boundaries", spawn_roads.len());
         spawn_roads
     }
 }
