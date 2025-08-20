@@ -1,8 +1,53 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
+use rstar::{RTree, RTreeObject, AABB};
 use crate::util::safe_math::safe_lerp;
 
 // NEW GTA-STYLE ROAD NETWORK SYSTEM
+
+/// Spatial indexing wrapper for roads to enable efficient intersection detection
+#[derive(Debug, Clone)]
+pub struct SpatialRoad {
+    pub id: u32,
+    pub aabb: AABB<[f32; 3]>,
+}
+
+impl RTreeObject for SpatialRoad {
+    type Envelope = AABB<[f32; 3]>;
+    
+    fn envelope(&self) -> Self::Envelope {
+        self.aabb
+    }
+}
+
+impl SpatialRoad {
+    pub fn from_spline(id: u32, spline: &RoadSpline) -> Self {
+        // Calculate AABB from spline control points
+        let mut min_x = f32::INFINITY;
+        let mut max_x = f32::NEG_INFINITY;
+        let mut min_z = f32::INFINITY;
+        let mut max_z = f32::NEG_INFINITY;
+        
+        for point in &spline.control_points {
+            min_x = min_x.min(point.x);
+            max_x = max_x.max(point.x);
+            min_z = min_z.min(point.z);
+            max_z = max_z.max(point.z);
+        }
+        
+        // Expand by road width
+        let width = spline.road_type.width() * 0.5;
+        min_x -= width;
+        max_x += width;
+        min_z -= width;
+        max_z += width;
+        
+        Self {
+            id,
+            aabb: AABB::from_corners([min_x, 0.0, min_z], [max_x, 1.0, max_z]),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RoadType {
@@ -140,6 +185,7 @@ pub struct RoadIntersection {
 pub struct RoadNetwork {
     pub roads: HashMap<u32, RoadSpline>,
     pub intersections: HashMap<u32, RoadIntersection>,
+    pub spatial_index: RTree<SpatialRoad>,  // Spatial index for O(log n) intersection queries
     pub next_road_id: u32,
     pub next_intersection_id: u32,
     pub generated_chunks: std::collections::HashSet<(i32, i32)>, // Track generated areas
@@ -150,6 +196,7 @@ impl Default for RoadNetwork {
         Self {
             roads: HashMap::new(),
             intersections: HashMap::new(),
+            spatial_index: RTree::new(),
             next_road_id: 0,
             next_intersection_id: 0,
             generated_chunks: std::collections::HashSet::new(),
@@ -166,6 +213,7 @@ impl RoadNetwork {
     pub fn reset(&mut self) {
         self.roads.clear();
         self.intersections.clear();
+        self.spatial_index = RTree::new();
         self.generated_chunks.clear();
         self.next_road_id = 0;
         self.next_intersection_id = 0;
@@ -179,6 +227,11 @@ impl RoadNetwork {
         self.next_road_id += 1;
         
         let road = RoadSpline::new(id, start, end, road_type);
+        
+        // Add to spatial index for efficient intersection detection
+        let spatial_road = SpatialRoad::from_spline(id, &road);
+        self.spatial_index.insert(spatial_road);
+        
         self.roads.insert(id, road);
         id
     }
@@ -189,6 +242,11 @@ impl RoadNetwork {
         
         let mut road = RoadSpline::new(id, start, end, road_type);
         road.add_curve(control);
+        
+        // Add to spatial index for efficient intersection detection
+        let spatial_road = SpatialRoad::from_spline(id, &road);
+        self.spatial_index.insert(spatial_road);
+        
         self.roads.insert(id, road);
         id
     }
@@ -200,6 +258,25 @@ impl RoadNetwork {
         if let Some(road2) = self.roads.get_mut(&road2_id) {
             road2.connections.push(road1_id);
         }
+    }
+    
+    /// Efficiently find roads near a chunk using spatial index - O(log n) instead of O(n)
+    pub fn find_roads_near_chunk(&self, chunk_coord: crate::systems::world::unified_world::ChunkCoord) -> Vec<u32> {
+        let chunk_center = chunk_coord.to_world_pos();
+        let chunk_size = crate::systems::world::unified_world::UNIFIED_CHUNK_SIZE;
+        let half_size = chunk_size * 0.5;
+        
+        // Create search AABB for the chunk
+        let search_aabb = AABB::from_corners(
+            [chunk_center.x - half_size, 0.0, chunk_center.z - half_size],
+            [chunk_center.x + half_size, 1.0, chunk_center.z + half_size],
+        );
+        
+        // Use spatial index for O(log n) lookup
+        self.spatial_index
+            .locate_in_envelope(&search_aabb)
+            .map(|spatial_road| spatial_road.id)
+            .collect()
     }
     
     pub fn add_intersection(&mut self, position: Vec3, connected_roads: Vec<u32>, intersection_type: IntersectionType) -> u32 {

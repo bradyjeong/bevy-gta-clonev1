@@ -120,10 +120,6 @@ pub fn seamless_world_rebase_system(
     // This is invisible to players because terrain moves with the player
     world_root_transform.translation += shift_amount;
     
-    // Update Rapier's world offset to keep physics consistent
-    // Note: Rapier 0.30 may not have set_world_offset, but we can translate collision pipeline
-    // This keeps broad-phase collision detection working correctly
-    
     // Update logical world offset for deterministic generation
     world_offset.offset += shift_amount; // Add because logical world advanced forward
     world_offset.last_shift_time = current_time;
@@ -136,6 +132,25 @@ pub fn seamless_world_rebase_system(
     
     info!("Seamless world rebase: shifted by {:?}, new logical offset: {:?}", 
           shift_amount, world_offset.offset);
+}
+
+/// System to update Rapier physics bodies during world origin shifts
+/// Rapier 0.30 requires manual translation of rigid body positions
+pub fn update_physics_after_origin_shift(
+    mut origin_events: EventReader<WorldOriginShifted>,
+    mut rigidbody_query: Query<&mut Transform, (With<RigidBody>, Without<WorldRoot>)>,
+) {
+    for event in origin_events.read() {
+        // Translate all physics bodies by the world shift amount to keep them in sync
+        // Note: event.shift_amount is negative (world moved -shift), so we apply the shift directly
+        let physics_shift = -event.shift_amount;
+        
+        for mut transform in rigidbody_query.iter_mut() {
+            transform.translation += physics_shift;
+        }
+        
+        info!("Updated {} physics bodies for world origin shift", rigidbody_query.iter().count());
+    }
 }
 
 /// System to create the WorldRoot entity that parents all game content

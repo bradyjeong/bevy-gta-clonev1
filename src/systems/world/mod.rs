@@ -11,10 +11,8 @@ pub mod debug;
 // NEW UNIFIED WORLD SYSTEM
 pub mod unified_world;
 pub mod layered_generation;
-pub mod unified_lod;
 pub mod npc_lod;
 pub mod npc_spawn;
-// pub mod optimized_lod; // Removed - functionality moved to unified_lod.rs
 pub mod vegetation_lod;
 pub mod unified_distance_culling;
 pub mod unified_factory_setup;
@@ -32,10 +30,8 @@ pub use debug::*;
 // Export unified system components
 pub use unified_world::*;
 pub use layered_generation::*;
-pub use unified_lod::*;
 pub use npc_lod::*;
 pub use npc_spawn::*;
-// pub use optimized_lod::*; // Removed - functionality moved to unified_lod.rs
 pub use vegetation_lod::*;
 // Export unified distance culling components (selective to avoid conflicts)
 pub use unified_distance_culling::{

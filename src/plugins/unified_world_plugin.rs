@@ -2,11 +2,11 @@ use bevy::prelude::*;
 use crate::plugins::{
     WorldStreamingPlugin,
     WorldContentPlugin,
-    WorldLodPlugin,
     WorldNpcPlugin,
     WorldDebugPlugin,
     TimingPlugin,
 };
+use crate::systems::world::UnifiedDistanceCullingPlugin;
 use crate::factories::initialize_material_factory;
 
 /// Simplified unified world plugin that coordinates focused world sub-plugins.
@@ -21,7 +21,7 @@ impl Plugin for UnifiedWorldPlugin {
             .add_plugins(TimingPlugin)
             .add_plugins(WorldStreamingPlugin)
             .add_plugins(WorldContentPlugin)
-            .add_plugins(WorldLodPlugin)
+            .add_plugins(UnifiedDistanceCullingPlugin)
             .add_plugins(WorldNpcPlugin)
             .add_plugins(WorldDebugPlugin)
             

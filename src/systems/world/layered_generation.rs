@@ -1,11 +1,11 @@
 use bevy::prelude::*;
-use rand::Rng;
-use std::cell::RefCell;
+use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha8Rng;
 use crate::components::*;
 use crate::bundles::VisibleChildBundle;
 use crate::systems::world::unified_world::{
     UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState,
-    UNIFIED_CHUNK_SIZE,
+    ChunkRootMarker, UNIFIED_CHUNK_SIZE,
 };
 use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType};
 use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh, generate_intersection_mesh};
@@ -16,8 +16,26 @@ use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_marking
 // - Road Markings:y =  0.01  (1cm above road surface)
 // Unified road height prevents overlapping geometry and z-fighting issues
 
-thread_local! {
-    static LAYERED_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
+/// Deterministic RNG resource for world generation - seeded by chunk coordinates
+#[derive(Resource)]
+pub struct DeterministicRng {
+    pub base_seed: u64,
+}
+
+impl Default for DeterministicRng {
+    fn default() -> Self {
+        Self { base_seed: 12345 }
+    }
+}
+
+impl DeterministicRng {
+    /// Create deterministic RNG for a specific chunk
+    pub fn for_chunk(&self, coord: ChunkCoord) -> ChaCha8Rng {
+        let chunk_seed = self.base_seed
+            .wrapping_add(coord.x as u64)
+            .wrapping_add((coord.z as u64) << 32);
+        ChaCha8Rng::seed_from_u64(chunk_seed)
+    }
 }
 
 // LAYERED CONTENT GENERATION SYSTEMS
@@ -106,6 +124,7 @@ pub fn road_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -120,7 +139,9 @@ pub fn road_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_roads_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        if let Some(chunk_root) = world_manager.get_chunk_root_entity(coord) {
+            generate_roads_for_chunk(&mut commands, &mut world_manager, coord, chunk_root, &mut meshes, &mut materials);
+        }
     }
 }
 
@@ -128,6 +149,7 @@ fn generate_roads_for_chunk(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
+    chunk_root: Entity,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
@@ -142,30 +164,33 @@ fn generate_roads_for_chunk(
                 coord,
                 road_id,
                 &road,
+                chunk_root,
                 meshes,
                 materials,
             );
             
-            // Add road to placement grid
+            // Add road to placement grid and track grid cells
             let samples = 20;
             for i in 0..samples {
                 let t = i as f32 / (samples - 1) as f32;
                 let road_point = road.evaluate(t);
-                world_manager.placement_grid.add_entity(
+                let grid_cell = world_manager.placement_grid.add_entity(
                     road_point,
                     ContentType::Road,
                     road.road_type.width() * 0.5,
                 );
+                
+                // Track this grid cell for efficient cleanup
+                let chunk = world_manager.get_chunk_mut(coord);
+                if !chunk.owned_grid_cells.contains(&grid_cell) {
+                    chunk.owned_grid_cells.push(grid_cell);
+                }
             }
-            
-            // Add entity to chunk
-            let chunk = world_manager.get_chunk_mut(coord);
-            chunk.entities.push(road_entity);
         }
     }
     
     // INTERSECTION FIX: Detect and generate intersections after roads are created
-    detect_and_spawn_intersections(commands, world_manager, coord, meshes, materials);
+    detect_and_spawn_intersections(commands, world_manager, coord, chunk_root, meshes, materials);
     
     // Mark roads as generated
     let chunk = world_manager.get_chunk_mut(coord);
@@ -177,6 +202,7 @@ fn spawn_unified_road_entity(
     chunk_coord: ChunkCoord,
     road_id: u32,
     road: &RoadSpline,
+    chunk_root: Entity,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
@@ -200,6 +226,9 @@ fn spawn_unified_road_entity(
             content_type: ContentType::Road,
         },
     )).id();
+    
+    // Parent road to chunk root
+    commands.entity(chunk_root).add_child(road_entity);
     
     // Road surface mesh - positioned at ground level (y = 0.0)
     let road_mesh = generate_road_mesh(road);
@@ -231,6 +260,7 @@ fn detect_and_spawn_intersections(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
+    chunk_root: Entity,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
@@ -238,14 +268,12 @@ fn detect_and_spawn_intersections(
     let chunk_size = UNIFIED_CHUNK_SIZE;
     let half_size = chunk_size * 0.5;
     
-    // Collect all roads in and around this chunk
+    // Use spatial index for O(log n) road lookup instead of O(n) scan
+    let nearby_road_ids = world_manager.road_network.find_roads_near_chunk(coord);
     let mut chunk_roads = Vec::new();
-    for (road_id, road) in &world_manager.road_network.roads {
-        // Check if road passes through or near this chunk
-        let road_center = road.evaluate(0.5);
-        if (road_center.x - chunk_center.x).abs() < chunk_size && 
-           (road_center.z - chunk_center.z).abs() < chunk_size {
-            chunk_roads.push((*road_id, road.clone()));
+    for road_id in nearby_road_ids {
+        if let Some(road) = world_manager.road_network.roads.get(&road_id) {
+            chunk_roads.push((road_id, road.clone()));
         }
     }
     
@@ -299,13 +327,10 @@ fn detect_and_spawn_intersections(
                 intersection_id,
                 intersection,
                 road_type,
+                chunk_root,
                 meshes,
                 materials,
             );
-            
-            // Add entity to chunk
-            let chunk = world_manager.get_chunk_mut(coord);
-            chunk.entities.push(intersection_entity);
         }
     }
 }
@@ -354,6 +379,7 @@ fn spawn_unified_intersection_entity(
     intersection_id: u32,
     intersection: &crate::systems::world::road_network::RoadIntersection,
     dominant_road_type: RoadType,
+    chunk_root: Entity,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
@@ -378,6 +404,9 @@ fn spawn_unified_intersection_entity(
         },
     )).id();
     
+    // Parent intersection to chunk root
+    commands.entity(chunk_root).add_child(intersection_entity);
+    
     // Generate intersection mesh - positioned at ground level (y = 0.0)
     let intersection_mesh = generate_intersection_mesh(intersection, &[]);
     commands.spawn((
@@ -397,6 +426,8 @@ pub fn building_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    deterministic_rng: Res<DeterministicRng>,
+    chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -413,7 +444,9 @@ pub fn building_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_buildings_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        if let Some(chunk_root) = world_manager.get_chunk_root_entity(coord) {
+            generate_buildings_for_chunk(&mut commands, &mut world_manager, coord, chunk_root, &deterministic_rng, &mut meshes, &mut materials);
+        }
     }
 }
 
@@ -421,6 +454,8 @@ fn generate_buildings_for_chunk(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
+    chunk_root: Entity,
+    deterministic_rng: &DeterministicRng,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
@@ -433,15 +468,16 @@ fn generate_buildings_for_chunk(
     
     // Generate building positions - REDUCED: From 20 to 8 attempts
     let building_attempts = (building_density * 8.0) as usize;
+    let mut rng = deterministic_rng.for_chunk(coord);
     
     for _ in 0..building_attempts {
-        let local_x = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
-        let local_z = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
+        let local_x = rng.gen_range(-half_size..half_size);
+        let local_z = rng.gen_range(-half_size..half_size);
         let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
         
         // Check if position is valid (not on road, not overlapping other buildings)
         if !is_on_road_unified(position, &world_manager.road_network) {
-            let building_size = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(8.0..15.0));
+            let building_size = rng.gen_range(8.0..15.0);
             if world_manager.placement_grid.can_place(
                 position,
                 ContentType::Building,
@@ -453,20 +489,23 @@ fn generate_buildings_for_chunk(
                     coord,
                     position,
                     distance_from_center,
+                    chunk_root,
                     meshes,
                     materials,
                 );
                 
-                // Add to placement grid
-                world_manager.placement_grid.add_entity(
+                // Add to placement grid and track grid cell
+                let grid_cell = world_manager.placement_grid.add_entity(
                     position,
                     ContentType::Building,
                     building_size * 0.5,
                 );
                 
-                // Add entity to chunk
+                // Track this grid cell for efficient cleanup
                 let chunk = world_manager.get_chunk_mut(coord);
-                chunk.entities.push(building_entity);
+                if !chunk.owned_grid_cells.contains(&grid_cell) {
+                    chunk.owned_grid_cells.push(grid_cell);
+                }
             }
         }
     }
@@ -481,6 +520,7 @@ fn spawn_unified_building(
     chunk_coord: ChunkCoord,
     position: Vec3,
     _distance_from_center: f32,
+    chunk_root: Entity,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
@@ -501,6 +541,8 @@ fn spawn_unified_building(
                     layer: ContentLayer::Buildings,
                 },
             ));
+            // Parent building to chunk root
+            commands.entity(chunk_root).add_child(entity);
             entity
         }
         Err(_) => {
@@ -519,6 +561,8 @@ pub fn vehicle_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    deterministic_rng: Res<DeterministicRng>,
+    chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -535,7 +579,9 @@ pub fn vehicle_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_vehicles_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        if let Some(chunk_root) = world_manager.get_chunk_root_entity(coord) {
+            generate_vehicles_for_chunk(&mut commands, &mut world_manager, coord, chunk_root, &deterministic_rng, &mut meshes, &mut materials);
+        }
     }
 }
 
@@ -543,6 +589,8 @@ fn generate_vehicles_for_chunk(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
+    chunk_root: Entity,
+    deterministic_rng: &DeterministicRng,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
@@ -551,10 +599,11 @@ fn generate_vehicles_for_chunk(
     
     // Generate vehicles only on roads - REDUCED: From 5 to 2 attempts
     let vehicle_attempts = 2; // Conservative number to prevent overcrowding
+    let mut rng = deterministic_rng.for_chunk(coord);
     
     for _ in 0..vehicle_attempts {
-        let local_x = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
-        let local_z = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
+        let local_x = rng.gen_range(-half_size..half_size);
+        let local_z = rng.gen_range(-half_size..half_size);
         let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
         
         // Only spawn on roads with sufficient spacing
@@ -569,20 +618,23 @@ fn generate_vehicles_for_chunk(
                     commands,
                     coord,
                     position,
+                    chunk_root,
                     meshes,
                     materials,
                 );
                 
-                // Add to placement grid
-                world_manager.placement_grid.add_entity(
+                // Add to placement grid and track grid cell
+                let grid_cell = world_manager.placement_grid.add_entity(
                     position,
                     ContentType::Vehicle,
                     4.0,
                 );
                 
-                // Add entity to chunk
+                // Track this grid cell for efficient cleanup
                 let chunk = world_manager.get_chunk_mut(coord);
-                chunk.entities.push(vehicle_entity);
+                if !chunk.owned_grid_cells.contains(&grid_cell) {
+                    chunk.owned_grid_cells.push(grid_cell);
+                }
             }
         }
     }
@@ -596,6 +648,7 @@ fn spawn_unified_vehicle(
     commands: &mut Commands,
     chunk_coord: ChunkCoord,
     position: Vec3,
+    chunk_root: Entity,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
@@ -616,6 +669,8 @@ fn spawn_unified_vehicle(
                     layer: ContentLayer::Vehicles,
                 },
             ));
+            // Parent vehicle to chunk root
+            commands.entity(chunk_root).add_child(entity);
             entity
         }
         Err(_) => {
@@ -634,6 +689,8 @@ pub fn vegetation_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    deterministic_rng: Res<DeterministicRng>,
+    chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -650,7 +707,9 @@ pub fn vegetation_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_vegetation_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        if let Some(chunk_root) = world_manager.get_chunk_root_entity(coord) {
+            generate_vegetation_for_chunk(&mut commands, &mut world_manager, coord, chunk_root, &deterministic_rng, &mut meshes, &mut materials);
+        }
     }
 }
 
@@ -658,6 +717,8 @@ fn generate_vegetation_for_chunk(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
+    chunk_root: Entity,
+    deterministic_rng: &DeterministicRng,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
@@ -666,10 +727,11 @@ fn generate_vegetation_for_chunk(
     
     // Generate trees and vegetation in open areas
     let vegetation_attempts = 8;
+    let mut rng = deterministic_rng.for_chunk(coord);
     
     for _ in 0..vegetation_attempts {
-        let local_x = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
-        let local_z = LAYERED_RNG.with(|rng| rng.borrow_mut().gen_range(-half_size..half_size));
+        let local_x = rng.gen_range(-half_size..half_size);
+        let local_z = rng.gen_range(-half_size..half_size);
         let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
         
         // Only spawn vegetation away from roads and buildings
@@ -684,20 +746,23 @@ fn generate_vegetation_for_chunk(
                     commands,
                     coord,
                     position,
+                    chunk_root,
                     meshes,
                     materials,
                 );
                 
-                // Add to placement grid
-                world_manager.placement_grid.add_entity(
+                // Add to placement grid and track grid cell
+                let grid_cell = world_manager.placement_grid.add_entity(
                     position,
                     ContentType::Tree,
                     2.0,
                 );
                 
-                // Add entity to chunk
+                // Track this grid cell for efficient cleanup
                 let chunk = world_manager.get_chunk_mut(coord);
-                chunk.entities.push(tree_entity);
+                if !chunk.owned_grid_cells.contains(&grid_cell) {
+                    chunk.owned_grid_cells.push(grid_cell);
+                }
             }
         }
     }
@@ -711,6 +776,7 @@ fn spawn_unified_tree(
     commands: &mut Commands,
     chunk_coord: ChunkCoord,
     position: Vec3,
+    chunk_root: Entity,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
@@ -731,6 +797,8 @@ fn spawn_unified_tree(
                     layer: ContentLayer::Vegetation,
                 },
             ));
+            // Parent tree to chunk root
+            commands.entity(chunk_root).add_child(entity);
             entity
         }
         Err(_) => {

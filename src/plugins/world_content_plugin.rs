@@ -6,6 +6,7 @@ use crate::systems::world::{
     vegetation_layer_system,
     // dynamic_terrain_system - DISABLED: conflicts with WorldRoot coordinate shifting
 };
+use crate::systems::world::layered_generation::DeterministicRng;
 
 /// Plugin responsible for generating world content (roads, buildings, vehicles, vegetation)
 pub struct WorldContentPlugin;
@@ -13,6 +14,7 @@ pub struct WorldContentPlugin;
 impl Plugin for WorldContentPlugin {
     fn build(&self, app: &mut App) {
         app
+            .init_resource::<DeterministicRng>()
             .add_systems(Update, (
                 road_layer_system,
                 building_layer_system,

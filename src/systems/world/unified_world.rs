@@ -3,6 +3,12 @@ use std::collections::HashMap;
 use crate::components::*;
 use crate::systems::world::road_network::RoadNetwork;
 
+/// Marker component for chunk root entities
+#[derive(Component, Debug, Clone)]
+pub struct ChunkRootMarker {
+    pub coord: ChunkCoord,
+}
+
 // UNIFIED WORLD GENERATION SYSTEM
 // This replaces map_system.rs, dynamic_content.rs coordination
 // Provides single source of truth for world streaming and generation
@@ -15,6 +21,21 @@ pub const UNIFIED_STREAMING_RADIUS: f32 = 800.0;
 
 /// LOD transition distances - optimized for 60+ FPS target
 pub const LOD_DISTANCES: [f32; 3] = [150.0, 300.0, 500.0];
+
+// Compile-time assertion to ensure constants match GameConfig defaults
+#[cfg(test)]
+mod constant_validation {
+    use super::*;
+    use crate::config::GameConfig;
+    
+    #[test]
+    fn test_constants_match_game_config() {
+        let config = GameConfig::default();
+        assert_eq!(UNIFIED_CHUNK_SIZE, config.world.chunk_size);
+        assert_eq!(UNIFIED_STREAMING_RADIUS, config.world.streaming_radius);
+        assert_eq!(LOD_DISTANCES, config.world.lod_distances);
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ChunkCoord {
@@ -62,7 +83,8 @@ pub struct ChunkData {
     pub coord: ChunkCoord,
     pub state: ChunkState,
     pub distance_to_player: f32,
-    pub entities: Vec<Entity>,
+    pub root_entity: Option<Entity>,  // Single root entity for the entire chunk
+    pub owned_grid_cells: Vec<(i32, i32)>,  // Grid cells this chunk owns for O(k) cleanup
     pub last_update: f32,
     
     // Layer generation flags
@@ -78,7 +100,8 @@ impl ChunkData {
             coord,
             state: ChunkState::Unloaded,
             distance_to_player: f32::INFINITY,
-            entities: Vec::new(),
+            root_entity: None,
+            owned_grid_cells: Vec::new(),
             last_update: 0.0,
             roads_generated: false,
             buildings_generated: false,
@@ -110,9 +133,10 @@ impl PlacementGrid {
         self.grid.clear();
     }
     
-    pub fn add_entity(&mut self, position: Vec3, content_type: ContentType, radius: f32) {
+    pub fn add_entity(&mut self, position: Vec3, content_type: ContentType, radius: f32) -> (i32, i32) {
         let cell = self.world_to_grid(position);
         self.grid.entry(cell).or_default().push((position, content_type, radius));
+        cell
     }
     
     pub fn remove_entity(&mut self, position: Vec3, content_type: ContentType) {
@@ -219,6 +243,10 @@ impl UnifiedWorldManager {
         self.chunks.entry(coord).or_insert_with(|| ChunkData::new(coord))
     }
     
+    pub fn get_chunk_root_entity(&self, coord: ChunkCoord) -> Option<Entity> {
+        self.chunks.get(&coord)?.root_entity
+    }
+    
     pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
         matches!(
             self.chunks.get(&coord).map(|c| c.state),
@@ -276,20 +304,10 @@ impl UnifiedWorldManager {
     }
     
     pub fn clear_placement_grid_for_chunk(&mut self, coord: ChunkCoord) {
-        // CRITICAL FIX: Actually clear placement grid entries for this chunk
-        let chunk_center = coord.to_world_pos();
-        let half_size = UNIFIED_CHUNK_SIZE * 0.5;
-        
-        // Calculate grid cell range for this chunk
-        let min_x = ((chunk_center.x - half_size) / self.placement_grid.cell_size).floor() as i32;
-        let max_x = ((chunk_center.x + half_size) / self.placement_grid.cell_size).ceil() as i32;
-        let min_z = ((chunk_center.z - half_size) / self.placement_grid.cell_size).floor() as i32;
-        let max_z = ((chunk_center.z + half_size) / self.placement_grid.cell_size).ceil() as i32;
-        
-        // Remove all grid cells within chunk bounds
-        for x in min_x..=max_x {
-            for z in min_z..=max_z {
-                self.placement_grid.grid.remove(&(x, z));
+        // O(k) cleanup using per-chunk cell tracking instead of O(cells²) range scan
+        if let Some(chunk) = self.chunks.get(&coord) {
+            for &cell in &chunk.owned_grid_cells {
+                self.placement_grid.grid.remove(&cell);
             }
         }
     }
@@ -372,22 +390,20 @@ fn initiate_chunk_loading(
     let logical_pos = coord.to_world_pos();
     let render_pos = world_offset.logical_to_render(logical_pos);
     
-    // Create a marker entity for this chunk and PARENT TO WORLDROOT
-    let chunk_entity = commands.spawn((
-        UnifiedChunkEntity {
-            coord,
-            layer: ContentLayer::Roads, // Start with roads
-        },
+    // Create a single root entity for the entire chunk
+    let chunk_root_entity = commands.spawn((
+        ChunkRootMarker { coord },
         Transform::from_translation(render_pos),
         Visibility::Visible,
         InheritedVisibility::default(),
         ViewVisibility::default(),
     )).id();
     
-    // CRITICAL FIX: Parent to WorldRoot so it follows origin shifts
-    commands.entity(world_root).add_child(chunk_entity);
+    // Parent to WorldRoot so it follows origin shifts
+    commands.entity(world_root).add_child(chunk_root_entity);
     
-    chunk.entities.push(chunk_entity);
+    // Store the single root entity
+    chunk.root_entity = Some(chunk_root_entity);
 }
 
 fn unload_chunk(
@@ -396,9 +412,9 @@ fn unload_chunk(
     coord: ChunkCoord,
 ) {
     if let Some(chunk) = world_manager.chunks.get(&coord) {
-        // CRITICAL FIX: Use despawn to clean up entire hierarchy (auto-recursive in Bevy 0.16)
-        for &entity in &chunk.entities {
-            commands.entity(entity).despawn();
+        // Use despawn to clean up entire chunk hierarchy (auto-recursive in Bevy 0.16)
+        if let Some(root_entity) = chunk.root_entity {
+            commands.entity(root_entity).despawn();
         }
         
         // Clear from placement grid

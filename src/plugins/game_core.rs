@@ -14,7 +14,7 @@ use crate::systems::{
     
     // Coordinate safety systems
     WorldOffset, FloatingOriginConfig, WorldOriginShifted, setup_world_root,
-    seamless_world_rebase_system, floating_origin_diagnostics, world_sanity_check_system, 
+    seamless_world_rebase_system, update_physics_after_origin_shift, floating_origin_diagnostics, world_sanity_check_system, 
     world_shift_special_cases_system, ActiveEntityTransferred, active_transfer_executor_system, 
     active_entity_integrity_check, validate_streaming_position
 };
@@ -112,7 +112,10 @@ impl Plugin for GameCorePlugin {
             
             // Coordinate safety systems with seamless world shifting
             // Seamless world rebase runs BEFORE physics simulation
-            .add_systems(PreUpdate, seamless_world_rebase_system)
+            .add_systems(PreUpdate, (
+                seamless_world_rebase_system,
+                update_physics_after_origin_shift,
+            ).chain())
             
             .add_systems(FixedUpdate, (
                 // Universal physics safeguards run AFTER Rapier physics step
