@@ -17,6 +17,7 @@ use crate::systems::{
     world_sanity_check_system, world_shift_special_cases_system, ActiveEntityTransferred, 
     active_transfer_executor_system, active_entity_integrity_check, validate_streaming_position
 };
+use crate::systems::physics::apply_universal_physics_safeguards;
 use crate::services::GroundDetectionPlugin;
 use crate::GameState;
 use crate::config::GameConfig;
@@ -106,6 +107,17 @@ impl Plugin for GameCorePlugin {
             ))
             
             // Coordinate safety systems with floating origin enabled
+            .add_systems(FixedUpdate, (
+                // Universal physics safeguards run AFTER Rapier physics step
+                apply_universal_physics_safeguards,
+                
+                // Floating origin system for infinite worlds  
+                floating_origin_system,
+                
+                // Special cases system handles entities with separate position data
+                world_shift_special_cases_system,
+            ).chain())
+            
             .add_systems(Update, (
                 // Input validation catches bad positions early
                 validate_streaming_position,
@@ -114,12 +126,8 @@ impl Plugin for GameCorePlugin {
                 active_transfer_executor_system,
                 active_entity_integrity_check,
                 
-                // Floating origin system for infinite worlds (conservative threshold)
-                floating_origin_system.after(active_transfer_executor_system),
+                // Diagnostics and monitoring
                 floating_origin_diagnostics,
-                
-                // Special cases system handles entities with separate position data
-                world_shift_special_cases_system.after(floating_origin_system),
                 
                 // Safety system to catch any remaining orphaned entities
                 world_sanity_check_system,
