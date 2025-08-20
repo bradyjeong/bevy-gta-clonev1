@@ -8,6 +8,7 @@ use crate::systems::human_behavior::HumanEmotions;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
 use crate::services::distance_cache::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
+use crate::systems::floating_origin::{WorldRoot, IgnoreWorldShift};
 
 pub fn setup_basic_world(
     mut commands: Commands,
@@ -15,15 +16,23 @@ pub fn setup_basic_world(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
+    world_root_query: Query<Entity, With<WorldRoot>>,
 ) {
-    // Camera (higher to see the massive Dubai world)
+    // Get WorldRoot entity (should exist from setup_world_root system)
+    let Ok(world_root) = world_root_query.single() else {
+        error!("WorldRoot entity not found - cannot setup world");
+        return;
+    };
+    
+    // Camera (stays outside WorldRoot - doesn't move with world shifts)
     commands.spawn((
         MainCamera,
         Camera3d::default(),
         Transform::from_xyz(0.0, 15.0, 25.0).looking_at(Vec3::ZERO, Vec3::Y),
+        IgnoreWorldShift, // Camera must not shift with world
     ));
 
-    // Controls UI
+    // Controls UI (stays outside WorldRoot - UI doesn't move with world shifts)
     commands
         .spawn((
             Node {
@@ -40,6 +49,7 @@ pub fn setup_basic_world(
             Visibility::Visible,
             InheritedVisibility::VISIBLE,
             ViewVisibility::default(),
+            IgnoreWorldShift, // UI must not shift with world
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -59,16 +69,18 @@ pub fn setup_basic_world(
 
 
 
-    // DYNAMIC TERRAIN - Below roads with proper collision separation
-    commands.spawn((
-        DynamicTerrain,
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(4000.0, 4000.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))),
-        Transform::from_xyz(0.0, -0.15, 0.0), // 15cm below road surface at y=0.0
-        RigidBody::Fixed,
-        Collider::cuboid(2000.0, 0.05, 2000.0), // Terrain collider: -0.2 to -0.1
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
-    ));
+    // INFINITE TERRAIN - Massive plane for infinite world (parented to WorldRoot)
+    commands.entity(world_root).with_children(|parent| {
+        parent.spawn((
+            DynamicTerrain,
+            Mesh3d(meshes.add(Plane3d::default().mesh().size(100_000.0, 100_000.0))), // 100km x 100km
+            MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))),
+            Transform::from_xyz(0.0, -0.15, 0.0), // 15cm below road surface at y=0.0
+            RigidBody::Fixed,
+            Collider::cuboid(50_000.0, 0.05, 50_000.0), // 50km radius terrain collider
+            CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
+        ));
+    });
 
     // Calculate proper ground position for player spawn
     let player_spawn_pos = Vec2::new(0.0, 0.0);
@@ -77,7 +89,7 @@ pub fn setup_basic_world(
     
     println!("DEBUG: Player spawn - ground height: {:.3}, final Y: {:.3}", ground_height, player_y);
     
-    // Player character with human-like components
+    // Player character with human-like components (parented to WorldRoot)
     let player_entity = commands.spawn((
         Player,
         ActiveEntity,
@@ -92,6 +104,8 @@ pub fn setup_basic_world(
         CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP),
         Damping { linear_damping: 1.2, angular_damping: 3.5 }, // Balanced damping to prevent overspin
     )).id();
+    
+    // Player stays independent of WorldRoot - moves freely in world coordinates
     
     // Add human behavior components separately
     commands.entity(player_entity).insert((

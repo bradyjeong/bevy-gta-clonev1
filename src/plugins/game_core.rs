@@ -13,9 +13,10 @@ use crate::systems::{
     TransformSyncPlugin, UnifiedDistanceCalculatorPlugin, UnifiedPerformancePlugin,
     
     // Coordinate safety systems
-    WorldOffset, FloatingOriginConfig, WorldOriginShifted, floating_origin_system, floating_origin_diagnostics,
-    world_sanity_check_system, world_shift_special_cases_system, ActiveEntityTransferred, 
-    active_transfer_executor_system, active_entity_integrity_check, validate_streaming_position
+    WorldOffset, FloatingOriginConfig, WorldOriginShifted, setup_world_root,
+    seamless_world_rebase_system, floating_origin_diagnostics, world_sanity_check_system, 
+    world_shift_special_cases_system, ActiveEntityTransferred, active_transfer_executor_system, 
+    active_entity_integrity_check, validate_streaming_position
 };
 use crate::systems::physics::apply_universal_physics_safeguards;
 use crate::services::GroundDetectionPlugin;
@@ -106,13 +107,16 @@ impl Plugin for GameCorePlugin {
                 UIPlugin,
             ))
             
-            // Coordinate safety systems with floating origin enabled
+            // Setup world root entity at startup
+            .add_systems(Startup, setup_world_root)
+            
+            // Coordinate safety systems with seamless world shifting
+            // Seamless world rebase runs BEFORE physics simulation
+            .add_systems(PreUpdate, seamless_world_rebase_system)
+            
             .add_systems(FixedUpdate, (
                 // Universal physics safeguards run AFTER Rapier physics step
                 apply_universal_physics_safeguards,
-                
-                // Floating origin system for infinite worlds  
-                floating_origin_system,
                 
                 // Special cases system handles entities with separate position data
                 world_shift_special_cases_system,

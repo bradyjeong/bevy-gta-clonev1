@@ -29,31 +29,26 @@ impl PhysicsUtilities {
         time.delta_secs().clamp(0.001, 0.05)
     }
     
-    /// Clamp entity position to world bounds
-    pub fn apply_world_bounds(
+    /// Emergency failsafe for extreme coordinate corruption (>100km)
+    /// Only logs and disables entities - no more invisible walls
+    pub fn emergency_coordinate_failsafe(
         transform: &mut Transform,
-        velocity: &mut Velocity,
-        config: &GameConfig
-    ) {
-        let bounds = config.physics.max_world_coord;
+        entity: Entity,
+        commands: &mut Commands
+    ) -> bool {
+        const EMERGENCY_THRESHOLD: f32 = 100_000.0; // 100km - truly extreme
         
-        // Check and clamp X bounds
-        if transform.translation.x > bounds {
-            transform.translation.x = bounds;
-            velocity.linvel.x = velocity.linvel.x.min(0.0);
-        } else if transform.translation.x < -bounds {
-            transform.translation.x = -bounds;
-            velocity.linvel.x = velocity.linvel.x.max(0.0);
+        let distance = transform.translation.length();
+        if distance > EMERGENCY_THRESHOLD {
+            error!("Entity {:?} at extreme distance {:.1}km - disabling for safety", 
+                   entity, distance / 1000.0);
+            
+            // Disable the entity instead of teleporting it
+            commands.entity(entity).insert(RigidBodyDisabled);
+            return true; // Indicates emergency action taken
         }
         
-        // Check and clamp Z bounds
-        if transform.translation.z > bounds {
-            transform.translation.z = bounds;
-            velocity.linvel.z = velocity.linvel.z.min(0.0);
-        } else if transform.translation.z < -bounds {
-            transform.translation.z = -bounds;
-            velocity.linvel.z = velocity.linvel.z.max(0.0);
-        }
+        false // No emergency action needed
     }
 }
 
@@ -80,6 +75,7 @@ impl CollisionGroupHelper {
 /// Enhanced comprehensive physics safety system
 /// Runs AFTER physics step to catch any corruption before other systems see it
 pub fn apply_universal_physics_safeguards(
+    mut commands: Commands,
     mut query: Query<(Entity, &mut Velocity, &mut Transform), With<RigidBody>>,
     config: Res<GameConfig>,
 ) {
@@ -92,7 +88,10 @@ pub fn apply_universal_physics_safeguards(
             warn!("Entity {:?} had corrupted physics data, fixed", entity);
         }
         
-        // Apply game-specific bounds
-        PhysicsUtilities::apply_world_bounds(&mut transform, &mut velocity, &config);
+        // Emergency failsafe only - no hard boundaries anymore
+        PhysicsUtilities::emergency_coordinate_failsafe(&mut transform, entity, &mut commands);
+        
+        // Clamp velocity to prevent physics explosions (but allow free movement)
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
     }
 }

@@ -16,6 +16,7 @@
 //! - `player`: Player character markers and state
 //! - `vehicles`: Vehicle types and properties
 //! - `world`: Terrain and world structure markers
+//! - `entity_types`: World entity classification for LOD and spawning
 //!
 //! ### Visual & Rendering
 //! - `effects`: Visual effect data and parameters
@@ -66,6 +67,7 @@ pub mod instanced_vegetation;
 pub mod control_state;
 pub mod safety;
 pub mod unified_vehicle;
+pub mod entity_types;
 
 pub use player::*;
 pub use vehicles::*;
@@ -80,3 +82,4 @@ pub use instanced_vegetation::*;
 pub use control_state::*;
 pub use safety::*;
 pub use unified_vehicle::*;
+pub use entity_types::*;

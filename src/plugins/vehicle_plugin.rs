@@ -3,7 +3,7 @@ use crate::systems::movement::{car_movement, simple_f16_movement, simple_helicop
 use crate::systems::setup::on_f16_spawned;
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames_unified};
-use crate::systems::safety::{bounds_safety_system, bounds_diagnostics_system, validate_physics_config};
+use crate::systems::safety::{bounds_diagnostics_system, validate_physics_config};
 use crate::components::safety::WorldBounds;
 use crate::systems::vehicles::vehicle_lod_system;
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
@@ -21,11 +21,9 @@ impl Plugin for VehiclePlugin {
         // Observer for F16 setup when specs are added
         .add_observer(on_f16_spawned)
         .add_systems(Update, (
-            // CRITICAL PHYSICS SAFEGUARDS: Unified bounds safety with NaN protection
-            bounds_safety_system,
+            // REMOVED: bounds_safety_system - replaced with seamless world root shifting
+            // Only keep diagnostics for monitoring
             bounds_diagnostics_system,
-            
-
             
             // LOD system runs after safeguards
             vehicle_lod_system,

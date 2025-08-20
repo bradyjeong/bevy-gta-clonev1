@@ -4,7 +4,7 @@ use crate::systems::world::{
     building_layer_system,
     vehicle_layer_system,
     vegetation_layer_system,
-    dynamic_terrain_system,
+    // dynamic_terrain_system - DISABLED: conflicts with WorldRoot coordinate shifting
 };
 
 /// Plugin responsible for generating world content (roads, buildings, vehicles, vegetation)
@@ -18,7 +18,7 @@ impl Plugin for WorldContentPlugin {
                 building_layer_system,
                 vehicle_layer_system,
                 vegetation_layer_system,
-                dynamic_terrain_system,
+                // dynamic_terrain_system - DISABLED: terrain follows WorldRoot automatically
             ).chain());
     }
 }

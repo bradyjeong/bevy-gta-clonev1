@@ -10,6 +10,7 @@ use crate::factories::{MaterialFactory, MeshFactory};
 use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};
 
 use crate::systems::{RoadNetwork, is_on_road_spline, UnifiedCullable, MovementTracker};
+use crate::systems::floating_origin::WorldRoot;
 
 use crate::GameConfig;
 
@@ -135,20 +136,30 @@ impl UnifiedEntityFactory {
         }
     }
     
-    /// Validate position is within world bounds
+    /// Helper to spawn entity under WorldRoot for seamless coordinate shifting
+    pub fn spawn_under_world_root<B: Bundle>(
+        &self,
+        commands: &mut Commands,
+        world_root_query: &Query<Entity, With<WorldRoot>>,
+        bundle: B,
+    ) -> Result<Entity, BundleError> {
+        let Ok(world_root) = world_root_query.single() else {
+            return Err(BundleError::InvalidEntityType { entity_type: "WorldRoot not found".to_string() });
+        };
+        
+        let entity = commands.spawn(bundle).id();
+        commands.entity(world_root).add_child(entity);
+        Ok(entity)
+    }
+    
+    /// Validate position is safe (no more hard bounds, just safety check)
     pub fn validate_position(&self, position: Vec3) -> Result<Vec3, BundleError> {
-        if position.x.abs() > self.config.physics.max_world_coord ||
-           position.z.abs() > self.config.physics.max_world_coord {
-            return Err(BundleError::PositionOutOfBounds {
-                position,
-                max_coord: self.config.physics.max_world_coord,
-            });
+        if !position.is_finite() {
+            return Err(BundleError::InvalidEntityType { entity_type: "Position contains NaN/Infinity".to_string() });
         }
         
-        Ok(position.clamp(
-            Vec3::splat(self.config.physics.min_world_coord),
-            Vec3::splat(self.config.physics.max_world_coord),
-        ))
+        // No hard bounds anymore - floating origin handles large distances smoothly
+        Ok(position)
     }
     
     /// Get ground height at position with caching for performance
