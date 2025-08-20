@@ -124,8 +124,9 @@ pub use safe_active_entity::{
 
 // Floating origin system
 pub use floating_origin::{
-    WorldOffset, IgnoreWorldShift, WorldOriginShifted, FloatingOriginConfig,
-    floating_origin_system, validate_streaming_position, floating_origin_diagnostics
+    WorldOffset, IgnoreWorldShift, FollowsWorldOffset, WorldOriginShifted, FloatingOriginConfig,
+    floating_origin_system, validate_streaming_position, floating_origin_diagnostics,
+    world_sanity_check_system, world_shift_special_cases_system
 };
 
 // Simple service examples

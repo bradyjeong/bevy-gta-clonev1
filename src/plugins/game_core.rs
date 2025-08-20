@@ -14,8 +14,8 @@ use crate::systems::{
     
     // Coordinate safety systems
     WorldOffset, FloatingOriginConfig, WorldOriginShifted, floating_origin_system, floating_origin_diagnostics,
-    ActiveEntityTransferred, active_transfer_executor_system, active_entity_integrity_check,
-    validate_streaming_position
+    world_sanity_check_system, world_shift_special_cases_system, ActiveEntityTransferred, 
+    active_transfer_executor_system, active_entity_integrity_check, validate_streaming_position
 };
 use crate::services::GroundDetectionPlugin;
 use crate::GameState;
@@ -117,6 +117,12 @@ impl Plugin for GameCorePlugin {
                 // Floating origin system for infinite worlds (conservative threshold)
                 floating_origin_system.after(active_transfer_executor_system),
                 floating_origin_diagnostics,
+                
+                // Special cases system handles entities with separate position data
+                world_shift_special_cases_system.after(floating_origin_system),
+                
+                // Safety system to catch any remaining orphaned entities
+                world_sanity_check_system,
             ).chain());
         
         info!("✅ Game Core Plugin loaded with complete coordinate safety and infinite world support");
