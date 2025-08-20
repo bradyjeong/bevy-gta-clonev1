@@ -124,6 +124,7 @@ pub fn road_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    deterministic_rng: Res<DeterministicRng>,
     chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
@@ -140,7 +141,7 @@ pub fn road_layer_system(
     
     for coord in chunks_to_process {
         if let Some(chunk_root) = world_manager.get_chunk_root_entity(coord) {
-            generate_roads_for_chunk(&mut commands, &mut world_manager, coord, chunk_root, &mut meshes, &mut materials);
+            generate_roads_for_chunk(&mut commands, &mut world_manager, coord, chunk_root, &deterministic_rng, &mut meshes, &mut materials);
         }
     }
 }
@@ -150,11 +151,13 @@ fn generate_roads_for_chunk(
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
     chunk_root: Entity,
+    deterministic_rng: &DeterministicRng,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
     // Use existing road network generation logic but adapted for unified system
-    let new_road_ids = world_manager.road_network.generate_chunk_roads(coord.x, coord.z);
+    let mut rng = deterministic_rng.for_chunk(coord);
+    let new_road_ids = world_manager.road_network.generate_chunk_roads(coord.x, coord.z, &mut rng);
     
     // Create road entities and add to placement grid
     for road_id in new_road_ids {

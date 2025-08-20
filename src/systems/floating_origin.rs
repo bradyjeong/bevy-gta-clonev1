@@ -149,6 +149,9 @@ pub fn update_physics_after_origin_shift(
             transform.translation += physics_shift;
         }
         
+        // Note: Rapier 0.30 will sync from Transform changes automatically
+        // No need for manual RigidBody position updates
+        
         info!("Updated {} physics bodies for world origin shift", rigidbody_query.iter().count());
     }
 }

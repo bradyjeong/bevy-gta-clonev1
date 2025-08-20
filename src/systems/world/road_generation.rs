@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use rand::SeedableRng;
 use crate::components::*;
 use crate::systems::world::road_network::RoadNetwork;
 use crate::components::RoadEntity;
@@ -99,7 +100,9 @@ pub fn road_network_system(
             let distance = active_pos.distance(chunk_center);
             if distance <= active_radius {
                 // println!("DEBUG: Generating roads for chunk ({}, {}) at distance {}", check_chunk_x, check_chunk_z, distance);
-                let new_road_ids = road_network.generate_chunk_roads(check_chunk_x, check_chunk_z);
+                // TODO: This is legacy code - update to use DeterministicRng
+                let mut temp_rng = rand_chacha::ChaCha8Rng::seed_from_u64(((check_chunk_x as u64) << 32) | (check_chunk_z as u64));
+                let new_road_ids = road_network.generate_chunk_roads(check_chunk_x, check_chunk_z, &mut temp_rng);
                 // println!("DEBUG: Generated {} roads for chunk ({}, {})", new_road_ids.len(), check_chunk_x, check_chunk_z);
                 
                 // Spawn mesh entities for new roads

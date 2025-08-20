@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 use rstar::{RTree, RTreeObject, AABB};
+use rand::Rng;
+use rand_chacha::ChaCha8Rng;
 use crate::util::safe_math::safe_lerp;
 
 // NEW GTA-STYLE ROAD NETWORK SYSTEM
@@ -301,8 +303,8 @@ impl RoadNetwork {
         id
     }
     
-    // Generate road network for a chunk
-    pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32> {
+    // Generate road network for a chunk using deterministic RNG
+    pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32, rng: &mut ChaCha8Rng) -> Vec<u32> {
         if self.generated_chunks.contains(&(chunk_x, chunk_z)) {
             // println!("DEBUG: Chunk ({}, {}) already generated, skipping", chunk_x, chunk_z);
             return Vec::new();
@@ -330,7 +332,7 @@ impl RoadNetwork {
             let road_type = RoadType::MainStreet;
             let height = road_type.height();
             let start = Vec3::new(base_x, height, base_z - chunk_size * 0.5);
-            let control = Vec3::new(base_x + rand::random::<f32>() * 20.0 - 10.0, height, base_z + chunk_size * 0.2);
+            let control = Vec3::new(base_x + rng.gen_range(-10.0..10.0), height, base_z + chunk_size * 0.2);
             let end = Vec3::new(base_x, height, base_z + chunk_size * 1.5);
             
             let road_id = self.add_curved_road(start, control, end, road_type);
@@ -344,7 +346,7 @@ impl RoadNetwork {
             let road_type = RoadType::MainStreet;
             let height = road_type.height();
             let start = Vec3::new(base_x - chunk_size * 0.5, height, base_z);
-            let control = Vec3::new(base_x + chunk_size * 0.2, height, base_z + rand::random::<f32>() * 20.0 - 10.0);
+            let control = Vec3::new(base_x + chunk_size * 0.2, height, base_z + rng.gen_range(-10.0..10.0));
             let end = Vec3::new(base_x + chunk_size * 1.5, height, base_z);
             
             let road_id = self.add_curved_road(start, control, end, road_type);
@@ -371,10 +373,10 @@ impl RoadNetwork {
                 let sub_z = base_z + (j as f32 + 0.5) * chunk_size / 3.0;
                 
                 // Add some randomness to break the grid
-                let offset_x = (rand::random::<f32>() - 0.5) * 30.0;
-                let offset_z = (rand::random::<f32>() - 0.5) * 30.0;
+                let offset_x = rng.gen_range(-15.0..15.0);
+                let offset_z = rng.gen_range(-15.0..15.0);
                 
-                if rand::random::<f32>() < 0.8 { // 80% chance for side street
+                if rng.gen_range(0.0..1.0) < 0.8 { // 80% chance for side street
                     let road_type = RoadType::SideStreet;
                     let height = road_type.height();
                     let start = Vec3::new(sub_x + offset_x, height, sub_z - 40.0);
