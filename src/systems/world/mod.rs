@@ -6,7 +6,7 @@ pub mod road_network;
 pub mod road_mesh;
 pub mod road_generation;
 pub mod debug;
-pub mod map_system;
+
 
 // NEW UNIFIED WORLD SYSTEM
 pub mod unified_world;
@@ -27,7 +27,7 @@ pub use road_network::*;
 pub use road_mesh::*;
 pub use road_generation::*;
 pub use debug::*;
-pub use map_system::*;
+
 
 // Export unified system components
 pub use unified_world::*;

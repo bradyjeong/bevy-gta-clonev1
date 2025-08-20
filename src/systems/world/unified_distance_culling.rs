@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::components::*;
 use crate::services::distance_cache::{DistanceCache, get_cached_distance_squared};
-use crate::systems::world::map_system::MapChunk;
+
 
 /// Configuration for distance-based culling and LOD for different entity types
 #[derive(Clone, Debug)]
@@ -347,29 +347,7 @@ pub struct VegetationLODUpdate {
     pub distance: f32,
 }
 
-/// System for chunk LOD using unified culling (replaces map_system chunk LOD)
-pub fn unified_chunk_lod_system(
-    chunk_query: Query<(Entity, &UnifiedCullable, &MapChunk), (With<DirtyLOD>, Changed<UnifiedCullable>)>,
-    mut commands: Commands,
-) {
-    for (entity, cullable, chunk) in chunk_query.iter() {
-        if cullable.is_culled {
-            // Mark chunk for unloading
-            commands.entity(entity).insert(ChunkUnloadRequest);
-        } else {
-            // Update chunk LOD if changed
-            if chunk.lod_level != cullable.current_lod {
-                commands.entity(entity).insert(ChunkLODUpdate { 
-                    new_lod: cullable.current_lod,
-                    distance: cullable.last_distance,
-                });
-            }
-        }
-        
-        // Remove dirty flag after processing
-        commands.entity(entity).remove::<DirtyLOD>();
-    }
-}
+
 
 /// Component to signal chunk LOD updates
 #[derive(Component)]
@@ -488,7 +466,7 @@ impl Plugin for UnifiedDistanceCullingPlugin {
                 unified_vehicle_lod_system,
                 unified_npc_lod_system,
                 unified_vegetation_lod_system,
-                unified_chunk_lod_system,
+
                 
                 // Support systems
                 unified_culling_movement_tracker,
