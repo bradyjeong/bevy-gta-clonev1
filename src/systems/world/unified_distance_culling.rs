@@ -169,6 +169,7 @@ pub fn new_unified_distance_culling_system(
     time: Res<Time>,
     _commands: Commands,
     frame_counter: Res<FrameCounter>,
+    config: Option<Res<crate::config::GameConfig>>,
 ) {
     let Ok((active_entity, active_transform)) = active_query.single() else { return };
     let player_pos = active_transform.translation;
@@ -177,21 +178,24 @@ pub fn new_unified_distance_culling_system(
     let current_time = timer.elapsed;
     let _current_frame = frame_counter.frame;
     
-    // Time budgeting - max 4ms per frame
-    let start_time = std::time::Instant::now();
-    const MAX_FRAME_TIME: std::time::Duration = std::time::Duration::from_millis(4);
+    // Get performance config
+    let game_config = config.as_ref().expect("GameConfig required for unified distance culling");
     
-    // Reduced entity processing per frame
+    // Time budgeting - configurable frame time budget
+    let start_time = time.elapsed_secs();
+    let max_frame_time_ms = game_config.performance.max_frame_time_ms;
+    
+    // Configurable entity processing per frame  
     let mut processed = 0;
-    const MAX_ENTITIES_PER_FRAME: usize = 15;
+    let max_entities_per_frame = game_config.performance.max_entities_per_frame;
     
     for (entity, mut cullable, transform, mut visibility) in cullable_query.iter_mut() {
-        // Early exit if time budget exceeded
-        if start_time.elapsed() > MAX_FRAME_TIME {
+        // Early exit if time budget exceeded  
+        if (time.elapsed_secs() - start_time) * 1000.0 > max_frame_time_ms {
             break;
         }
         
-        if processed >= MAX_ENTITIES_PER_FRAME {
+        if processed >= max_entities_per_frame {
             break;
         }
         

@@ -13,30 +13,9 @@ pub struct ChunkRootMarker {
 // This replaces map_system.rs, dynamic_content.rs coordination
 // Provides single source of truth for world streaming and generation
 
-/// Standard chunk size used across all world systems
-pub const UNIFIED_CHUNK_SIZE: f32 = 200.0;
 
-/// Maximum streaming radius around active entity
-pub const UNIFIED_STREAMING_RADIUS: f32 = 800.0;
 
-/// LOD transition distances - optimized for 60+ FPS target
-pub const LOD_DISTANCES: [f32; 3] = [150.0, 300.0, 500.0];
 
-// Compile-time assertion to ensure constants match GameConfig defaults
-#[cfg(test)]
-mod constant_validation {
-    use super::*;
-    use crate::config::GameConfig;
-    
-    #[test]
-    fn test_constants_match_game_config() {
-        let config = GameConfig::default();
-        assert_eq!(UNIFIED_CHUNK_SIZE, config.world.chunk_size);
-        assert_eq!(UNIFIED_STREAMING_RADIUS, config.world.streaming_radius);
-        assert_eq!(LOD_DISTANCES, config.world.lod_distances);
-        // max_chunks_per_frame is dynamically updated from config, not a constant
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ChunkCoord {
@@ -49,18 +28,18 @@ impl ChunkCoord {
         Self { x, z }
     }
     
-    pub fn from_world_pos(world_pos: Vec3) -> Self {
+    pub fn from_world_pos(world_pos: Vec3, chunk_size: f32) -> Self {
         Self {
-            x: (world_pos.x / UNIFIED_CHUNK_SIZE).floor() as i32,
-            z: (world_pos.z / UNIFIED_CHUNK_SIZE).floor() as i32,
+            x: (world_pos.x / chunk_size).floor() as i32,
+            z: (world_pos.z / chunk_size).floor() as i32,
         }
     }
     
-    pub fn to_world_pos(&self) -> Vec3 {
+    pub fn to_world_pos(&self, chunk_size: f32) -> Vec3 {
         Vec3::new(
-            self.x as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5,
+            self.x as f32 * chunk_size + chunk_size * 0.5,
             0.0,
-            self.z as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5,
+            self.z as f32 * chunk_size + chunk_size * 0.5,
         )
     }
     
@@ -226,7 +205,7 @@ impl Default for UnifiedWorldManager {
             placement_grid: PlacementGrid::new(),
             road_network: RoadNetwork::default(),
             active_chunk: None,
-            streaming_radius_chunks: (UNIFIED_STREAMING_RADIUS / UNIFIED_CHUNK_SIZE).ceil() as i32,
+            streaming_radius_chunks: 4, // Will be calculated from config on first update
             last_update: 0.0,
             chunks_loaded_this_frame: 0,
             chunks_unloaded_this_frame: 0,
@@ -255,22 +234,22 @@ impl UnifiedWorldManager {
         )
     }
     
-    pub fn calculate_lod_level(&self, distance: f32) -> usize {
-        for (i, &max_distance) in LOD_DISTANCES.iter().enumerate() {
+    pub fn calculate_lod_level(&self, distance: f32, lod_distances: &[f32]) -> usize {
+        for (i, &max_distance) in lod_distances.iter().enumerate() {
             if distance <= max_distance {
                 return i;
             }
         }
-        LOD_DISTANCES.len() - 1
+        lod_distances.len() - 1
     }
     
-    pub fn cleanup_distant_chunks(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
+    pub fn cleanup_distant_chunks(&mut self, active_pos: Vec3, streaming_radius: f32, chunk_size: f32) -> Vec<ChunkCoord> {
         let mut to_unload = Vec::new();
         
         for (coord, chunk) in &mut self.chunks {
-            chunk.distance_to_player = active_pos.distance(coord.to_world_pos());
+            chunk.distance_to_player = active_pos.distance(coord.to_world_pos(chunk_size));
             
-            if chunk.distance_to_player > UNIFIED_STREAMING_RADIUS + UNIFIED_CHUNK_SIZE {
+            if chunk.distance_to_player > streaming_radius + chunk_size {
                 if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
                     chunk.state = ChunkState::Unloading;
                     to_unload.push(*coord);
@@ -281,16 +260,16 @@ impl UnifiedWorldManager {
         to_unload
     }
     
-    pub fn get_chunks_to_load(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
-        let active_chunk = ChunkCoord::from_world_pos(active_pos);
+    pub fn get_chunks_to_load(&mut self, active_pos: Vec3, streaming_radius: f32, chunk_size: f32) -> Vec<ChunkCoord> {
+        let active_chunk = ChunkCoord::from_world_pos(active_pos, chunk_size);
         let mut to_load = Vec::new();
         
         for dx in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
             for dz in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
                 let coord = ChunkCoord::new(active_chunk.x + dx, active_chunk.z + dz);
-                let distance = active_pos.distance(coord.to_world_pos());
+                let distance = active_pos.distance(coord.to_world_pos(chunk_size));
                 
-                if distance <= UNIFIED_STREAMING_RADIUS {
+                if distance <= streaming_radius {
                     let chunk = self.get_chunk_mut(coord);
                     if matches!(chunk.state, ChunkState::Unloaded) {
                         chunk.state = ChunkState::Loading;
@@ -345,10 +324,16 @@ pub fn unified_world_streaming_system(
     // Convert render position to logical position for streaming calculations
     let active_pos = world_offset.render_to_logical(active_transform.translation);
     
+    // Get config values with defaults first
+    let (streaming_radius, chunk_size, max_chunks_per_frame) = if let Some(config) = &game_config {
+        (config.world.streaming_radius, config.world.chunk_size, config.world.max_chunks_per_frame)
+    } else {
+        (800.0, 200.0, 4) // Fallback defaults
+    };
+    
     // Update config-driven parameters
-    if let Some(config) = game_config {
-        world_manager.max_chunks_per_frame = config.world.max_chunks_per_frame;
-    }
+    world_manager.max_chunks_per_frame = max_chunks_per_frame;
+    world_manager.streaming_radius_chunks = (streaming_radius / chunk_size).ceil() as i32;
     
     // Update timing
     world_manager.last_update = time.elapsed_secs();
@@ -356,12 +341,12 @@ pub fn unified_world_streaming_system(
     world_manager.chunks_unloaded_this_frame = 0;
     
     // Update active chunk
-    let current_chunk = ChunkCoord::from_world_pos(active_pos);
+    let current_chunk = ChunkCoord::from_world_pos(active_pos, chunk_size);
     let _chunk_changed = world_manager.active_chunk != Some(current_chunk);
     world_manager.active_chunk = Some(current_chunk);
     
     // Cleanup distant chunks
-    let chunks_to_unload = world_manager.cleanup_distant_chunks(active_pos);
+    let chunks_to_unload = world_manager.cleanup_distant_chunks(active_pos, streaming_radius, chunk_size);
     for coord in chunks_to_unload {
         if world_manager.chunks_unloaded_this_frame >= world_manager.max_chunks_per_frame {
             break;
@@ -371,12 +356,12 @@ pub fn unified_world_streaming_system(
     }
     
     // Load new chunks
-    let chunks_to_load = world_manager.get_chunks_to_load(active_pos);
+    let chunks_to_load = world_manager.get_chunks_to_load(active_pos, streaming_radius, chunk_size);
     for coord in chunks_to_load {
         if world_manager.chunks_loaded_this_frame >= world_manager.max_chunks_per_frame {
             break;
         }
-        initiate_chunk_loading(&mut commands, &mut world_manager, coord, world_root, &world_offset);
+        initiate_chunk_loading(&mut commands, &mut world_manager, coord, world_root, &world_offset, chunk_size);
         world_manager.chunks_loaded_this_frame += 1;
     }
 }
@@ -387,6 +372,7 @@ fn initiate_chunk_loading(
     coord: ChunkCoord,
     world_root: Entity,
     world_offset: &crate::systems::floating_origin::WorldOffset,
+    chunk_size: f32,
 ) {
     // This function starts the chunk loading process
     // The actual content generation will be handled by layer-specific systems
@@ -394,7 +380,7 @@ fn initiate_chunk_loading(
     chunk.state = ChunkState::Loading;
     
     // Convert logical chunk position to render space
-    let logical_pos = coord.to_world_pos();
+    let logical_pos = coord.to_world_pos(chunk_size);
     let render_pos = world_offset.logical_to_render(logical_pos);
     
     // Create a single root entity for the entire chunk

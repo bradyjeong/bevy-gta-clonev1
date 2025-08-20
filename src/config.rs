@@ -175,6 +175,8 @@ pub struct PerformanceConfig {
     // Culling parameters
     pub culling_check_interval: f32,  // 0.5 - Culling check interval
     pub max_visible_distance: f32,    // 1500.0 - Maximum visibility distance
+    pub max_entities_per_frame: usize, // 15 - Max entities processed per frame
+    pub max_frame_time_ms: f32,       // 4.0 - Max frame time budget in ms
 }
 
 #[derive(Debug, Clone)]
@@ -389,6 +391,8 @@ impl Default for PerformanceConfig {
             frame_time_threshold: 16.67,
             culling_check_interval: 0.5,
             max_visible_distance: 1500.0,
+            max_entities_per_frame: 15,
+            max_frame_time_ms: 4.0,
         }
     }
 }

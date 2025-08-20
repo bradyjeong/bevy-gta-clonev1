@@ -265,9 +265,8 @@ impl RoadNetwork {
     }
     
     /// Efficiently find roads near a chunk using spatial index - O(log n) instead of O(n)
-    pub fn find_roads_near_chunk(&self, chunk_coord: crate::systems::world::unified_world::ChunkCoord) -> Vec<u32> {
-        let chunk_center = chunk_coord.to_world_pos();
-        let chunk_size = crate::systems::world::unified_world::UNIFIED_CHUNK_SIZE;
+    pub fn find_roads_near_chunk(&self, chunk_coord: crate::systems::world::unified_world::ChunkCoord, chunk_size: f32) -> Vec<u32> {
+        let chunk_center = chunk_coord.to_world_pos(chunk_size);
         let half_size = chunk_size * 0.5;
         
         // Create search AABB for the chunk

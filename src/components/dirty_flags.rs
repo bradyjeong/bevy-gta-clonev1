@@ -1,10 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Component, Default)]
-pub struct DirtyLOD {
-    pub priority: DirtyPriority,
-    pub frame_marked: u64,
-}
+
 
 #[derive(Component, Default)]  
 pub struct DirtyVisibility {
@@ -48,15 +44,6 @@ pub struct DirtyFlagsMetrics {
     pub lod_count: u32,
     pub visibility_count: u32,
     pub instancing_count: u32,
-}
-
-impl DirtyLOD {
-    pub fn new(priority: DirtyPriority, frame: u64) -> Self {
-        Self {
-            priority,
-            frame_marked: frame,
-        }
-    }
 }
 
 impl DirtyVisibility {
