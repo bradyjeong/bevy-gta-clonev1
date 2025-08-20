@@ -71,7 +71,7 @@ pub fn is_valid_velocity(v: Vec3) -> bool {
 /// Extension trait for Vec3 with safe operations
 pub trait Vec3SafeExt {
     fn safe_normalize(self) -> Vec3;
-    fn clamp_length_safe(self, max_length: f32) -> Vec3;
+    fn clamp_length(self, max_length: f32) -> Vec3;
 }
 
 impl Vec3SafeExt for Vec3 {
@@ -84,8 +84,8 @@ impl Vec3SafeExt for Vec3 {
         }
     }
     
-    /// Clamp length with NaN protection
-    fn clamp_length_safe(self, max_length: f32) -> Vec3 {
+    /// Clamp length with NaN protection - single implementation
+    fn clamp_length(self, max_length: f32) -> Vec3 {
         if !self.is_finite() {
             return Vec3::ZERO;
         }
@@ -104,8 +104,8 @@ pub const MAX_SAFE_COORDINATE: f32 = 100_000.0;    // 100km
 pub const MAX_SAFE_VELOCITY: f32 = 600.0;          // 600 m/s  
 pub const MAX_SAFE_ANGULAR_VEL: f32 = 20.0;        // 20 rad/s
 
-/// Validate and fix a transform to safe values
-pub fn sanitize_transform(transform: &mut Transform) -> bool {
+/// Validate and fix a transform to safe values - single authority for transform safety  
+pub fn validate_transform(transform: &mut Transform) -> bool {
     let mut was_corrupt = false;
     
     // Fix translation
@@ -132,8 +132,8 @@ pub fn sanitize_transform(transform: &mut Transform) -> bool {
     was_corrupt
 }
 
-/// Validate and fix velocity to safe values
-pub fn sanitize_velocity(velocity: &mut bevy_rapier3d::prelude::Velocity) -> bool {
+/// Validate and fix velocity to safe values - single authority for velocity safety
+pub fn validate_velocity(velocity: &mut bevy_rapier3d::prelude::Velocity) -> bool {
     let mut was_corrupt = false;
     
     if !is_valid_velocity(velocity.linvel) {
@@ -217,14 +217,14 @@ mod tests {
     }
 
     #[test]
-    fn test_sanitize_transform() {
+    fn test_validate_transform() {
         let mut transform = Transform {
             translation: Vec3::new(f32::NAN, 0.0, 0.0),
             rotation: Quat::NAN,
             scale: Vec3::new(0.0, 1.0, 1.0), // Invalid zero scale
         };
         
-        assert!(sanitize_transform(&mut transform));
+        assert!(validate_transform(&mut transform));
         assert_eq!(transform.translation, Vec3::ZERO);
         assert_eq!(transform.rotation, Quat::IDENTITY);
         assert_eq!(transform.scale, Vec3::ONE);

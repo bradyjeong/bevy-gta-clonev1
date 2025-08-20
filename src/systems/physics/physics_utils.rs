@@ -2,32 +2,23 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;
 use crate::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
-use crate::util::safe_math::{sanitize_velocity, sanitize_transform};
+use crate::util::safe_math::{validate_velocity, validate_transform, Vec3SafeExt};
 
 /// Essential physics utilities for movement systems
 #[derive(Default)]
 pub struct PhysicsUtilities;
 
 impl PhysicsUtilities {
-    /// Validate and clamp velocity to safe ranges for physics stability
-    /// Enhanced with safe math to prevent all corruption sources
+    /// Validate and clamp velocity to safe ranges - single authority for game velocity limits
     pub fn clamp_velocity(velocity: &mut Velocity, config: &GameConfig) {
-        // Use safe math utilities for comprehensive validation
-        let was_corrupt = sanitize_velocity(velocity);
-        
-        if was_corrupt {
+        // Use safe math for validation and fixing
+        if validate_velocity(velocity) {
             warn!("Detected and fixed corrupted velocity");
         }
         
-        // Additional game-specific limits
-        velocity.linvel = velocity.linvel.clamp_length_max(config.physics.max_velocity);
-        velocity.angvel = velocity.angvel.clamp_length_max(config.physics.max_angular_velocity);
-    }
-    
-    /// Legacy alias for backward compatibility - use clamp_velocity instead
-    #[deprecated(note = "Use clamp_velocity instead")]
-    pub fn validate_velocity(velocity: &mut Velocity, config: &GameConfig) {
-        Self::clamp_velocity(velocity, config);
+        // Apply game-specific limits using safe clamp extension
+        velocity.linvel = Vec3SafeExt::clamp_length(velocity.linvel, config.physics.max_velocity);
+        velocity.angvel = Vec3SafeExt::clamp_length(velocity.angvel, config.physics.max_angular_velocity);
     }
     
 
@@ -94,8 +85,8 @@ pub fn apply_universal_physics_safeguards(
 ) {
     for (entity, mut velocity, mut transform) in query.iter_mut() {
         // Use safe math utilities for comprehensive validation
-        let velocity_corrupt = sanitize_velocity(&mut velocity);
-        let transform_corrupt = sanitize_transform(&mut transform);
+        let velocity_corrupt = validate_velocity(&mut velocity);
+        let transform_corrupt = validate_transform(&mut transform);
         
         if velocity_corrupt || transform_corrupt {
             warn!("Entity {:?} had corrupted physics data, fixed", entity);

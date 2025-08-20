@@ -9,7 +9,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::ActiveEntity;
-use crate::util::safe_math::{is_valid_position, sanitize_transform};
+use crate::util::safe_math::{is_valid_position, validate_transform};
 
 /// Resource tracking the cumulative world offset for deterministic generation
 #[derive(Resource, Default)]
@@ -116,7 +116,7 @@ pub fn floating_origin_system(
             transform.translation += shift_amount;
             
             // Validate result
-            if sanitize_transform(&mut transform) {
+            if validate_transform(&mut transform) {
                 warn!("Transform became invalid during world shift, sanitized");
             }
             
