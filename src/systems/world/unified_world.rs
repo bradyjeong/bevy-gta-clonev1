@@ -34,6 +34,7 @@ mod constant_validation {
         assert_eq!(UNIFIED_CHUNK_SIZE, config.world.chunk_size);
         assert_eq!(UNIFIED_STREAMING_RADIUS, config.world.streaming_radius);
         assert_eq!(LOD_DISTANCES, config.world.lod_distances);
+        // max_chunks_per_frame is dynamically updated from config, not a constant
     }
 }
 
@@ -229,7 +230,7 @@ impl Default for UnifiedWorldManager {
             last_update: 0.0,
             chunks_loaded_this_frame: 0,
             chunks_unloaded_this_frame: 0,
-            max_chunks_per_frame: 4, // Prevent frame drops
+            max_chunks_per_frame: 4, // Default value, will be overridden by GameConfig
         }
     }
 }
@@ -335,6 +336,7 @@ pub fn unified_world_streaming_system(
     active_query: Query<&Transform, With<ActiveEntity>>,
     world_offset: Res<crate::systems::floating_origin::WorldOffset>,
     world_root_query: Query<Entity, With<crate::systems::floating_origin::WorldRoot>>,
+    game_config: Option<Res<crate::config::GameConfig>>,
     time: Res<Time>,
 ) {
     let Ok(active_transform) = active_query.single() else { return };
@@ -342,6 +344,11 @@ pub fn unified_world_streaming_system(
     
     // CRITICAL FIX: Convert render position to logical position for streaming calculations
     let active_pos = world_offset.render_to_logical(active_transform.translation);
+    
+    // Update config-driven parameters
+    if let Some(config) = game_config {
+        world_manager.max_chunks_per_frame = config.world.max_chunks_per_frame;
+    }
     
     // Update timing
     world_manager.last_update = time.elapsed_secs();

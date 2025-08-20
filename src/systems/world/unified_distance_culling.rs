@@ -217,19 +217,7 @@ pub fn new_unified_distance_culling_system(
                     Visibility::Visible
                 };
                 
-                // Mark entity as dirty for other systems to respond to LOD changes
-                // Batching system disabled
-                // commands.entity(entity).insert(DirtyLOD::new(
-                //     if distance < 100.0 { DirtyPriority::High } else { DirtyPriority::Normal },
-                //     current_frame,
-                // ));
-                
-                // Mark visibility as dirty if changed
-                // Batching system disabled
-                // commands.entity(entity).insert(DirtyVisibility::new(
-                //     DirtyPriority::Normal,
-                //     current_frame,
-                // ));
+                // LOD and visibility changes are handled directly by UnifiedCullable
             }
             
             processed += 1;
@@ -237,35 +225,8 @@ pub fn new_unified_distance_culling_system(
     }
 }
 
-/// System specifically for vehicle LOD using unified culling
-pub fn unified_vehicle_lod_system(
-    vehicle_query: Query<(Entity, &UnifiedCullable, &VehicleState), (With<DirtyLOD>, Changed<UnifiedCullable>)>,
-    mut commands: Commands,
-) {
-    for (entity, cullable, vehicle_state) in vehicle_query.iter() {
-        if cullable.is_culled {
-            // Remove rendering components when culled
-            commands.entity(entity).remove::<VehicleRendering>();
-        } else {
-            // Update vehicle LOD based on unified culling LOD level
-            let vehicle_lod = match cullable.current_lod {
-                0 => VehicleLOD::Full,
-                1 => VehicleLOD::Medium,
-                2 => VehicleLOD::Low,
-                _ => VehicleLOD::StateOnly,
-            };
-            
-            // Only update if LOD actually changed
-            if vehicle_state.current_lod != vehicle_lod {
-                // Mark for rendering system to handle the mesh updates
-                commands.entity(entity).insert(VehicleLODUpdate { new_lod: vehicle_lod });
-            }
-        }
-        
-        // Remove dirty flag after processing
-        commands.entity(entity).remove::<DirtyLOD>();
-    }
-}
+// Note: Vehicle LOD is now handled directly by UnifiedCullable component
+// No separate adapter system needed
 
 /// Component to signal vehicle LOD updates
 #[derive(Component)]
@@ -273,35 +234,8 @@ pub struct VehicleLODUpdate {
     pub new_lod: VehicleLOD,
 }
 
-/// System specifically for NPC LOD using unified culling
-pub fn unified_npc_lod_system(
-    npc_query: Query<(Entity, &UnifiedCullable, &NPCState), (With<DirtyLOD>, Changed<UnifiedCullable>)>,
-    mut commands: Commands,
-) {
-    for (entity, cullable, npc_state) in npc_query.iter() {
-        if cullable.is_culled {
-            // Remove rendering components when culled
-            commands.entity(entity).remove::<NPCRendering>();
-        } else {
-            // Update NPC LOD based on unified culling LOD level
-            let npc_lod = match cullable.current_lod {
-                0 => NPCLOD::Full,
-                1 => NPCLOD::Medium,
-                2 => NPCLOD::Low,
-                _ => NPCLOD::StateOnly,
-            };
-            
-            // Only update if LOD actually changed
-            if npc_state.current_lod != npc_lod {
-                // Mark for rendering system to handle the mesh updates
-                commands.entity(entity).insert(NPCLODUpdate { new_lod: npc_lod });
-            }
-        }
-        
-        // Remove dirty flag after processing
-        commands.entity(entity).remove::<DirtyLOD>();
-    }
-}
+// Note: NPC LOD is now handled directly by UnifiedCullable component
+// No separate adapter system needed
 
 /// Component to signal NPC LOD updates
 #[derive(Component)]
@@ -309,36 +243,8 @@ pub struct NPCLODUpdate {
     pub new_lod: NPCLOD,
 }
 
-/// System specifically for vegetation LOD using unified culling
-pub fn unified_vegetation_lod_system(
-    vegetation_query: Query<(Entity, &UnifiedCullable, &VegetationLOD), (With<DirtyLOD>, Changed<UnifiedCullable>)>,
-    mut commands: Commands,
-) {
-    for (entity, cullable, vegetation_lod) in vegetation_query.iter() {
-        let new_detail_level = if cullable.is_culled {
-            VegetationDetailLevel::Culled
-        } else {
-            match cullable.current_lod {
-                0 => VegetationDetailLevel::Full,
-                1 => VegetationDetailLevel::Medium,
-                2 => VegetationDetailLevel::Billboard,
-                _ => VegetationDetailLevel::Culled,
-            }
-        };
-        
-        // Only update if LOD actually changed
-        if vegetation_lod.detail_level != new_detail_level {
-            // Mark for vegetation rendering system to handle the mesh updates
-            commands.entity(entity).insert(VegetationLODUpdate { 
-                new_detail_level,
-                distance: cullable.last_distance,
-            });
-        }
-        
-        // Remove dirty flag after processing
-        commands.entity(entity).remove::<DirtyLOD>();
-    }
-}
+// Note: Vegetation LOD is now handled directly by UnifiedCullable component
+// No separate adapter system needed
 
 /// Component to signal vegetation LOD updates
 #[derive(Component)]
@@ -396,37 +302,8 @@ pub fn unified_culling_performance_monitor(
     }
 }
 
-/// System to handle entity movement and automatically mark for distance updates
-pub fn unified_culling_movement_tracker(
-    _commands: Commands,
-    moved_entities: Query<
-        (Entity, &UnifiedCullable, &Transform), 
-        (Changed<Transform>, Without<DirtyLOD>)
-    >,
-    frame_counter: Res<FrameCounter>,
-) {
-    let _current_frame = frame_counter.frame;
-    
-    for (_entity, cullable, transform) in moved_entities.iter() {
-        // Calculate how much the entity moved
-        let movement_threshold = cullable.config.hysteresis;
-        let distance_moved = (transform.translation - Vec3::ZERO).length(); // Simplified
-        
-        if distance_moved > movement_threshold {
-            let _priority = if cullable.last_distance < 100.0 {
-                DirtyPriority::High // Close entities get higher priority
-            } else {
-                DirtyPriority::Normal
-            };
-            
-            // Batching system disabled  
-            // commands.entity(entity).insert(DirtyLOD::new(
-            //     priority,
-            //     current_frame,
-            // ));
-        }
-    }
-}
+// Note: Movement tracking is now handled directly by UnifiedCullable.needs_update()
+// No separate movement tracker needed
 
 /// Helper function to convert old Cullable component to UnifiedCullable
 pub fn migrate_cullable_to_unified(
@@ -459,17 +336,8 @@ impl Plugin for UnifiedDistanceCullingPlugin {
         app
             .insert_resource(UnifiedCullingTimer::default())
             .add_systems(Update, (
-                // Main culling system runs first
+                // Main culling system handles everything directly
                 new_unified_distance_culling_system,
-                
-                // Entity-specific LOD systems run after
-                unified_vehicle_lod_system,
-                unified_npc_lod_system,
-                unified_vegetation_lod_system,
-
-                
-                // Support systems
-                unified_culling_movement_tracker,
                 unified_culling_performance_monitor,
                 
                 // Migration helper (can be removed after migration)

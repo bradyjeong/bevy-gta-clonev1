@@ -69,6 +69,7 @@ pub struct WorldConfig {
     pub chunk_size: f32,           // 200.0 - Standard chunk size
     pub map_size: f32,             // 4000.0 - Total world size
     pub streaming_radius: f32,     // 800.0 - Object streaming radius
+    pub max_chunks_per_frame: usize, // 4 - Maximum chunks to load/unload per frame
     
     // LOD distances with performance optimization
     pub lod_distances: [f32; 3],   // [300.0, 600.0, 1000.0] - LOD transitions
@@ -276,6 +277,7 @@ impl Default for WorldConfig {
             chunk_size: 200.0,
             map_size: 4000.0,
             streaming_radius: 800.0,
+            max_chunks_per_frame: 4,
             lod_distances: [150.0, 300.0, 500.0],
             building_density: 0.5,
             tree_density: 2.0,

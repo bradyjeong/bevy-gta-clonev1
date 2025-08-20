@@ -125,7 +125,7 @@ pub fn road_layer_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     deterministic_rng: Res<DeterministicRng>,
-    chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
+    _chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -162,7 +162,7 @@ fn generate_roads_for_chunk(
     // Create road entities and add to placement grid
     for road_id in new_road_ids {
         if let Some(road) = world_manager.road_network.roads.get(&road_id).cloned() {
-            let road_entity = spawn_unified_road_entity(
+            let _road_entity = spawn_unified_road_entity(
                 commands,
                 coord,
                 road_id,
@@ -324,7 +324,7 @@ fn detect_and_spawn_intersections(
         
         if let Some(intersection) = world_manager.road_network.intersections.get(&intersection_id) {
             println!("🚧 DEBUG: Successfully spawned intersection entity {}", intersection_id);
-            let intersection_entity = spawn_unified_intersection_entity(
+            let _intersection_entity = spawn_unified_intersection_entity(
                 commands,
                 coord,
                 intersection_id,
@@ -430,7 +430,7 @@ pub fn building_layer_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     deterministic_rng: Res<DeterministicRng>,
-    chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
+    _chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -487,7 +487,7 @@ fn generate_buildings_for_chunk(
                 building_size * 0.5,
                 building_size,
             ) {
-                let building_entity = spawn_unified_building(
+                let _building_entity = spawn_unified_building(
                     commands,
                     coord,
                     position,
@@ -565,7 +565,7 @@ pub fn vehicle_layer_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     deterministic_rng: Res<DeterministicRng>,
-    chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
+    _chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -617,7 +617,7 @@ fn generate_vehicles_for_chunk(
                 4.0, // Vehicle radius
                 25.0, // Minimum distance between vehicles
             ) {
-                let vehicle_entity = spawn_unified_vehicle(
+                let _vehicle_entity = spawn_unified_vehicle(
                     commands,
                     coord,
                     position,
@@ -693,7 +693,7 @@ pub fn vegetation_layer_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     deterministic_rng: Res<DeterministicRng>,
-    chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
+    _chunk_root_query: Query<Entity, With<ChunkRootMarker>>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -745,7 +745,7 @@ fn generate_vegetation_for_chunk(
                 2.0, // Tree radius
                 8.0, // Minimum distance between trees
             ) {
-                let tree_entity = spawn_unified_tree(
+                let _tree_entity = spawn_unified_tree(
                     commands,
                     coord,
                     position,
