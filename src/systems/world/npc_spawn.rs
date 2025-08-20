@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::{
-    NPCState, NPCType, NPCLOD, Cullable, NPCBehaviorType, NPCAppearance, NPCGender,
-    NPC_LOD_CULL_DISTANCE
+    NPCState, NPCType, NPCLOD, NPCBehaviorType, NPCAppearance, NPCGender
 };
 use crate::systems::floating_origin::FollowsWorldOffset;
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 use crate::config::GameConfig;
 use crate::services::timing_service::{TimingService, EntityTimerType, ManagedTiming};
@@ -120,7 +120,7 @@ pub fn spawn_simple_npc_with_ground_detection(
         Transform::from_translation(spawn_position),
         Visibility::Visible,
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Cullable { max_distance: NPC_LOD_CULL_DISTANCE, is_culled: false },
+        UnifiedCullable::npc(),
         FollowsWorldOffset,  // Component for floating origin system
     )).id()
 }
@@ -152,7 +152,7 @@ pub fn spawn_simple_npc(
         Transform::from_translation(position),
         Visibility::Visible,
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Cullable { max_distance: NPC_LOD_CULL_DISTANCE, is_culled: false },
+        UnifiedCullable::npc(),
         FollowsWorldOffset,  // Component for floating origin system
     )).id()
 }
@@ -185,7 +185,7 @@ pub fn spawn_npc_with_new_architecture(
         Transform::from_translation(position),
         Visibility::Visible,
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Cullable { max_distance: NPC_LOD_CULL_DISTANCE, is_culled: false },
+        UnifiedCullable::npc(),
     )).id()
 }
 

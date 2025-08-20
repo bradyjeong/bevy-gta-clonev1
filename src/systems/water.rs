@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::{Lake, WaterBody, Yacht, Boat, Cullable};
+use crate::components::{Lake, WaterBody, Yacht, Boat};
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 use crate::factories::{MaterialFactory, RenderingFactory, StandardRenderingPattern, RenderingBundleType};
 
 pub fn setup_lake(
@@ -102,7 +103,7 @@ pub fn setup_yacht(
             wake_enabled: true,
         },
         Boat,
-        Cullable::new(300.0),
+        UnifiedCullable::vehicle(),
         Name::new("Yacht"),
     ));
 

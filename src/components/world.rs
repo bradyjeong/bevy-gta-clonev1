@@ -202,20 +202,7 @@ pub const NPC_LOD_MEDIUM_DISTANCE: f32 = 50.0;
 pub const NPC_LOD_LOW_DISTANCE: f32 = 75.0;
 pub const NPC_LOD_CULL_DISTANCE: f32 = 100.0;
 
-#[derive(Component)]
-pub struct Cullable {
-    pub max_distance: f32,
-    pub is_culled: bool,
-}
-
-impl Cullable {
-    pub fn new(max_distance: f32) -> Self {
-        Self {
-            max_distance,
-            is_culled: false,
-        }
-    }
-}
+// LEGACY CULLABLE COMPONENT REMOVED - replaced by UnifiedCullable
 
 
 

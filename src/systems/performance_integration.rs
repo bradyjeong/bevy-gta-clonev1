@@ -94,7 +94,7 @@ pub fn monitor_vehicle_physics_performance(
 /// System to monitor culling performance
 pub fn monitor_culling_performance(
     mut tracker: ResMut<UnifiedPerformanceTracker>,
-    cullable_query: Query<Entity, With<crate::components::Cullable>>,
+    cullable_query: Query<Entity, With<crate::systems::world::unified_distance_culling::UnifiedCullable>>,
 ) {
     let start = std::time::Instant::now();
     

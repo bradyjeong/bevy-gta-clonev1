@@ -542,7 +542,7 @@ impl UnifiedEntityFactory {
             Mesh3d(head_mesh),
             MeshMaterial3d(head_material),
             Transform::from_xyz(0.0, appearance.height * 0.85, 0.0),
-            Cullable { max_distance: self.config.world.lod_distances[0], is_culled: false },
+            UnifiedCullable::npc(),
             ChildOf(parent_entity),
         ));
         
@@ -558,7 +558,7 @@ impl UnifiedEntityFactory {
             Mesh3d(body_mesh),
             MeshMaterial3d(body_material),
             Transform::from_xyz(0.0, appearance.height * 0.5, 0.0),
-            Cullable { max_distance: self.config.world.lod_distances[0], is_culled: false },
+            UnifiedCullable::npc(),
             ChildOf(parent_entity),
         ));
         
@@ -667,7 +667,7 @@ impl UnifiedEntityFactory {
                 frequency: 1.0,
                 phase: 0.0,
             },
-            Cullable { max_distance: self.config.world.lod_distances[2], is_culled: false },
+            UnifiedCullable::building(),
             ChildOf(water_entity),
         ));
         
@@ -730,7 +730,7 @@ impl UnifiedEntityFactory {
             Mesh3d(mesh),
             MeshMaterial3d(material_handle),
             ExhaustFlame,
-            Cullable { max_distance: self.config.world.lod_distances[0], is_culled: false },
+            UnifiedCullable::vegetation(),
         )).id();
         
         Ok(effect_entity)

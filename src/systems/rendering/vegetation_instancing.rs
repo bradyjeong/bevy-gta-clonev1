@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use crate::components::instanced_vegetation::*;
 use crate::components::dirty_flags::{DirtyVegetationInstancing, DirtyPriority, FrameCounter};
-use crate::components::world::*;
+
 use crate::components::player::ActiveEntity;
 use crate::GameConfig;
 
@@ -12,7 +12,7 @@ use crate::GameConfig;
 pub fn collect_vegetation_instances_system(
     mut commands: Commands,
     vegetation_query: Query<(Entity, &Transform, &VegetationBatchable, &GlobalTransform), 
-                          (With<Cullable>, Without<DirtyVegetationInstancing>)>,
+                          (With<crate::systems::world::unified_distance_culling::UnifiedCullable>, Without<DirtyVegetationInstancing>)>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     mut palm_frond_query: Query<&mut InstancedPalmFrond>,
     mut leaf_cluster_query: Query<&mut InstancedLeafCluster>,

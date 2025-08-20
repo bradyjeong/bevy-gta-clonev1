@@ -5,7 +5,7 @@ use crate::systems::setup::on_f16_spawned;
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames_unified};
 use crate::systems::safety::{bounds_diagnostics_system, validate_physics_config};
 use crate::components::safety::WorldBounds;
-use crate::systems::vehicles::vehicle_lod_system;
+// OLD LOD SYSTEM REMOVED - now using UnifiedCullable
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
 use crate::game_state::GameState;
 
@@ -24,9 +24,6 @@ impl Plugin for VehiclePlugin {
             // REMOVED: bounds_safety_system - replaced with seamless world root shifting
             // Only keep diagnostics for monitoring
             bounds_diagnostics_system,
-            
-            // LOD system runs after safeguards
-            vehicle_lod_system,
             
             // Movement systems (simplified for AGENT.md compliance)
             car_movement.run_if(in_state(GameState::Driving)),

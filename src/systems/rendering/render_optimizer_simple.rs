@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 use std::time::Instant;
 
-use crate::components::{ActiveEntity, Cullable};
+use crate::components::ActiveEntity;
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 use crate::config::GameConfig;
 
 /// Simplified render optimization system with batching limits and view frustum culling
 pub fn render_optimization_system(
-    mut render_query: Query<(Entity, &mut Visibility, &Transform), With<Cullable>>,
+    mut render_query: Query<(Entity, &mut Visibility, &Transform), With<UnifiedCullable>>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     config: Res<GameConfig>,
     time: Res<Time>,
@@ -117,7 +118,7 @@ fn is_in_view_frustum(
 
 /// Batch rendering system with operation limits
 pub fn batch_rendering_system(
-    mut renderable_query: Query<(Entity, &mut Visibility, &Transform), With<Cullable>>,
+    mut renderable_query: Query<(Entity, &mut Visibility, &Transform), With<UnifiedCullable>>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     config: Res<GameConfig>,
     time: Res<Time>,

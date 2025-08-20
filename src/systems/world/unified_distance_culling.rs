@@ -228,39 +228,7 @@ pub fn new_unified_distance_culling_system(
 // Note: Vehicle LOD is now handled directly by UnifiedCullable component
 // No separate adapter system needed
 
-/// Component to signal vehicle LOD updates
-#[derive(Component)]
-pub struct VehicleLODUpdate {
-    pub new_lod: VehicleLOD,
-}
-
-// Note: NPC LOD is now handled directly by UnifiedCullable component
-// No separate adapter system needed
-
-/// Component to signal NPC LOD updates
-#[derive(Component)]
-pub struct NPCLODUpdate {
-    pub new_lod: NPCLOD,
-}
-
-// Note: Vegetation LOD is now handled directly by UnifiedCullable component
-// No separate adapter system needed
-
-/// Component to signal vegetation LOD updates
-#[derive(Component)]
-pub struct VegetationLODUpdate {
-    pub new_detail_level: VegetationDetailLevel,
-    pub distance: f32,
-}
-
-
-
-/// Component to signal chunk LOD updates
-#[derive(Component)]
-pub struct ChunkLODUpdate {
-    pub new_lod: usize,
-    pub distance: f32,
-}
+// LEGACY LOD UPDATE COMPONENTS REMOVED - functionality moved to UnifiedCullable
 
 /// Component to mark chunks for unloading
 #[derive(Component)]
@@ -305,28 +273,7 @@ pub fn unified_culling_performance_monitor(
 // Note: Movement tracking is now handled directly by UnifiedCullable.needs_update()
 // No separate movement tracker needed
 
-/// Helper function to convert old Cullable component to UnifiedCullable
-pub fn migrate_cullable_to_unified(
-    query: Query<(Entity, &Cullable), Without<UnifiedCullable>>,
-    mut commands: Commands,
-) {
-    for (entity, cullable) in query.iter() {
-        // Create a generic config based on max_distance
-        let config = if cullable.max_distance <= 150.0 {
-            DistanceCullingConfig::npc()
-        } else if cullable.max_distance <= 400.0 {
-            DistanceCullingConfig::vegetation()
-        } else if cullable.max_distance <= 500.0 {
-            DistanceCullingConfig::vehicle()
-        } else {
-            DistanceCullingConfig::buildings()
-        };
-        
-        let unified_cullable = UnifiedCullable::new(config);
-        commands.entity(entity).insert(unified_cullable);
-        commands.entity(entity).remove::<Cullable>();
-    }
-}
+
 
 /// Plugin to integrate unified distance culling system
 pub struct UnifiedDistanceCullingPlugin;
@@ -339,9 +286,6 @@ impl Plugin for UnifiedDistanceCullingPlugin {
                 // Main culling system handles everything directly
                 new_unified_distance_culling_system,
                 unified_culling_performance_monitor,
-                
-                // Migration helper (can be removed after migration)
-                migrate_cullable_to_unified,
-            ).chain());
+            ).chain().in_set(crate::system_sets::GameSystemSets::ServiceUpdates));
     }
 }

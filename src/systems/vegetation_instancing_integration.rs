@@ -1,11 +1,12 @@
 use bevy::prelude::*;
 use crate::components::*;
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 /// Integration system to demonstrate vegetation instancing
 /// This system would be called by your main vegetation spawning system
 pub fn integrate_vegetation_with_instancing_system(
     mut commands: Commands,
-    vegetation_query: Query<(Entity, &Transform), (With<Cullable>, Without<VegetationBatchable>)>,
+    vegetation_query: Query<(Entity, &Transform), (With<UnifiedCullable>, Without<VegetationBatchable>)>,
     _frame_counter: Res<FrameCounter>,
 ) {
     // Convert existing vegetation entities to use instancing
@@ -46,7 +47,7 @@ fn determine_vegetation_type(_commands: &Commands, _entity: Entity) -> Vegetatio
 /// System to spawn test vegetation for instancing demonstration
 pub fn spawn_test_vegetation_system(
     mut commands: Commands,
-    config: Res<VegetationInstancingConfig>,
+    _config: Res<VegetationInstancingConfig>,
     mut spawned: Local<bool>,
 ) {
     if *spawned {
@@ -73,7 +74,7 @@ pub fn spawn_test_vegetation_system(
             &format!("TestVegetation_{}", i),
             Transform::from_translation(Vec3::new(x, y, z)),
             vegetation_type,
-        )).insert(Cullable::new(config.culling_distance));
+        )).insert(UnifiedCullable::vegetation());
     }
     
     info!("Spawned 100 test vegetation entities for instancing");

@@ -1,3 +1,1 @@
-pub mod lod_manager;
-
-pub use lod_manager::*;
+// Vehicle LOD is now handled by UnifiedCullable in unified_distance_culling.rs

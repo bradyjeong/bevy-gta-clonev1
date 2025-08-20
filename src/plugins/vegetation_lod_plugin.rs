@@ -1,44 +1,12 @@
 use bevy::prelude::*;
-use crate::systems::world::vegetation_lod::{
-    vegetation_lod_system,
-    vegetation_billboard_system,
-    vegetation_billboard_mesh_generator,
-    adaptive_vegetation_lod_system,
-    vegetation_lod_performance_monitor,
-    vegetation_lod_batching_system,
-    LODFrameCounter,
-
-};
-// Distance cache plugin already added in main.rs
+// OLD LOD SYSTEMS REMOVED - now using UnifiedCullable
 
 pub struct VegetationLODPlugin;
 
 impl Plugin for VegetationLODPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            // Add required plugins
-            // Distance cache plugin already added in main.rs
-            
-            // Add resources
-            .insert_resource(LODFrameCounter::default())
-            
-            // Startup systems
-            .add_systems(Startup, vegetation_billboard_mesh_generator)
-            
-            // Update systems with proper ordering
-            .add_systems(Update, (
-                vegetation_lod_system,
-                vegetation_billboard_system,
-                adaptive_vegetation_lod_system,
-                vegetation_lod_performance_monitor,
-                vegetation_lod_batching_system,
-            ))
-            
-            // Run LOD systems less frequently to improve performance
-            .add_systems(FixedUpdate, (
-                vegetation_lod_system,
-                vegetation_lod_performance_monitor,
-            )); // 10Hz update rate
+    fn build(&self, _app: &mut App) {
+        // OLD LOD SYSTEMS REMOVED - now using UnifiedCullable
+        // This plugin is now empty but kept for compatibility
     }
 }
 

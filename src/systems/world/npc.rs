@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
-use crate::components::{NPC, Cullable, ActiveEntity};
+use crate::components::{NPC, ActiveEntity};
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 thread_local! {
     static NPC_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
@@ -11,7 +12,7 @@ thread_local! {
 /// Simple NPC movement that follows direct AI patterns
 pub fn simple_npc_movement(
     time: Res<Time>,
-    mut npc_query: Query<(Entity, &mut Transform, &mut Velocity, &mut NPC, &Cullable)>,
+    mut npc_query: Query<(Entity, &mut Transform, &mut Velocity, &mut NPC, &UnifiedCullable)>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
     let current_time = time.elapsed_secs();
@@ -80,7 +81,7 @@ pub fn simple_npc_movement(
 /// Legacy NPC movement system - kept for backwards compatibility
 pub fn optimized_npc_movement(
     time: Res<Time>,
-    mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC, &Cullable)>,
+    mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC, &UnifiedCullable)>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
     let current_time = time.elapsed_secs();

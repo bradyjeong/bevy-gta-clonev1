@@ -16,7 +16,7 @@ impl Plugin for WorldStreamingPlugin {
             .add_systems(Update, (
                 unified_world_streaming_system,
                 layered_generation_coordinator,
-            ).chain());
+            ).chain().in_set(crate::system_sets::GameSystemSets::WorldSetup));
     }
 }
 

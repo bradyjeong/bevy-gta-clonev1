@@ -342,7 +342,7 @@ pub fn unified_world_streaming_system(
     let Ok(active_transform) = active_query.single() else { return };
     let Ok(world_root) = world_root_query.single() else { return };
     
-    // CRITICAL FIX: Convert render position to logical position for streaming calculations
+    // Convert render position to logical position for streaming calculations
     let active_pos = world_offset.render_to_logical(active_transform.translation);
     
     // Update config-driven parameters
@@ -393,7 +393,7 @@ fn initiate_chunk_loading(
     let chunk = world_manager.get_chunk_mut(coord);
     chunk.state = ChunkState::Loading;
     
-    // CRITICAL FIX: Convert logical chunk position to render space
+    // Convert logical chunk position to render space
     let logical_pos = coord.to_world_pos();
     let render_pos = world_offset.logical_to_render(logical_pos);
     
@@ -402,7 +402,7 @@ fn initiate_chunk_loading(
         ChunkRootMarker { coord },
         Transform::from_translation(render_pos),
         Visibility::Visible,
-        InheritedVisibility::default(),
+        InheritedVisibility::VISIBLE,
         ViewVisibility::default(),
     )).id();
     

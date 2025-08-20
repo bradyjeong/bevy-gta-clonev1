@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 /// Luxury color schemes for the Bugatti Chiron
 #[derive(Clone, Copy)]
@@ -94,7 +95,7 @@ pub fn setup_luxury_bugatti_chiron(
         Velocity::zero(),
         Transform::from_translation(position),
         Damping { linear_damping: 1.0, angular_damping: 5.0 },
-        Cullable { max_distance: 1000.0, is_culled: false },
+        UnifiedCullable::vehicle(),
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
     )).id();
 

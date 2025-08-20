@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::services::simple_services::{ConfigService, PhysicsService, EnhancedTimingService};
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 /// Example system showing service injection pattern with simple services
 pub fn service_example_vehicle_creation(
@@ -62,7 +63,7 @@ pub fn service_example_vehicle_creation(
             linear_damping: vehicle_config.linear_damping,
             angular_damping: vehicle_config.angular_damping,
         })
-        .insert(Cullable::new(150.0))
+        .insert(UnifiedCullable::vehicle())
         .insert(Name::new("ServiceCreatedCar"))
         .id();
     

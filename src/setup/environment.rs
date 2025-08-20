@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::constants::*;
 use crate::bundles::VisibleChildBundle;
-use crate::components::world::Cullable;
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 // NOTE: Roads are now fully dynamic - no static setup needed
 // The dynamic road system guarantees immediate spawn area roads
@@ -81,7 +81,7 @@ pub fn setup_palm_trees(
             CollisionGroups::new(STATIC_GROUP, Group::ALL),
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(palm_entity),
-            Cullable { max_distance: 200.0, is_culled: false },
+            UnifiedCullable::vegetation(),
         ));
     }
 }

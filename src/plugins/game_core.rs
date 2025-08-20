@@ -138,7 +138,7 @@ impl Plugin for GameCorePlugin {
                 
                 // Safety system to catch any remaining orphaned entities
                 world_sanity_check_system,
-            ).chain());
+            ).chain().in_set(crate::system_sets::GameSystemSets::ServiceUpdates));
         
         info!("✅ Game Core Plugin loaded with complete coordinate safety and infinite world support");
     }

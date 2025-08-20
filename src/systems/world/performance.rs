@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
-use crate::components::{PerformanceStats, Cullable};
+use crate::components::PerformanceStats;
+use crate::systems::world::unified_distance_culling::UnifiedCullable;
 
 pub fn performance_monitoring_system(
     time: Res<Time>,
     mut stats: ResMut<PerformanceStats>,
     entity_query: Query<Entity>,
-    cullable_query: Query<&Cullable>,
+    cullable_query: Query<&UnifiedCullable>,
     diagnostics: Res<DiagnosticsStore>,
 ) {
     let current_time = time.elapsed_secs();
