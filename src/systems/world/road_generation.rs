@@ -74,7 +74,8 @@ pub fn road_network_system(
             // Simple distance check - only remove roads that are extremely far away
             let distance = active_pos.distance(transform.translation);
             if distance > cleanup_radius {
-                println!("DEBUG: Cleaning up road entity at distance {}", distance);
+                #[cfg(debug_assertions)]
+        println!("DEBUG: Cleaning up road entity at distance {}", distance);
                 commands.entity(entity).despawn();
             }
         }

@@ -10,15 +10,11 @@ pub struct TimingService {
     pub delta_time: f32,
     
     /// Performance throttling intervals
-    pub vehicle_lod_interval: f32,        // 0.1s - Vehicle LOD checks
-    pub npc_lod_interval: f32,            // 0.1s - NPC LOD checks
       
     pub audio_cleanup_interval: f32,      // 1.0s - Audio entity cleanup
     pub effect_update_interval: f32,      // 0.05s - Effect state updates
     
     /// Last update times for throttled systems
-    last_vehicle_lod_check: f32,
-    last_npc_lod_check: f32,
     
     last_audio_cleanup: f32,
     last_effect_update: f32,
@@ -37,10 +33,7 @@ pub struct EntityTimer {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EntityTimerType {
-    VehicleLOD,
-    NPCLOD,
     FootstepAudio,
-    
     Custom(String),
 }
 
@@ -50,15 +43,8 @@ impl Default for TimingService {
             current_time: 0.0,
             delta_time: 0.0,
             
-            // Optimized intervals for better FPS
-            vehicle_lod_interval: 0.2,      // REDUCED from 0.1s for distant entities
-            npc_lod_interval: 0.2,          // REDUCED from 0.1s for distant entities  
-            
             audio_cleanup_interval: 2.0,    // INCREASED from 1.0s (less frequent cleanup)
             effect_update_interval: 0.1,    // INCREASED from 0.05s (less frequent updates)
-            
-            last_vehicle_lod_check: 0.0,
-            last_npc_lod_check: 0.0,
             
             last_audio_cleanup: 0.0,
             last_effect_update: 0.0,
@@ -78,9 +64,6 @@ impl TimingService {
     /// Check if a global system should run based on its interval
     pub fn should_run_system(&mut self, system_type: SystemType) -> bool {
         let (interval, last_check) = match system_type {
-            SystemType::VehicleLOD => (self.vehicle_lod_interval, &mut self.last_vehicle_lod_check),
-            SystemType::NPCLOD => (self.npc_lod_interval, &mut self.last_npc_lod_check),
-            
             SystemType::AudioCleanup => (self.audio_cleanup_interval, &mut self.last_audio_cleanup),
             SystemType::EffectUpdate => (self.effect_update_interval, &mut self.last_effect_update),
         };
@@ -136,9 +119,6 @@ impl TimingService {
 
 #[derive(Debug, Clone, Copy)]
 pub enum SystemType {
-    VehicleLOD,
-    NPCLOD,
-    
     AudioCleanup,
     EffectUpdate,
 }

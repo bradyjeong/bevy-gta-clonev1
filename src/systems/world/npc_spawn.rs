@@ -83,6 +83,7 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
         FollowsWorldOffset,  // Component for floating origin system
     )).id();
     
+    #[cfg(debug_assertions)]
     println!("DEBUG: Spawned NPC at {:?} (ground: {:.2})", spawn_position, ground_height);
     entity
 }
@@ -204,10 +205,11 @@ pub fn migrate_legacy_npcs(
         // Add new components while keeping the old one for compatibility
         commands.entity(entity).insert((
             npc_state,
-            ManagedTiming::new(EntityTimerType::NPCLOD),
+            ManagedTiming::new(EntityTimerType::Custom("NPC".to_string())),
             FollowsWorldOffset,  // Component for floating origin system
         ));
         
+        #[cfg(debug_assertions)]
         println!("DEBUG: Migrated NPC entity {:?} to unified architecture", entity);
     }
 }

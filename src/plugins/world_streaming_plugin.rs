@@ -24,5 +24,6 @@ fn initialize_streaming_world(mut world_manager: ResMut<UnifiedWorldManager>) {
     world_manager.chunks.clear();
     world_manager.placement_grid.clear();
     world_manager.road_network.reset();
-    println!("DEBUG: World streaming initialized!");
+    #[cfg(debug_assertions)]
+        println!("DEBUG: World streaming initialized!");
 }

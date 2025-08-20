@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use crate::components::*;
+use crate::config::GameConfig;
 use crate::systems::UnifiedCullable;
 use crate::systems::world::unified_world::{
     UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState,
@@ -47,8 +48,10 @@ pub fn layered_generation_coordinator(
     mut world_manager: ResMut<UnifiedWorldManager>,
     _chunk_query: Query<(Entity, &UnifiedChunkEntity)>,
     time: Res<Time>,
+    _game_config: Res<GameConfig>,
 ) {
     let current_time = time.elapsed_secs();
+
     
     // Process chunks that are in loading state
     let mut chunks_to_update = Vec::new();
@@ -91,8 +94,8 @@ fn advance_chunk_generation(
         let distance = chunk.distance_to_player;
         // Store distance first, then calculate LOD
         let _ = chunk; // Release the mutable borrow
-        let lod_distances = &[100.0, 500.0, 1000.0]; // Default LOD distances
-        let lod_level = world_manager.calculate_lod_level(distance, lod_distances);
+        let chunk_lod_distances = vec![150.0, 300.0, 500.0]; // Use chunk LOD distances
+        let lod_level = world_manager.calculate_lod_level(distance, &chunk_lod_distances);
         let chunk = world_manager.get_chunk_mut(coord); // Re-borrow
         chunk.state = ChunkState::Loaded { lod_level };
         None
@@ -246,7 +249,7 @@ fn spawn_unified_road_entity(
     let mesh_entity = commands.spawn((
         Mesh3d(meshes.add(road_mesh)),
         MeshMaterial3d(road_material),
-        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)), // Identity - vertices already in world space
+        Transform::from_translation(-local_pos), // Offset mesh to account for chunk-local positioning
         Visibility::default(),
         InheritedVisibility::VISIBLE,
         ViewVisibility::default(),
@@ -259,7 +262,7 @@ fn spawn_unified_road_entity(
         let marking_entity = commands.spawn((
             Mesh3d(meshes.add(marking_mesh)),
             MeshMaterial3d(marking_material.clone()),
-            Transform::from_translation(Vec3::new(0.0, 0.01, 0.0)), // 1cm above road surface
+            Transform::from_translation(-local_pos + Vec3::new(0.0, 0.01, 0.0)), // 1cm above road surface
             Visibility::default(),
             InheritedVisibility::VISIBLE,
             ViewVisibility::default(),
@@ -435,7 +438,7 @@ fn spawn_unified_intersection_entity(
     let mesh_entity = commands.spawn((
         Mesh3d(meshes.add(intersection_mesh)),
         MeshMaterial3d(intersection_material),
-        Transform::from_translation(Vec3::new(0.0, 0.01, 0.0)), // Slightly above road surface to prevent z-fighting
+        Transform::from_translation(-local_pos + Vec3::new(0.0, 0.01, 0.0)), // Slightly above road surface to prevent z-fighting
         Visibility::default(),
         InheritedVisibility::VISIBLE,
         ViewVisibility::default(),

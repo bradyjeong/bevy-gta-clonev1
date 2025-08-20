@@ -554,6 +554,7 @@ pub fn unified_performance_monitoring_system(
     // Generate periodic reports
     if tracker.last_report.elapsed() > tracker.report_interval {
         let report = tracker.generate_report();
+        #[cfg(debug_assertions)]
         println!("{}", report);
         tracker.last_report = Instant::now();
     }

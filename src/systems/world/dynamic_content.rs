@@ -239,7 +239,8 @@ fn spawn_dynamic_content_safe_unified(
                 existing_content,
                 current_time,
             ) {
-                println!("DEBUG: Spawned building using unified factory at {:?}", position);
+                #[cfg(debug_assertions)]
+        println!("DEBUG: Spawned building using unified factory at {:?}", position);
             }
         }
     }
@@ -256,7 +257,8 @@ fn spawn_dynamic_content_safe_unified(
             existing_content,
             current_time,
         ) {
-            println!("DEBUG: Spawned vehicle using unified factory at {:?}", position);
+            #[cfg(debug_assertions)]
+        println!("DEBUG: Spawned vehicle using unified factory at {:?}", position);
         }
     }
     
@@ -272,7 +274,8 @@ fn spawn_dynamic_content_safe_unified(
             existing_content,
             current_time,
         ) {
-            println!("DEBUG: Spawned tree using unified factory at {:?}", position);
+            #[cfg(debug_assertions)]
+        println!("DEBUG: Spawned tree using unified factory at {:?}", position);
         }
     }
     
@@ -288,7 +291,8 @@ fn spawn_dynamic_content_safe_unified(
             existing_content,
             current_time,
         ) {
-            println!("DEBUG: Spawned NPC using unified factory at {:?}", position);
+            #[cfg(debug_assertions)]
+        println!("DEBUG: Spawned NPC using unified factory at {:?}", position);
         }
     }
 }
