@@ -276,13 +276,22 @@ impl UnifiedWorldManager {
     }
     
     pub fn clear_placement_grid_for_chunk(&mut self, coord: ChunkCoord) {
-        // Remove all entities from placement grid within this chunk's bounds
-        let _chunk_center = coord.to_world_pos();
-        let _half_size = UNIFIED_CHUNK_SIZE * 0.5;
+        // CRITICAL FIX: Actually clear placement grid entries for this chunk
+        let chunk_center = coord.to_world_pos();
+        let half_size = UNIFIED_CHUNK_SIZE * 0.5;
         
-        // This is inefficient - in a full implementation, we'd track which
-        // grid cells belong to which chunks
-        // For now, we'll implement a more targeted removal in the actual generation
+        // Calculate grid cell range for this chunk
+        let min_x = ((chunk_center.x - half_size) / self.placement_grid.cell_size).floor() as i32;
+        let max_x = ((chunk_center.x + half_size) / self.placement_grid.cell_size).ceil() as i32;
+        let min_z = ((chunk_center.z - half_size) / self.placement_grid.cell_size).floor() as i32;
+        let max_z = ((chunk_center.z + half_size) / self.placement_grid.cell_size).ceil() as i32;
+        
+        // Remove all grid cells within chunk bounds
+        for x in min_x..=max_x {
+            for z in min_z..=max_z {
+                self.placement_grid.grid.remove(&(x, z));
+            }
+        }
     }
 }
 
@@ -306,10 +315,15 @@ pub fn unified_world_streaming_system(
     mut commands: Commands,
     mut world_manager: ResMut<UnifiedWorldManager>,
     active_query: Query<&Transform, With<ActiveEntity>>,
+    world_offset: Res<crate::systems::floating_origin::WorldOffset>,
+    world_root_query: Query<Entity, With<crate::systems::floating_origin::WorldRoot>>,
     time: Res<Time>,
 ) {
     let Ok(active_transform) = active_query.single() else { return };
-    let active_pos = active_transform.translation;
+    let Ok(world_root) = world_root_query.single() else { return };
+    
+    // CRITICAL FIX: Convert render position to logical position for streaming calculations
+    let active_pos = world_offset.render_to_logical(active_transform.translation);
     
     // Update timing
     world_manager.last_update = time.elapsed_secs();
@@ -337,7 +351,7 @@ pub fn unified_world_streaming_system(
         if world_manager.chunks_loaded_this_frame >= world_manager.max_chunks_per_frame {
             break;
         }
-        initiate_chunk_loading(&mut commands, &mut world_manager, coord);
+        initiate_chunk_loading(&mut commands, &mut world_manager, coord, world_root, &world_offset);
         world_manager.chunks_loaded_this_frame += 1;
     }
 }
@@ -346,23 +360,32 @@ fn initiate_chunk_loading(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
+    world_root: Entity,
+    world_offset: &crate::systems::floating_origin::WorldOffset,
 ) {
     // This function starts the chunk loading process
     // The actual content generation will be handled by layer-specific systems
     let chunk = world_manager.get_chunk_mut(coord);
     chunk.state = ChunkState::Loading;
     
-    // Create a marker entity for this chunk
+    // CRITICAL FIX: Convert logical chunk position to render space
+    let logical_pos = coord.to_world_pos();
+    let render_pos = world_offset.logical_to_render(logical_pos);
+    
+    // Create a marker entity for this chunk and PARENT TO WORLDROOT
     let chunk_entity = commands.spawn((
         UnifiedChunkEntity {
             coord,
             layer: ContentLayer::Roads, // Start with roads
         },
-        Transform::from_translation(coord.to_world_pos()),
+        Transform::from_translation(render_pos),
         Visibility::Visible,
-        InheritedVisibility::VISIBLE,
+        InheritedVisibility::default(),
         ViewVisibility::default(),
     )).id();
+    
+    // CRITICAL FIX: Parent to WorldRoot so it follows origin shifts
+    commands.entity(world_root).add_child(chunk_entity);
     
     chunk.entities.push(chunk_entity);
 }
@@ -373,7 +396,7 @@ fn unload_chunk(
     coord: ChunkCoord,
 ) {
     if let Some(chunk) = world_manager.chunks.get(&coord) {
-        // Despawn all entities in this chunk
+        // CRITICAL FIX: Use despawn to clean up entire hierarchy (auto-recursive in Bevy 0.16)
         for &entity in &chunk.entities {
             commands.entity(entity).despawn();
         }
