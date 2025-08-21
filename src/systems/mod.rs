@@ -87,6 +87,8 @@ pub mod parallel_physics;
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
+
+
 pub mod performance_monitor;
 // pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
 pub mod batching;
@@ -123,6 +125,8 @@ pub use safe_active_entity::{
 };
 
 // Floating origin system - REMOVED: Finite world doesn't need coordinate translation
+
+
 
 // Simple service examples
 pub use simple_service_example::{
