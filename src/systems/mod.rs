@@ -126,6 +126,8 @@ pub use safe_active_entity::{
 
 // Floating origin system - REMOVED: Finite world doesn't need coordinate translation
 
+// World boundary systems
+pub use world::{WorldBounds, world_boundary_system, aircraft_boundary_system};
 
 
 // Simple service examples

@@ -14,7 +14,10 @@ use crate::systems::{
     
     // Coordinate safety systems (simplified for finite world)
     ActiveEntityTransferred, active_transfer_executor_system, 
-    active_entity_integrity_check
+    active_entity_integrity_check,
+    
+    // World boundary systems
+    WorldBounds, world_boundary_system, aircraft_boundary_system
 };
 use crate::systems::physics::apply_universal_physics_safeguards;
 use crate::services::GroundDetectionPlugin;
@@ -60,7 +63,8 @@ impl Plugin for GameCorePlugin {
             .init_resource::<EntityLimits>()
             
             // Coordinate safety resources 
-            // No longer need floating origin resources
+            // World boundary system
+            .init_resource::<WorldBounds>()
             .add_event::<ActiveEntityTransferred>()
             // No world origin shift events needed
             
@@ -115,8 +119,9 @@ impl Plugin for GameCorePlugin {
                 // Universal physics safeguards run AFTER Rapier physics step
                 apply_universal_physics_safeguards,
                 
-                // Special cases system handles entities with separate position data
-                // No world shift system needed
+                // World boundary enforcement
+                world_boundary_system,
+                aircraft_boundary_system,
             ).chain())
             
             .add_systems(Update, (

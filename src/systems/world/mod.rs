@@ -17,6 +17,7 @@ pub mod npc_spawn;
 // pub mod optimized_lod; // Removed - functionality moved to unified_lod.rs
 pub mod vegetation_lod;
 // pub mod unified_distance_culling; - REMOVED: Replaced with Bevy's VisibilityRange
+pub mod boundaries;
 pub mod unified_factory_setup;
 
 pub use npc::*;
@@ -38,4 +39,5 @@ pub use npc_spawn::*;
 // pub use optimized_lod::*; // Removed - functionality moved to unified_lod.rs
 pub use vegetation_lod::*;
 // UnifiedCullable exports removed - using Bevy's VisibilityRange instead
+pub use boundaries::*;
 pub use unified_factory_setup::*;
