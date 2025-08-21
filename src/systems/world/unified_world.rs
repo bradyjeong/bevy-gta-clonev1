@@ -315,15 +315,13 @@ pub fn unified_world_streaming_system(
     mut commands: Commands,
     mut world_manager: ResMut<UnifiedWorldManager>,
     active_query: Query<&Transform, With<ActiveEntity>>,
-    world_offset: Res<crate::systems::floating_origin::WorldOffset>,
-    world_root_query: Query<Entity, With<crate::systems::floating_origin::WorldRoot>>,
+
     time: Res<Time>,
 ) {
     let Ok(active_transform) = active_query.single() else { return };
-    let Ok(world_root) = world_root_query.single() else { return };
     
-    // CRITICAL FIX: Convert render position to logical position for streaming calculations
-    let active_pos = world_offset.render_to_logical(active_transform.translation);
+    // Use direct world coordinates (no coordinate conversion needed)
+    let active_pos = active_transform.translation;
     
     // Update timing
     world_manager.last_update = time.elapsed_secs();
@@ -351,7 +349,7 @@ pub fn unified_world_streaming_system(
         if world_manager.chunks_loaded_this_frame >= world_manager.max_chunks_per_frame {
             break;
         }
-        initiate_chunk_loading(&mut commands, &mut world_manager, coord, world_root, &world_offset);
+        initiate_chunk_loading(&mut commands, &mut world_manager, coord);
         world_manager.chunks_loaded_this_frame += 1;
     }
 }
@@ -360,8 +358,6 @@ fn initiate_chunk_loading(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
-    world_root: Entity,
-    world_offset: &crate::systems::floating_origin::WorldOffset,
 ) {
     // This function starts the chunk loading process
     // The actual content generation will be handled by layer-specific systems
@@ -369,8 +365,7 @@ fn initiate_chunk_loading(
     chunk.state = ChunkState::Loading;
     
     // CRITICAL FIX: Convert logical chunk position to render space
-    let logical_pos = coord.to_world_pos();
-    let render_pos = world_offset.logical_to_render(logical_pos);
+    let world_pos = coord.to_world_pos();
     
     // Create a marker entity for this chunk and PARENT TO WORLDROOT
     let chunk_entity = commands.spawn((
@@ -378,14 +373,13 @@ fn initiate_chunk_loading(
             coord,
             layer: ContentLayer::Roads, // Start with roads
         },
-        Transform::from_translation(render_pos),
+        Transform::from_translation(world_pos),
         Visibility::Visible,
         InheritedVisibility::default(),
         ViewVisibility::default(),
     )).id();
     
-    // CRITICAL FIX: Parent to WorldRoot so it follows origin shifts
-    commands.entity(world_root).add_child(chunk_entity);
+    // Chunk entity spawned directly in world space
     
     chunk.entities.push(chunk_entity);
 }

@@ -85,7 +85,7 @@ pub mod player_collision_resolution;
 
 pub mod parallel_physics;
 pub mod safe_active_entity;
-pub mod floating_origin;
+// pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
 pub mod performance_monitor;
 // pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
@@ -122,12 +122,7 @@ pub use safe_active_entity::{
     active_entity_integrity_check, queue_active_transfer
 };
 
-// Floating origin system
-pub use floating_origin::{
-    WorldOffset, WorldRoot, IgnoreWorldShift, FollowsWorldOffset, WorldOriginShifted, FloatingOriginConfig,
-    setup_world_root, seamless_world_rebase_system, validate_streaming_position, floating_origin_diagnostics,
-    world_sanity_check_system, world_shift_special_cases_system
-};
+// Floating origin system - REMOVED: Finite world doesn't need coordinate translation
 
 // Simple service examples
 pub use simple_service_example::{

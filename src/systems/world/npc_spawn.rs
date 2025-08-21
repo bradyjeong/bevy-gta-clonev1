@@ -4,7 +4,7 @@ use crate::components::{
     NPCState, NPCType, NPCLOD, Cullable, NPCBehaviorType, NPCAppearance, NPCGender,
     NPC_LOD_CULL_DISTANCE
 };
-use crate::systems::floating_origin::FollowsWorldOffset;
+
 
 use crate::config::GameConfig;
 use crate::services::timing_service::{TimingService, EntityTimerType, ManagedTiming};
@@ -80,7 +80,7 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
         },
         Transform::from_translation(spawn_position),
         GlobalTransform::default(),
-        FollowsWorldOffset,  // Component for floating origin system
+
     )).id();
     
     println!("DEBUG: Spawned NPC at {:?} (ground: {:.2})", spawn_position, ground_height);
@@ -121,7 +121,7 @@ pub fn spawn_simple_npc_with_ground_detection(
         Visibility::Visible,
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         Cullable { max_distance: NPC_LOD_CULL_DISTANCE, is_culled: false },
-        FollowsWorldOffset,  // Component for floating origin system
+
     )).id()
 }
 
@@ -153,7 +153,7 @@ pub fn spawn_simple_npc(
         Visibility::Visible,
         LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         Cullable { max_distance: NPC_LOD_CULL_DISTANCE, is_culled: false },
-        FollowsWorldOffset,  // Component for floating origin system
+
     )).id()
 }
 
@@ -205,7 +205,7 @@ pub fn migrate_legacy_npcs(
         commands.entity(entity).insert((
             npc_state,
             ManagedTiming::new(EntityTimerType::NPCLOD),
-            FollowsWorldOffset,  // Component for floating origin system
+
         ));
         
         println!("DEBUG: Migrated NPC entity {:?} to unified architecture", entity);

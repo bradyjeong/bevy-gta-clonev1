@@ -12,11 +12,9 @@ use crate::systems::{
     SpawnValidationPlugin, DistanceCachePlugin, DistanceCacheDebugPlugin, 
     TransformSyncPlugin, UnifiedDistanceCalculatorPlugin, UnifiedPerformancePlugin,
     
-    // Coordinate safety systems
-    WorldOffset, FloatingOriginConfig, WorldOriginShifted, setup_world_root,
-    seamless_world_rebase_system, floating_origin_diagnostics, world_sanity_check_system, 
-    world_shift_special_cases_system, ActiveEntityTransferred, active_transfer_executor_system, 
-    active_entity_integrity_check, validate_streaming_position
+    // Coordinate safety systems (simplified for finite world)
+    ActiveEntityTransferred, active_transfer_executor_system, 
+    active_entity_integrity_check
 };
 use crate::systems::physics::apply_universal_physics_safeguards;
 use crate::services::GroundDetectionPlugin;
@@ -62,10 +60,9 @@ impl Plugin for GameCorePlugin {
             .init_resource::<EntityLimits>()
             
             // Coordinate safety resources 
-            .init_resource::<WorldOffset>()
-            .init_resource::<FloatingOriginConfig>()
+            // No longer need floating origin resources
             .add_event::<ActiveEntityTransferred>()
-            .add_event::<WorldOriginShifted>()
+            // No world origin shift events needed
             
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
             .insert_resource(AmbientLight {
@@ -108,33 +105,32 @@ impl Plugin for GameCorePlugin {
             ))
             
             // Setup world root entity at startup
-            .add_systems(Startup, setup_world_root)
+            // No longer need WorldRoot setup
             
             // Coordinate safety systems with seamless world shifting
             // Seamless world rebase runs BEFORE physics simulation
-            .add_systems(PreUpdate, seamless_world_rebase_system)
+            // No floating origin system needed
             
             .add_systems(FixedUpdate, (
                 // Universal physics safeguards run AFTER Rapier physics step
                 apply_universal_physics_safeguards,
                 
                 // Special cases system handles entities with separate position data
-                world_shift_special_cases_system,
+                // No world shift system needed
             ).chain())
             
             .add_systems(Update, (
                 // Input validation catches bad positions early
-                validate_streaming_position,
+                // No position validation needed for finite world
                 
                 // ActiveEntity safety ensures exactly one active entity  
                 active_transfer_executor_system,
                 active_entity_integrity_check,
                 
                 // Diagnostics and monitoring
-                floating_origin_diagnostics,
+                // No floating origin diagnostics needed
                 
-                // Safety system to catch any remaining orphaned entities
-                world_sanity_check_system,
+                // No sanity check system needed for finite world
             ).chain());
         
         info!("✅ Game Core Plugin loaded with complete coordinate safety and infinite world support");
