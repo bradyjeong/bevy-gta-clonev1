@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::collections::HashMap;
@@ -9,7 +9,7 @@ use crate::bundles::{
 use crate::factories::{MaterialFactory, MeshFactory};
 use crate::factories::generic_bundle::{GenericBundleFactory, BundleError, ColliderShape, ParticleEffectType};
 
-use crate::systems::{RoadNetwork, is_on_road_spline, UnifiedCullable, MovementTracker};
+use crate::systems::{RoadNetwork, is_on_road_spline, MovementTracker};
 
 
 use crate::GameConfig;
@@ -330,7 +330,11 @@ impl UnifiedEntityFactory {
                 visibility: Visibility::default(),
                 inherited_visibility: InheritedVisibility::VISIBLE,
                 view_visibility: ViewVisibility::default(),
-                cullable: UnifiedCullable::building(),
+                visibility_range: VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 350.0..400.0,
+                    use_aabb: false,
+                },
             },
             // Building-specific components
             Building {
@@ -391,7 +395,11 @@ impl UnifiedEntityFactory {
                     self.config.physics.static_group | self.config.physics.vehicle_group | self.config.physics.character_group
                 ),
                 velocity: Velocity::default(),
-                cullable: UnifiedCullable::vehicle(),
+                visibility_range: VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 450.0..500.0,
+                    use_aabb: false,
+                },
             },
             // Vehicle-specific components
             Car,
@@ -456,7 +464,11 @@ impl UnifiedEntityFactory {
                     Group::ALL
                 ),
                 velocity: Velocity::default(),
-                cullable: UnifiedCullable::npc(),
+                visibility_range: VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 130.0..150.0,
+                    use_aabb: false,
+                },
             },
             // NPC-specific components
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
@@ -497,7 +509,11 @@ impl UnifiedEntityFactory {
                 visibility: Visibility::default(),
                 inherited_visibility: InheritedVisibility::VISIBLE,
                 view_visibility: ViewVisibility::default(),
-                cullable: UnifiedCullable::vegetation(),
+                visibility_range: VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 250.0..300.0,
+                    use_aabb: false,
+                },
             },
             Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
             MeshMaterial3d(materials.add(Color::srgb(0.4, 0.2, 0.1))),

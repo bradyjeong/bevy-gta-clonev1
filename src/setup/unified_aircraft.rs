@@ -1,11 +1,11 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::factories::{MeshFactory, MaterialFactory};
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
-use crate::systems::world::unified_distance_culling::UnifiedCullable;
+
 use crate::systems::MovementTracker;
 use crate::GameConfig;
 
@@ -142,7 +142,11 @@ fn spawn_helicopter_unified(
         
         // Collision and culling
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        UnifiedCullable::vehicle(), // Aircraft visible from far
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..500.0, // Aircraft visible from far
+            use_aabb: false,
+        },
         
         // Movement tracking
         MovementTracker::new(position, 50.0),
@@ -271,7 +275,11 @@ fn spawn_f16_unified(
         
         // Collision and culling
         CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-        UnifiedCullable::vehicle(), // Aircraft visible from far
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..500.0, // Aircraft visible from far
+            use_aabb: false,
+        },
         
         // Movement tracking
         MovementTracker::new(position, 50.0),

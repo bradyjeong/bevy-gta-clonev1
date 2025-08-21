@@ -6,7 +6,7 @@ use crate::factories::entity_factory_unified::UnifiedEntityFactory;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::road_network::RoadNetwork;
-use crate::systems::world::unified_distance_culling::UnifiedCullable;
+use bevy::render::view::VisibilityRange;
 use crate::services::distance_cache::MovementTracker;
 
 use crate::GameConfig;
@@ -134,11 +134,17 @@ fn setup_starter_vehicles_unified(
                 velocity: Velocity::default(),
                 damping: Damping { linear_damping: 2.0, angular_damping: 8.0 },
                 locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-                cullable: UnifiedCullable::vehicle(),
+                // Use Bevy's built-in LOD system
+                visibility_range: VisibilityRange {
+                    start_margin: 0.0..0.0,     // Always visible when in range
+                    end_margin: 450.0..500.0,   // Fade out between 450-500m
+                    use_aabb: false,
+                },
             },
             MovementTracker::new(validated_position, 10.0),
             Name::new(format!("StarterVehicle_{}", i)),
             SimpleCarSpecs::default(),
+
         )).id();
         
         // Add car body as child entity
@@ -260,11 +266,17 @@ fn setup_luxury_cars_unified(
                 velocity: Velocity::default(),
                 damping: Damping { linear_damping: 2.0, angular_damping: 8.0 },
                 locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-                cullable: UnifiedCullable::vehicle(),
+                // Use Bevy's built-in LOD system
+                visibility_range: VisibilityRange {
+                    start_margin: 0.0..0.0,     // Always visible when in range
+                    end_margin: 450.0..500.0,   // Fade out between 450-500m
+                    use_aabb: false,
+                },
             },
             MovementTracker::new(validated_position, 10.0),
             Name::new(format!("LuxuryCar_{}", i)),
             SimpleCarSpecs::default(),
+
         )).id();
         
         // Add luxury car body with premium materials

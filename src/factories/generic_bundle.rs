@@ -1,11 +1,11 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 use crate::config::*;
 use crate::components::*;
 use crate::services::distance_cache::MovementTracker;
 use crate::bundles::*;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
-use crate::systems::world::unified_distance_culling::UnifiedCullable;
+
 
 /// Type alias for old NPCBehavior to maintain compatibility
 pub type NPCBehavior = NPCBehaviorComponent;
@@ -141,10 +141,18 @@ impl BundleSpec for VehicleBundleSpec {
                 linear_damping: vehicle_config.linear_damping, 
                 angular_damping: vehicle_config.angular_damping 
             },
-            cullable: if self.include_visibility {
-                UnifiedCullable::vehicle()
+            visibility_range: if self.include_visibility {
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 450.0..500.0,
+                    use_aabb: false,
+                }
             } else {
-                UnifiedCullable::vehicle()
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 450.0..500.0,
+                    use_aabb: false,
+                }
             },
         }
     }
@@ -236,7 +244,11 @@ impl BundleSpec for NPCBundleSpec {
             collision_groups: CollisionGroups::new(config.physics.character_group, Group::ALL),
             additional_mass: AdditionalMassProperties::Mass(70.0 * build),
             velocity: Velocity::zero(),
-            cullable: UnifiedCullable::npc(),
+            visibility_range: VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 130.0..150.0,
+                use_aabb: false,
+            },
             movement_tracker: MovementTracker::new(self.position, 8.0), // Track NPC movement with 8m threshold
         }
     }
@@ -314,7 +326,11 @@ impl BundleSpec for BuildingBundleSpec {
                 Collider::ball(0.1) // Minimal collider for LOD
             },
             collision_groups: CollisionGroups::new(config.physics.static_group, Group::ALL),
-            cullable: UnifiedCullable::building(),
+            visibility_range: VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 350.0..400.0,
+                use_aabb: false,
+            },
         }
     }
     
@@ -607,7 +623,11 @@ impl GenericBundleFactory {
             visibility: Visibility::Inherited,
             inherited_visibility: InheritedVisibility::VISIBLE,
             view_visibility: ViewVisibility::default(),
-            cullable: UnifiedCullable::vegetation(),
+            visibility_range: VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 250.0..300.0,
+                use_aabb: false,
+            },
         }
     }
     
@@ -629,7 +649,11 @@ impl GenericBundleFactory {
             collider,
             collision_groups,
             velocity: Velocity::zero(),
-            cullable: UnifiedCullable::vegetation(),
+            visibility_range: VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 250.0..300.0,
+                use_aabb: false,
+            },
         }
     }
     
@@ -652,7 +676,11 @@ impl GenericBundleFactory {
             velocity: Velocity::zero(),
             damping,
             locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            cullable: UnifiedCullable::vehicle(),
+            visibility_range: VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..500.0,
+                use_aabb: false,
+            },
         }
     }
     
@@ -667,7 +695,11 @@ impl GenericBundleFactory {
             visibility: Visibility::Inherited,
             inherited_visibility: InheritedVisibility::VISIBLE,
             view_visibility: ViewVisibility::default(),
-            cullable: UnifiedCullable::vegetation(),
+            visibility_range: VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 250.0..300.0,
+                use_aabb: false,
+            },
         }
     }
     
@@ -705,7 +737,11 @@ impl GenericBundleFactory {
             visibility: Visibility::Inherited,
             inherited_visibility: InheritedVisibility::VISIBLE,
             view_visibility: ViewVisibility::default(),
-            cullable: UnifiedCullable::vegetation(),
+            visibility_range: VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 250.0..300.0,
+                use_aabb: false,
+            },
         }
     }
 }

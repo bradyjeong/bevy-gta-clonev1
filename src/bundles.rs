@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::services::distance_cache::MovementTracker;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
-use crate::systems::world::unified_distance_culling::UnifiedCullable;
+use bevy::render::view::VisibilityRange;
 
 /// Bundle for entities that need to be visible and inherit visibility from parents
 #[derive(Bundle)]
@@ -68,7 +68,7 @@ pub struct VehicleBundle {
     pub additional_mass: AdditionalMassProperties,
     pub velocity: Velocity,
     pub damping: Damping,
-    pub cullable: UnifiedCullable,
+    pub visibility_range: VisibilityRange,
 }
 
 /// Complete NPC bundle with physics and state  
@@ -85,7 +85,7 @@ pub struct NPCBundle {
     pub collision_groups: CollisionGroups,
     pub additional_mass: AdditionalMassProperties,
     pub velocity: Velocity,
-    pub cullable: UnifiedCullable,
+    pub visibility_range: VisibilityRange,
     pub movement_tracker: MovementTracker,
 }
 
@@ -98,7 +98,7 @@ pub struct BuildingBundle {
     pub rigid_body: RigidBody,
     pub collider: Collider,
     pub collision_groups: CollisionGroups,
-    pub cullable: UnifiedCullable,
+    pub visibility_range: VisibilityRange,
 }
 
 /// Generic physics bundle for any physics object
@@ -124,7 +124,7 @@ pub struct DynamicContentBundle {
     pub visibility: Visibility,
     pub inherited_visibility: InheritedVisibility,
     pub view_visibility: ViewVisibility,
-    pub cullable: UnifiedCullable,
+    pub visibility_range: VisibilityRange,
 }
 
 /// Bundle for dynamic content with physics
@@ -139,7 +139,7 @@ pub struct DynamicPhysicsBundle {
     pub collider: Collider,
     pub collision_groups: CollisionGroups,
     pub velocity: Velocity,
-    pub cullable: UnifiedCullable,
+    pub visibility_range: VisibilityRange,
 }
 
 /// Bundle for vehicle entities with complete setup
@@ -157,7 +157,7 @@ pub struct DynamicVehicleBundle {
     pub velocity: Velocity,
     pub damping: Damping,
     pub locked_axes: LockedAxes,
-    pub cullable: UnifiedCullable,
+    pub visibility_range: VisibilityRange,
 }
 
 /// Bundle for trees and vegetation
@@ -168,7 +168,7 @@ pub struct VegetationBundle {
     pub visibility: Visibility,
     pub inherited_visibility: InheritedVisibility,
     pub view_visibility: ViewVisibility,
-    pub cullable: UnifiedCullable,
+    pub visibility_range: VisibilityRange,
 }
 
 /// Bundle for simple static physics objects
@@ -191,5 +191,5 @@ pub struct UnifiedChunkBundle {
     pub visibility: Visibility,
     pub inherited_visibility: InheritedVisibility,
     pub view_visibility: ViewVisibility,
-    pub cullable: UnifiedCullable,
+    pub visibility_range: VisibilityRange,
 }
