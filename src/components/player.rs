@@ -29,7 +29,7 @@ impl Default for HumanMovement {
         Self {
             acceleration: 32.0,
             deceleration: 50.0,
-            max_speed: 7.0, // Increased from 4.5 for faster walking
+            max_speed: 4.5, // Realistic walking speed (4.5 m/s = 16 km/h)
             current_speed: 0.0,
             target_velocity: Vec3::ZERO,
         }

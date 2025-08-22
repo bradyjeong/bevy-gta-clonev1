@@ -128,7 +128,7 @@ fn setup_starter_vehicles_unified(
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(1.0, 0.5, 2.0),
+                    collider: Collider::cuboid(0.95, 0.65, 2.35),
                     collision_groups: CollisionGroups::new(
                         entity_factory.config.physics.vehicle_group,
                         entity_factory.config.physics.static_group
@@ -149,6 +149,7 @@ fn setup_starter_vehicles_unified(
                     },
                 },
                 MovementTracker::new(validated_position, 10.0),
+                VehicleState::new(VehicleType::SuperCar),
                 Name::new(format!("StarterVehicle_{}", i)),
                 SimpleCarSpecs::default(),
             ))
@@ -156,7 +157,7 @@ fn setup_starter_vehicles_unified(
 
         // Add car body as child entity
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
+            Mesh3d(meshes.add(Cuboid::new(1.9, 1.3, 4.7))),
             MeshMaterial3d(materials.add(color)),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
@@ -271,7 +272,7 @@ fn setup_luxury_cars_unified(
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(1.0, 0.5, 2.0),
+                    collider: Collider::cuboid(0.95, 0.65, 2.35),
                     collision_groups: CollisionGroups::new(
                         entity_factory.config.physics.vehicle_group,
                         entity_factory.config.physics.static_group
@@ -292,6 +293,7 @@ fn setup_luxury_cars_unified(
                     },
                 },
                 MovementTracker::new(validated_position, 10.0),
+                VehicleState::new(VehicleType::SuperCar),
                 Name::new(format!("LuxuryCar_{}", i)),
                 SimpleCarSpecs::default(),
             ))

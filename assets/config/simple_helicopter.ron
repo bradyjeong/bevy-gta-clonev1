@@ -4,7 +4,7 @@ SimpleHelicopterConfig(
     // Movement speeds
     lateral_speed: 20.0,        // Side-to-side movement speed
     vertical_speed: 15.0,       // Up/down movement speed
-    forward_speed: 25.0,        // Forward/backward movement speed
+    forward_speed: 83.0,        // Forward/backward movement speed
     
     // Rotation rates
     yaw_rate: 1.5,             // Rotation around Y axis (rad/s)

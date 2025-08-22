@@ -137,7 +137,7 @@ pub struct TailRotor;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum VehicleType {
-    BasicCar,
+    SuperCar,
     Helicopter,
     F16,
 }
@@ -166,9 +166,9 @@ pub struct VehicleState {
 impl VehicleState {
     pub fn new(vehicle_type: VehicleType) -> Self {
         let (max_speed, acceleration) = match vehicle_type {
-            VehicleType::BasicCar => (60.0, 20.0),
-            VehicleType::Helicopter => (80.0, 25.0),
-            VehicleType::F16 => (300.0, 100.0),
+            VehicleType::SuperCar => (70.0, 40.0),
+            VehicleType::Helicopter => (83.0, 30.0),
+            VehicleType::F16 => (600.0, 80.0),
         };
 
         Self {

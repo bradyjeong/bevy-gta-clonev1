@@ -373,7 +373,7 @@ fn get_boundary_vehicle_type(vehicle_state: &VehicleState) -> BoundaryVehicleTyp
     match vehicle_state.vehicle_type {
         crate::components::vehicles::VehicleType::F16 => BoundaryVehicleType::Aircraft,
         crate::components::vehicles::VehicleType::Helicopter => BoundaryVehicleType::Aircraft,
-        crate::components::vehicles::VehicleType::BasicCar => BoundaryVehicleType::GroundVehicle,
+        crate::components::vehicles::VehicleType::SuperCar => BoundaryVehicleType::GroundVehicle,
         // Add more mappings as needed
     }
 }

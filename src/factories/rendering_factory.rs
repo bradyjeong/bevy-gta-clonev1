@@ -111,7 +111,7 @@ pub enum StandardRenderingPattern {
 
 #[derive(Debug, Clone, Copy)]
 pub enum VehicleBodyType {
-    BasicCar,
+    SuperCar,
     SportsCar,
     SUV,
     Truck,
@@ -228,7 +228,7 @@ impl RenderingFactory {
                 color,
             } => {
                 let mesh = match vehicle_type {
-                    VehicleBodyType::BasicCar => MeshFactory::create_car_body(meshes),
+                    VehicleBodyType::SuperCar => MeshFactory::create_car_body(meshes),
                     VehicleBodyType::SportsCar => MeshFactory::create_sports_car_body(meshes),
                     VehicleBodyType::SUV => MeshFactory::create_suv_body(meshes),
                     VehicleBodyType::Truck => MeshFactory::create_truck_body(meshes),
@@ -586,7 +586,7 @@ impl RenderingFactory {
             meshes,
             materials,
             StandardRenderingPattern::VehicleBody {
-                vehicle_type: VehicleBodyType::BasicCar,
+                vehicle_type: VehicleBodyType::SuperCar,
                 color,
             },
             position,

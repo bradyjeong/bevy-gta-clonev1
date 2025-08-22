@@ -19,7 +19,7 @@ pub fn service_example_vehicle_creation(
     }
 
     // Get vehicle configuration from config service
-    let vehicle_config = &config_service.get_config().vehicles.basic_car;
+    let vehicle_config = &config_service.get_config().vehicles.super_car;
 
     // Validate spawn position using physics service
     let spawn_position = Vec3::new(15.0, 2.0, 15.0);

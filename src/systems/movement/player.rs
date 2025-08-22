@@ -53,7 +53,7 @@ pub fn velocity_apply_system(
     };
 
     let effective_max_speed = if input_data.is_running {
-        movement.max_speed * 2.5 // Sprint speed
+        movement.max_speed * 1.8 // Sprint speed (8 m/s realistic)
     } else {
         movement.max_speed // Walk speed
     };

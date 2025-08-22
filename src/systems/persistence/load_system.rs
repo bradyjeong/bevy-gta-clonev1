@@ -195,10 +195,10 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
     ));
 
     match vehicle_data.vehicle_type {
-        VehicleType::BasicCar => {
+        VehicleType::SuperCar => {
             entity_commands.insert((
                 Car,
-                Collider::cuboid(2.0, 1.0, 4.5),
+                Collider::cuboid(0.95, 0.65, 2.35),
                 ColliderMassProperties::Density(0.8),
             ));
         }
@@ -206,7 +206,7 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
         VehicleType::Helicopter => {
             entity_commands.insert((
                 Helicopter,
-                Collider::cuboid(2.0, 1.5, 8.0),
+                Collider::cuboid(1.5, 1.5, 6.0),
                 ColliderMassProperties::Density(0.6),
             ));
         }
@@ -220,7 +220,7 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
             entity_commands.insert((
                 F16,
                 aircraft_flight_data,
-                Collider::cuboid(1.5, 1.0, 6.0),
+                Collider::cuboid(7.5, 2.5, 5.0),
                 ColliderMassProperties::Density(0.7),
             ));
         }

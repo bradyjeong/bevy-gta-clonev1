@@ -92,9 +92,6 @@ pub struct WorldConfig {
 
 #[derive(Debug, Clone)]
 pub struct VehicleConfig {
-    // Basic car parameters
-    pub basic_car: VehicleTypeConfig,
-
     // Super car parameters
     pub super_car: VehicleTypeConfig,
 
@@ -298,22 +295,10 @@ impl Default for WorldConfig {
 impl Default for VehicleConfig {
     fn default() -> Self {
         Self {
-            basic_car: VehicleTypeConfig {
-                body_size: Vec3::new(1.8, 0.6, 3.6),
-                collider_size: Vec3::new(0.9, 0.6, 1.8),
-                max_speed: 80.0,
-                acceleration: 25.0,
-                mass: 1200.0,
-                linear_damping: 1.0,
-                angular_damping: 5.0,
-                default_color: Color::srgb(0.8, 0.8, 0.8),
-                engine_volume: 0.6,
-                horn_volume: 0.8,
-            },
             super_car: VehicleTypeConfig {
-                body_size: Vec3::new(1.8, 0.4, 4.2),
-                collider_size: Vec3::new(0.9, 0.5, 2.1),
-                max_speed: 120.0,
+                body_size: Vec3::new(1.9, 1.3, 4.7),
+                collider_size: Vec3::new(0.95, 0.65, 2.35),
+                max_speed: 70.0,
                 acceleration: 40.0,
                 mass: 1400.0,
                 linear_damping: 1.0,
@@ -323,9 +308,9 @@ impl Default for VehicleConfig {
                 horn_volume: 0.9,
             },
             helicopter: VehicleTypeConfig {
-                body_size: Vec3::new(2.5, 1.5, 5.0),
-                collider_size: Vec3::new(1.25, 0.75, 2.5),
-                max_speed: 60.0,
+                body_size: Vec3::new(3.0, 3.0, 12.0),
+                collider_size: Vec3::new(1.5, 1.5, 6.0),
+                max_speed: 83.0,
                 acceleration: 30.0,
                 mass: 2500.0,
                 linear_damping: 2.0,
@@ -335,9 +320,9 @@ impl Default for VehicleConfig {
                 horn_volume: 0.5,
             },
             f16: VehicleTypeConfig {
-                body_size: Vec3::new(16.0, 2.0, 3.0),
-                collider_size: Vec3::new(8.0, 1.0, 1.5),
-                max_speed: 200.0,
+                body_size: Vec3::new(15.0, 5.0, 10.0),
+                collider_size: Vec3::new(7.5, 2.5, 5.0),
+                max_speed: 600.0,
                 acceleration: 80.0,
                 mass: 8000.0,
                 linear_damping: 0.5,
@@ -552,7 +537,7 @@ impl WorldConfig {
 
 impl VehicleConfig {
     pub fn validate_and_clamp(&mut self) {
-        self.basic_car.validate_and_clamp();
+
         self.super_car.validate_and_clamp();
         self.helicopter.validate_and_clamp();
         self.f16.validate_and_clamp();

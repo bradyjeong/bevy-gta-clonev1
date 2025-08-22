@@ -432,7 +432,7 @@ impl UnifiedEntityFactory {
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(1.0, 0.5, 2.0),
+                    collider: Collider::cuboid(0.95, 0.65, 2.35),
                     collision_groups: CollisionGroups::new(
                         self.config.physics.vehicle_group,
                         self.config.physics.static_group
@@ -448,6 +448,7 @@ impl UnifiedEntityFactory {
                 },
                 // Vehicle-specific components
                 Car,
+                VehicleState::new(VehicleType::SuperCar),
                 LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
                 Damping {
                     linear_damping: 1.0,
@@ -463,7 +464,7 @@ impl UnifiedEntityFactory {
 
         // Add car body as child entity
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
+            Mesh3d(meshes.add(Cuboid::new(1.9, 1.3, 4.7))),
             MeshMaterial3d(materials.add(color)),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
