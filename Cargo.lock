@@ -2426,6 +2426,7 @@ dependencies = [
  "bevy_rapier3d",
  "bytemuck",
  "chrono",
+ "futures-lite",
  "rand",
  "ron",
  "serde",

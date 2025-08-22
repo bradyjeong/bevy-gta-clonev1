@@ -58,6 +58,12 @@ impl ChunkCoord {
         let dz = (self.z - other.z) as f32;
         (dx * dx + dz * dz).sqrt()
     }
+    
+    pub fn distance_squared_to(&self, other: ChunkCoord) -> f32 {
+        let dx = (self.x - other.x) as f32;
+        let dz = (self.z - other.z) as f32;
+        dx * dx + dz * dz
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -144,10 +150,11 @@ impl PlacementGrid {
                 let check_cell = (cell.0 + dx, cell.1 + dz);
                 if let Some(entities) = self.grid.get(&check_cell) {
                     for (existing_pos, _existing_type, existing_radius) in entities {
-                        let distance = position.distance(*existing_pos);
                         let required_distance = min_distance.max(*existing_radius + radius);
+                        let required_distance_squared = required_distance.powi(2);
+                        let distance_squared = position.distance_squared(*existing_pos);
                         
-                        if distance < required_distance {
+                        if distance_squared < required_distance_squared {
                             return false;
                         }
                     }
@@ -168,7 +175,8 @@ impl PlacementGrid {
                 let check_cell = (cell.0 + dx, cell.1 + dz);
                 if let Some(entities) = self.grid.get(&check_cell) {
                     for (entity_pos, content_type, entity_radius) in entities {
-                        if position.distance(*entity_pos) <= radius {
+                        let radius_squared = radius.powi(2);
+                        if position.distance_squared(*entity_pos) <= radius_squared {
                             result.push((*entity_pos, *content_type, *entity_radius));
                         }
                     }
@@ -317,12 +325,15 @@ impl UnifiedWorldManager {
     
     pub fn cleanup_distant_chunks(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
         let mut to_unload = Vec::new();
+        let max_distance_squared = (UNIFIED_STREAMING_RADIUS + self.chunk_size).powi(2);
         
         for chunk_opt in &mut self.chunks {
             if let Some(chunk) = chunk_opt {
-                chunk.distance_to_player = active_pos.distance(chunk.coord.to_world_pos_with_size(self.chunk_size));
+                let chunk_pos = chunk.coord.to_world_pos_with_size(self.chunk_size);
+                let distance_squared = active_pos.distance_squared(chunk_pos);
+                chunk.distance_to_player = distance_squared.sqrt(); // Only calculate sqrt when needed
                 
-                if chunk.distance_to_player > UNIFIED_STREAMING_RADIUS + self.chunk_size {
+                if distance_squared > max_distance_squared {
                     if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
                         chunk.state = ChunkState::Unloading;
                         to_unload.push(chunk.coord);
@@ -337,23 +348,24 @@ impl UnifiedWorldManager {
     pub fn get_chunks_to_load(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
         let active_chunk = ChunkCoord::from_world_pos(active_pos, self.chunk_size);
         let mut to_load = Vec::new();
+        let max_distance_squared = UNIFIED_STREAMING_RADIUS.powi(2);
         
-        for dx in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
-            for dz in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
-                let coord = ChunkCoord::new(active_chunk.x + dx, active_chunk.z + dz);
-                
+        // PERFORMANCE: Use ring pattern instead of nested loops for better cache locality
+        for ring in 0..=self.streaming_radius_chunks {
+            for coord in self.generate_ring_coords(active_chunk, ring) {
                 // FINITE WORLD: Skip chunks outside bounds
                 if !self.is_chunk_in_bounds(coord) {
                     continue;
                 }
                 
-                let distance = active_pos.distance(coord.to_world_pos_with_size(self.chunk_size));
+                let chunk_pos = coord.to_world_pos_with_size(self.chunk_size);
+                let distance_squared = active_pos.distance_squared(chunk_pos);
                 
-                if distance <= UNIFIED_STREAMING_RADIUS {
+                if distance_squared <= max_distance_squared {
                     if let Some(chunk) = self.get_chunk_mut(coord) {
                         if matches!(chunk.state, ChunkState::Unloaded) {
                             chunk.state = ChunkState::Loading;
-                            chunk.distance_to_player = distance;
+                            chunk.distance_to_player = distance_squared.sqrt();
                             to_load.push(coord);
                         }
                     }
@@ -362,6 +374,30 @@ impl UnifiedWorldManager {
         }
         
         to_load
+    }
+    
+    /// Generate ring pattern coordinates for cache-friendly iteration
+    fn generate_ring_coords(&self, center: ChunkCoord, ring: i32) -> Vec<ChunkCoord> {
+        if ring == 0 {
+            return vec![center];
+        }
+        
+        let mut coords = Vec::new();
+        
+        // Generate coordinates in ring pattern (clockwise from top-left)
+        for i in 0..(ring * 8) {
+            let (dx, dz) = match i / (ring * 2) {
+                0 => (-ring + (i % (ring * 2)), -ring), // Top edge
+                1 => (ring, -ring + (i % (ring * 2))),  // Right edge  
+                2 => (ring - (i % (ring * 2)), ring),   // Bottom edge
+                3 => (-ring, ring - (i % (ring * 2))),  // Left edge
+                _ => (0, 0), // Should never happen
+            };
+            
+            coords.push(ChunkCoord::new(center.x + dx, center.z + dz));
+        }
+        
+        coords
     }
     
     pub fn clear_placement_grid_for_chunk(&mut self, coord: ChunkCoord) {
@@ -399,21 +435,27 @@ pub enum ContentLayer {
     NPCs,
 }
 
-/// Main unified world streaming system
+/// Main unified world streaming system with fixed update intervals
+/// Runs at 0.2s intervals instead of every frame for optimal performance
 pub fn unified_world_streaming_system(
     mut commands: Commands,
     mut world_manager: ResMut<UnifiedWorldManager>,
     active_query: Query<&Transform, With<ActiveEntity>>,
-
     time: Res<Time>,
 ) {
     let Ok(active_transform) = active_query.single() else { return };
+    let current_time = time.elapsed_secs();
+    
+    // PERFORMANCE: Only update every 0.2 seconds, not every frame
+    if current_time - world_manager.last_update < 0.2 {
+        return;
+    }
     
     // Use direct world coordinates (no coordinate conversion needed)
     let active_pos = active_transform.translation;
     
     // Update timing
-    world_manager.last_update = time.elapsed_secs();
+    world_manager.last_update = current_time;
     world_manager.chunks_loaded_this_frame = 0;
     world_manager.chunks_unloaded_this_frame = 0;
     
