@@ -1,6 +1,7 @@
 # AGENT.md
 
 ## Table of Contents
+- [Best Practices](#best-practices)
 - [Code Philosophy: Simplicity First](#code-philosophy-simplicity-first)
 - [Module Communication](#module-communication)
 - [ECS Patterns](#ecs-patterns)
@@ -13,6 +14,9 @@
 - [Debugging & Error Handling](#debugging--error-handling)
 - [Asset-Driven Control System](#asset-driven-control-system)
 - [Simplified Physics Systems](#simplified-physics-systems)
+
+## Best Practices
+Follow best practices from professional GTA games, Bevy, and Rust while maintaining our simplicity principles.
 
 ## Code Philosophy: Simplicity First
 CORE PRINCIPLE: Simplicity is the key to this codebase.
