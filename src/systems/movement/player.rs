@@ -156,22 +156,35 @@ pub fn human_player_animation(
         ),
     >,
 ) {
-    let Ok((_player_transform, animation, _movement)) = player_query.single() else {
+    let Ok((_player_transform, animation, movement)) = player_query.single() else {
         return;
     };
 
     let _dt = time.delta_secs();
     let time_elapsed = time.elapsed_secs();
 
+    // Determine realistic step cadence (Hz) based on speed and running state
+    let speed = movement.current_speed;
+    let cadence_hz = if animation.is_running {
+        // Running: ~2.6–3.2 Hz across 3–8 m/s
+        let t = ((speed - 3.0) / (8.0 - 3.0)).clamp(0.0, 1.0);
+        2.6 + t * (3.2 - 2.6)
+    } else {
+        // Walking: ~1.6–2.2 Hz across 0.5–2.0 m/s
+        let t = ((speed - 0.5) / (2.0 - 0.5)).clamp(0.0, 1.0);
+        1.6 + t * (2.2 - 1.6)
+    };
+    let step_omega = 2.0 * std::f32::consts::PI * cadence_hz;
+
     // Calculate animation values
     let walk_cycle = if animation.is_walking {
-        (time_elapsed * animation.step_frequency).sin()
+        (time_elapsed * step_omega).sin()
     } else {
         0.0
     };
 
     let walk_cycle_offset = if animation.is_walking {
-        (time_elapsed * animation.step_frequency + std::f32::consts::PI).sin()
+        (time_elapsed * step_omega + std::f32::consts::PI).sin()
     } else {
         0.0
     };

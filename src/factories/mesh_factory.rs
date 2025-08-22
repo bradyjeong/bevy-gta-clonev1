@@ -11,8 +11,8 @@ impl MeshFactory {
     }
 
     pub fn create_sports_car_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // Match collider proportions: cuboid(0.95, 0.65, 2.35) scaled up for visibility
-        meshes.add(Cuboid::new(1.9, 1.3, 4.7)) // 2x collider dimensions for visual size
+        // GTA-style: Visual mesh at full size, collider will be 0.8x for forgiving collision
+        meshes.add(Cuboid::new(1.9, 1.3, 4.7)) // Full visual size from config body_size
     }
 
     pub fn create_suv_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
@@ -24,8 +24,8 @@ impl MeshFactory {
     }
 
     pub fn create_helicopter_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // Match collider dimensions: cuboid(1.5, 1.5, 6.0) from config
-        meshes.add(Cuboid::new(3.0, 3.0, 12.0)) // 2x collider dimensions for visual size
+        // GTA-style: Visual mesh at full size, collider will be 0.8x for forgiving collision
+        meshes.add(Cuboid::new(3.0, 3.0, 12.0)) // Full visual size from config body_size
     }
 
     pub fn create_boat_hull(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
@@ -277,12 +277,12 @@ impl MeshFactory {
         meshes.add(Capsule3d::new(safe_radius, safe_length))
     }
 
-    /// Create F16 fighter jet body (main fuselage) - Fixed: aligned with physics forward (-Z)
+    /// Create F16 fighter jet body (main fuselage) - GTA-style collision
     pub fn create_f16_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // Match collider dimensions: capsule_z(7.5, 2.5) = 15m long, 5m diameter
-        let width = 5.0_f32.clamp(0.1, 10.0); // X-axis (diameter)
-        let height = 5.0_f32.clamp(0.1, 10.0); // Y-axis (diameter)  
-        let depth = 15.0_f32.clamp(0.1, 50.0); // Z-axis (length)
+        // F16 proportions: Keep fighter jet look - long and narrow
+        let width = 4.0_f32.clamp(0.1, 10.0); // X-axis - narrow fighter jet
+        let height = 2.5_f32.clamp(0.1, 5.0); // Y-axis - low profile  
+        let depth = 16.0_f32.clamp(0.1, 20.0); // Z-axis - long fuselage
         meshes.add(Cuboid::new(width, height, depth))
     }
 

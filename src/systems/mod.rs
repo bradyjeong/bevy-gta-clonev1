@@ -70,6 +70,7 @@ pub mod input;
 pub mod persistence;
 pub mod safety;
 pub mod spawn_validation;
+pub mod validation;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
 // pub mod distance_cache; // Moved to services/
 pub mod distance_cache_debug;
@@ -127,6 +128,9 @@ pub use safe_active_entity::{
     ActiveEntityTransferred, ActiveTransferRequest, active_entity_integrity_check,
     active_transfer_executor_system, queue_active_transfer,
 };
+
+// Validation systems
+pub use validation::{MeshColliderConfig, ColliderType, validate_vehicle_consistency};
 
 // Floating origin system - REMOVED: Finite world doesn't need coordinate translation
 

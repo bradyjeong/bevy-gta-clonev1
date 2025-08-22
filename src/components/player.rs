@@ -53,7 +53,7 @@ impl Default for HumanAnimation {
     fn default() -> Self {
         Self {
             walk_cycle_time: 0.0,
-            step_frequency: 5.0, // Increased from 3.0 for faster arm/leg movement
+            step_frequency: 2.0 * std::f32::consts::PI * 1.9, // ~1.9 Hz walking cadence
             head_bob_amplitude: 0.025,
             body_sway_amplitude: 0.015,
             breathing_rate: 1.4,

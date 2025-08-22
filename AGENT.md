@@ -14,6 +14,7 @@
 - [Debugging & Error Handling](#debugging--error-handling)
 - [Asset-Driven Control System](#asset-driven-control-system)
 - [Simplified Physics Systems](#simplified-physics-systems)
+- [Mesh-Collider Consistency](#mesh-collider-consistency)
 
 ## Best Practices
 Follow best practices from professional GTA games, Bevy, and Rust while maintaining our simplicity principles.
@@ -212,6 +213,29 @@ Primary control configuration using RON (Rusty Object Notation) files.
 - **Performant**: Rapier handles optimization, minimal per-frame calculations
 - **Reliable Physics**: Vehicles behave predictably with proper collision response
 
+## Mesh-Collider Consistency
 
+### System Architecture
+- **Single Source**: `config.rs` defines both `body_size` (mesh) and `collider_size` (physics)
+- **Validation System**: `src/systems/validation/mesh_collider_consistency.rs` - Startup checks
+- **Automated Creation**: `MeshColliderConfig` and `ConsistentVehicleFactory` for paired creation
+- **Debug Visualization**: Collider wireframes with `--features debug-ui`
+
+### Best Practices
+- **GTA-Style Forgiving**: Colliders 0.8x visual mesh size for forgiving collision
+- **Proportional Scaling**: Maintain aspect ratio between mesh and collider
+- **Validation Bounds**: Collider must be 0.7-0.9x mesh size for GTA-style gameplay
+- **Single Creation**: Use `ConsistentVehicleFactory` for new vehicles
+
+### Current Vehicle Ratios (GTA-Style)
+- **SuperCar**: 0.8x (mesh 1.9×1.3×4.7, collider 0.76×0.52×1.88)
+- **Helicopter**: 0.8x (mesh 3×3×12, collider 1.2×1.2×4.8)
+- **F16**: 0.8x (mesh 15×5×10, collider capsule 6.0 radius × 4.0 half-height)
+- **Yacht**: 0.5x (mesh 8×2×20, collider 4×1×10) - intentionally smaller for boats
+
+### Startup Validation
+- Automatic consistency checks on game startup
+- Warnings for mismatched ratios or oversized differences
+- Performance impact logging for validation systems
 
 

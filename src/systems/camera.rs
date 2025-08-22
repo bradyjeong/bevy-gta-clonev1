@@ -48,8 +48,8 @@ pub fn camera_follow_system(
         config.camera.lerp_speed,
     );
 
-    // Camera looks toward the entity at player height (classic GTA style)
-    let look_target = active_transform.translation + Vec3::Y * 1.0;
+    // Camera looks toward the entity slightly above ground (closer to parallel)
+    let look_target = active_transform.translation + Vec3::Y * 0.5;
 
     // Safety check for look target
     if !look_target.is_finite() {

@@ -128,7 +128,7 @@ fn setup_starter_vehicles_unified(
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(0.95, 0.65, 2.35),
+                    collider: Collider::cuboid(0.76, 0.52, 1.88), // 0.8x visual mesh for GTA-style forgiving collision
                     collision_groups: CollisionGroups::new(
                         entity_factory.config.physics.vehicle_group,
                         entity_factory.config.physics.static_group
@@ -272,7 +272,7 @@ fn setup_luxury_cars_unified(
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(0.95, 0.65, 2.35),
+                    collider: Collider::cuboid(0.76, 0.52, 1.88), // 0.8x visual mesh for GTA-style forgiving collision
                     collision_groups: CollisionGroups::new(
                         entity_factory.config.physics.vehicle_group,
                         entity_factory.config.physics.static_group

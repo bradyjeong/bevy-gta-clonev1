@@ -296,8 +296,8 @@ impl Default for VehicleConfig {
     fn default() -> Self {
         Self {
             super_car: VehicleTypeConfig {
-                body_size: Vec3::new(1.9, 1.3, 4.7),
-                collider_size: Vec3::new(0.95, 0.65, 2.35),
+                body_size: Vec3::new(1.9, 1.3, 4.7),        // Visual mesh size
+                collider_size: Vec3::new(1.52, 1.04, 3.76), // 0.8x visual for GTA-style forgiving collision
                 max_speed: 70.0,
                 acceleration: 40.0,
                 mass: 1400.0,
@@ -308,8 +308,8 @@ impl Default for VehicleConfig {
                 horn_volume: 0.9,
             },
             helicopter: VehicleTypeConfig {
-                body_size: Vec3::new(3.0, 3.0, 12.0),
-                collider_size: Vec3::new(1.5, 1.5, 6.0),
+                body_size: Vec3::new(3.0, 3.0, 12.0),       // Visual mesh size
+                collider_size: Vec3::new(2.4, 2.4, 9.6),    // 0.8x visual for GTA-style forgiving collision
                 max_speed: 83.0,
                 acceleration: 30.0,
                 mass: 2500.0,
@@ -320,8 +320,8 @@ impl Default for VehicleConfig {
                 horn_volume: 0.5,
             },
             f16: VehicleTypeConfig {
-                body_size: Vec3::new(15.0, 5.0, 10.0),
-                collider_size: Vec3::new(7.5, 2.5, 5.0),
+                body_size: Vec3::new(15.0, 5.0, 10.0),      // Visual mesh size  
+                collider_size: Vec3::new(12.0, 4.0, 8.0),   // 0.8x visual for GTA-style forgiving collision
                 max_speed: 600.0,
                 acceleration: 80.0,
                 mass: 8000.0,
@@ -412,8 +412,8 @@ impl Default for FootstepConfig {
 impl Default for CameraConfig {
     fn default() -> Self {
         Self {
-            distance: 15.0,   // Closer to player
-            height: 3.0,      // Much lower, more behind than above
+            distance: 8.0,    // Much closer to player
+            height: 1.5,      // Lower for more parallel to ground
             lerp_speed: 0.25, // Much more responsive camera
             look_ahead_distance: 10.0,
             look_ahead_height: 2.0,

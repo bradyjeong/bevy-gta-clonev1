@@ -432,7 +432,7 @@ impl UnifiedEntityFactory {
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(0.95, 0.65, 2.35),
+                    collider: Collider::cuboid(0.76, 0.52, 1.88), // 0.8x visual mesh for GTA-style forgiving collision
                     collision_groups: CollisionGroups::new(
                         self.config.physics.vehicle_group,
                         self.config.physics.static_group

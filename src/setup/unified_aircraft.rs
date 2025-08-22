@@ -79,8 +79,8 @@ fn spawn_aircraft_unified(
 
     // Calculate spawn position (aircraft spawn at appropriate height above ground)
     let spawn_height = match aircraft_type {
-        AircraftType::Helicopter => 1.0, // Helicopter half-height
-        AircraftType::F16 => 1.5,        // F16 half-height
+        AircraftType::Helicopter => 1.2, // Helicopter collider half-height (1.2) + small margin
+        AircraftType::F16 => 1.0,        // F16 cuboid half-height (1.0) to ensure bottom touches ground
     };
 
     let spawn_position = Vec3::new(
@@ -133,7 +133,7 @@ fn spawn_helicopter_unified(
             SimpleHelicopterSpecs::default(),
             // Physics components
             RigidBody::Dynamic,
-            Collider::cuboid(1.5, 1.5, 6.0), // Updated to match config dimensions
+            Collider::cuboid(1.2, 1.2, 4.8), // 0.8x visual mesh (3x3x12) for GTA-style forgiving collision
             Velocity::zero(),
             Transform::from_translation(position),
             Damping {
@@ -269,7 +269,7 @@ fn spawn_f16_unified(
             },
             // Physics components - Simple capsule collider (following AGENT.md simplicity principles)
             RigidBody::Dynamic,
-            Collider::capsule_z(7.5, 2.5), // Fighter jet shape: 15m long, 5m diameter
+            Collider::cuboid(1.6, 1.0, 6.4), // 0.8x visual mesh (4x2.5x16) for better ground contact
             LockedAxes::empty(),
             Velocity::zero(),
             ExternalForce::default(), // For proper force-based physics

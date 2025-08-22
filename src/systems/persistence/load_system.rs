@@ -198,7 +198,7 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
         VehicleType::SuperCar => {
             entity_commands.insert((
                 Car,
-                Collider::cuboid(0.95, 0.65, 2.35),
+                Collider::cuboid(0.76, 0.52, 1.88), // 0.8x visual mesh for GTA-style forgiving collision
                 ColliderMassProperties::Density(0.8),
             ));
         }
@@ -206,7 +206,7 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
         VehicleType::Helicopter => {
             entity_commands.insert((
                 Helicopter,
-                Collider::cuboid(1.5, 1.5, 6.0),
+                Collider::cuboid(1.2, 1.2, 4.8), // 0.8x visual mesh for GTA-style forgiving collision
                 ColliderMassProperties::Density(0.6),
             ));
         }
@@ -220,7 +220,7 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
             entity_commands.insert((
                 F16,
                 aircraft_flight_data,
-                Collider::cuboid(7.5, 2.5, 5.0),
+                Collider::cuboid(1.6, 1.0, 6.4), // 0.8x visual mesh (4x2.5x16) for better ground contact
                 ColliderMassProperties::Density(0.7),
             ));
         }
