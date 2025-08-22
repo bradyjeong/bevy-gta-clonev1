@@ -1,8 +1,8 @@
-use bevy::prelude::*;
 use crate::components::ControlsText;
+use crate::components::VehicleControlType;
 use crate::game_state::GameState;
 use crate::systems::input::{LoadedVehicleControls, get_vehicle_control_help};
-use crate::components::VehicleControlType;
+use bevy::prelude::*;
 
 pub fn controls_ui_system(
     current_state: Res<State<GameState>>,
@@ -15,7 +15,10 @@ pub fn controls_ui_system(
     }
 }
 
-fn generate_dynamic_controls_text(state: &GameState, loaded_controls: &LoadedVehicleControls) -> String {
+fn generate_dynamic_controls_text(
+    state: &GameState,
+    loaded_controls: &LoadedVehicleControls,
+) -> String {
     // Convert GameState to VehicleControlType
     let vehicle_type = match state {
         GameState::Walking => VehicleControlType::Walking,
@@ -23,7 +26,7 @@ fn generate_dynamic_controls_text(state: &GameState, loaded_controls: &LoadedVeh
         GameState::Flying => VehicleControlType::Helicopter,
         GameState::Jetting => VehicleControlType::F16,
     };
-    
+
     // Use asset-based control help generation
     if let Some(help_text) = get_vehicle_control_help(&vehicle_type, loaded_controls) {
         help_text
@@ -43,21 +46,21 @@ fn generate_dynamic_controls_text(state: &GameState, loaded_controls: &LoadedVeh
 #[allow(dead_code)]
 fn format_key_name(key: KeyCode) -> String {
     match key {
-        KeyCode::ArrowUp => "⬆️ UP".to_string(),
-        KeyCode::ArrowDown => "⬇️ DOWN".to_string(),
-        KeyCode::ArrowLeft => "⬅️ LEFT".to_string(),
-        KeyCode::ArrowRight => "➡️ RIGHT".to_string(),
-        KeyCode::Space => "🚀 SPACE".to_string(),
-        KeyCode::ShiftLeft => "🚀 SHIFT".to_string(),
+        KeyCode::ArrowUp => "UP".to_string(),
+        KeyCode::ArrowDown => "DOWN".to_string(),
+        KeyCode::ArrowLeft => "LEFT".to_string(),
+        KeyCode::ArrowRight => "RIGHT".to_string(),
+        KeyCode::Space => "SPACE".to_string(),
+        KeyCode::ShiftLeft => "SHIFT".to_string(),
         KeyCode::ControlLeft => "CTRL".to_string(),
-        KeyCode::KeyF => "🔄 F".to_string(),
+        KeyCode::KeyF => "F".to_string(),
         KeyCode::KeyQ => "Q".to_string(),
         KeyCode::KeyE => "E".to_string(),
-        KeyCode::KeyW => "🔥 W".to_string(),
-        KeyCode::KeyA => "↪️ A".to_string(),
-        KeyCode::KeyS => "🔻 S".to_string(),
-        KeyCode::KeyD => "↩️ D".to_string(),
-        KeyCode::Enter => "🔄 ENTER".to_string(),
+        KeyCode::KeyW => "W".to_string(),
+        KeyCode::KeyA => "A".to_string(),
+        KeyCode::KeyS => "S".to_string(),
+        KeyCode::KeyD => "D".to_string(),
+        KeyCode::Enter => "ENTER".to_string(),
         KeyCode::F1 => "F1".to_string(),
         KeyCode::F2 => "F2".to_string(),
         KeyCode::F3 => "F3".to_string(),
@@ -66,7 +69,10 @@ fn format_key_name(key: KeyCode) -> String {
         _ => {
             let debug_str = format!("{:?}", key);
             if debug_str.starts_with("Key") {
-                debug_str.strip_prefix("Key").unwrap_or(&debug_str).to_string()
+                debug_str
+                    .strip_prefix("Key")
+                    .unwrap_or(&debug_str)
+                    .to_string()
             } else {
                 debug_str
             }

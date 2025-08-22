@@ -1,7 +1,6 @@
+use crate::components::ContentType;
 use bevy::prelude::*;
 use std::collections::{HashMap, HashSet};
-use crate::components::ContentType;
-
 
 // Universal spawn validation system to prevent entity overlap and collision issues
 
@@ -27,20 +26,20 @@ impl SpawnableType {
             ContentType::Road => SpawnableType::EnvironmentObject,
         }
     }
-    
+
     /// Get the minimum clearance radius for this entity type
     pub fn clearance_radius(&self) -> f32 {
         match self {
-            SpawnableType::Vehicle => 8.0,      // Car size (increased from 4.0)
-            SpawnableType::Aircraft => 16.0,    // Fighter jet/helicopter size (increased from 8.0)
-            SpawnableType::NPC => 2.0,          // Human size (increased from 1.0)
-            SpawnableType::Building => 20.0,    // Building footprint (increased from 12.0)
-            SpawnableType::Tree => 6.0,         // Tree canopy (increased from 3.0)
+            SpawnableType::Vehicle => 8.0,   // Car size (increased from 4.0)
+            SpawnableType::Aircraft => 16.0, // Fighter jet/helicopter size (increased from 8.0)
+            SpawnableType::NPC => 2.0,       // Human size (increased from 1.0)
+            SpawnableType::Building => 20.0, // Building footprint (increased from 12.0)
+            SpawnableType::Tree => 6.0,      // Tree canopy (increased from 3.0)
             SpawnableType::EnvironmentObject => 4.0, // (increased from 2.0)
-            SpawnableType::Player => 3.0,       // Player character (increased from 1.5)
+            SpawnableType::Player => 3.0,    // Player character (increased from 1.5)
         }
     }
-    
+
     /// Get the minimum distance this entity should be from other entities
     pub fn minimum_spacing(&self, other: &SpawnableType) -> f32 {
         // Calculate safe distance as sum of clearance radii plus buffer
@@ -54,7 +53,7 @@ impl SpawnableType {
             (_, SpawnableType::Building) => 8.0,
             _ => 3.0, // Default buffer
         };
-        
+
         self.clearance_radius() + other.clearance_radius() + buffer
     }
 }
@@ -88,32 +87,32 @@ impl SpatialGrid {
             cells: HashMap::new(),
         }
     }
-    
+
     fn get_cell_coord(&self, position: Vec3) -> (i32, i32) {
         (
             (position.x / self.grid_size).floor() as i32,
             (position.z / self.grid_size).floor() as i32,
         )
     }
-    
+
     fn add_entity(&mut self, entity: Entity, position: Vec3) {
         let coord = self.get_cell_coord(position);
         self.cells.entry(coord).or_default().push(entity);
     }
-    
+
     fn remove_entity(&mut self, entity: Entity, position: Vec3) {
         let coord = self.get_cell_coord(position);
         if let Some(entities) = self.cells.get_mut(&coord) {
             entities.retain(|&e| e != entity);
         }
     }
-    
+
     fn get_nearby_entities(&self, position: Vec3, radius: f32) -> Vec<Entity> {
         // Pre-allocate with estimated capacity to reduce reallocations
         let mut result = Vec::with_capacity(32);
         let center_coord = self.get_cell_coord(position);
         let cell_range = ((radius / self.grid_size).ceil() as i32).max(1);
-        
+
         // Early exit for single cell case
         if cell_range == 1 {
             if let Some(entities) = self.cells.get(&center_coord) {
@@ -121,7 +120,7 @@ impl SpatialGrid {
             }
             return result;
         }
-        
+
         for dx in -cell_range..=cell_range {
             for dz in -cell_range..=cell_range {
                 let coord = (center_coord.0 + dx, center_coord.1 + dz);
@@ -130,7 +129,7 @@ impl SpatialGrid {
                 }
             }
         }
-        
+
         result
     }
 }
@@ -142,7 +141,7 @@ impl SpawnRegistry {
             spatial_grid: SpatialGrid::new(20.0), // 20 unit grid cells
         }
     }
-    
+
     /// Register a newly spawned entity
     pub fn register_entity(&mut self, entity: Entity, position: Vec3, entity_type: SpawnableType) {
         let radius = entity_type.clearance_radius();
@@ -152,57 +151,78 @@ impl SpawnRegistry {
             entity_id: entity,
             radius,
         };
-        
-        info!("🎯 SPAWN REGISTRY: Registered {:?} at {:?} (radius: {:.1})", entity_type, position, radius);
-        
+
+        info!(
+            "SPAWN REGISTRY: Registered {:?} at {:?} (radius: {:.1})",
+            entity_type, position, radius
+        );
+
         self.spatial_grid.add_entity(entity, position);
         self.entities.insert(entity, spawned_entity);
     }
-    
+
     /// Remove an entity from the registry
     pub fn unregister_entity(&mut self, entity: Entity) {
         if let Some(spawned_entity) = self.entities.remove(&entity) {
-            self.spatial_grid.remove_entity(entity, spawned_entity.position);
+            self.spatial_grid
+                .remove_entity(entity, spawned_entity.position);
         }
     }
-    
+
     /// Update an entity's position in the registry
     pub fn update_entity_position(&mut self, entity: Entity, new_position: Vec3) {
         if let Some(spawned_entity) = self.entities.get_mut(&entity) {
-            self.spatial_grid.remove_entity(entity, spawned_entity.position);
+            self.spatial_grid
+                .remove_entity(entity, spawned_entity.position);
             spawned_entity.position = new_position;
             self.spatial_grid.add_entity(entity, new_position);
         }
     }
-    
+
     /// Check if a position is safe for spawning the given entity type
     pub fn is_position_safe(&self, position: Vec3, entity_type: SpawnableType) -> bool {
         let search_radius = entity_type.clearance_radius() + 15.0; // Extended search
-        let nearby_entities = self.spatial_grid.get_nearby_entities(position, search_radius);
-        
-        debug!("🔍 SPAWN CHECK: Checking {:?} at {:?} against {} nearby entities", entity_type, position, nearby_entities.len());
-        
+        let nearby_entities = self
+            .spatial_grid
+            .get_nearby_entities(position, search_radius);
+
+        debug!(
+            "🔍 SPAWN CHECK: Checking {:?} at {:?} against {} nearby entities",
+            entity_type,
+            position,
+            nearby_entities.len()
+        );
+
         for &nearby_entity in &nearby_entities {
             if let Some(spawned_entity) = self.entities.get(&nearby_entity) {
                 let required_distance = entity_type.minimum_spacing(&spawned_entity.entity_type);
                 // Use distance_squared for more efficient comparison when possible
                 let actual_distance_sq = position.distance_squared(spawned_entity.position);
                 let required_distance_sq = required_distance * required_distance;
-                
+
                 if actual_distance_sq < required_distance_sq {
                     let actual_distance = actual_distance_sq.sqrt();
-                    debug!("❌ COLLISION: {:?} at {:?} too close to {:?} at {:?} (distance: {:.1} < {:.1})",
-                          entity_type, position, spawned_entity.entity_type, spawned_entity.position,
-                          actual_distance, required_distance);
+                    debug!(
+                        "❌ COLLISION: {:?} at {:?} too close to {:?} at {:?} (distance: {:.1} < {:.1})",
+                        entity_type,
+                        position,
+                        spawned_entity.entity_type,
+                        spawned_entity.position,
+                        actual_distance,
+                        required_distance
+                    );
                     return false;
                 }
             }
         }
-        
-        debug!("✅ SAFE: Position {:?} is safe for {:?}", position, entity_type);
+
+        debug!(
+            "✅ SAFE: Position {:?} is safe for {:?}",
+            position, entity_type
+        );
         true
     }
-    
+
     /// Find the nearest safe spawn position within a search area
     pub fn find_safe_spawn_position(
         &self,
@@ -215,31 +235,28 @@ impl SpawnRegistry {
         if self.is_position_safe(preferred_position, entity_type) {
             return Some(preferred_position);
         }
-        
+
         // Use spiral search pattern for better results
         for attempt in 0..max_attempts {
             let angle = (attempt as f32) * 2.39996; // Golden angle for even distribution
             let distance = (attempt as f32 / max_attempts as f32) * max_search_radius;
-            
-            let offset = Vec3::new(
-                angle.cos() * distance,
-                0.0,
-                angle.sin() * distance,
-            );
-            
+
+            let offset = Vec3::new(angle.cos() * distance, 0.0, angle.sin() * distance);
+
             let test_position = preferred_position + offset;
-            
+
             // Validate Y position (ground level)
-            let ground_level_position = Vec3::new(test_position.x, preferred_position.y, test_position.z);
-            
+            let ground_level_position =
+                Vec3::new(test_position.x, preferred_position.y, test_position.z);
+
             if self.is_position_safe(ground_level_position, entity_type) {
                 return Some(ground_level_position);
             }
         }
-        
+
         None
     }
-    
+
     /// Get all entities within a radius of a position
     pub fn get_entities_in_radius(&self, position: Vec3, radius: f32) -> Vec<&SpawnedEntity> {
         let nearby_entities = self.spatial_grid.get_nearby_entities(position, radius);
@@ -275,13 +292,13 @@ fn cleanup_despawned_entities(
         return;
     }
     *cleanup_timer = 0.0;
-    
+
     // Only check a batch of entities per frame to spread the work
     const BATCH_SIZE: usize = 50;
     let start_index = (registry.entities.len() / BATCH_SIZE) % registry.entities.len().max(1);
-    
+
     let valid_entities: HashSet<Entity> = query.iter().collect();
-    
+
     // Process only a batch of entities
     let entities_to_remove: Vec<(Entity, Vec3)> = registry
         .entities
@@ -296,7 +313,7 @@ fn cleanup_despawned_entities(
             }
         })
         .collect();
-    
+
     // Remove them from both data structures
     for (entity, position) in entities_to_remove {
         registry.entities.remove(&entity);
@@ -331,13 +348,9 @@ impl SpawnValidator {
             None
         }
     }
-    
+
     /// Quick check if a position is clear
-    pub fn is_clear(
-        registry: &SpawnRegistry,
-        position: Vec3,
-        entity_type: SpawnableType,
-    ) -> bool {
+    pub fn is_clear(registry: &SpawnRegistry, position: Vec3, entity_type: SpawnableType) -> bool {
         registry.is_position_safe(position, entity_type)
     }
 }
