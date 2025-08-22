@@ -27,7 +27,7 @@ pub struct WorldBounds {
 impl Default for WorldBounds {
     fn default() -> Self {
         Self {
-            max_coordinate: 1000.0, // Consistent with AGENT.md culling distances
+            max_coordinate: 10000.0, // Match 12km world bounds from GameConfig
             reset_position: Vec3::ZERO,
             emergency_damping: 0.1,
         }

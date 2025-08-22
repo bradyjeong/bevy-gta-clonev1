@@ -15,6 +15,9 @@ SimpleHelicopterConfig(
     angular_lerp_factor: 4.0,   // Angular velocity smoothing rate
     linear_lerp_factor: 6.0,    // Linear velocity smoothing rate
     
+    // Gliding physics (engine off)
+    drag_factor: 0.99,          // Momentum decay per second (helicopters have more drag than jets)
+    
     // Rotor animation speeds
     main_rotor_rpm: 20.0,       // Main rotor rotation speed (rad/s)
     tail_rotor_rpm: 35.0,       // Tail rotor rotation speed (rad/s)

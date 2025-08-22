@@ -18,6 +18,9 @@ SimpleF16Config(
     // Lift assistance (orientation-aware)
     lift_per_throttle: 3.0,  // Upward force per throttle unit
     
+    // Gliding physics (engine off)
+    drag_factor: 0.995, // Momentum decay per second (aircraft glide well)
+    
     // (Removed unused fields: min_altitude, emergency_pullup_force)
     
     // Formerly magic numbers in code

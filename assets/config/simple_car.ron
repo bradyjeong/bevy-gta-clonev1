@@ -1,9 +1,9 @@
-// Simple Car Physics Configuration
-// Data-driven constants for car movement (eliminates magic numbers)
+// Super Car Physics Configuration
+// Data-driven constants for super car movement (eliminates magic numbers)
 SimpleCarConfig(
     // Core movement specs
-    base_speed: 25.0,           // Base acceleration/movement speed
-    rotation_speed: 2.0,        // Steering rotation rate (rad/s)
+    base_speed: 70.0,           // Base acceleration/movement speed (super car performance)
+    rotation_speed: 3.0,        // Steering rotation rate (rad/s) - super cars turn faster
     
     // Physics smoothing
     linear_lerp_factor: 4.0,    // Linear velocity smoothing rate
@@ -12,4 +12,7 @@ SimpleCarConfig(
     // Emergency systems
     emergency_brake_linear: 0.1,  // Linear velocity multiplier during emergency brake
     emergency_brake_angular: 0.5, // Angular velocity multiplier during emergency brake
+    
+    // Momentum physics (when no input)
+    drag_factor: 0.98,            // Momentum decay per second (cars have rolling resistance)
 )

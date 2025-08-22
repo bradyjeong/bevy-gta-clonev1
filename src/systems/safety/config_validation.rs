@@ -14,11 +14,11 @@ pub fn validate_physics_config(
     let max_vel = config.physics.max_velocity;
     let max_coord = bounds.max_coordinate;
 
-    if max_vel > max_coord / 2.0 {
+    if max_vel > max_coord / 5.0 {
         panic!(
-            "Physics config error: max_velocity ({}) exceeds half of world bounds ({}). This can cause coordinate explosion.",
+            "Physics config error: max_velocity ({}) exceeds one-fifth of world bounds ({}). This can cause coordinate explosion.",
             max_vel,
-            max_coord / 2.0
+            max_coord / 5.0
         );
     }
 

@@ -80,31 +80,32 @@ pub fn simple_f16_movement(
             dt * specs.angular_lerp_factor,
         );
 
-        // === DIRECT VELOCITY CONTROL ===
+        // === ARCADE-REALISTIC VELOCITY CONTROL ===
 
-        // Calculate target forward speed from throttle (consistent with other vehicles)
-        let target_forward_speed = specs.max_forward_speed * flight.throttle * boost_multiplier;
-        let target_forward_velocity = transform.forward() * target_forward_speed;
-
-        // Orientation-aware lift assistance (deadzone from specs)
-        let mut target_linear_velocity = target_forward_velocity;
         if flight.throttle > specs.throttle_deadzone {
-            target_linear_velocity += transform.up() * flight.throttle * specs.lift_per_throttle;
-        }
-
-        // Apply direct velocity interpolation while preserving gravity
-        let lerped_velocity = safe_lerp(
-            velocity.linvel,
-            target_linear_velocity,
-            dt * specs.linear_lerp_factor,
-        );
-        
-        // Preserve gravity in Y-axis unless actively controlling vertical movement
-        velocity.linvel = if flight.throttle > specs.throttle_deadzone {
-            lerped_velocity // Full control including Y when throttling
+            // Engine on: Direct thrust control (arcade style)
+            let target_forward_speed = specs.max_forward_speed * flight.throttle * boost_multiplier;
+            let target_forward_velocity = transform.forward() * target_forward_speed;
+            
+            // Add lift assistance when throttling
+            let target_linear_velocity = target_forward_velocity + transform.up() * flight.throttle * specs.lift_per_throttle;
+            
+            velocity.linvel = safe_lerp(
+                velocity.linvel,
+                target_linear_velocity,
+                dt * specs.linear_lerp_factor,
+            );
         } else {
-            Vec3::new(lerped_velocity.x, velocity.linvel.y, lerped_velocity.z) // Preserve gravity
-        };
+            // Engine off: Apply frame-rate independent momentum decay (gliding like GTA V)
+            let drag_per_second = specs.drag_factor;
+            let frame_drag = drag_per_second.powf(dt);
+            let vertical_drag = 0.999_f32.powf(dt); // Slight vertical drag for realistic sink rate
+            velocity.linvel = Vec3::new(
+                velocity.linvel.x * frame_drag,
+                velocity.linvel.y * vertical_drag, // Gradual loss of vertical momentum
+                velocity.linvel.z * frame_drag,
+            );
+        }
 
         // === MINIMAL STATE TRACKING ===
 
@@ -179,19 +180,30 @@ pub fn simple_helicopter_movement(
             }
         }
 
-        // Always apply interpolation and safety checks every frame (dynamic bodies handle gravity)
-        let lerped_velocity = safe_lerp(
-            velocity.linvel,
-            target_linear_velocity,
-            dt * specs.linear_lerp_factor,
-        );
-        
-        // Preserve gravity in Y-axis unless actively controlling vertical movement
-        velocity.linvel = if target_linear_velocity.y.abs() > 0.1 {
-            lerped_velocity // Full control including Y when actively moving vertically
+        // Apply movement with momentum decay when no input (GTA-style)
+        if has_input {
+            let lerped_velocity = safe_lerp(
+                velocity.linvel,
+                target_linear_velocity,
+                dt * specs.linear_lerp_factor,
+            );
+            
+            // Preserve gravity in Y-axis unless actively controlling vertical movement
+            velocity.linvel = if target_linear_velocity.y.abs() > 0.1 {
+                lerped_velocity // Full control including Y when actively moving vertically
+            } else {
+                Vec3::new(lerped_velocity.x, velocity.linvel.y, lerped_velocity.z) // Preserve gravity
+            };
         } else {
-            Vec3::new(lerped_velocity.x, velocity.linvel.y, lerped_velocity.z) // Preserve gravity
-        };
+            // No input: Apply frame-rate independent momentum decay (helicopter keeps drifting like GTA V)
+            let drag_per_second = specs.drag_factor;
+            let frame_drag = drag_per_second.powf(dt);
+            velocity.linvel = Vec3::new(
+                velocity.linvel.x * frame_drag,
+                velocity.linvel.y, // Preserve gravity
+                velocity.linvel.z * frame_drag,
+            );
+        }
         velocity.angvel = safe_lerp(
             velocity.angvel,
             target_angular_velocity,

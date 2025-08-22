@@ -87,6 +87,7 @@ pub struct SimpleF16Specs {
     pub linear_damping: f32,
     pub angular_damping: f32,
     pub lift_per_throttle: f32,
+    pub drag_factor: f32, // Momentum decay when engine off
 
     // Previously magic numbers in code
     pub afterburner_multiplier: f32, // Speed multiplier for afterburner
@@ -117,6 +118,7 @@ impl Default for SimpleF16Specs {
             linear_damping: 0.15_f32.clamp(0.01, 5.0),
             angular_damping: 0.05_f32.clamp(0.01, 5.0),
             lift_per_throttle: 3.0_f32.clamp(0.1, 50.0),
+            drag_factor: 0.995_f32.clamp(0.9, 1.0), // Momentum decay per second when engine off
 
             // Formerly magic numbers - with safety limits
             afterburner_multiplier: 1.5_f32.clamp(1.0, 3.0), // Speed multiplier for afterburner
@@ -206,17 +208,19 @@ pub struct SimpleCarSpecs {
     pub angular_lerp_factor: f32,
     pub emergency_brake_linear: f32,
     pub emergency_brake_angular: f32,
+    pub drag_factor: f32, // Momentum decay when no input
 }
 
 impl Default for SimpleCarSpecs {
     fn default() -> Self {
         Self {
-            base_speed: 25.0_f32.clamp(1.0, 100.0), // m/s - reasonable car speeds
-            rotation_speed: 2.0_f32.clamp(0.1, 10.0), // rad/s - prevent excessive turning
+            base_speed: 70.0_f32.clamp(1.0, 100.0), // m/s - super car speeds
+            rotation_speed: 3.0_f32.clamp(0.1, 10.0), // rad/s - super cars turn faster
             linear_lerp_factor: 4.0_f32.clamp(1.0, 20.0), // Smooth movement response
             angular_lerp_factor: 6.0_f32.clamp(1.0, 20.0), // Smooth rotation response
             emergency_brake_linear: 0.1_f32.clamp(0.01, 1.0), // Multiplier - keep some movement
             emergency_brake_angular: 0.5_f32.clamp(0.01, 1.0), // Multiplier
+            drag_factor: 0.98_f32.clamp(0.9, 1.0), // Momentum decay per second when no input
         }
     }
 }
@@ -231,6 +235,7 @@ pub struct SimpleHelicopterSpecs {
     pub roll_rate: f32,
     pub angular_lerp_factor: f32,
     pub linear_lerp_factor: f32,
+    pub drag_factor: f32, // Momentum decay when no input
     pub main_rotor_rpm: f32,
     pub tail_rotor_rpm: f32,
 }
@@ -246,6 +251,7 @@ impl Default for SimpleHelicopterSpecs {
             roll_rate: 1.0_f32.clamp(0.1, 5.0),        // rad/s
             angular_lerp_factor: 4.0_f32.clamp(1.0, 20.0), // Smooth control response
             linear_lerp_factor: 6.0_f32.clamp(1.0, 20.0), // Smooth movement response
+            drag_factor: 0.99_f32.clamp(0.9, 1.0), // Momentum decay per second when no input
             main_rotor_rpm: 20.0_f32.clamp(1.0, 100.0), // rad/s - main rotor speed
             tail_rotor_rpm: 35.0_f32.clamp(1.0, 100.0), // rad/s - tail rotor speed
         }

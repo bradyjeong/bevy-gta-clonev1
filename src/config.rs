@@ -253,7 +253,7 @@ impl Default for PhysicsConfig {
             character_group: Group::GROUP_3,
             max_world_coord: 10000.0,
             min_world_coord: -10000.0,
-            max_velocity: 500.0,
+            max_velocity: 800.0,
             max_angular_velocity: 50.0,
             max_collider_size: 1000.0,
             min_collider_size: 0.01,
@@ -277,7 +277,7 @@ impl Default for WorldConfig {
             map_size,
             total_chunks_x: total_chunks,
             total_chunks_z: total_chunks,
-            streaming_radius: 800.0,
+            streaming_radius: 1200.0,
             lod_distances: [150.0, 300.0, 500.0],
             building_density: 0.5,
             tree_density: 2.0,
@@ -458,7 +458,7 @@ impl PhysicsConfig {
         self.min_world_coord = self.min_world_coord.clamp(-50000.0, -1000.0);
 
         // Clamp velocities to prevent physics explosions
-        self.max_velocity = self.max_velocity.clamp(10.0, 2000.0);
+        self.max_velocity = self.max_velocity.clamp(10.0, 1000.0);
         self.max_angular_velocity = self.max_angular_velocity.clamp(1.0, 200.0);
 
         // Clamp collider sizes to prevent degenerate or oversized colliders
@@ -557,7 +557,7 @@ impl VehicleTypeConfig {
         self.collider_size.z = self.collider_size.z.clamp(0.5, self.body_size.z);
 
         // Clamp performance parameters
-        self.max_speed = self.max_speed.clamp(10.0, 500.0);
+        self.max_speed = self.max_speed.clamp(10.0, 800.0);
         self.acceleration = self.acceleration.clamp(5.0, 200.0);
         self.mass = self.mass.clamp(100.0, 50000.0);
 
