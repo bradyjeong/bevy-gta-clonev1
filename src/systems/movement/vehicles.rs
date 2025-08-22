@@ -50,10 +50,17 @@ pub fn car_movement(
 
         // Always apply interpolation and safety checks (dynamic bodies handle gravity)
         let dt = PhysicsUtilities::stable_dt(&time);
-        velocity.linvel = safe_lerp(
+        let lerped_velocity = safe_lerp(
             velocity.linvel,
             target_linear_velocity,
             dt * specs.linear_lerp_factor,
+        );
+        
+        // Preserve gravity in Y-axis for cars (they should fall off cliffs)
+        velocity.linvel = Vec3::new(
+            lerped_velocity.x,
+            velocity.linvel.y, // Preserve gravity
+            lerped_velocity.z,
         );
         velocity.angvel = safe_lerp(
             velocity.angvel,

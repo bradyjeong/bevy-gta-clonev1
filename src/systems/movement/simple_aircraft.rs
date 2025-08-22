@@ -92,12 +92,19 @@ pub fn simple_f16_movement(
             target_linear_velocity += transform.up() * flight.throttle * specs.lift_per_throttle;
         }
 
-        // Apply direct velocity interpolation (no force/mass calculations)
-        velocity.linvel = safe_lerp(
+        // Apply direct velocity interpolation while preserving gravity
+        let lerped_velocity = safe_lerp(
             velocity.linvel,
             target_linear_velocity,
             dt * specs.linear_lerp_factor,
         );
+        
+        // Preserve gravity in Y-axis unless actively controlling vertical movement
+        velocity.linvel = if flight.throttle > specs.throttle_deadzone {
+            lerped_velocity // Full control including Y when throttling
+        } else {
+            Vec3::new(lerped_velocity.x, velocity.linvel.y, lerped_velocity.z) // Preserve gravity
+        };
 
         // === MINIMAL STATE TRACKING ===
 
@@ -173,11 +180,18 @@ pub fn simple_helicopter_movement(
         }
 
         // Always apply interpolation and safety checks every frame (dynamic bodies handle gravity)
-        velocity.linvel = safe_lerp(
+        let lerped_velocity = safe_lerp(
             velocity.linvel,
             target_linear_velocity,
             dt * specs.linear_lerp_factor,
         );
+        
+        // Preserve gravity in Y-axis unless actively controlling vertical movement
+        velocity.linvel = if target_linear_velocity.y.abs() > 0.1 {
+            lerped_velocity // Full control including Y when actively moving vertically
+        } else {
+            Vec3::new(lerped_velocity.x, velocity.linvel.y, lerped_velocity.z) // Preserve gravity
+        };
         velocity.angvel = safe_lerp(
             velocity.angvel,
             target_angular_velocity,

@@ -197,9 +197,16 @@ pub fn yacht_movement_system(
         // Apply rotation
         transform.rotate_y(angular_velocity * time.delta_secs());
 
-        // Apply movement with water resistance
+        // Apply movement with water resistance while preserving gravity
         let drag = 0.95;
-        velocity.linvel = velocity.linvel * drag + acceleration * time.delta_secs() * 0.1;
+        let new_velocity = velocity.linvel * drag + acceleration * time.delta_secs() * 0.1;
+        
+        // Preserve gravity in Y-axis (yachts can fall if lifted out of water)
+        velocity.linvel = Vec3::new(
+            new_velocity.x,
+            velocity.linvel.y, // Preserve gravity
+            new_velocity.z,
+        );
 
         // Keep yacht on water surface (simple buoyancy)
         if transform.translation.y < 0.5 {

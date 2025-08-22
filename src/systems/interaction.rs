@@ -266,7 +266,7 @@ pub fn interaction_system(
                                 Transform::from_translation(exit_position)
                                     .with_rotation(car_transform.rotation),
                             )
-                            .insert(Velocity::zero())
+                            .insert(Velocity::linear(Vec3::new(0.0, -9.81, 0.0))) // Start falling with gravity
                             .insert(Visibility::Visible);
 
                         // Transfer control components back to player
@@ -333,7 +333,7 @@ pub fn interaction_system(
                                 Transform::from_translation(exit_position)
                                     .with_rotation(helicopter_transform.rotation),
                             )
-                            .insert(Velocity::zero())
+                            .insert(Velocity::linear(Vec3::new(0.0, -9.81, 0.0))) // Start falling with gravity
                             .insert(Visibility::Visible);
 
                         // Transfer control components back to player
@@ -397,7 +397,7 @@ pub fn interaction_system(
                                 Transform::from_translation(exit_position)
                                     .with_rotation(f16_transform.rotation),
                             )
-                            .insert(Velocity::zero())
+                            .insert(Velocity::linear(Vec3::new(0.0, -9.81, 0.0))) // Start falling with gravity
                             .insert(Visibility::Visible);
 
                         // Transfer control components back to player
