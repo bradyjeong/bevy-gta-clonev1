@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::factories::MeshFactory;
+use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 /// Factory for creating building entities with simplified, clear interface
 pub struct BuildingFactory;
@@ -14,16 +14,18 @@ impl BuildingFactory {
         position: Vec3,
         building_type: BuildingType,
     ) -> Entity {
-        let entity = commands.spawn((
-            Name::new("Building"),
-            Transform::from_translation(position),
-            Visibility::default(),
-        )).id();
+        let entity = commands
+            .spawn((
+                Name::new("Building"),
+                Transform::from_translation(position),
+                Visibility::default(),
+            ))
+            .id();
 
         // Add building-specific components
         commands.entity(entity).insert((
             building_type,
-            Building { 
+            Building {
                 building_type: world::BuildingType::Residential,
                 height: 3.0,
                 scale: Vec3::splat(1.0),

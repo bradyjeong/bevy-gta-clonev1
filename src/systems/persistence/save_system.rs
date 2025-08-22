@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use chrono::{DateTime, Utc};
 
 use crate::components::*;
 use crate::game_state::GameState;
@@ -132,10 +132,6 @@ impl Into<VehicleState> for SerializableVehicleState {
     }
 }
 
-
-
-
-
 // Legacy serialization code removed - keeping only essential components
 
 // Use the new simplified aircraft persistence module
@@ -150,20 +146,22 @@ pub struct SaveGameState {
     pub vehicles: Vec<SerializableVehicle>,
     pub world_seed: Option<u64>,
     pub play_time: f64,
-
 }
 
 impl SaveGameState {
     pub fn validate(&self) -> Result<(), String> {
         // Version compatibility check
         if self.version > SAVE_VERSION {
-            return Err(format!("Save version {} is too new (current: {})", self.version, SAVE_VERSION));
+            return Err(format!(
+                "Save version {} is too new (current: {})",
+                self.version, SAVE_VERSION
+            ));
         }
 
         // ActiveEntity validation
         if let Some(active_id) = self.active_entity_id {
-            let found = self.player.entity_id == active_id || 
-                       self.vehicles.iter().any(|v| v.entity_id == active_id);
+            let found = self.player.entity_id == active_id
+                || self.vehicles.iter().any(|v| v.entity_id == active_id);
             if !found {
                 return Err("ActiveEntity reference not found in saved entities".to_string());
             }
@@ -193,7 +191,7 @@ impl SaveGameState {
             if pos[0].abs() > 10000.0 || pos[1].abs() > 10000.0 || pos[2].abs() > 10000.0 {
                 return Err("Invalid vehicle position detected".to_string());
             }
-            
+
             let vel = &vehicle.velocity.linvel;
             if vel[0].abs() > 1000.0 || vel[1].abs() > 1000.0 || vel[2].abs() > 1000.0 {
                 return Err("Invalid vehicle velocity detected".to_string());
@@ -217,7 +215,16 @@ pub fn save_game_system(
     car_query: Query<(Entity, &Transform, &Velocity, &VehicleState), With<Car>>,
 
     helicopter_query: Query<(Entity, &Transform, &Velocity, &VehicleState), With<Helicopter>>,
-    f16_query: Query<(Entity, &Transform, &Velocity, &VehicleState, &AircraftFlight), With<F16>>,
+    f16_query: Query<
+        (
+            Entity,
+            &Transform,
+            &Velocity,
+            &VehicleState,
+            &AircraftFlight,
+        ),
+        With<F16>,
+    >,
 ) {
     if !input.just_pressed(KeyCode::F5) {
         return;
@@ -226,7 +233,8 @@ pub fn save_game_system(
     info!("Starting save operation...");
 
     // Get player data
-    let Ok((player_entity, player_transform, player_velocity, in_car)) = player_query.single() else {
+    let Ok((player_entity, player_transform, player_velocity, in_car)) = player_query.single()
+    else {
         error!("Failed to find player for save operation");
         return;
     };
@@ -249,9 +257,7 @@ pub fn save_game_system(
     // Cars
     for (entity, transform, velocity, vehicle_state) in car_query.iter() {
         let is_active = active_query.get(entity).is_ok();
-        
 
-        
         vehicles.push(SerializableVehicle {
             entity_id: entity.index(),
             vehicle_type: vehicle_state.vehicle_type,
@@ -305,7 +311,6 @@ pub fn save_game_system(
         vehicles,
         world_seed: None, // TODO: Add world generation seed if needed
         play_time: time.elapsed_secs_f64(),
-
     };
 
     // Validate save state
@@ -339,7 +344,10 @@ pub fn save_game_system(
     }
 
     info!("Game saved successfully to {}", save_path);
-    info!("Active entity: {:?}, Game state: {:?}", active_entity_id, **current_state);
+    info!(
+        "Active entity: {:?}, Game state: {:?}",
+        active_entity_id, **current_state
+    );
 }
 
 fn backup_saves() {

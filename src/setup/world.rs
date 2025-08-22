@@ -1,14 +1,13 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
+use crate::bundles::VisibleChildBundle;
 use crate::components::*;
 use crate::constants::*;
-use crate::bundles::VisibleChildBundle;
+use crate::services::distance_cache::MovementTracker;
+use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::audio::FootstepTimer;
 use crate::systems::human_behavior::HumanEmotions;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
-use crate::services::distance_cache::MovementTracker;
-use crate::services::ground_detection::GroundDetectionService;
-
+use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 pub fn setup_basic_world(
     mut commands: Commands,
@@ -16,10 +15,9 @@ pub fn setup_basic_world(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
-
 ) {
     // No longer need WorldRoot - spawn entities directly in world space
-    
+
     // Camera (stays outside WorldRoot - doesn't move with world shifts)
     commands.spawn((
         MainCamera,
@@ -63,8 +61,6 @@ pub fn setup_basic_world(
             ));
         });
 
-
-
     // FINITE TERRAIN - Ground plane for finite world (4km x 4km)
     commands.spawn((
         DynamicTerrain,
@@ -76,40 +72,48 @@ pub fn setup_basic_world(
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
     ));
 
-    // OCEAN BOUNDARY - Visual boundary around world edges  
+    // OCEAN BOUNDARY - Visual boundary around world edges
     commands.spawn((
         Name::new("Ocean"),
         Mesh3d(meshes.add(Plane3d::default().mesh().size(6000.0, 6000.0))), // Larger than terrain
-        MeshMaterial3d(materials.add(Color::srgb(0.1, 0.3, 0.6))), // Ocean blue
-        Transform::from_xyz(0.0, -0.5, 0.0), // Below terrain
-        // No physics - just visual
+        MeshMaterial3d(materials.add(Color::srgb(0.1, 0.3, 0.6))),          // Ocean blue
+        Transform::from_xyz(0.0, -0.5, 0.0),                                // Below terrain
+                                                                            // No physics - just visual
     ));
 
     // Calculate proper ground position for player spawn
     let player_spawn_pos = Vec2::new(0.0, 0.0);
     let ground_height = ground_service.get_ground_height_simple(player_spawn_pos);
     let player_y = ground_height + 0.45; // Position so feet (at -0.4) touch ground
-    
-    println!("DEBUG: Player spawn - ground height: {:.3}, final Y: {:.3}", ground_height, player_y);
-    
+
+    println!(
+        "DEBUG: Player spawn - ground height: {:.3}, final Y: {:.3}",
+        ground_height, player_y
+    );
+
     // Player character with human-like components in world coordinates
-    let player_entity = commands.spawn((
-        Player,
-        ActiveEntity,
-        RigidBody::Dynamic,
-        Collider::capsule(Vec3::new(0.0, -0.4, 0.0), Vec3::new(0.0, 1.0, 0.0), 0.4),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Velocity::zero(),
-        Transform::from_xyz(0.0, player_y, 0.0),
-        Visibility::Visible,
-        InheritedVisibility::VISIBLE,
-        ViewVisibility::default(),
-        CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP),
-        Damping { linear_damping: 1.2, angular_damping: 3.5 }, // Balanced damping to prevent overspin
-    )).id();
-    
+    let player_entity = commands
+        .spawn((
+            Player,
+            ActiveEntity,
+            RigidBody::Dynamic,
+            Collider::capsule(Vec3::new(0.0, -0.4, 0.0), Vec3::new(0.0, 1.0, 0.0), 0.4),
+            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+            Velocity::zero(),
+            Transform::from_xyz(0.0, player_y, 0.0),
+            Visibility::Visible,
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
+            CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP),
+            Damping {
+                linear_damping: 1.2,
+                angular_damping: 3.5,
+            }, // Balanced damping to prevent overspin
+        ))
+        .id();
+
     // Player moves freely in world coordinates
-    
+
     // Add human behavior components separately
     commands.entity(player_entity).insert((
         HumanMovement::default(),
@@ -124,12 +128,16 @@ pub fn setup_basic_world(
         PlayerControlled,
         VehicleControlType::Walking,
     ));
-    
+
     // Register player in spawn registry
-    spawn_registry.register_entity(player_entity, Vec3::new(0.0, player_y, 0.0), SpawnableType::Player);
+    spawn_registry.register_entity(
+        player_entity,
+        Vec3::new(0.0, player_y, 0.0),
+        SpawnableType::Player,
+    );
 
     // Human-like body parts
-    
+
     // Torso
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(0.6, 0.8, 0.3))),
@@ -285,7 +293,7 @@ pub fn setup_dubai_noon_lighting(mut commands: Commands) {
     // Golden hour sun for that cinematic Dubai look
     commands.spawn((
         DirectionalLight {
-            illuminance: 25000.0, // Balanced golden hour sun
+            illuminance: 25000.0,              // Balanced golden hour sun
             color: Color::srgb(1.0, 0.8, 0.5), // Warm golden sunset light
             shadows_enabled: true,
             ..default()

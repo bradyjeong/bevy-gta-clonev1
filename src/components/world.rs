@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-
-
 /// NPC Behavior Component - replaces old NPCBehavior
 #[derive(Component, Debug, Clone)]
 pub struct NPCBehaviorComponent {
@@ -96,14 +94,14 @@ impl NPCState {
     pub fn new(npc_type: NPCType) -> Self {
         use rand::prelude::*;
         let mut rng = thread_rng();
-        
+
         let speed = match npc_type {
             NPCType::Civilian => rng.gen_range(2.0..4.0),
             NPCType::Worker => rng.gen_range(3.0..5.0),
             NPCType::Police => rng.gen_range(4.0..6.0),
             NPCType::Emergency => rng.gen_range(5.0..8.0),
         };
-        
+
         Self {
             npc_type,
             appearance: NPCAppearance::random(),
@@ -124,7 +122,7 @@ impl NPCAppearance {
     pub fn random() -> Self {
         use rand::prelude::*;
         let mut rng = thread_rng();
-        
+
         let skin_tones = [
             Color::srgb(0.8, 0.6, 0.4),
             Color::srgb(0.6, 0.4, 0.3),
@@ -132,7 +130,7 @@ impl NPCAppearance {
             Color::srgb(0.7, 0.5, 0.4),
             Color::srgb(0.5, 0.3, 0.2),
         ];
-        
+
         let hair_colors = [
             Color::srgb(0.1, 0.1, 0.1), // Black
             Color::srgb(0.3, 0.2, 0.1), // Brown
@@ -140,7 +138,7 @@ impl NPCAppearance {
             Color::srgb(0.4, 0.3, 0.2), // Dark brown
             Color::srgb(0.7, 0.7, 0.7), // Gray
         ];
-        
+
         let clothing_colors = [
             Color::srgb(0.2, 0.2, 0.8), // Blue
             Color::srgb(0.8, 0.2, 0.2), // Red
@@ -149,7 +147,7 @@ impl NPCAppearance {
             Color::srgb(0.9, 0.9, 0.9), // White
             Color::srgb(0.5, 0.3, 0.1), // Brown
         ];
-        
+
         Self {
             height: rng.gen_range(1.6..1.9),
             build: rng.gen_range(0.8..1.2),
@@ -157,7 +155,11 @@ impl NPCAppearance {
             hair_color: hair_colors[rng.gen_range(0..hair_colors.len())],
             shirt_color: clothing_colors[rng.gen_range(0..clothing_colors.len())],
             pants_color: clothing_colors[rng.gen_range(0..clothing_colors.len())],
-            gender: if rng.gen_bool(0.5) { NPCGender::Male } else { NPCGender::Female },
+            gender: if rng.gen_bool(0.5) {
+                NPCGender::Male
+            } else {
+                NPCGender::Female
+            },
         }
     }
 }
@@ -217,8 +219,6 @@ impl Cullable {
     }
 }
 
-
-
 // Road system components
 #[derive(Component)]
 pub struct RoadEntity {
@@ -263,8 +263,6 @@ pub struct Landmark;
 #[derive(Component)]
 pub struct Buildable;
 
-
-
 #[derive(Component)]
 pub struct MainCamera;
 
@@ -307,10 +305,6 @@ impl Default for PerformanceStats {
     }
 }
 
-
-
-
-
 // Mesh caching components
 #[derive(Resource)]
 pub struct MeshCache {
@@ -345,10 +339,10 @@ pub struct EntityLimits {
 impl Default for EntityLimits {
     fn default() -> Self {
         Self {
-            max_buildings: 800,    // Reduced from unlimited
-            max_vehicles: 200,     // Reduced from unlimited
-            max_npcs: 150,         // Reduced from unlimited
-            max_trees: 400,        // Reduced from unlimited
+            max_buildings: 800, // Reduced from unlimited
+            max_vehicles: 200,  // Reduced from unlimited
+            max_npcs: 150,      // Reduced from unlimited
+            max_trees: 400,     // Reduced from unlimited
             building_entities: Vec::new(),
             vehicle_entities: Vec::new(),
             npc_entities: Vec::new(),
@@ -365,10 +359,10 @@ pub struct WorldBounds {
     pub max_x: f32,
     pub min_z: f32,
     pub max_z: f32,
-    
+
     // Context-aware boundary zones (GTA-style)
-    pub warning_zone_size: f32,     // Distance from edge where warnings start
-    pub critical_zone_size: f32,    // Distance from edge where effects trigger
+    pub warning_zone_size: f32,  // Distance from edge where warnings start
+    pub critical_zone_size: f32, // Distance from edge where effects trigger
     pub boundary_enforcement: BoundaryEnforcement,
 }
 
@@ -403,22 +397,26 @@ impl WorldBounds {
     /// Create WorldBounds from GameConfig
     pub fn from_config(world_config: &crate::config::WorldConfig) -> Self {
         let (min_x, max_x, min_z, max_z) = world_config.world_bounds();
-        
+
         Self {
             min_x,
             max_x,
             min_z,
             max_z,
-            warning_zone_size: 500.0,   // 500m warning zone
-            critical_zone_size: 200.0,  // 200m critical zone  
+            warning_zone_size: 500.0,  // 500m warning zone
+            critical_zone_size: 200.0, // 200m critical zone
             boundary_enforcement: BoundaryEnforcement::Progressive,
         }
     }
-    
+
     /// Get boundary zone for a position and vehicle type
-    pub fn get_boundary_zone(&self, position: Vec3, _vehicle_type: BoundaryVehicleType) -> BoundaryZone {
+    pub fn get_boundary_zone(
+        &self,
+        position: Vec3,
+        _vehicle_type: BoundaryVehicleType,
+    ) -> BoundaryZone {
         let distance_to_edge = self.distance_to_nearest_edge(position);
-        
+
         if distance_to_edge < 0.0 {
             BoundaryZone::OutOfBounds
         } else if distance_to_edge < self.critical_zone_size {
@@ -429,21 +427,23 @@ impl WorldBounds {
             BoundaryZone::Safe
         }
     }
-    
+
     /// Get distance to nearest world edge (negative if outside bounds)
     pub fn distance_to_nearest_edge(&self, position: Vec3) -> f32 {
         let x_distance = (position.x - self.min_x).min(self.max_x - position.x);
         let z_distance = (position.z - self.min_z).min(self.max_z - position.z);
-        
+
         x_distance.min(z_distance)
     }
-    
+
     /// Check if position is within world bounds
     pub fn is_in_bounds(&self, position: Vec3) -> bool {
-        position.x >= self.min_x && position.x <= self.max_x &&
-        position.z >= self.min_z && position.z <= self.max_z
+        position.x >= self.min_x
+            && position.x <= self.max_x
+            && position.z >= self.min_z
+            && position.z <= self.max_z
     }
-    
+
     /// Clamp position to world bounds
     pub fn clamp_to_bounds(&self, position: Vec3) -> Vec3 {
         Vec3::new(
@@ -452,12 +452,12 @@ impl WorldBounds {
             position.z.clamp(self.min_z, self.max_z),
         )
     }
-    
+
     /// Get safe respawn position near world center
     pub fn safe_respawn_position(&self) -> Vec3 {
         let center_x = (self.min_x + self.max_x) / 2.0;
         let center_z = (self.min_z + self.max_z) / 2.0;
-        
+
         // Spawn slightly offset from exact center
         Vec3::new(center_x + 10.0, 2.0, center_z + 10.0)
     }

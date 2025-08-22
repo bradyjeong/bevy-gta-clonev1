@@ -25,13 +25,13 @@ pub fn unified_factory_debug_system(factory: Res<UnifiedEntityFactory>, time: Re
         let (buildings, vehicles, npcs, trees) = factory.entity_limits.get_counts();
 
         info!(
-            "🏭 UNIFIED FACTORY STATUS:\n\
+            "UNIFIED FACTORY STATUS:\n\
             Current Entity Counts:\n\
             • Buildings: {}/{} ({:.1}% full)\n\
             • Vehicles:  {}/{} ({:.1}% full)\n\
             • NPCs:      {}/{} ({:.1}% full)\n\
             • Trees:     {}/{} ({:.1}% full)\n\
-            🚀 Position Cache Size: {} entries",
+            Position Cache Size: {} entries",
             buildings,
             factory.entity_limits.max_buildings,
             (buildings as f32 / factory.entity_limits.max_buildings as f32) * 100.0,

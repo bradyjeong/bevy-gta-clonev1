@@ -56,7 +56,7 @@ impl VegetationLOD {
             self.detail_level = new_level;
             self.last_update_frame = frame;
         }
-        
+
         self.distance_to_player = distance;
     }
 

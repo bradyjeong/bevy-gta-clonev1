@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::components::{Player, ActiveEntity, HumanMovement, HumanAnimation};
 use crate::components::ControlState;
+use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, Player};
 
 #[derive(Resource)]
 pub struct PlayerInputData {
@@ -36,12 +36,10 @@ pub fn read_input_system(
     if control_state.is_braking() {
         input_data.input_direction -= *transform.forward();
     }
-    
+
     input_data.rotation_input = control_state.steering;
     input_data.is_running = control_state.run;
 }
-
-
 
 pub fn velocity_apply_system(
     input_data: Res<PlayerInputData>,
@@ -55,9 +53,9 @@ pub fn velocity_apply_system(
     };
 
     let effective_max_speed = if input_data.is_running {
-        movement.max_speed * 2.5  // Sprint speed
+        movement.max_speed * 2.5 // Sprint speed
     } else {
-        movement.max_speed  // Walk speed
+        movement.max_speed // Walk speed
     };
 
     let target_linear_velocity = if input_data.input_direction.length() > 0.0 {
@@ -102,11 +100,56 @@ pub fn human_player_animation(
         (With<Player>, With<ActiveEntity>),
     >,
     mut torso_query: Query<&mut Transform, (With<crate::components::PlayerTorso>, Without<Player>)>,
-    mut head_query: Query<&mut Transform, (With<crate::components::PlayerHead>, Without<Player>, Without<crate::components::PlayerTorso>)>,
-    mut left_arm_query: Query<&mut Transform, (With<crate::components::PlayerLeftArm>, Without<Player>, Without<crate::components::PlayerTorso>, Without<crate::components::PlayerHead>)>,
-    mut right_arm_query: Query<&mut Transform, (With<crate::components::PlayerRightArm>, Without<Player>, Without<crate::components::PlayerTorso>, Without<crate::components::PlayerHead>, Without<crate::components::PlayerLeftArm>)>,
-    mut left_leg_query: Query<&mut Transform, (With<crate::components::PlayerLeftLeg>, Without<Player>, Without<crate::components::PlayerTorso>, Without<crate::components::PlayerHead>, Without<crate::components::PlayerLeftArm>, Without<crate::components::PlayerRightArm>)>,
-    mut right_leg_query: Query<&mut Transform, (With<crate::components::PlayerRightLeg>, Without<Player>, Without<crate::components::PlayerTorso>, Without<crate::components::PlayerHead>, Without<crate::components::PlayerLeftArm>, Without<crate::components::PlayerRightArm>, Without<crate::components::PlayerLeftLeg>)>,
+    mut head_query: Query<
+        &mut Transform,
+        (
+            With<crate::components::PlayerHead>,
+            Without<Player>,
+            Without<crate::components::PlayerTorso>,
+        ),
+    >,
+    mut left_arm_query: Query<
+        &mut Transform,
+        (
+            With<crate::components::PlayerLeftArm>,
+            Without<Player>,
+            Without<crate::components::PlayerTorso>,
+            Without<crate::components::PlayerHead>,
+        ),
+    >,
+    mut right_arm_query: Query<
+        &mut Transform,
+        (
+            With<crate::components::PlayerRightArm>,
+            Without<Player>,
+            Without<crate::components::PlayerTorso>,
+            Without<crate::components::PlayerHead>,
+            Without<crate::components::PlayerLeftArm>,
+        ),
+    >,
+    mut left_leg_query: Query<
+        &mut Transform,
+        (
+            With<crate::components::PlayerLeftLeg>,
+            Without<Player>,
+            Without<crate::components::PlayerTorso>,
+            Without<crate::components::PlayerHead>,
+            Without<crate::components::PlayerLeftArm>,
+            Without<crate::components::PlayerRightArm>,
+        ),
+    >,
+    mut right_leg_query: Query<
+        &mut Transform,
+        (
+            With<crate::components::PlayerRightLeg>,
+            Without<Player>,
+            Without<crate::components::PlayerTorso>,
+            Without<crate::components::PlayerHead>,
+            Without<crate::components::PlayerLeftArm>,
+            Without<crate::components::PlayerRightArm>,
+            Without<crate::components::PlayerLeftLeg>,
+        ),
+    >,
 ) {
     let Ok((_player_transform, animation, _movement)) = player_query.single() else {
         return;
@@ -180,7 +223,7 @@ pub fn human_player_animation(
 
         left_arm_transform.translation.x = -0.4;
         left_arm_transform.translation.y = 0.7;
-        left_arm_transform.translation.z = arm_swing * 0.35;  // Increased from 0.2 for more movement
+        left_arm_transform.translation.z = arm_swing * 0.35; // Increased from 0.2 for more movement
         left_arm_transform.rotation = Quat::from_rotation_x(arm_swing);
     }
 
@@ -193,27 +236,27 @@ pub fn human_player_animation(
 
         right_arm_transform.translation.x = 0.4;
         right_arm_transform.translation.y = 0.7;
-        right_arm_transform.translation.z = arm_swing * 0.35;  // Increased from 0.2 for more movement
+        right_arm_transform.translation.z = arm_swing * 0.35; // Increased from 0.2 for more movement
         right_arm_transform.rotation = Quat::from_rotation_x(arm_swing);
     }
 
     // Animate legs walking
     if let Ok(mut left_leg_transform) = left_leg_query.single_mut() {
         let leg_swing = if animation.is_walking {
-            walk_cycle * 0.7  // Increased from 0.4 for more pronounced leg swing
+            walk_cycle * 0.7 // Increased from 0.4 for more pronounced leg swing
         } else {
             0.0
         };
 
         let leg_lift = if animation.is_walking {
-            (walk_cycle * 0.5).max(0.0) * 0.15  // Increased from 0.1 for higher leg lift
+            (walk_cycle * 0.5).max(0.0) * 0.15 // Increased from 0.1 for higher leg lift
         } else {
             0.0
         };
 
         left_leg_transform.translation.x = -0.15;
         left_leg_transform.translation.y = 0.0 + leg_lift;
-        left_leg_transform.translation.z = leg_swing * 0.25;  // Increased from 0.15 for more forward/back movement
+        left_leg_transform.translation.z = leg_swing * 0.25; // Increased from 0.15 for more forward/back movement
         left_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
     }
 
@@ -225,14 +268,14 @@ pub fn human_player_animation(
         };
 
         let leg_lift = if animation.is_walking {
-            (walk_cycle_offset * 0.5).max(0.0) * 0.15  // Increased from 0.1 for higher leg lift
+            (walk_cycle_offset * 0.5).max(0.0) * 0.15 // Increased from 0.1 for higher leg lift
         } else {
             0.0
         };
 
         right_leg_transform.translation.x = 0.15;
         right_leg_transform.translation.y = 0.0 + leg_lift;
-        right_leg_transform.translation.z = leg_swing * 0.25;  // Increased from 0.15 for more forward/back movement
+        right_leg_transform.translation.z = leg_swing * 0.25; // Increased from 0.15 for more forward/back movement
         right_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
     }
 }

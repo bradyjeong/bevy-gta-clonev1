@@ -24,11 +24,7 @@ impl Default for GroundDetectionService {
 
 impl GroundDetectionService {
     /// Get ground height at a given XZ position using raycasting
-    pub fn get_ground_height(
-        &self,
-        position: Vec2,
-        rapier_context: &RapierContext,
-    ) -> f32 {
+    pub fn get_ground_height(&self, position: Vec2, rapier_context: &RapierContext) -> f32 {
         if !self.enabled {
             return self.fallback_height;
         }
@@ -39,22 +35,17 @@ impl GroundDetectionService {
         let max_distance = GROUND_DETECTION_HEIGHT + 20.0; // Extra margin
 
         // Create raycast filter to only hit static geometry (terrain, buildings)
-        let filter = QueryFilter::new()
-            .groups(CollisionGroups::new(
-                Group::ALL,
-                Group::GROUP_1, // STATIC_GROUP
-            ));
+        let filter = QueryFilter::new().groups(CollisionGroups::new(
+            Group::ALL,
+            Group::GROUP_1, // STATIC_GROUP
+        ));
 
         // Perform raycast
-        if let Some((_entity, intersection)) = rapier_context.cast_ray(
-            ray_origin,
-            ray_direction,
-            max_distance,
-            true,
-            filter,
-        ) {
+        if let Some((_entity, intersection)) =
+            rapier_context.cast_ray(ray_origin, ray_direction, max_distance, true, filter)
+        {
             let ground_height = ray_origin.y - intersection;
-            
+
             // Validate ground height is reasonable
             if ground_height >= MIN_GROUND_HEIGHT && ground_height <= MAX_GROUND_HEIGHT {
                 return ground_height;
@@ -78,11 +69,7 @@ impl GroundDetectionService {
     }
 
     /// Validate if a position has valid ground
-    pub fn has_valid_ground(
-        &self,
-        position: Vec2,
-        rapier_context: &RapierContext,
-    ) -> bool {
+    pub fn has_valid_ground(&self, position: Vec2, rapier_context: &RapierContext) -> bool {
         if !self.enabled {
             return true;
         }
@@ -91,19 +78,14 @@ impl GroundDetectionService {
         let ray_direction = Vec3::NEG_Y;
         let max_distance = GROUND_DETECTION_HEIGHT + 20.0;
 
-        let filter = QueryFilter::new()
-            .groups(CollisionGroups::new(
-                Group::ALL,
-                Group::GROUP_1, // STATIC_GROUP
-            ));
+        let filter = QueryFilter::new().groups(CollisionGroups::new(
+            Group::ALL,
+            Group::GROUP_1, // STATIC_GROUP
+        ));
 
-        rapier_context.cast_ray(
-            ray_origin,
-            ray_direction,
-            max_distance,
-            true,
-            filter,
-        ).is_some()
+        rapier_context
+            .cast_ray(ray_origin, ray_direction, max_distance, true, filter)
+            .is_some()
     }
 
     /// Get ground height without requiring RapierContext access
@@ -111,11 +93,11 @@ impl GroundDetectionService {
     pub fn get_ground_height_simple(&self, position: Vec2) -> f32 {
         // Match the actual terrain height from setup_basic_world
         // Terrain is at y=-0.15, so ground surface is at -0.1
-        
+
         // Keep spawn area (within 10 units of origin) perfectly flat to prevent sliding
         let spawn_area_radius = 10.0;
         let distance_from_spawn = (position.x.powi(2) + position.y.powi(2)).sqrt();
-        
+
         if distance_from_spawn < spawn_area_radius {
             -0.1 // Perfectly flat ground around spawn
         } else {
@@ -131,7 +113,7 @@ impl GroundDetectionService {
         // - Not inside buildings
         // - Not too steep terrain
         // - Not in water
-        
+
         // For now, just avoid positions too close to origin (where roads typically are)
         let distance_from_origin = position.length();
         distance_from_origin > 10.0 // Stay away from central road network
@@ -146,4 +128,3 @@ impl Plugin for GroundDetectionPlugin {
         app.init_resource::<GroundDetectionService>();
     }
 }
-

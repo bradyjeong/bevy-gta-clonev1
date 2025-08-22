@@ -3,8 +3,8 @@ use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures_lite::future;
 use std::collections::HashMap;
 
-use crate::systems::world::{ChunkCoord, ChunkState, UnifiedWorldManager};
 use crate::components::world::ContentType;
+use crate::systems::world::{ChunkCoord, ChunkState, UnifiedWorldManager};
 
 /// Async chunk generation system following Oracle recommendations
 /// Moves heavy chunk generation work off main thread for smooth 60+ FPS
@@ -12,12 +12,10 @@ pub struct AsyncChunkGenerationPlugin;
 
 impl Plugin for AsyncChunkGenerationPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_resource::<AsyncChunkQueue>()
-            .add_systems(Update, (
-                queue_async_chunk_generation,
-                process_completed_chunks,
-            ).chain());
+        app.init_resource::<AsyncChunkQueue>().add_systems(
+            Update,
+            (queue_async_chunk_generation, process_completed_chunks).chain(),
+        );
     }
 }
 
@@ -37,11 +35,11 @@ impl AsyncChunkQueue {
             max_concurrent_tasks: 4, // Limit concurrent generation for stability
         }
     }
-    
+
     pub fn has_capacity(&self) -> bool {
         self.active_tasks.len() < self.max_concurrent_tasks
     }
-    
+
     pub fn is_chunk_generating(&self, coord: ChunkCoord) -> bool {
         self.active_tasks.contains_key(&coord)
     }
@@ -76,38 +74,38 @@ pub fn queue_async_chunk_generation(
     if !async_queue.has_capacity() {
         return;
     }
-    
-    let Ok(active_transform) = active_query.single() else { return };
+
+    let Ok(active_transform) = active_query.single() else {
+        return;
+    };
     let active_pos = active_transform.translation;
-    
+
     // Find chunks that need loading and aren't already being generated
     let chunks_to_load = world_manager.get_chunks_to_load(active_pos);
-    
+
     let task_pool = AsyncComputeTaskPool::get();
-    
+
     for coord in chunks_to_load {
         // Skip if already generating
         if async_queue.is_chunk_generating(coord) {
             continue;
         }
-        
+
         // Skip if no capacity
         if !async_queue.has_capacity() {
             break;
         }
-        
+
         // Mark chunk as generating
         if let Some(chunk) = world_manager.get_chunk_mut(coord) {
             chunk.state = ChunkState::Loading;
         }
-        
+
         // Spawn async task for chunk generation
-        let generation_task = task_pool.spawn(async move {
-            generate_chunk_async(coord).await
-        });
-        
+        let generation_task = task_pool.spawn(async move { generate_chunk_async(coord).await });
+
         async_queue.active_tasks.insert(coord, generation_task);
-        
+
         info!("Queued async generation for chunk {:?}", coord);
     }
 }
@@ -122,43 +120,42 @@ pub fn process_completed_chunks(
     time: Res<Time>,
 ) {
     let mut completed_coords = Vec::new();
-    
+
     // Check for completed tasks
     for (coord, task) in &mut async_queue.active_tasks {
         if let Some(result) = future::block_on(future::poll_once(task)) {
             completed_coords.push((*coord, result));
         }
     }
-    
+
     // Process completed chunks
     for (coord, result) in completed_coords {
         // Remove from active tasks
         async_queue.active_tasks.remove(&coord);
-        
+
         if result.success {
             // Spawn entities on main thread using generated data
-            let spawned_entities = spawn_entities_from_async_data(
-                &mut commands, 
-                &mut meshes, 
-                &mut materials, 
-                &result
-            );
-            
+            let spawned_entities =
+                spawn_entities_from_async_data(&mut commands, &mut meshes, &mut materials, &result);
+
             // Mark chunk as loaded and track spawned entities
             if let Some(chunk) = world_manager.get_chunk_mut(coord) {
                 chunk.state = ChunkState::Loaded { lod_level: 0 };
                 chunk.last_update = time.elapsed_secs();
                 chunk.entities.extend(spawned_entities); // Track entities for cleanup
             }
-            
-            info!("Async chunk generation completed for {:?} in {:.2}ms", 
-                  coord, result.generation_time * 1000.0);
+
+            info!(
+                "Async chunk generation completed for {:?} in {:.2}ms",
+                coord,
+                result.generation_time * 1000.0
+            );
         } else {
             // Mark as failed, will retry on next streaming update
             if let Some(chunk) = world_manager.get_chunk_mut(coord) {
                 chunk.state = ChunkState::Unloaded;
             }
-            
+
             warn!("Async chunk generation failed for {:?}", coord);
         }
     }
@@ -167,22 +164,18 @@ pub fn process_completed_chunks(
 /// Async chunk generation function - runs off main thread
 async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
     let start_time = std::time::Instant::now();
-    
+
     // Simulate chunk generation work (roads, buildings, vegetation, etc.)
     // This is where the heavy procedural generation would happen
     let mut entities_data = Vec::new();
-    
+
     // Generate sample content (replace with actual generation logic)
     let chunk_center = coord.to_world_pos_with_size(128.0); // Use finite world chunk size
-    
+
     // Generate some sample buildings
     for i in 0..5 {
-        let offset = Vec3::new(
-            (i as f32 * 20.0) - 40.0,
-            0.0,
-            (i as f32 * 15.0) - 30.0,
-        );
-        
+        let offset = Vec3::new((i as f32 * 20.0) - 40.0, 0.0, (i as f32 * 15.0) - 30.0);
+
         entities_data.push(EntityGenerationData {
             position: chunk_center + offset,
             content_type: ContentType::Building,
@@ -191,7 +184,7 @@ async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
             color: Color::srgb(0.7, 0.7, 0.8),
         });
     }
-    
+
     // Generate some vegetation
     for i in 0..10 {
         let offset = Vec3::new(
@@ -199,7 +192,7 @@ async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
             0.0,
             ((i % 3) as f32 * 20.0) - 20.0,
         );
-        
+
         entities_data.push(EntityGenerationData {
             position: chunk_center + offset,
             content_type: ContentType::Tree,
@@ -208,9 +201,9 @@ async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
             color: Color::srgb(0.2, 0.6, 0.2),
         });
     }
-    
+
     let generation_time = start_time.elapsed().as_secs_f32();
-    
+
     ChunkGenerationResult {
         coord,
         entities_data,
@@ -228,31 +221,21 @@ fn spawn_entities_from_async_data(
     result: &ChunkGenerationResult,
 ) -> Vec<Entity> {
     let mut spawned_entities = Vec::new();
-    
+
     for entity_data in &result.entities_data {
         let entity = match entity_data.content_type {
-            ContentType::Building => {
-                spawn_async_building(commands, meshes, materials, entity_data)
-            },
-            ContentType::Tree => {
-                spawn_async_vegetation(commands, meshes, materials, entity_data)
-            },
-            ContentType::Vehicle => {
-                spawn_async_vehicle(commands, meshes, materials, entity_data)
-            },
-            ContentType::NPC => {
-                spawn_async_npc(commands, meshes, materials, entity_data)
-            },
-            ContentType::Road => {
-                spawn_async_road(commands, meshes, materials, entity_data)
-            },
+            ContentType::Building => spawn_async_building(commands, meshes, materials, entity_data),
+            ContentType::Tree => spawn_async_vegetation(commands, meshes, materials, entity_data),
+            ContentType::Vehicle => spawn_async_vehicle(commands, meshes, materials, entity_data),
+            ContentType::NPC => spawn_async_npc(commands, meshes, materials, entity_data),
+            ContentType::Road => spawn_async_road(commands, meshes, materials, entity_data),
         };
-        
+
         if let Some(entity) = entity {
             spawned_entities.push(entity);
         }
     }
-    
+
     spawned_entities
 }
 
@@ -264,34 +247,36 @@ fn spawn_async_building(
     data: &EntityGenerationData,
 ) -> Option<Entity> {
     use bevy::render::view::VisibilityRange;
-    
+
     let mesh = meshes.add(Mesh::from(Cuboid::from_size(data.scale)));
     let material = materials.add(StandardMaterial {
         base_color: data.color,
         ..default()
     });
-    
-    let entity = commands.spawn((
-        Mesh3d(mesh),
-        MeshMaterial3d(material),
-        Transform::from_translation(data.position)
-            .with_rotation(data.rotation)
-            .with_scale(data.scale),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 350.0..400.0, // Buildings visible from 350-400m
-            use_aabb: false,
-        },
-        crate::components::world::Building {
-            building_type: crate::components::world::BuildingType::Generic,
-            height: data.scale.y,
-            scale: data.scale,
-        },
-        crate::components::world::DynamicContent {
-            content_type: ContentType::Building,
-        },
-    )).id();
-    
+
+    let entity = commands
+        .spawn((
+            Mesh3d(mesh),
+            MeshMaterial3d(material),
+            Transform::from_translation(data.position)
+                .with_rotation(data.rotation)
+                .with_scale(data.scale),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 350.0..400.0, // Buildings visible from 350-400m
+                use_aabb: false,
+            },
+            crate::components::world::Building {
+                building_type: crate::components::world::BuildingType::Generic,
+                height: data.scale.y,
+                scale: data.scale,
+            },
+            crate::components::world::DynamicContent {
+                content_type: ContentType::Building,
+            },
+        ))
+        .id();
+
     Some(entity)
 }
 
@@ -303,28 +288,29 @@ fn spawn_async_vegetation(
     data: &EntityGenerationData,
 ) -> Option<Entity> {
     use bevy::render::view::VisibilityRange;
-    
+
     let mesh = meshes.add(Mesh::from(Cylinder::new(data.scale.x * 0.1, data.scale.y)));
     let material = materials.add(StandardMaterial {
         base_color: data.color,
         ..default()
     });
-    
-    let entity = commands.spawn((
-        Mesh3d(mesh),
-        MeshMaterial3d(material),
-        Transform::from_translation(data.position)
-            .with_rotation(data.rotation),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 250.0..300.0, // Trees visible from 250-300m
-            use_aabb: false,
-        },
-        crate::components::world::DynamicContent {
-            content_type: ContentType::Tree,
-        },
-    )).id();
-    
+
+    let entity = commands
+        .spawn((
+            Mesh3d(mesh),
+            MeshMaterial3d(material),
+            Transform::from_translation(data.position).with_rotation(data.rotation),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 250.0..300.0, // Trees visible from 250-300m
+                use_aabb: false,
+            },
+            crate::components::world::DynamicContent {
+                content_type: ContentType::Tree,
+            },
+        ))
+        .id();
+
     Some(entity)
 }
 

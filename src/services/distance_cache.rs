@@ -45,13 +45,13 @@ impl DistanceCache {
     /// Advance to the next frame for cache management
     pub fn advance_frame(&mut self) {
         self.current_frame += 1;
-        
+
         // Clean up old entries every 120 frames (~2 seconds at 60 FPS)
         // Spread cleanup over multiple frames to prevent spikes
         if self.current_frame % 120 == 0 {
             self.cleanup_old_entries_gradually();
         }
-        
+
         // Prevent cache from growing too large
         if self.cache.len() > self.max_cache_size {
             self.limit_cache_size();
@@ -76,7 +76,8 @@ impl DistanceCache {
         // Check cache first
         if let Some((distance, _, last_frame)) = self.cache.get(&key) {
             // Cache hit - return cached value if recent
-            if self.current_frame - last_frame < 5 { // Valid for 5 frames
+            if self.current_frame - last_frame < 5 {
+                // Valid for 5 frames
                 self.stats.hits += 1;
                 return *distance;
             }
@@ -86,8 +87,9 @@ impl DistanceCache {
         self.stats.misses += 1;
         let distance = pos1.distance(pos2);
         let distance_squared = pos1.distance_squared(pos2);
-        
-        self.cache.insert(key, (distance, distance_squared, self.current_frame));
+
+        self.cache
+            .insert(key, (distance, distance_squared, self.current_frame));
         distance
     }
 
@@ -109,7 +111,8 @@ impl DistanceCache {
         // Check cache first
         if let Some((_, distance_squared, last_frame)) = self.cache.get(&key) {
             // Cache hit - return cached value if recent
-            if self.current_frame - last_frame < 5 { // Valid for 5 frames
+            if self.current_frame - last_frame < 5 {
+                // Valid for 5 frames
                 self.stats.hits += 1;
                 return *distance_squared;
             }
@@ -119,14 +122,16 @@ impl DistanceCache {
         self.stats.misses += 1;
         let distance_squared = pos1.distance_squared(pos2);
         let distance = distance_squared.sqrt();
-        
-        self.cache.insert(key, (distance, distance_squared, self.current_frame));
+
+        self.cache
+            .insert(key, (distance, distance_squared, self.current_frame));
         distance_squared
     }
 
     /// Invalidate all cached distances for a specific entity (when it moves significantly)
     pub fn invalidate_entity_cache(&mut self, entity: Entity) {
-        let keys_to_remove: Vec<_> = self.cache
+        let keys_to_remove: Vec<_> = self
+            .cache
             .keys()
             .filter(|(e1, e2)| *e1 == entity || *e2 == entity)
             .cloned()
@@ -142,11 +147,11 @@ impl DistanceCache {
     fn cleanup_old_entries_gradually(&mut self) {
         let cutoff_frame = self.current_frame.saturating_sub(10);
         let _initial_size = self.cache.len();
-        
+
         // Only clean up a limited number of entries per frame (max 50)
         let mut removed = 0;
         const MAX_CLEANUP_PER_FRAME: usize = 50;
-        
+
         self.cache.retain(|_, (_, _, last_frame)| {
             if *last_frame < cutoff_frame && removed < MAX_CLEANUP_PER_FRAME {
                 removed += 1;
@@ -155,7 +160,7 @@ impl DistanceCache {
                 true
             }
         });
-        
+
         self.stats.cleanups += removed as u64;
     }
 
@@ -170,11 +175,11 @@ impl DistanceCache {
         entries.sort_by_key(|(_, (_, _, frame))| *frame);
 
         let to_remove = self.cache.len() - (self.max_cache_size * 3 / 4); // Remove 25% when at limit
-        
+
         for (key, _) in entries.iter().take(to_remove) {
             self.cache.remove(key);
         }
-        
+
         self.stats.cleanups += to_remove as u64;
     }
 

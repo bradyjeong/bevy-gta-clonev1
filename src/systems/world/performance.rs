@@ -1,6 +1,6 @@
-use bevy::prelude::*;
+use crate::components::{Cullable, PerformanceStats};
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
-use crate::components::{PerformanceStats, Cullable};
+use bevy::prelude::*;
 
 pub fn performance_monitoring_system(
     time: Res<Time>,
@@ -10,18 +10,18 @@ pub fn performance_monitoring_system(
     diagnostics: Res<DiagnosticsStore>,
 ) {
     let current_time = time.elapsed_secs();
-    
+
     // Update stats
     stats.entity_count = entity_query.iter().count();
     stats.culled_entities = cullable_query.iter().filter(|c| c.is_culled).count();
-    
+
     // Get frame time from diagnostics
     if let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
         if let Some(fps_avg) = fps_diag.smoothed() {
             stats.frame_time = (1000.0 / fps_avg) as f32; // Convert to milliseconds
         }
     }
-    
+
     // Report every 5 seconds
     if current_time - stats.last_report > 5.0 {
         stats.last_report = current_time;
@@ -30,7 +30,11 @@ pub fn performance_monitoring_system(
             stats.entity_count,
             stats.culled_entities,
             stats.frame_time,
-            if stats.frame_time > 0.0 { 1000.0 / stats.frame_time } else { 0.0 }
+            if stats.frame_time > 0.0 {
+                1000.0 / stats.frame_time
+            } else {
+                0.0
+            }
         );
     }
 }

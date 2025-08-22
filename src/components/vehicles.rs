@@ -23,8 +23,6 @@
 
 use bevy::prelude::*;
 
-
-
 // Essential marker components
 #[derive(Component)]
 pub struct Car;
@@ -58,11 +56,11 @@ impl VehicleHealth {
             max: max_health,
         }
     }
-    
+
     pub fn is_destroyed(&self) -> bool {
         self.current <= 0.0
     }
-    
+
     pub fn health_percentage(&self) -> f32 {
         (self.current / self.max).clamp(0.0, 1.0)
     }
@@ -72,32 +70,30 @@ impl VehicleHealth {
 #[derive(Component, Clone)]
 pub struct AircraftFlight {
     // Engine state only (eliminate derived data)
-    pub throttle: f32,        // 0.0-1.0, processed from controls
-    pub airspeed: f32,        // For UI/debugging only
+    pub throttle: f32, // 0.0-1.0, processed from controls
+    pub airspeed: f32, // For UI/debugging only
     pub afterburner_active: bool,
 }
 
 // Simplified F16 specifications - all tuning constants data-driven
 #[derive(Component, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SimpleF16Specs {
-    pub max_forward_speed: f32,  // Maximum forward velocity (m/s)
-    pub roll_rate_max: f32,      // Maximum roll rate (rad/s)
-    pub pitch_rate_max: f32,     // Maximum pitch rate (rad/s)
-    pub yaw_rate_max: f32,       // Maximum yaw rate (rad/s)
+    pub max_forward_speed: f32, // Maximum forward velocity (m/s)
+    pub roll_rate_max: f32,     // Maximum roll rate (rad/s)
+    pub pitch_rate_max: f32,    // Maximum pitch rate (rad/s)
+    pub yaw_rate_max: f32,      // Maximum yaw rate (rad/s)
     pub throttle_increase_rate: f32,
     pub throttle_decrease_rate: f32,
     pub linear_damping: f32,
     pub angular_damping: f32,
     pub lift_per_throttle: f32,
-    
+
     // Previously magic numbers in code
-    pub afterburner_multiplier: f32,  // Speed multiplier for afterburner
-    pub linear_lerp_factor: f32,      // Linear velocity smoothing rate
-    pub angular_lerp_factor: f32,     // Angular velocity smoothing rate
-    pub throttle_deadzone: f32,       // Minimum throttle for lift activation
+    pub afterburner_multiplier: f32, // Speed multiplier for afterburner
+    pub linear_lerp_factor: f32,     // Linear velocity smoothing rate
+    pub angular_lerp_factor: f32,    // Angular velocity smoothing rate
+    pub throttle_deadzone: f32,      // Minimum throttle for lift activation
 }
-
-
 
 impl Default for AircraftFlight {
     fn default() -> Self {
@@ -112,26 +108,24 @@ impl Default for AircraftFlight {
 impl Default for SimpleF16Specs {
     fn default() -> Self {
         Self {
-            max_forward_speed: 200.0_f32.clamp(50.0, 500.0),  // m/s - realistic fighter jet speed
-            roll_rate_max: 6.3_f32.clamp(0.1, 10.0),          // rad/s - prevent excessive rotation
-            pitch_rate_max: 3.5_f32.clamp(0.1, 10.0),         // rad/s
-            yaw_rate_max: 1.05_f32.clamp(0.1, 5.0),           // rad/s
+            max_forward_speed: 200.0_f32.clamp(50.0, 500.0), // m/s - realistic fighter jet speed
+            roll_rate_max: 6.3_f32.clamp(0.1, 10.0),         // rad/s - prevent excessive rotation
+            pitch_rate_max: 3.5_f32.clamp(0.1, 10.0),        // rad/s
+            yaw_rate_max: 1.05_f32.clamp(0.1, 5.0),          // rad/s
             throttle_increase_rate: 2.0_f32.clamp(0.1, 10.0),
             throttle_decrease_rate: 3.0_f32.clamp(0.1, 10.0),
             linear_damping: 0.15_f32.clamp(0.01, 5.0),
             angular_damping: 0.05_f32.clamp(0.01, 5.0),
             lift_per_throttle: 3.0_f32.clamp(0.1, 50.0),
-            
+
             // Formerly magic numbers - with safety limits
-            afterburner_multiplier: 1.5_f32.clamp(1.0, 3.0),  // Speed multiplier for afterburner
-            linear_lerp_factor: 4.0_f32.clamp(1.0, 20.0),     // Linear velocity smoothing
-            angular_lerp_factor: 8.0_f32.clamp(1.0, 20.0),    // Angular velocity smoothing
-            throttle_deadzone: 0.1_f32.clamp(0.0, 0.5),       // Minimum throttle for lift
+            afterburner_multiplier: 1.5_f32.clamp(1.0, 3.0), // Speed multiplier for afterburner
+            linear_lerp_factor: 4.0_f32.clamp(1.0, 20.0),    // Linear velocity smoothing
+            angular_lerp_factor: 8.0_f32.clamp(1.0, 20.0),   // Angular velocity smoothing
+            throttle_deadzone: 0.1_f32.clamp(0.0, 0.5),      // Minimum throttle for lift
         }
     }
 }
-
-
 
 #[derive(Component)]
 pub struct MainRotor;
@@ -217,12 +211,12 @@ pub struct SimpleCarSpecs {
 impl Default for SimpleCarSpecs {
     fn default() -> Self {
         Self {
-            base_speed: 25.0_f32.clamp(1.0, 100.0),              // m/s - reasonable car speeds
-            rotation_speed: 2.0_f32.clamp(0.1, 10.0),            // rad/s - prevent excessive turning
-            linear_lerp_factor: 4.0_f32.clamp(1.0, 20.0),        // Smooth movement response
-            angular_lerp_factor: 6.0_f32.clamp(1.0, 20.0),       // Smooth rotation response
-            emergency_brake_linear: 0.1_f32.clamp(0.01, 1.0),    // Multiplier - keep some movement
-            emergency_brake_angular: 0.5_f32.clamp(0.01, 1.0),   // Multiplier
+            base_speed: 25.0_f32.clamp(1.0, 100.0), // m/s - reasonable car speeds
+            rotation_speed: 2.0_f32.clamp(0.1, 10.0), // rad/s - prevent excessive turning
+            linear_lerp_factor: 4.0_f32.clamp(1.0, 20.0), // Smooth movement response
+            angular_lerp_factor: 6.0_f32.clamp(1.0, 20.0), // Smooth rotation response
+            emergency_brake_linear: 0.1_f32.clamp(0.01, 1.0), // Multiplier - keep some movement
+            emergency_brake_angular: 0.5_f32.clamp(0.01, 1.0), // Multiplier
         }
     }
 }
@@ -244,16 +238,16 @@ pub struct SimpleHelicopterSpecs {
 impl Default for SimpleHelicopterSpecs {
     fn default() -> Self {
         Self {
-            lateral_speed: 20.0_f32.clamp(1.0, 100.0),           // m/s - reasonable helicopter speeds
-            vertical_speed: 15.0_f32.clamp(1.0, 50.0),           // m/s - vertical flight limits
-            forward_speed: 25.0_f32.clamp(1.0, 100.0),           // m/s
-            yaw_rate: 1.5_f32.clamp(0.1, 5.0),                   // rad/s - prevent excessive rotation
-            pitch_rate: 1.0_f32.clamp(0.1, 5.0),                 // rad/s
-            roll_rate: 1.0_f32.clamp(0.1, 5.0),                  // rad/s
-            angular_lerp_factor: 4.0_f32.clamp(1.0, 20.0),       // Smooth control response
-            linear_lerp_factor: 6.0_f32.clamp(1.0, 20.0),        // Smooth movement response
-            main_rotor_rpm: 20.0_f32.clamp(1.0, 100.0),          // rad/s - main rotor speed
-            tail_rotor_rpm: 35.0_f32.clamp(1.0, 100.0),          // rad/s - tail rotor speed  
+            lateral_speed: 20.0_f32.clamp(1.0, 100.0), // m/s - reasonable helicopter speeds
+            vertical_speed: 15.0_f32.clamp(1.0, 50.0), // m/s - vertical flight limits
+            forward_speed: 25.0_f32.clamp(1.0, 100.0), // m/s
+            yaw_rate: 1.5_f32.clamp(0.1, 5.0),         // rad/s - prevent excessive rotation
+            pitch_rate: 1.0_f32.clamp(0.1, 5.0),       // rad/s
+            roll_rate: 1.0_f32.clamp(0.1, 5.0),        // rad/s
+            angular_lerp_factor: 4.0_f32.clamp(1.0, 20.0), // Smooth control response
+            linear_lerp_factor: 6.0_f32.clamp(1.0, 20.0), // Smooth movement response
+            main_rotor_rpm: 20.0_f32.clamp(1.0, 100.0), // rad/s - main rotor speed
+            tail_rotor_rpm: 35.0_f32.clamp(1.0, 100.0), // rad/s - tail rotor speed
         }
     }
 }

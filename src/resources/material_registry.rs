@@ -40,9 +40,15 @@ impl MaterialKey {
             emissive: false,
         }
     }
-    
+
     /// Create key with custom properties
-    pub fn new(color: Color, roughness: f32, metallic: f32, reflectance: f32, emissive: bool) -> Self {
+    pub fn new(
+        color: Color,
+        roughness: f32,
+        metallic: f32,
+        reflectance: f32,
+        emissive: bool,
+    ) -> Self {
         let rgba = color.to_srgba();
         Self {
             base_color: [
@@ -57,27 +63,27 @@ impl MaterialKey {
             emissive,
         }
     }
-    
+
     /// Road material key
     pub fn road(color: Color) -> Self {
         Self::new(color, 0.9, 0.0, 0.04, false)
     }
-    
+
     /// Road marking material key (emissive for visibility)
     pub fn road_marking(color: Color) -> Self {
         Self::new(color, 0.5, 0.0, 0.04, true)
     }
-    
+
     /// Building material key
     pub fn building(color: Color) -> Self {
         Self::new(color, 0.7, 0.1, 0.04, false)
     }
-    
+
     /// Vegetation material key
     pub fn vegetation(color: Color) -> Self {
         Self::new(color, 0.8, 0.0, 0.04, false)
     }
-    
+
     /// Builder method to set custom roughness
     pub fn with_roughness(mut self, roughness: f32) -> Self {
         self.roughness = (roughness.clamp(0.0, 1.0) * 255.0) as u8;
@@ -92,7 +98,7 @@ impl MaterialRegistry {
             materials: HashMap::new(),
         }
     }
-    
+
     /// Get or create material with given key
     /// Returns existing handle if material already exists, creates new one if not
     pub fn get_or_create(
@@ -103,23 +109,23 @@ impl MaterialRegistry {
         if let Some(handle) = self.materials.get(&key) {
             return handle.clone();
         }
-        
+
         // Create new material from key
         let material = self.create_material_from_key(&key);
         let handle = materials.add(material);
         self.materials.insert(key, handle.clone());
         handle
     }
-    
+
     /// Helper to create StandardMaterial from MaterialKey
     fn create_material_from_key(&self, key: &MaterialKey) -> StandardMaterial {
         let color = Color::srgba_u8(
             key.base_color[0],
-            key.base_color[1], 
+            key.base_color[1],
             key.base_color[2],
             key.base_color[3],
         );
-        
+
         let mut material = StandardMaterial {
             base_color: color,
             perceptual_roughness: key.roughness as f32 / 255.0,
@@ -127,14 +133,14 @@ impl MaterialRegistry {
             reflectance: key.reflectance as f32 / 255.0,
             ..default()
         };
-        
+
         if key.emissive {
             material.emissive = LinearRgba::from(color) * 0.3;
         }
-        
+
         material
     }
-    
+
     /// Get registry statistics for debugging
     pub fn stats(&self) -> MaterialRegistryStats {
         MaterialRegistryStats {

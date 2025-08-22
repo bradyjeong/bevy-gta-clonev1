@@ -94,7 +94,7 @@ pub fn service_example_timing_check(
         let delta_time = timing_service.delta_time();
 
         info!(
-            "⏱️ SERVICE EXAMPLE: Current time: {:.2}s, Delta: {:.4}s",
+            "SERVICE EXAMPLE: Current time: {:.2}s, Delta: {:.4}s",
             current_time, delta_time
         );
     }

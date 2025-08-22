@@ -98,54 +98,56 @@ impl TransformFactory {
     pub fn tail_rotor() -> Transform {
         Transform::from_xyz(0.0, 0.6, -1.8)
     }
-    
+
     /// Transform for F16 left wing (properly positioned for realistic layout)
     pub fn f16_left_wing() -> Transform {
         Transform::from_xyz(-5.0, -0.2, 1.0) // Left side, slightly below fuselage, forward
     }
-    
+
     /// Transform for F16 right wing (properly positioned for realistic layout)
     pub fn f16_right_wing() -> Transform {
         Transform::from_xyz(5.0, -0.2, 1.0) // Right side, slightly below fuselage, forward
     }
-    
+
     /// Transform for F16 canopy (pilot position)
     pub fn f16_canopy() -> Transform {
         Transform::from_xyz(0.0, 1.2, 2.0) // Above fuselage, forward of center
     }
-    
+
     /// Transform for F16 left air intake
     pub fn f16_left_air_intake() -> Transform {
         Transform::from_xyz(-1.5, -0.3, 3.0) // Left side, below fuselage, forward
     }
-    
+
     /// Transform for F16 right air intake
     pub fn f16_right_air_intake() -> Transform {
         Transform::from_xyz(1.5, -0.3, 3.0) // Right side, below fuselage, forward
     }
-    
+
     /// Transform for F16 vertical tail
     pub fn f16_vertical_tail() -> Transform {
         Transform::from_xyz(0.0, 1.5, -6.0) // Above fuselage, rear
     }
-    
+
     /// Transform for F16 left horizontal stabilizer
     pub fn f16_left_horizontal_stabilizer() -> Transform {
         Transform::from_xyz(-2.0, 0.3, -6.5) // Left side, rear, slightly elevated
     }
-    
+
     /// Transform for F16 right horizontal stabilizer
     pub fn f16_right_horizontal_stabilizer() -> Transform {
         Transform::from_xyz(2.0, 0.3, -6.5) // Right side, rear, slightly elevated
     }
-    
+
     /// Transform for F16 engine nozzle
     pub fn f16_engine_nozzle() -> Transform {
-        Transform::from_xyz(0.0, -0.2, -7.5).with_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0))
+        Transform::from_xyz(0.0, -0.2, -7.5)
+            .with_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0))
     }
 
     pub fn wheel_with_rotation(x: f32, y: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, y, z).with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0))
+        Transform::from_xyz(x, y, z)
+            .with_rotation(Quat::from_rotation_z(std::f32::consts::PI / 2.0))
     }
 
     pub fn large_vehicle_wheel(x: f32, y: f32, z: f32) -> Transform {
@@ -154,11 +156,13 @@ impl TransformFactory {
 
     // EXHAUST PIPES
     pub fn left_exhaust() -> Transform {
-        Transform::from_xyz(0.4, -0.25, -2.0).with_rotation(Quat::from_rotation_x(std::f32::consts::PI / 2.0))
+        Transform::from_xyz(0.4, -0.25, -2.0)
+            .with_rotation(Quat::from_rotation_x(std::f32::consts::PI / 2.0))
     }
 
     pub fn right_exhaust() -> Transform {
-        Transform::from_xyz(-0.4, -0.25, -2.0).with_rotation(Quat::from_rotation_x(std::f32::consts::PI / 2.0))
+        Transform::from_xyz(-0.4, -0.25, -2.0)
+            .with_rotation(Quat::from_rotation_x(std::f32::consts::PI / 2.0))
     }
 
     // AIRCRAFT COMPONENTS
@@ -177,8 +181,6 @@ impl TransformFactory {
     pub fn landing_skid_left() -> Transform {
         Transform::from_xyz(-2.0, -0.2, 0.0)
     }
-
-
 
     pub fn tail_rotor_blade() -> Transform {
         Transform::from_xyz(0.08, 2.2, 0.15)
@@ -269,7 +271,8 @@ impl TransformFactory {
     }
 
     pub fn street_light(x: f32, y: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, y, z).with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2))
+        Transform::from_xyz(x, y, z)
+            .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2))
     }
 
     // WATER FEATURES
@@ -279,12 +282,20 @@ impl TransformFactory {
 
     pub fn lake_bottom(lake_position: Vec3, depth: f32) -> Transform {
         let safe_depth = depth.max(0.1).min(1000.0);
-        Transform::from_xyz(lake_position.x, lake_position.y - safe_depth, lake_position.z)
+        Transform::from_xyz(
+            lake_position.x,
+            lake_position.y - safe_depth,
+            lake_position.z,
+        )
     }
 
     pub fn lake_cylinder(lake_position: Vec3, depth: f32) -> Transform {
         let safe_depth = depth.max(0.1).min(1000.0);
-        Transform::from_xyz(lake_position.x, lake_position.y - safe_depth / 2.0, lake_position.z)
+        Transform::from_xyz(
+            lake_position.x,
+            lake_position.y - safe_depth / 2.0,
+            lake_position.z,
+        )
     }
 
     // SKY COMPONENTS
@@ -307,12 +318,22 @@ impl TransformFactory {
     }
 
     // PROCEDURAL WORLD - Dynamic positioning
-    pub fn road_segment_horizontal(_x: f32, _z: f32, segment_size: f32, road_width: f32) -> Transform {
+    pub fn road_segment_horizontal(
+        _x: f32,
+        _z: f32,
+        segment_size: f32,
+        road_width: f32,
+    ) -> Transform {
         let safe_segment = segment_size.max(1.0).min(1000.0);
         Transform::from_xyz(safe_segment * 1.5, 0.1, road_width)
     }
 
-    pub fn road_segment_vertical(_x: f32, _z: f32, segment_size: f32, road_width: f32) -> Transform {
+    pub fn road_segment_vertical(
+        _x: f32,
+        _z: f32,
+        segment_size: f32,
+        road_width: f32,
+    ) -> Transform {
         let safe_segment = segment_size.max(1.0).min(1000.0);
         Transform::from_xyz(road_width, 0.1, safe_segment * 1.5)
     }

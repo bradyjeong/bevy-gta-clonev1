@@ -187,7 +187,7 @@ impl SpawnRegistry {
             .get_nearby_entities(position, search_radius);
 
         debug!(
-            "🔍 SPAWN CHECK: Checking {:?} at {:?} against {} nearby entities",
+            "SPAWN CHECK: Checking {:?} at {:?} against {} nearby entities",
             entity_type,
             position,
             nearby_entities.len()

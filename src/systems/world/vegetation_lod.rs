@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::components::*;
 use crate::services::distance_cache::{DistanceCache, get_cached_distance};
+use bevy::prelude::*;
 
 /// Frame counter for LOD updates
 #[derive(Resource, Default)]
@@ -14,17 +14,27 @@ pub fn vegetation_lod_system(
     mut distance_cache: ResMut<DistanceCache>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     mut vegetation_query: Query<
-        (Entity, &mut VegetationLOD, &Transform, &mut Visibility, &mut Mesh3d),
-        With<VegetationMeshLOD>
+        (
+            Entity,
+            &mut VegetationLOD,
+            &Transform,
+            &mut Visibility,
+            &mut Mesh3d,
+        ),
+        With<VegetationMeshLOD>,
     >,
     mesh_lod_query: Query<&VegetationMeshLOD>,
 ) {
     lod_counter.frame += 1;
-    
-    let Ok(active_transform) = active_query.single() else { return };
+
+    let Ok(active_transform) = active_query.single() else {
+        return;
+    };
     let active_pos = active_transform.translation;
 
-    for (entity, mut veg_lod, transform, mut visibility, mut mesh_handle) in vegetation_query.iter_mut() {
+    for (entity, mut veg_lod, transform, mut visibility, mut mesh_handle) in
+        vegetation_query.iter_mut()
+    {
         // Use distance cache for efficient distance calculation
         let distance = get_cached_distance(
             entity,
@@ -60,21 +70,23 @@ pub fn vegetation_billboard_system(
     active_query: Query<&Transform, With<ActiveEntity>>,
     mut billboard_query: Query<
         (&mut Transform, &VegetationLOD, &VegetationBillboard),
-        (Without<ActiveEntity>, With<VegetationBillboard>)
+        (Without<ActiveEntity>, With<VegetationBillboard>),
     >,
 ) {
-    let Ok(active_transform) = active_query.single() else { return };
+    let Ok(active_transform) = active_query.single() else {
+        return;
+    };
     let camera_pos = active_transform.translation;
 
     for (mut transform, veg_lod, billboard) in billboard_query.iter_mut() {
         // Only update billboards for entities at billboard LOD level
         if matches!(veg_lod.detail_level, VegetationDetailLevel::Billboard) {
             let direction = (camera_pos - transform.translation).normalize();
-            
+
             // Create rotation to face camera (Y-axis billboard)
             let look_rotation = Quat::from_rotation_y(direction.x.atan2(direction.z));
             transform.rotation = look_rotation;
-            
+
             // Ensure billboard maintains correct size
             let distance_scale = (veg_lod.distance_to_player / 150.0).clamp(0.5, 1.0);
             transform.scale = billboard.original_scale * distance_scale;
@@ -92,7 +104,7 @@ pub fn vegetation_billboard_mesh_generator(
     // Generate a simple quad mesh for billboards
     let billboard_mesh = create_billboard_quad();
     let billboard_mesh_handle = meshes.add(billboard_mesh);
-    
+
     // Create a simple material for billboards using solid colors instead of textures
     let billboard_material = StandardMaterial {
         base_color: Color::srgb(0.2, 0.8, 0.3), // Green color for vegetation
@@ -101,7 +113,7 @@ pub fn vegetation_billboard_mesh_generator(
         ..default()
     };
     let billboard_material_handle = materials.add(billboard_material);
-    
+
     // Store these as resources for reuse
     commands.insert_resource(VegetationBillboardResources {
         mesh: billboard_mesh_handle,
@@ -126,7 +138,7 @@ pub fn adaptive_vegetation_lod_system(
 ) {
     let frame_time = time.delta_secs();
     let target_frame_time = 1.0 / 60.0; // 60 FPS target
-    
+
     // If performance is poor, reduce LOD distances to cull more aggressively
     let distance_multiplier = if frame_time > target_frame_time * 1.5 {
         0.8 // Reduce distances by 20%
@@ -135,7 +147,7 @@ pub fn adaptive_vegetation_lod_system(
     } else {
         1.0 // No change
     };
-    
+
     if distance_multiplier != 1.0 {
         for mut veg_lod in vegetation_query.iter_mut() {
             let adjusted_distance = veg_lod.distance_to_player * distance_multiplier;
@@ -153,7 +165,7 @@ pub fn vegetation_lod_performance_monitor(
     let mut medium_count = 0;
     let mut billboard_count = 0;
     let mut culled_count = 0;
-    
+
     for veg_lod in vegetation_query.iter() {
         match veg_lod.detail_level {
             VegetationDetailLevel::Full => full_count += 1,
@@ -162,25 +174,26 @@ pub fn vegetation_lod_performance_monitor(
             VegetationDetailLevel::Culled => culled_count += 1,
         }
     }
-    
+
     // Update performance stats (assuming these fields exist)
     performance_stats.entity_count = full_count + medium_count + billboard_count;
     performance_stats.culled_entities = culled_count;
-    
+
     // EMERGENCY: Disable excessive logging to improve performance
     // Only log every 5 seconds to reduce spam
     use std::time::{Duration, Instant};
     thread_local! {
         static LAST_LOG: std::cell::Cell<Option<Instant>> = std::cell::Cell::new(None);
     }
-    
+
     if cfg!(feature = "debug-ui") {
         LAST_LOG.with(|last| {
             let now = Instant::now();
-            let should_log = last.get()
+            let should_log = last
+                .get()
                 .map(|last_time| now.duration_since(last_time) > Duration::from_secs(5))
                 .unwrap_or(true);
-                
+
             if should_log {
                 info!(
                     "Vegetation LOD: Full: {}, Medium: {}, Billboard: {}, Culled: {}",
@@ -209,12 +222,12 @@ pub fn vegetation_lod_batching_system(
             VegetationDetailLevel::Billboard => 2,
             VegetationDetailLevel::Culled => continue,
         };
-        
+
         // In a real implementation, you'd store the actual entity IDs
         // This is simplified for demonstration
         batches[batch_index].push(Entity::from_raw(entity as u32));
     }
-    
+
     // Process batches for efficient rendering
     // In a full implementation, you'd submit these as instanced draws
 }

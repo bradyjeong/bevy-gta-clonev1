@@ -1,12 +1,14 @@
+use crate::services::timing_service::{EntityTimerType, SystemType, TimingStats};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::Group;
-use crate::services::timing_service::{EntityTimerType, SystemType, TimingStats};
 
 /// Core service trait for all services
 #[allow(dead_code)]
 pub trait Service: Send + Sync + 'static {
     fn service_name(&self) -> &'static str;
-    fn is_ready(&self) -> bool { true }
+    fn is_ready(&self) -> bool {
+        true
+    }
 }
 
 /// Configuration service for centralized configuration management
@@ -18,10 +20,10 @@ pub trait ConfigService: Service {
     fn get_npc_config(&self) -> &crate::config::NPCConfig;
     fn get_performance_config(&self) -> &crate::config::PerformanceConfig;
     fn get_audio_config(&self) -> &crate::config::AudioConfig;
-    
+
     fn get_camera_config(&self) -> &crate::config::CameraConfig;
     fn get_ui_config(&self) -> &crate::config::UIConfig;
-    
+
     fn update_config(&mut self, config: crate::config::GameConfig);
     fn validate_and_clamp(&mut self);
 }
@@ -39,8 +41,6 @@ pub trait TimingService: Service {
     fn update_time(&mut self, time: &Time);
 }
 
-
-
 /// Physics service for physics world interface
 #[allow(dead_code)]
 pub trait PhysicsService: Service {
@@ -50,5 +50,3 @@ pub trait PhysicsService: Service {
     fn validate_collider_size(&self, size: Vec3) -> Vec3;
     fn get_collision_groups(&self) -> (Group, Group, Group); // static, vehicle, character
 }
-
-

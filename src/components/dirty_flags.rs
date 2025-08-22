@@ -6,7 +6,7 @@ pub struct DirtyLOD {
     pub frame_marked: u64,
 }
 
-#[derive(Component, Default)]  
+#[derive(Component, Default)]
 pub struct DirtyVisibility {
     pub priority: DirtyPriority,
     pub frame_marked: u64,

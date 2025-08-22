@@ -1,16 +1,16 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
+use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 /// Luxury color schemes for the Bugatti Chiron
 #[derive(Clone, Copy)]
 pub enum BugattiColorScheme {
-    MidnightBlue,     // Deep blue with subtle glow
-    PlatinumSilver,   // Bright metallic silver
-    CarbonBlack,      // Matte black with carbon fiber
-    ChampagneGold,    // Luxurious gold finish
-    RacingRed,        // Vibrant red with gloss
+    MidnightBlue,   // Deep blue with subtle glow
+    PlatinumSilver, // Bright metallic silver
+    CarbonBlack,    // Matte black with carbon fiber
+    ChampagneGold,  // Luxurious gold finish
+    RacingRed,      // Vibrant red with gloss
 }
 
 impl BugattiColorScheme {
@@ -70,12 +70,6 @@ impl BugattiColorScheme {
     }
 }
 
-
-
-
-
-
-
 /// Enhanced Bugatti Chiron with premium customization options
 pub fn setup_luxury_bugatti_chiron(
     mut commands: Commands,
@@ -85,18 +79,28 @@ pub fn setup_luxury_bugatti_chiron(
     position: Vec3,
 ) {
     // Create the luxury Bugatti entity
-    let bugatti_entity = commands.spawn((
-        Car,
-
-        RigidBody::Dynamic,
-        Collider::cuboid(1.1, 0.5, 2.4),
-        LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-        Velocity::zero(),
-        Transform::from_translation(position),
-        Damping { linear_damping: 1.0, angular_damping: 5.0 },
-        Cullable { max_distance: 1000.0, is_culled: false },
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP),
-    )).id();
+    let bugatti_entity = commands
+        .spawn((
+            Car,
+            RigidBody::Dynamic,
+            Collider::cuboid(1.1, 0.5, 2.4),
+            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+            Velocity::zero(),
+            Transform::from_translation(position),
+            Damping {
+                linear_damping: 1.0,
+                angular_damping: 5.0,
+            },
+            Cullable {
+                max_distance: 1000.0,
+                is_culled: false,
+            },
+            CollisionGroups::new(
+                VEHICLE_GROUP,
+                STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,
+            ),
+        ))
+        .id();
 
     // Main body with chosen luxury color scheme
     commands.spawn((
@@ -200,8 +204,7 @@ pub fn setup_luxury_bugatti_chiron(
             alpha_mode: AlphaMode::Blend,
             ..default()
         })),
-        Transform::from_xyz(0.0, 0.42, 0.9)
-            .with_rotation(Quat::from_rotation_x(-0.25)),
+        Transform::from_xyz(0.0, 0.42, 0.9).with_rotation(Quat::from_rotation_x(-0.25)),
         ChildOf(bugatti_entity),
     ));
 

@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
+use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct FpsText;

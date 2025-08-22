@@ -1,9 +1,9 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::services::distance_cache::MovementTracker;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
+use bevy::prelude::*;
 use bevy::render::view::VisibilityRange;
+use bevy_rapier3d::prelude::*;
 
 /// Bundle for entities that need to be visible and inherit visibility from parents
 #[derive(Bundle)]
@@ -182,7 +182,7 @@ pub struct StaticPhysicsBundle {
     pub collision_groups: CollisionGroups,
 }
 
-/// Bundle for unified chunk entities 
+/// Bundle for unified chunk entities
 #[derive(Bundle)]
 pub struct UnifiedChunkBundle {
     pub chunk_entity: UnifiedChunkEntity,

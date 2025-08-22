@@ -572,7 +572,7 @@ impl UnifiedPerformanceTracker {
         ));
 
         // Cache performance
-        report.push_str("\n🗄️ Cache Performance:\n");
+        report.push_str("\nCache Performance:\n");
         report.push_str(&format!(
             "   Distance Cache: {:.1}% hit rate\n",
             self.get_cache_hit_ratio("distance") * 100.0
@@ -597,13 +597,13 @@ impl UnifiedPerformanceTracker {
 
         // Active alerts
         if !self.alerts.is_empty() {
-            report.push_str("\n⚠️ Active Alerts:\n");
+            report.push_str("\nActive Alerts:\n");
             for alert in self.alerts.iter().rev().take(5) {
                 let severity_icon = match alert.severity {
-                    AlertSeverity::Info => "ℹ️",
-                    AlertSeverity::Warning => "⚠️",
-                    AlertSeverity::Critical => "🚨",
-                    AlertSeverity::Emergency => "🆘",
+                    AlertSeverity::Info => "INFO",
+                    AlertSeverity::Warning => "WARN",
+                    AlertSeverity::Critical => "CRIT",
+                    AlertSeverity::Emergency => "EMRG",
                 };
                 report.push_str(&format!(
                     "   {} {}: {}\n",

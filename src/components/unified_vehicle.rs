@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Unified vehicle specifications - merges duplicate data from SimpleF16Specs and VehicleState
 #[derive(Component, Clone, Serialize, Deserialize, Debug)]
@@ -9,17 +9,17 @@ pub struct UnifiedVehicleSpecs {
     pub max_thrust: f32,
     pub linear_damping: f32,
     pub angular_damping: f32,
-    
+
     // Performance (was duplicated between SimpleF16Specs and VehicleState)
     pub max_speed: f32,
     pub acceleration: f32,
-    
+
     // Flight-specific (only for aircraft)
     pub roll_rate_max: Option<f32>,
     pub pitch_rate_max: Option<f32>,
     pub yaw_rate_max: Option<f32>,
     pub min_altitude: Option<f32>,
-    
+
     // Visual properties
     pub color: Color,
 }
@@ -41,7 +41,7 @@ impl UnifiedVehicleSpecs {
             color: Color::srgb(0.35, 0.37, 0.40), // F-16 Falcon Gray
         }
     }
-    
+
     /// Create car specifications
     pub fn car() -> Self {
         Self {

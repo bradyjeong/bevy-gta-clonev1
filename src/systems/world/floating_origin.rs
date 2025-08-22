@@ -1,10 +1,10 @@
-use bevy::prelude::*;
 use crate::components::player::ActiveEntity;
+use bevy::prelude::*;
 
 /// Optional floating origin system for future scaling beyond 12km
 /// Automatically recenters world coordinates when player moves too far from origin
 /// This prevents floating-point precision loss in very large worlds
-/// 
+///
 /// Currently disabled since 12km finite world is well within f32 precision limits
 /// Enable this when expanding beyond 16km or for procedural infinite worlds
 
@@ -51,37 +51,43 @@ pub fn floating_origin_system(
     if !floating_origin.enabled {
         return;
     }
-    
-    let Ok(active_transform) = active_query.single() else { return };
+
+    let Ok(active_transform) = active_query.single() else {
+        return;
+    };
     let active_pos = active_transform.translation;
-    
+
     // Check if rebase is needed
     let distance_from_origin = active_pos.length();
     if distance_from_origin <= floating_origin.rebase_threshold {
         return;
     }
-    
+
     // Calculate offset to recenter world
     let rebase_offset = Vec3::new(active_pos.x, 0.0, active_pos.z); // Don't rebase Y axis
-    
-    info!("Floating origin rebase: offset={:?}, distance={:.1}m", 
-          rebase_offset, distance_from_origin);
-    
+
+    info!(
+        "Floating origin rebase: offset={:?}, distance={:.1}m",
+        rebase_offset, distance_from_origin
+    );
+
     // Shift all transforms back toward origin
     for mut transform in &mut all_transforms {
         transform.translation -= rebase_offset;
     }
-    
+
     // Shift physics world (Rapier context)
     // Note: This requires careful handling in Rapier 0.30+
     // For now, we log the operation - full implementation would need Rapier API research
     info!("Would shift Rapier physics context by {:?}", -rebase_offset);
-    
+
     // Update global offset for networking/save systems
     floating_origin.global_offset += rebase_offset;
-    
-    info!("Floating origin rebase completed. New global offset: {:?}", 
-          floating_origin.global_offset);
+
+    info!(
+        "Floating origin rebase completed. New global offset: {:?}",
+        floating_origin.global_offset
+    );
 }
 
 /// Plugin for floating origin system (optional - disabled by default)
@@ -107,8 +113,7 @@ impl FloatingOriginPlugin {
 
 impl Plugin for FloatingOriginPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(FloatingOrigin::new(self.threshold, self.enabled))
+        app.insert_resource(FloatingOrigin::new(self.threshold, self.enabled))
             .add_systems(PostUpdate, floating_origin_system);
     }
 }

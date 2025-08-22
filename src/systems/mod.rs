@@ -50,66 +50,70 @@
 //!
 //! Use `.in_set()` to control when your system runs relative to others.
 
-pub mod movement;
-pub mod world;
-pub mod interaction;
+pub mod audio;
 pub mod camera;
 pub mod effects;
-pub mod audio;
 pub mod human_behavior;
+pub mod interaction;
+pub mod movement;
+pub mod world;
 
 pub mod physics;
 pub mod setup;
 
-pub mod vehicles;
-pub mod ui;
-pub mod water;
 pub mod debug;
+pub mod ui;
+pub mod vehicles;
+pub mod water;
 // pub mod timing_service; // Moved to services/
-pub mod spawn_validation;
-pub mod safety;
 pub mod input;
 pub mod persistence;
+pub mod safety;
+pub mod spawn_validation;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
 // pub mod distance_cache; // Moved to services/
-pub mod unified_distance_calculator;
-pub mod transform_sync;
 pub mod distance_cache_debug;
+pub mod transform_sync;
+pub mod unified_distance_calculator;
 // pub mod batching; // Missing file
 // pub mod batching_test; // Missing file
 
-pub mod simple_service_example;
-pub mod rendering;
-pub mod vegetation_instancing_integration;
 pub mod player_collision_resolution;
+pub mod rendering;
+pub mod simple_service_example;
+pub mod vegetation_instancing_integration;
 
 pub mod parallel_physics;
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
-
-
 
 pub mod performance_monitor;
 // pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
 pub mod batching;
 // Explicit exports following simplicity guidelines - only export what's needed
 // Core systems that are commonly used across plugins
-pub use crate::services::{DistanceCache, get_cached_distance, get_cached_distance_squared, MovementTracker, DistanceCachePlugin};
-pub use crate::services::{TimingService, SystemType, EntityTimerType, ManagedTiming, TimingStats};
-pub use spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType, SpawnValidationPlugin};
-pub use safety::{validate_physics_config};
+pub use crate::services::{
+    DistanceCache, DistanceCachePlugin, MovementTracker, get_cached_distance,
+    get_cached_distance_squared,
+};
+pub use crate::services::{EntityTimerType, ManagedTiming, SystemType, TimingService, TimingStats};
 pub use batching::frame_counter_system;
-pub use performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory, UnifiedPerformancePlugin};
 pub use distance_cache_debug::DistanceCacheDebugPlugin;
+pub use performance_monitor::{
+    PerformanceCategory, UnifiedPerformancePlugin, UnifiedPerformanceTracker,
+};
+pub use safety::validate_physics_config;
+pub use spawn_validation::{SpawnRegistry, SpawnValidationPlugin, SpawnValidator, SpawnableType};
 pub use transform_sync::TransformSyncPlugin;
 pub use unified_distance_calculator::UnifiedDistanceCalculatorPlugin;
 
 // World systems (frequently used together)
 pub use world::{
-    unified_world::{UnifiedWorldManager, UnifiedChunkEntity, ContentLayer, ChunkCoord, ChunkState},
-    road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType},
     road_generation::is_on_road_spline,
-
+    road_network::{IntersectionType, RoadNetwork, RoadSpline, RoadType},
+    unified_world::{
+        ChunkCoord, ChunkState, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
+    },
 };
 
 // Asset-based input system types only
@@ -120,19 +124,17 @@ pub use physics::PhysicsUtilities;
 
 // Safe ActiveEntity system
 pub use safe_active_entity::{
-    ActiveTransferRequest, ActiveEntityTransferred, active_transfer_executor_system,
-    active_entity_integrity_check, queue_active_transfer
+    ActiveEntityTransferred, ActiveTransferRequest, active_entity_integrity_check,
+    active_transfer_executor_system, queue_active_transfer,
 };
 
 // Floating origin system - REMOVED: Finite world doesn't need coordinate translation
 
 // World boundary systems
-pub use world::{WorldBounds, world_boundary_system, aircraft_boundary_system};
-
+pub use world::{WorldBounds, aircraft_boundary_system, world_boundary_system};
 
 // Simple service examples
 pub use simple_service_example::{
-    service_example_vehicle_creation, service_example_config_validation, 
-    service_example_timing_check
+    service_example_config_validation, service_example_timing_check,
+    service_example_vehicle_creation,
 };
-

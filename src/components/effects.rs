@@ -2,10 +2,10 @@ use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct JetFlame {
-    pub intensity: f32,      // 0.0 to 1.0 based on throttle/afterburner
-    pub base_scale: f32,     // Base size of the flame
-    pub max_scale: f32,      // Maximum scale when afterburner active
-    pub flicker_speed: f32,  // Speed of flame animation
+    pub intensity: f32,       // 0.0 to 1.0 based on throttle/afterburner
+    pub base_scale: f32,      // Base size of the flame
+    pub max_scale: f32,       // Maximum scale when afterburner active
+    pub flicker_speed: f32,   // Speed of flame animation
     pub color_intensity: f32, // Color brightness
 }
 

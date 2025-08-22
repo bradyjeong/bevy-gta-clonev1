@@ -1,5 +1,5 @@
+use crate::components::{ActiveEntity, AircraftFlight, F16, JetFlame};
 use bevy::prelude::*;
-use crate::components::{F16, AircraftFlight, JetFlame, ActiveEntity};
 
 /// Combined jet flame system: handles both scale/visibility and color updates in one pass
 /// Uses parent-child relationships to avoid O(n²) iteration
@@ -15,10 +15,11 @@ pub fn update_jet_flames_unified(
         let base_intensity = flight.throttle;
         let afterburner_boost = if flight.afterburner_active { 0.8 } else { 0.0 };
         let flame_intensity = (base_intensity + afterburner_boost).clamp(0.0, 1.0);
-        
+
         // Process all flame children of this F-16
         for child in children.iter() {
-            if let Ok((mut flame_transform, mut visibility, jet_flame)) = flame_query.get_mut(child) {
+            if let Ok((mut flame_transform, mut visibility, jet_flame)) = flame_query.get_mut(child)
+            {
                 // Hide flames when throttle is very low
                 if flame_intensity < 0.1 {
                     *visibility = Visibility::Hidden;
@@ -29,15 +30,15 @@ pub fn update_jet_flames_unified(
 
                 // Calculate flame scale with flickering
                 let flicker = (time.elapsed_secs() * jet_flame.flicker_speed).sin() * 0.15 + 1.0;
-                let scale_factor = jet_flame.base_scale + 
-                    (jet_flame.max_scale - jet_flame.base_scale) * flame_intensity;
+                let scale_factor = jet_flame.base_scale
+                    + (jet_flame.max_scale - jet_flame.base_scale) * flame_intensity;
                 let final_scale = scale_factor * flicker;
 
                 // Apply scale - flames stretch more in Z axis when intense
                 flame_transform.scale = Vec3::new(
                     final_scale * 0.8,
-                    final_scale * 0.8, 
-                    final_scale * (1.0 + flame_intensity * 1.5)
+                    final_scale * 0.8,
+                    final_scale * (1.0 + flame_intensity * 1.5),
                 );
 
                 // Update color if flame has material
@@ -48,14 +49,14 @@ pub fn update_jet_flames_unified(
                             Color::srgb(
                                 0.8 + flame_intensity * 0.2,
                                 0.6 + flame_intensity * 0.4,
-                                1.0
+                                1.0,
                             )
                         } else {
                             // Orange-red flame for normal thrust
                             Color::srgb(
                                 1.0,
                                 0.3 + flame_intensity * 0.5,
-                                0.1 + flame_intensity * 0.2
+                                0.1 + flame_intensity * 0.2,
                             )
                         };
 
@@ -74,5 +75,3 @@ pub fn update_jet_flames_unified(
         }
     }
 }
-
-
