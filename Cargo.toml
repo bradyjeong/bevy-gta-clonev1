@@ -8,13 +8,19 @@ edition = "2024"
 doctest = false
 
 [features]
-default = []
+default = ["simple_render_culler"]
 debug-movement = []
 debug-audio = []
 debug-ui = []
 debug-timing = []
+profile-worldgen = []
+simple_render_culler = []
 
 # Removed gta_simple binary - using main.rs as default
+
+[[bench]]
+name = "world_generation"
+harness = false
 
 [dependencies]
 bevy = { version = "0.16.1", features = ["serialize", "shader_format_glsl"] }
