@@ -1,7 +1,8 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use std::fs;
 use std::collections::HashMap;
+use std::fs;
 
 use crate::components::*;
 use crate::game_state::GameState;
@@ -49,21 +50,32 @@ pub fn load_game_system(
     }
 
     // Clear existing entities
-    cleanup_existing_entities(&mut commands, &player_query, &car_query, &helicopter_query, &f16_query, &active_query);
+    cleanup_existing_entities(
+        &mut commands,
+        &player_query,
+        &car_query,
+        &helicopter_query,
+        &f16_query,
+        &active_query,
+    );
 
     // Clear entity mapping
     load_state.entity_mapping.clear();
-    
+
     // World offset no longer needed with finite world
-    
+
     // Load player
     let player_entity = spawn_player(&mut commands, &save_data.player);
-    load_state.entity_mapping.insert(save_data.player.entity_id, player_entity);
+    load_state
+        .entity_mapping
+        .insert(save_data.player.entity_id, player_entity);
 
     // Load vehicles
     for vehicle_data in &save_data.vehicles {
         let vehicle_entity = spawn_vehicle(&mut commands, vehicle_data);
-        load_state.entity_mapping.insert(vehicle_data.entity_id, vehicle_entity);
+        load_state
+            .entity_mapping
+            .insert(vehicle_data.entity_id, vehicle_entity);
     }
 
     // Set up ActiveEntity and relationships
@@ -85,17 +97,20 @@ pub fn load_game_system(
     }
 
     info!("Game loaded successfully!");
-    info!("Loaded state: {:?}, Active entity: {:?}", game_state, save_data.active_entity_id);
+    info!(
+        "Loaded state: {:?}, Active entity: {:?}",
+        game_state, save_data.active_entity_id
+    );
 }
 
 fn load_save_file() -> Result<SaveGameState, String> {
     let save_path = "saves/savegame.ron";
-    
-    let content = fs::read_to_string(save_path)
-        .map_err(|e| format!("Failed to read save file: {}", e))?;
-    
-    let save_data: SaveGameState = ron::from_str(&content)
-        .map_err(|e| format!("Failed to parse save file: {}", e))?;
+
+    let content =
+        fs::read_to_string(save_path).map_err(|e| format!("Failed to read save file: {e}"))?;
+
+    let save_data: SaveGameState =
+        ron::from_str(&content).map_err(|e| format!("Failed to parse save file: {e}"))?;
 
     Ok(save_data)
 }
@@ -135,7 +150,7 @@ fn spawn_player(commands: &mut Commands, player_data: &SerializablePlayer) -> En
 
     let transform: Transform = player_data.transform.clone().into();
     let velocity: Velocity = player_data.velocity.clone().into();
-    
+
     let mut entity_commands = commands.spawn((
         Player,
         transform,
@@ -181,10 +196,10 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
     ));
 
     match vehicle_data.vehicle_type {
-        VehicleType::BasicCar => {
+        VehicleType::SuperCar => {
             entity_commands.insert((
                 Car,
-                Collider::cuboid(2.0, 1.0, 4.5),
+                Collider::cuboid(0.76, 0.52, 1.88), // 0.8x visual mesh for GTA-style forgiving collision
                 ColliderMassProperties::Density(0.8),
             ));
         }
@@ -192,26 +207,31 @@ fn spawn_vehicle(commands: &mut Commands, vehicle_data: &SerializableVehicle) ->
         VehicleType::Helicopter => {
             entity_commands.insert((
                 Helicopter,
-                Collider::cuboid(2.0, 1.5, 8.0),
+                Collider::cuboid(1.2, 1.2, 4.8), // 0.8x visual mesh for GTA-style forgiving collision
                 ColliderMassProperties::Density(0.6),
             ));
         }
         VehicleType::F16 => {
-            let aircraft_flight_data: AircraftFlight = vehicle_data.aircraft_flight_data.as_ref()
+            let aircraft_flight_data: AircraftFlight = vehicle_data
+                .aircraft_flight_data
+                .as_ref()
                 .map(|af| af.clone().into())
                 .unwrap_or_default();
-            
+
             entity_commands.insert((
                 F16,
                 aircraft_flight_data,
-                Collider::cuboid(1.5, 1.0, 6.0),
+                Collider::cuboid(1.6, 1.0, 6.4), // 0.8x visual mesh (4x2.5x16) for better ground contact
                 ColliderMassProperties::Density(0.7),
             ));
         }
     }
 
     let entity = entity_commands.id();
-    info!("Vehicle entity spawned: {:?} -> {:?}", vehicle_data.vehicle_type, entity);
+    info!(
+        "Vehicle entity spawned: {:?} -> {:?}",
+        vehicle_data.vehicle_type, entity
+    );
     entity
 }
 
@@ -235,7 +255,9 @@ fn setup_active_entity_and_relationships(
     if let Some(vehicle_id) = save_data.player.in_vehicle {
         if let Some(&vehicle_entity) = entity_mapping.get(&vehicle_id) {
             // Set up parent-child relationship
-            commands.entity(player_entity).insert(ChildOf(vehicle_entity));
+            commands
+                .entity(player_entity)
+                .insert(ChildOf(vehicle_entity));
             commands.entity(player_entity).insert(InCar(vehicle_entity));
             info!("Player assigned to vehicle: {:?}", vehicle_entity);
         }
@@ -270,7 +292,10 @@ fn validate_post_load(
 
     for vehicle in &save_data.vehicles {
         if !entity_mapping.contains_key(&vehicle.entity_id) {
-            return Err(format!("Vehicle entity {} not found in mapping", vehicle.entity_id));
+            return Err(format!(
+                "Vehicle entity {} not found in mapping",
+                vehicle.entity_id
+            ));
         }
     }
 
@@ -298,5 +323,3 @@ fn validate_post_load(
     info!("Post-load validation completed successfully");
     Ok(())
 }
-
-

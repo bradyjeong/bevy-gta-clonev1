@@ -54,32 +54,30 @@
 //! 4. Add documentation for each field
 //! 5. Export from this mod.rs file
 
+pub mod effects;
+pub mod lod;
 pub mod player;
 pub mod vehicles;
-pub mod world;
-pub mod effects;
 pub mod water;
-pub mod lod;
+pub mod world;
 
-
-pub mod dirty_flags;
-pub mod instanced_vegetation;
 pub mod control_state;
+pub mod dirty_flags;
+pub mod entity_types;
+pub mod instanced_vegetation;
 pub mod safety;
 pub mod unified_vehicle;
-pub mod entity_types;
 
+pub use effects::*;
+pub use lod::*;
 pub use player::*;
 pub use vehicles::*;
-pub use world::*;
-pub use effects::*;
 pub use water::*;
-pub use lod::*;
+pub use world::*;
 
-
+pub use control_state::*;
 pub use dirty_flags::*;
 pub use instanced_vegetation::*;
-pub use control_state::*;
-pub use safety::*;
-pub use unified_vehicle::*;
+// pub use safety::*; // Disabled - conflicts with world::WorldBounds in finite world
 pub use entity_types::*;
+pub use unified_vehicle::*;

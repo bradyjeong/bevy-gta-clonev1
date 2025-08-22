@@ -25,21 +25,21 @@ impl MaterialFactory {
             alpha_mode: AlphaMode::Blend,
             ..default()
         });
-        
+
         let vehicle_wheel_template = materials.add(StandardMaterial {
             base_color: Color::srgb(0.1, 0.1, 0.1),
             metallic: 0.1,
             perceptual_roughness: 0.8,
             ..default()
         });
-        
+
         let road_asphalt_template = materials.add(StandardMaterial {
             base_color: Color::srgb(0.3, 0.3, 0.3),
             metallic: 0.0,
             perceptual_roughness: 0.9,
             ..default()
         });
-        
+
         let water_surface_template = materials.add(StandardMaterial {
             base_color: Color::srgba(0.0, 0.3, 0.8, 0.7),
             metallic: 0.0,
@@ -48,14 +48,14 @@ impl MaterialFactory {
             alpha_mode: AlphaMode::Blend,
             ..default()
         });
-        
+
         let building_concrete_template = materials.add(StandardMaterial {
             base_color: Color::srgb(0.6, 0.6, 0.6),
             metallic: 0.0,
             perceptual_roughness: 0.8,
             ..default()
         });
-        
+
         Self {
             vehicle_glass_template,
             vehicle_wheel_template,
@@ -64,27 +64,27 @@ impl MaterialFactory {
             building_concrete_template,
         }
     }
-    
+
     /// Get standard vehicle glass material
     pub fn get_vehicle_glass(&self) -> Handle<StandardMaterial> {
         self.vehicle_glass_template.clone()
     }
-    
+
     /// Get standard vehicle wheel material
     pub fn get_vehicle_wheel(&self) -> Handle<StandardMaterial> {
         self.vehicle_wheel_template.clone()
     }
-    
+
     /// Get road asphalt material
     pub fn get_road_asphalt(&self) -> Handle<StandardMaterial> {
         self.road_asphalt_template.clone()
     }
-    
+
     /// Get water surface material
     pub fn get_water_surface(&self) -> Handle<StandardMaterial> {
         self.water_surface_template.clone()
     }
-    
+
     /// Get building material with specified color
     pub fn get_building_material(&self) -> Handle<StandardMaterial> {
         self.building_concrete_template.clone()
@@ -107,7 +107,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create sky gradient material with specified color
     pub fn create_sky_gradient(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -121,7 +121,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create building material with specified color
     pub fn create_building_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -134,7 +134,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create wheel material (matches exact pattern from vehicle LOD system)
     pub fn create_wheel_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -146,7 +146,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create simple colored material (matches materials.add(color) pattern)
     pub fn create_simple_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -157,7 +157,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create aircraft material (matches F16 metallic pattern)
     pub fn create_aircraft_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -170,7 +170,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create F16 fuselage material (military gray with appropriate finish)
     pub fn create_f16_fuselage_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -183,7 +183,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create F16 canopy material (tinted glass)
     pub fn create_f16_canopy_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -192,12 +192,12 @@ impl MaterialFactory {
             base_color: Color::srgba(0.1, 0.3, 0.5, 0.3), // Blue-tinted glass
             metallic: 0.0,
             perceptual_roughness: 0.1, // Very smooth glass
-            reflectance: 0.9, // High reflectance for glass
+            reflectance: 0.9,          // High reflectance for glass
             alpha_mode: AlphaMode::Blend,
             ..default()
         })
     }
-    
+
     /// Create F16 engine nozzle material (heat-resistant steel)
     pub fn create_f16_engine_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -210,7 +210,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create F16 air intake material (dark interior)
     pub fn create_f16_intake_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -223,7 +223,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create low-detail material (high roughness for distant objects)
     pub fn create_low_detail_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -235,7 +235,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create sky dome material (unlit with inside culling)
     pub fn create_sky_dome_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -248,7 +248,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create celestial body material (moon/stars with emissive and alpha)
     pub fn create_celestial_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -263,7 +263,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create cloud material (unlit with alpha blending)
     pub fn create_cloud_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -276,7 +276,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create water bottom material (mud/sand with high roughness)
     pub fn create_water_bottom_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -289,7 +289,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create water surface material (reflective with alpha blending)
     pub fn create_water_surface_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -304,7 +304,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create metallic material with custom properties
     pub fn create_metallic_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -319,7 +319,7 @@ impl MaterialFactory {
             ..default()
         })
     }
-    
+
     /// Create vehicle glass material (tinted glass with alpha blending)
     pub fn create_vehicle_glass_material(
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -358,6 +358,6 @@ pub fn initialize_material_factory(
 ) {
     let factory = MaterialFactory::new(&mut materials);
     commands.insert_resource(factory);
-    
+
     println!("🏭 MATERIAL FACTORY: Initialized with template materials");
 }

@@ -1,7 +1,7 @@
+use crate::components::{AircraftFlight, F16, VehicleState};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use serde::{Serialize, Deserialize};
-use crate::components::{F16, AircraftFlight, VehicleState};
+use serde::{Deserialize, Serialize};
 
 /// Ultra-simplified F-16 persistence - minimal data only
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -64,34 +64,38 @@ impl From<&VehicleState> for SerializableAircraftVehicleState {
 
 /// Collect F-16 entities for saving
 pub fn collect_f16_data(
-    f16_query: Query<(Entity, &Transform, &Velocity, &VehicleState, &AircraftFlight), With<F16>>,
+    f16_query: Query<
+        (
+            Entity,
+            &Transform,
+            &Velocity,
+            &VehicleState,
+            &AircraftFlight,
+        ),
+        With<F16>,
+    >,
 ) -> Vec<SerializableF16> {
-    f16_query.iter().map(|(entity, transform, velocity, vehicle_state, aircraft_flight)| {
-        SerializableF16 {
-            entity_id: entity.index() as u64,
-            position: (
-                transform.translation.x,
-                transform.translation.y,
-                transform.translation.z,
-            ),
-            rotation: (
-                transform.rotation.x,
-                transform.rotation.y,
-                transform.rotation.z,
-                transform.rotation.w,
-            ),
-            velocity: (
-                velocity.linvel.x,
-                velocity.linvel.y,
-                velocity.linvel.z,
-            ),
-            angular_velocity: (
-                velocity.angvel.x,
-                velocity.angvel.y,
-                velocity.angvel.z,
-            ),
-            flight_data: aircraft_flight.into(),
-            vehicle_state: vehicle_state.into(),
-        }
-    }).collect()
+    f16_query
+        .iter()
+        .map(
+            |(entity, transform, velocity, vehicle_state, aircraft_flight)| SerializableF16 {
+                entity_id: entity.index() as u64,
+                position: (
+                    transform.translation.x,
+                    transform.translation.y,
+                    transform.translation.z,
+                ),
+                rotation: (
+                    transform.rotation.x,
+                    transform.rotation.y,
+                    transform.rotation.z,
+                    transform.rotation.w,
+                ),
+                velocity: (velocity.linvel.x, velocity.linvel.y, velocity.linvel.z),
+                angular_velocity: (velocity.angvel.x, velocity.angvel.y, velocity.angvel.z),
+                flight_data: aircraft_flight.into(),
+                vehicle_state: vehicle_state.into(),
+            },
+        )
+        .collect()
 }

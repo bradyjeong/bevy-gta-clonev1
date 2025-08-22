@@ -1,7 +1,7 @@
+use crate::services::distance_cache::DistanceCache;
+use crate::systems::performance_monitor::{PerformanceCategory, UnifiedPerformanceTracker};
 use bevy::prelude::*;
 use std::collections::HashMap;
-use crate::services::distance_cache::DistanceCache;
-use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
 
 /// Unified distance calculator that batches calculations and leverages caching
 #[derive(Resource)]
@@ -47,7 +47,13 @@ impl Default for UnifiedDistanceCalculator {
 
 impl UnifiedDistanceCalculator {
     /// Add a distance calculation request to the batch
-    pub fn request_distance(&mut self, entity1: Entity, entity2: Entity, pos1: Vec3, pos2: Vec3) -> u32 {
+    pub fn request_distance(
+        &mut self,
+        entity1: Entity,
+        entity2: Entity,
+        pos1: Vec3,
+        pos2: Vec3,
+    ) -> u32 {
         let callback_id = self.distance_requests.len() as u32;
         self.distance_requests.push(DistanceRequest {
             entity1,
@@ -60,14 +66,20 @@ impl UnifiedDistanceCalculator {
     }
 
     /// Get immediate distance (bypass batching for critical calculations)
-    pub fn get_immediate_distance(&mut self, entity1: Entity, entity2: Entity, pos1: Vec3, pos2: Vec3) -> f32 {
+    pub fn get_immediate_distance(
+        &mut self,
+        entity1: Entity,
+        entity2: Entity,
+        pos1: Vec3,
+        pos2: Vec3,
+    ) -> f32 {
         let key = Self::make_key(entity1, entity2);
-        
+
         // Check frame cache first
         if let Some(&distance) = self.frame_cache.get(&key) {
             return distance;
         }
-        
+
         // Calculate and cache
         let distance = pos1.distance(pos2);
         self.frame_cache.insert(key, distance);
@@ -77,9 +89,8 @@ impl UnifiedDistanceCalculator {
 
     /// Get distance to reference position (typically player position)
     pub fn get_distance_to_reference(&mut self, entity: Entity, pos: Vec3) -> Option<f32> {
-        self.reference_position.map(|ref_pos| {
-            self.get_immediate_distance(entity, Entity::PLACEHOLDER, pos, ref_pos)
-        })
+        self.reference_position
+            .map(|ref_pos| self.get_immediate_distance(entity, Entity::PLACEHOLDER, pos, ref_pos))
     }
 
     /// Set the reference position for efficient reference-based calculations
@@ -95,10 +106,11 @@ impl UnifiedDistanceCalculator {
     ) -> Vec<DistanceResult> {
         let start_time = std::time::Instant::now();
         let mut results = Vec::with_capacity(self.distance_requests.len());
-        
+
         // Sort requests by entity pairs to maximize cache efficiency
-        self.distance_requests.sort_by_key(|req| Self::make_key(req.entity1, req.entity2));
-        
+        self.distance_requests
+            .sort_by_key(|req| Self::make_key(req.entity1, req.entity2));
+
         // Process requests directly without intermediate batching to avoid borrowing issues
         for request in self.distance_requests.drain(..) {
             let distance = distance_cache.get_distance(
@@ -108,26 +120,24 @@ impl UnifiedDistanceCalculator {
                 request.pos2,
             );
             let distance_squared = distance * distance;
-            
+
             results.push(DistanceResult {
                 distance,
                 distance_squared,
             });
         }
-        
+
         self.batch_count += 1;
-        
+
         // Update performance metrics
         let processing_time = start_time.elapsed().as_micros() as f32 / 1000.0;
         performance_tracker.record_category_time(PerformanceCategory::System, processing_time);
-        
+
         // Clear frame cache for next frame
         self.frame_cache.clear();
-        
+
         results
     }
-
-
 
     /// Create a consistent cache key for entity pairs
     fn make_key(entity1: Entity, entity2: Entity) -> (Entity, Entity) {
@@ -176,7 +186,7 @@ pub fn unified_distance_processing_system(
 /// Utility functions for easy distance calculations
 pub mod distance_utils {
     use super::*;
-    
+
     /// Calculate distance immediately (for critical path)
     pub fn calculate_distance_immediate(
         calculator: &mut ResMut<UnifiedDistanceCalculator>,
@@ -187,7 +197,7 @@ pub mod distance_utils {
     ) -> f32 {
         calculator.get_immediate_distance(entity1, entity2, pos1, pos2)
     }
-    
+
     /// Calculate distance to player/reference position
     pub fn calculate_distance_to_reference(
         calculator: &mut ResMut<UnifiedDistanceCalculator>,
@@ -196,13 +206,14 @@ pub mod distance_utils {
     ) -> Option<f32> {
         calculator.get_distance_to_reference(entity, pos)
     }
-    
+
     /// Batch multiple distance calculations for efficiency
     pub fn batch_distance_calculations(
         calculator: &mut ResMut<UnifiedDistanceCalculator>,
         requests: &[(Entity, Entity, Vec3, Vec3)],
     ) -> Vec<u32> {
-        requests.iter()
+        requests
+            .iter()
             .map(|(e1, e2, p1, p2)| calculator.request_distance(*e1, *e2, *p1, *p2))
             .collect()
     }
@@ -216,7 +227,8 @@ impl Plugin for UnifiedDistanceCalculatorPlugin {
         app.insert_resource(UnifiedDistanceCalculator::default())
             .add_systems(
                 Update,
-                unified_distance_processing_system.before(crate::services::distance_cache::distance_cache_management_system)
+                unified_distance_processing_system
+                    .before(crate::services::distance_cache::distance_cache_management_system),
             );
     }
 }

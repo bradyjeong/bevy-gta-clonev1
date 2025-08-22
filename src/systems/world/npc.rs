@@ -1,8 +1,9 @@
+use crate::components::{ActiveEntity, NPC};
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;
-use crate::components::{NPC, Cullable, ActiveEntity};
 
 thread_local! {
     static NPC_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
@@ -11,37 +12,34 @@ thread_local! {
 /// Simple NPC movement that follows direct AI patterns
 pub fn simple_npc_movement(
     time: Res<Time>,
-    mut npc_query: Query<(Entity, &mut Transform, &mut Velocity, &mut NPC, &Cullable)>,
+    mut npc_query: Query<(Entity, &mut Transform, &mut Velocity, &mut NPC), With<VisibilityRange>>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
     let current_time = time.elapsed_secs();
-    
+
     // Get player position for distance-based optimization
     let player_pos = if let Ok(active_transform) = active_query.single() {
         active_transform.translation
     } else {
         Vec3::ZERO
     };
-    
-    for (_entity, mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
-        // Skip if culled
-        if cullable.is_culled {
-            velocity.linvel = Vec3::ZERO;
-            continue;
-        }
-        
+
+    for (_entity, mut transform, mut velocity, mut npc) in npc_query.iter_mut() {
+        // Note: With VisibilityRange, Bevy handles culling automatically
+        // NPCs continue to update their AI even when not visible
+
         // Only update NPCs at their specific intervals (staggered updates)
         if current_time - npc.last_update < npc.update_interval {
             continue;
         }
         npc.last_update = current_time;
-        
+
         let current_pos = transform.translation;
         let target_pos = npc.target_position;
-        
+
         // Calculate distance to target
         let distance = current_pos.distance(target_pos);
-        
+
         // Reduce update frequency for distant NPCs
         let distance_to_player = current_pos.distance(player_pos);
         if distance_to_player > 100.0 {
@@ -51,7 +49,7 @@ pub fn simple_npc_movement(
         } else {
             npc.update_interval = 0.05; // Normal updates for close NPCs
         }
-        
+
         // If close to target, pick a new random target
         if distance < 5.0 {
             npc.target_position = Vec3::new(
@@ -67,7 +65,7 @@ pub fn simple_npc_movement(
                 velocity.linvel.y, // Preserve gravity
                 direction.z * npc.speed,
             );
-            
+
             // Face movement direction
             if direction.length() > 0.1 {
                 let rotation = Quat::from_rotation_y((-direction.x).atan2(-direction.z));
@@ -80,37 +78,33 @@ pub fn simple_npc_movement(
 /// Legacy NPC movement system - kept for backwards compatibility
 pub fn optimized_npc_movement(
     time: Res<Time>,
-    mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC, &Cullable)>,
+    mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC), With<VisibilityRange>>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
     let current_time = time.elapsed_secs();
-    
+
     // Get player position for distance-based optimization
     let player_pos = if let Ok(active_transform) = active_query.single() {
         active_transform.translation
     } else {
         Vec3::ZERO
     };
-    
-    for (mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
-        // Skip if culled
-        if cullable.is_culled {
-            velocity.linvel = Vec3::ZERO;
-            continue;
-        }
-        
+
+    for (mut transform, mut velocity, mut npc) in npc_query.iter_mut() {
+        // Note: With VisibilityRange, Bevy handles culling automatically
+
         // Only update NPCs at their specific intervals (staggered updates)
         if current_time - npc.last_update < npc.update_interval {
             continue;
         }
         npc.last_update = current_time;
-        
+
         let current_pos = transform.translation;
         let target_pos = npc.target_position;
-        
+
         // Calculate distance to target
         let distance = current_pos.distance(target_pos);
-        
+
         // Reduce update frequency for distant NPCs
         let distance_to_player = current_pos.distance(player_pos);
         if distance_to_player > 100.0 {
@@ -120,7 +114,7 @@ pub fn optimized_npc_movement(
         } else {
             npc.update_interval = 0.05; // Normal updates for close NPCs
         }
-        
+
         // If close to target, pick a new random target
         if distance < 5.0 {
             npc.target_position = Vec3::new(
@@ -136,7 +130,7 @@ pub fn optimized_npc_movement(
                 velocity.linvel.y, // Preserve gravity
                 direction.z * npc.speed,
             );
-            
+
             // Face movement direction
             if direction.length() > 0.1 {
                 let rotation = Quat::from_rotation_y((-direction.x).atan2(-direction.z));

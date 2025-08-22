@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Instanced vegetation components for GPU batching
 /// Reduces thousands of individual vegetation entities to instanced draws
-
+///
 /// Instance data for vegetation rendering
 #[derive(Component, Debug, Clone)]
 pub struct InstanceData {

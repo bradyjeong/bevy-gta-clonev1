@@ -1,8 +1,8 @@
+use crate::config::GameConfig;
+use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
+use crate::util::safe_math::{Vec3SafeExt, validate_transform, validate_velocity};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::config::GameConfig;
-use crate::constants::{STATIC_GROUP, VEHICLE_GROUP, CHARACTER_GROUP};
-use crate::util::safe_math::{validate_velocity, validate_transform, Vec3SafeExt};
 
 /// Essential physics utilities for movement systems
 #[derive(Default)]
@@ -15,39 +15,41 @@ impl PhysicsUtilities {
         if validate_velocity(velocity) {
             warn!("Detected and fixed corrupted velocity");
         }
-        
+
         // Apply game-specific limits using safe clamp extension
         velocity.linvel = Vec3SafeExt::clamp_length(velocity.linvel, config.physics.max_velocity);
-        velocity.angvel = Vec3SafeExt::clamp_length(velocity.angvel, config.physics.max_angular_velocity);
+        velocity.angvel =
+            Vec3SafeExt::clamp_length(velocity.angvel, config.physics.max_angular_velocity);
     }
-    
 
-    
     /// Unified stable delta-time for all vehicle systems
     /// Prevents physics instability from frame rate spikes
     pub fn stable_dt(time: &Time) -> f32 {
         time.delta_secs().clamp(0.001, 0.05)
     }
-    
+
     /// Emergency failsafe for extreme coordinate corruption (>100km)
     /// Only logs and disables entities - no more invisible walls
     pub fn emergency_coordinate_failsafe(
         transform: &mut Transform,
         entity: Entity,
-        commands: &mut Commands
+        commands: &mut Commands,
     ) -> bool {
         const EMERGENCY_THRESHOLD: f32 = 100_000.0; // 100km - truly extreme
-        
+
         let distance = transform.translation.length();
         if distance > EMERGENCY_THRESHOLD {
-            error!("Entity {:?} at extreme distance {:.1}km - disabling for safety", 
-                   entity, distance / 1000.0);
-            
+            error!(
+                "Entity {:?} at extreme distance {:.1}km - disabling for safety",
+                entity,
+                distance / 1000.0
+            );
+
             // Disable the entity instead of teleporting it
             commands.entity(entity).insert(RigidBodyDisabled);
             return true; // Indicates emergency action taken
         }
-        
+
         false // No emergency action needed
     }
 }
@@ -60,12 +62,15 @@ impl CollisionGroupHelper {
     pub fn static_groups() -> CollisionGroups {
         CollisionGroups::new(STATIC_GROUP, Group::ALL)
     }
-    
+
     /// Get collision groups for vehicles (cars, aircraft)
     pub fn vehicle_groups() -> CollisionGroups {
-        CollisionGroups::new(VEHICLE_GROUP, STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP)
+        CollisionGroups::new(
+            VEHICLE_GROUP,
+            STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,
+        )
     }
-    
+
     /// Get collision groups for characters (player, NPCs)
     pub fn character_groups() -> CollisionGroups {
         CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP)
@@ -83,14 +88,14 @@ pub fn apply_universal_physics_safeguards(
         // Use safe math utilities for comprehensive validation
         let velocity_corrupt = validate_velocity(&mut velocity);
         let transform_corrupt = validate_transform(&mut transform);
-        
+
         if velocity_corrupt || transform_corrupt {
             warn!("Entity {:?} had corrupted physics data, fixed", entity);
         }
-        
+
         // Emergency failsafe only - no hard boundaries anymore
         PhysicsUtilities::emergency_coordinate_failsafe(&mut transform, entity, &mut commands);
-        
+
         // Clamp velocity to prevent physics explosions (but allow free movement)
         PhysicsUtilities::clamp_velocity(&mut velocity, &config);
     }

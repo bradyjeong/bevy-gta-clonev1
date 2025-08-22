@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::factories::MeshFactory;
+use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 /// Factory for creating NPC entities with simplified, clear interface
 pub struct NPCFactory;
@@ -14,11 +14,13 @@ impl NPCFactory {
         position: Vec3,
         npc_type: NPCType,
     ) -> Entity {
-        let entity = commands.spawn((
-            Name::new("NPC"),
-            Transform::from_translation(position),
-            Visibility::default(),
-        )).id();
+        let entity = commands
+            .spawn((
+                Name::new("NPC"),
+                Transform::from_translation(position),
+                Visibility::default(),
+            ))
+            .id();
 
         // Add NPC-specific components
         commands.entity(entity).insert((

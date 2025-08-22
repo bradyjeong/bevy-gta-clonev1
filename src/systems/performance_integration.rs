@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use crate::systems::performance_monitor::{UnifiedPerformanceTracker, PerformanceCategory};
 use crate::components::{PerformanceStats, DirtyFlagsMetrics};
 // Removed: use crate::systems::input::ControlManager;
@@ -91,24 +92,25 @@ pub fn monitor_vehicle_physics_performance(
     }
 }
 
-/// System to monitor culling performance
+/// System to monitor visibility range performance (deprecated - Bevy handles culling automatically)
 pub fn monitor_culling_performance(
     mut tracker: ResMut<UnifiedPerformanceTracker>,
-    cullable_query: Query<Entity, With<crate::components::Cullable>>,
+    visibility_range_query: Query<Entity, With<VisibilityRange>>,
 ) {
     let start = std::time::Instant::now();
     
-    let cullable_count = cullable_query.iter().count();
-    let visible_count = cullable_query.iter()
-        .filter(|_| true) // This would check actual visibility
-        .count();
+    let visibility_range_count = visibility_range_query.iter().count();
+    // Note: Bevy now handles visibility culling automatically via VisibilityRange
+    // Manual culling detection is no longer needed
+    let visible_count = visibility_range_count; // All entities are managed by Bevy's system
     
     let elapsed_ms = start.elapsed().as_secs_f32() * 1000.0;
     
     tracker.record_category_time(PerformanceCategory::Culling, elapsed_ms);
-    tracker.record_system_time("culling_query", elapsed_ms);
+    tracker.record_system_time("visibility_range_query", elapsed_ms);
     
-    tracker.update_entity_counts(cullable_count, visible_count, cullable_count - visible_count);
+    // Note: Culling is now handled automatically by Bevy, so culled count is deprecated
+    tracker.update_entity_counts(visibility_range_count, visible_count, 0);
 }
 
 /// System to monitor audio performance

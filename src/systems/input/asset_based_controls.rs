@@ -1,10 +1,10 @@
+use crate::components::{ControlState, VehicleControlType};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::components::{ControlState, VehicleControlType};
 
 /// Asset-based control configuration system
-/// 
+///
 /// This system loads control mappings from RON files instead of hardcoding them.
 /// Benefits:
 /// - No code changes needed for new vehicles or control schemes
@@ -19,7 +19,7 @@ pub enum AssetControlAction {
     Backward,
     TurnLeft,
     TurnRight,
-    
+
     // Flight actions
     PitchUp,
     PitchDown,
@@ -29,17 +29,17 @@ pub enum AssetControlAction {
     RollRight,
     YawLeft,
     YawRight,
-    
+
     // Vertical actions
     VerticalUp,
     VerticalDown,
-    
+
     // Power actions
     ThrottleUp,
     ThrottleDown,
     Turbo,
     Afterburner,
-    
+
     // Meta actions
     Run,
     Interact,
@@ -77,15 +77,17 @@ impl VehicleControls {
         bindings.extend(&self.meta_controls);
         bindings
     }
-    
+
     /// Get key for a specific action
     pub fn get_key_for_action(&self, action: &AssetControlAction) -> Option<KeyCode> {
         self.get_all_bindings()
             .iter()
-            .find(|binding| std::mem::discriminant(&binding.action) == std::mem::discriminant(action))
+            .find(|binding| {
+                std::mem::discriminant(&binding.action) == std::mem::discriminant(action)
+            })
             .map(|binding| binding.key)
     }
-    
+
     /// Check if an action is bound for this vehicle
     pub fn has_action(&self, action: &AssetControlAction) -> bool {
         self.get_key_for_action(action).is_some()
@@ -109,7 +111,8 @@ pub fn load_vehicle_controls_system(
 ) {
     if loaded_controls.config.is_none() && !loaded_controls.loading {
         info!("Loading vehicle controls from assets/config/vehicle_controls.ron");
-        let handle: Handle<VehicleControlsConfig> = asset_server.load("config/vehicle_controls.ron");
+        let handle: Handle<VehicleControlsConfig> =
+            asset_server.load("config/vehicle_controls.ron");
         commands.insert_resource(VehicleControlsHandle(handle));
         loaded_controls.loading = true;
     }
@@ -133,44 +136,46 @@ pub fn process_loaded_controls_system(
 }
 
 /// Asset-based input mapping system
-/// 
+///
 /// This system uses loaded control configurations instead of hardcoded mappings
 /// Only processes entities with ActiveEntity to prevent state conflicts
 pub fn asset_based_input_mapping_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     loaded_controls: Res<LoadedVehicleControls>,
-    mut query: Query<(&mut ControlState, &VehicleControlType), With<crate::components::ActiveEntity>>,
+    mut query: Query<
+        (&mut ControlState, &VehicleControlType),
+        With<crate::components::ActiveEntity>,
+    >,
 ) {
     // Always reset control state each frame, even if assets aren't loaded yet
     for (mut control_state, _vehicle_type) in query.iter_mut() {
         control_state.reset();
     }
-    
+
     // Skip input mapping if controls haven't loaded yet
     let Some(ref config) = loaded_controls.config else {
         return;
     };
-    
+
     for (mut control_state, vehicle_type) in query.iter_mut() {
-        
         // Get vehicle controls from loaded config
         let Some(vehicle_controls) = config.vehicle_types.get(vehicle_type) else {
             warn!("No controls found for vehicle type: {:?}", vehicle_type);
             continue;
         };
-        
+
         // Map input based on loaded configuration
         for binding in vehicle_controls.get_all_bindings() {
             if keyboard_input.pressed(binding.key) {
                 apply_control_action(&binding.action, &mut control_state);
             }
-            
+
             // Handle just_pressed actions
             if keyboard_input.just_pressed(binding.key) {
                 apply_control_action_once(&binding.action, &mut control_state);
             }
         }
-        
+
         // Always validate inputs for safety
         control_state.validate_and_clamp();
     }
@@ -181,25 +186,27 @@ fn apply_control_action(action: &AssetControlAction, control_state: &mut Control
     match action {
         AssetControlAction::Forward => control_state.throttle = 1.0,
         AssetControlAction::Backward => control_state.brake = 1.0,
-        AssetControlAction::TurnLeft => control_state.steering = 1.0,  // Turn left = positive rotation
+        AssetControlAction::TurnLeft => control_state.steering = 1.0, // Turn left = positive rotation
         AssetControlAction::TurnRight => control_state.steering = -1.0, // Turn right = negative rotation
-        
+
         AssetControlAction::PitchUp | AssetControlAction::PitchForward => control_state.pitch = 1.0,
-        AssetControlAction::PitchDown | AssetControlAction::PitchBackward => control_state.pitch = -1.0,
+        AssetControlAction::PitchDown | AssetControlAction::PitchBackward => {
+            control_state.pitch = -1.0
+        }
         AssetControlAction::RollLeft => control_state.roll = -1.0,
         AssetControlAction::RollRight => control_state.roll = 1.0,
-        AssetControlAction::YawLeft => control_state.yaw = -1.0,  // Yaw left = negative rotation (follows control_state.rs docs)
-        AssetControlAction::YawRight => control_state.yaw = 1.0,  // Yaw right = positive rotation
-        
+        AssetControlAction::YawLeft => control_state.yaw = -1.0, // Yaw left = negative rotation (follows control_state.rs docs)
+        AssetControlAction::YawRight => control_state.yaw = 1.0, // Yaw right = positive rotation
+
         AssetControlAction::VerticalUp => control_state.vertical = 1.0,
         AssetControlAction::VerticalDown => control_state.vertical = -1.0,
-        
+
         AssetControlAction::ThrottleUp => control_state.throttle = 1.0,
         AssetControlAction::ThrottleDown => control_state.brake = 1.0,
         AssetControlAction::Turbo | AssetControlAction::Afterburner => control_state.boost = 1.0,
-        
+
         AssetControlAction::Run => control_state.run = true,
-        
+
         // Meta actions are handled in apply_control_action_once
         _ => {}
     }
@@ -222,11 +229,11 @@ pub fn get_vehicle_control_help(
 ) -> Option<String> {
     let config = loaded_controls.config.as_ref()?;
     let vehicle_controls = config.vehicle_types.get(vehicle_type)?;
-    
+
     let mut help_text = Vec::new();
     help_text.push(format!("{} CONTROLS", vehicle_controls.name.to_uppercase()));
     help_text.push(format!("{}\n", vehicle_controls.description));
-    
+
     if !vehicle_controls.primary_controls.is_empty() {
         help_text.push("PRIMARY CONTROLS:".to_string());
         for binding in &vehicle_controls.primary_controls {
@@ -234,7 +241,7 @@ pub fn get_vehicle_control_help(
         }
         help_text.push("".to_string());
     }
-    
+
     if !vehicle_controls.secondary_controls.is_empty() {
         help_text.push("SECONDARY CONTROLS:".to_string());
         for binding in &vehicle_controls.secondary_controls {
@@ -242,14 +249,14 @@ pub fn get_vehicle_control_help(
         }
         help_text.push("".to_string());
     }
-    
+
     if !vehicle_controls.meta_controls.is_empty() {
         help_text.push("META CONTROLS:".to_string());
         for binding in &vehicle_controls.meta_controls {
             help_text.push(format!("  {:?}: {}", binding.key, binding.description));
         }
     }
-    
+
     Some(help_text.join("\n"))
 }
 
@@ -261,11 +268,15 @@ pub fn debug_loaded_controls_system(
     if !keyboard_input.just_pressed(KeyCode::F3) {
         return;
     }
-    
+
     if let Some(ref config) = loaded_controls.config {
         info!("=== LOADED VEHICLE CONTROLS ===");
         for (vehicle_type, controls) in &config.vehicle_types {
-            info!("{:?}: {} controls", vehicle_type, controls.get_all_bindings().len());
+            info!(
+                "{:?}: {} controls",
+                vehicle_type,
+                controls.get_all_bindings().len()
+            );
         }
     } else {
         info!("Vehicle controls not yet loaded");
@@ -275,39 +286,43 @@ pub fn debug_loaded_controls_system(
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_control_action_application() {
         let mut control_state = ControlState::default();
-        
+
         apply_control_action(&AssetControlAction::Forward, &mut control_state);
         assert_eq!(control_state.throttle, 1.0);
-        
+
         apply_control_action(&AssetControlAction::TurnLeft, &mut control_state);
         assert_eq!(control_state.steering, 1.0); // TurnLeft now maps to positive rotation
-        
+
         apply_control_action_once(&AssetControlAction::Interact, &mut control_state);
         assert!(control_state.interact);
     }
-    
+
     #[test]
     fn test_vehicle_controls_lookup() {
         let controls = VehicleControls {
             name: "Test".to_string(),
             description: "Test vehicle".to_string(),
-            primary_controls: vec![
-                AssetControlBinding {
-                    action: AssetControlAction::Forward,
-                    key: KeyCode::ArrowUp,
-                    description: "Move forward".to_string(),
-                }
-            ],
+            primary_controls: vec![AssetControlBinding {
+                action: AssetControlAction::Forward,
+                key: KeyCode::ArrowUp,
+                description: "Move forward".to_string(),
+            }],
             secondary_controls: vec![],
             meta_controls: vec![],
         };
-        
-        assert_eq!(controls.get_key_for_action(&AssetControlAction::Forward), Some(KeyCode::ArrowUp));
-        assert_eq!(controls.get_key_for_action(&AssetControlAction::Backward), None);
+
+        assert_eq!(
+            controls.get_key_for_action(&AssetControlAction::Forward),
+            Some(KeyCode::ArrowUp)
+        );
+        assert_eq!(
+            controls.get_key_for_action(&AssetControlAction::Backward),
+            None
+        );
         assert!(controls.has_action(&AssetControlAction::Forward));
         assert!(!controls.has_action(&AssetControlAction::Backward));
     }

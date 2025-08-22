@@ -1,28 +1,45 @@
-use bevy::prelude::*;
+use crate::config::GameConfig;
+use crate::resources::MaterialRegistry;
 use crate::systems::world::{
-    UnifiedWorldManager,
-    unified_world_streaming_system,
-    layered_generation_coordinator,
+    UnifiedWorldManager, layered_generation_coordinator, unified_world_streaming_system,
 };
+use bevy::prelude::*;
 
 /// Plugin responsible for world streaming and chunk management
 pub struct WorldStreamingPlugin;
 
 impl Plugin for WorldStreamingPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_resource::<UnifiedWorldManager>()
-            .add_systems(Startup, initialize_streaming_world)
-            .add_systems(Update, (
+        app.add_systems(
+            Startup,
+            (initialize_streaming_world, initialize_material_registry).chain(),
+        )
+        .add_systems(
+            Update,
+            (
                 unified_world_streaming_system,
                 layered_generation_coordinator,
-            ).chain());
+            )
+                .chain(),
+        );
     }
 }
 
-fn initialize_streaming_world(mut world_manager: ResMut<UnifiedWorldManager>) {
-    world_manager.chunks.clear();
-    world_manager.placement_grid.clear();
-    world_manager.road_network.reset();
-    println!("DEBUG: World streaming initialized!");
+fn initialize_streaming_world(mut commands: Commands, config: Res<GameConfig>) {
+    // Initialize UnifiedWorldManager with finite world configuration
+    let world_manager = UnifiedWorldManager::from_config(&config);
+    commands.insert_resource(world_manager);
+
+    println!(
+        "DEBUG: World streaming initialized with finite world ({}x{} chunks)!",
+        config.world.total_chunks_x, config.world.total_chunks_z
+    );
+}
+
+fn initialize_material_registry(mut commands: Commands) {
+    // Initialize MaterialRegistry for performance optimization
+    let material_registry = MaterialRegistry::new();
+    commands.insert_resource(material_registry);
+
+    println!("🏭 MATERIAL REGISTRY: Initialized for cached material reuse");
 }

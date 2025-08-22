@@ -2,7 +2,7 @@
 // All tuning constants data-driven (eliminates magic numbers from code)
 SimpleF16Config(
     // Core aircraft specs
-    max_forward_speed: 200.0, // Max forward velocity (m/s)
+    max_forward_speed: 600.0, // Max forward velocity (m/s) - Mach 2
     roll_rate_max: 6.3,      // rad/s
     pitch_rate_max: 3.5,     // rad/s  
     yaw_rate_max: 1.05,      // rad/s
@@ -17,6 +17,9 @@ SimpleF16Config(
     
     // Lift assistance (orientation-aware)
     lift_per_throttle: 3.0,  // Upward force per throttle unit
+    
+    // Gliding physics (engine off)
+    drag_factor: 0.995, // Momentum decay per second (aircraft glide well)
     
     // (Removed unused fields: min_altitude, emergency_pullup_force)
     

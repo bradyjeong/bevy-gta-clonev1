@@ -1,3 +1,1 @@
-pub mod lod_manager;
-
-pub use lod_manager::*;
+// LOD functionality moved to Bevy's VisibilityRange + simulation_lod.rs

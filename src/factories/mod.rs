@@ -17,7 +17,7 @@
 //! - `entity_limits`: Focused entity count management and FIFO cleanup
 //! - `position_validator`: Spawn position validation and ground height detection
 //! - `collision_detector`: Entity collision detection for spawning
-//! 
+//!
 //!
 //! ### Specialized Factories
 //! - `material_factory`: Material and texture creation
@@ -66,40 +66,40 @@ pub mod entity_factory_unified;
 
 // Focused factory modules (following AGENT.md simplicity principles)
 // pub mod entity_limits; // Moved to services/
-pub mod position_validator;
 pub mod collision_detector;
+pub mod position_validator;
 
 // Domain-specific factories (following simplicity guidelines)
 pub mod building_factory;
 
+pub mod entity_limit;
 pub mod npc_factory;
 pub mod tree_factory;
-pub mod entity_limit;
 
 // Specialized factories
+pub mod generic_bundle;
 pub mod material_factory;
 pub mod mesh_factory;
-pub mod transform_factory;
-pub mod generic_bundle;
 pub mod rendering_factory;
+pub mod transform_factory;
 
-// Public API - unified factory system  
+// Public API - unified factory system
 pub use entity_factory_unified::*;
 
 // Focused module exports (AGENT.md compliant architecture)
-pub use position_validator::*;
 pub use collision_detector::*;
+pub use position_validator::*;
 
 // Domain-specific factory exports
 pub use building_factory::*;
 
+pub use entity_limit::{EntityLimit, EntityLimitManager, EntityType};
 pub use npc_factory::*;
-pub use tree_factory::*;
-pub use entity_limit::{EntityLimitManager, EntityType, EntityLimit}; // Avoid conflict with unified factory
+pub use tree_factory::*; // Avoid conflict with unified factory
 
 // Specialized factory exports
+pub use generic_bundle::*;
 pub use material_factory::*;
 pub use mesh_factory::*;
-pub use transform_factory::*;
-pub use generic_bundle::*;
 pub use rendering_factory::*;
+pub use transform_factory::*;

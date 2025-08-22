@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use crate::components::*;
 use crate::factories::MeshFactory;
+use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 /// Factory for creating tree/vegetation entities with simplified, clear interface
 pub struct TreeFactory;
@@ -14,11 +14,13 @@ impl TreeFactory {
         position: Vec3,
         tree_type: VegetationType,
     ) -> Entity {
-        let entity = commands.spawn((
-            Name::new("Tree"),
-            Transform::from_translation(position),
-            Visibility::default(),
-        )).id();
+        let entity = commands
+            .spawn((
+                Name::new("Tree"),
+                Transform::from_translation(position),
+                Visibility::default(),
+            ))
+            .id();
 
         // Add tree-specific components
         commands.entity(entity).insert((

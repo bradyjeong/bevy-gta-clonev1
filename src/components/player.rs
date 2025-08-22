@@ -29,7 +29,7 @@ impl Default for HumanMovement {
         Self {
             acceleration: 32.0,
             deceleration: 50.0,
-            max_speed: 7.0,  // Increased from 4.5 for faster walking
+            max_speed: 4.5, // Realistic walking speed (4.5 m/s = 16 km/h)
             current_speed: 0.0,
             target_velocity: Vec3::ZERO,
         }
@@ -53,7 +53,7 @@ impl Default for HumanAnimation {
     fn default() -> Self {
         Self {
             walk_cycle_time: 0.0,
-            step_frequency: 5.0,  // Increased from 3.0 for faster arm/leg movement
+            step_frequency: 2.0 * std::f32::consts::PI * 1.9, // ~1.9 Hz walking cadence
             head_bob_amplitude: 0.025,
             body_sway_amplitude: 0.015,
             breathing_rate: 1.4,
@@ -84,7 +84,8 @@ impl Default for HumanBehavior {
             movement_variation: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.95..1.05)),
             directional_drift: Vec3::ZERO,
             last_direction_change: 0.0,
-            personality_speed_modifier: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.95..1.05)),
+            personality_speed_modifier: PLAYER_RNG
+                .with(|rng| rng.borrow_mut().gen_range(0.95..1.05)),
             confidence_level: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.8..1.0)),
         }
     }

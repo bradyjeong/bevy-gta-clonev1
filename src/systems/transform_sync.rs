@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::util::safe_math::{safe_lerp, safe_slerp};
+use bevy::prelude::*;
 
 /// Single source of truth for entity positions - prevents fighting between systems
 #[derive(Component, Default, Reflect)]
@@ -25,27 +25,27 @@ pub fn sync_transforms_system(
     time: Res<Time>,
 ) {
     let dt = time.delta_secs().min(0.016); // Cap at 60fps for stability
-    
+
     for (mut transform, sync) in query.iter_mut() {
         // Smooth position
         transform.translation = safe_lerp(
             transform.translation,
-            sync.target_translation, 
-            sync.smoothing_speed * dt
+            sync.target_translation,
+            sync.smoothing_speed * dt,
         );
-        
+
         // Smooth rotation
         transform.rotation = safe_slerp(
             transform.rotation,
             sync.target_rotation,
-            sync.smoothing_speed * dt
+            sync.smoothing_speed * dt,
         );
-        
+
         // Once close enough, snap to target to prevent infinite micro-movements
         if transform.translation.distance(sync.target_translation) < 0.01 {
             transform.translation = sync.target_translation;
         }
-        
+
         if transform.rotation.angle_between(sync.target_rotation) < 0.01 {
             transform.rotation = sync.target_rotation;
         }
@@ -56,8 +56,7 @@ pub struct TransformSyncPlugin;
 
 impl Plugin for TransformSyncPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .register_type::<TransformSync>()
+        app.register_type::<TransformSync>()
             .add_systems(PostUpdate, sync_transforms_system);
     }
 }

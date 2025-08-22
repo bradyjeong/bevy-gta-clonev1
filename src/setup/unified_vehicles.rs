@@ -1,13 +1,14 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
-use crate::components::*;
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::bundles::DynamicVehicleBundle;
+use crate::components::*;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+use crate::services::distance_cache::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::road_network::RoadNetwork;
+use bevy::prelude::*;
 use bevy::render::view::VisibilityRange;
-use crate::services::distance_cache::MovementTracker;
+use bevy_rapier3d::prelude::*;
 
 use crate::GameConfig;
 
@@ -15,7 +16,7 @@ use crate::GameConfig;
 /// - Replaces setup_starter_vehicles (src/setup/starter_vehicles.rs)
 /// - Replaces setup_simple_vehicles (src/setup/vehicles.rs)
 /// - Replaces setup_luxury_cars (src/setup/environment.rs)
-/// 
+///
 /// KEY IMPROVEMENTS:
 /// - Consistent ground detection using UnifiedEntityFactory patterns
 /// - Proper spawn validation and collision detection
@@ -34,10 +35,10 @@ pub fn setup_initial_vehicles_unified(
     // Initialize UnifiedEntityFactory for consistent spawning
     let mut entity_factory = UnifiedEntityFactory::with_config(config.clone());
     let current_time = 0.0; // Initial spawn time
-    
+
     // Track all spawned vehicles for collision detection
     let mut existing_content: Vec<(Vec3, ContentType, f32)> = Vec::new();
-    
+
     // 1. STARTER VEHICLES (3 vehicles with ground detection - from starter_vehicles.rs)
     let starter_vehicles = setup_starter_vehicles_unified(
         &mut commands,
@@ -49,9 +50,7 @@ pub fn setup_initial_vehicles_unified(
         &mut existing_content,
         current_time,
     );
-    
 
-    
     // 3. LUXURY CARS (5-8 cars with proper validation - from luxury_cars)
     let luxury_cars = setup_luxury_cars_unified(
         &mut commands,
@@ -63,9 +62,12 @@ pub fn setup_initial_vehicles_unified(
         &mut existing_content,
         current_time,
     );
-    
-    info!("Unified vehicle setup complete - Spawned {} starter vehicles, {} luxury cars", 
-        starter_vehicles.len(), luxury_cars.len());
+
+    info!(
+        "Unified vehicle setup complete - Spawned {} starter vehicles, {} luxury cars",
+        starter_vehicles.len(),
+        luxury_cars.len()
+    );
 }
 
 /// Setup starter vehicles with ground detection (replaces setup_starter_vehicles)
@@ -80,29 +82,29 @@ fn setup_starter_vehicles_unified(
     _current_time: f32,
 ) -> Vec<Entity> {
     let mut spawned_vehicles = Vec::new();
-    
+
     // Safe starter positions (well-spaced from spawn point)
     let starter_positions = [
-        Vec3::new(25.0, 0.0, 10.0),   // Near spawn, well spaced
-        Vec3::new(-30.0, 0.0, 15.0),  // Different area
-        Vec3::new(10.0, 0.0, -25.0),  // Another area
+        Vec3::new(25.0, 0.0, 10.0),  // Near spawn, well spaced
+        Vec3::new(-30.0, 0.0, 15.0), // Different area
+        Vec3::new(10.0, 0.0, -25.0), // Another area
     ];
-    
+
     let car_colors = [
         Color::srgb(1.0, 0.0, 0.0), // Red
-        Color::srgb(0.0, 0.0, 1.0), // Blue  
+        Color::srgb(0.0, 0.0, 1.0), // Blue
         Color::srgb(0.0, 1.0, 0.0), // Green
     ];
-    
+
     for (i, &preferred_position) in starter_positions.iter().enumerate() {
         let color = car_colors[i % car_colors.len()];
-        
+
         // Use ground detection service for proper positioning
         let vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
         let ground_height = ground_service.get_ground_height_simple(vehicle_spawn_pos);
         let vehicle_y = ground_height + 0.5; // Vehicle collider half-height above ground
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
-        
+
         // Validate position using UnifiedEntityFactory
         let validated_position = match entity_factory.validate_position(final_position) {
             Ok(pos) => pos,
@@ -111,51 +113,58 @@ fn setup_starter_vehicles_unified(
                 continue;
             }
         };
-        
-        // Note: We'll use SpawnValidator to find safe position instead of skipping
-        
-        // Create vehicle using DynamicVehicleBundle
-        let vehicle_entity = commands.spawn((
-            DynamicVehicleBundle {
-                dynamic_content: DynamicContent { content_type: ContentType::Vehicle },
-                car: Car,
-                transform: Transform::from_translation(validated_position),
-                visibility: Visibility::default(),
-                inherited_visibility: InheritedVisibility::VISIBLE,
-                view_visibility: ViewVisibility::default(),
-                rigid_body: RigidBody::Dynamic,
-                collider: Collider::cuboid(1.0, 0.5, 2.0),
-                collision_groups: CollisionGroups::new(
-                    entity_factory.config.physics.vehicle_group,
-                    entity_factory.config.physics.static_group | 
-                    entity_factory.config.physics.vehicle_group | 
-                    entity_factory.config.physics.character_group
-                ),
-                velocity: Velocity::default(),
-                damping: Damping { linear_damping: 2.0, angular_damping: 8.0 },
-                locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-                // Use Bevy's built-in LOD system
-                visibility_range: VisibilityRange {
-                    start_margin: 0.0..0.0,     // Always visible when in range
-                    end_margin: 450.0..500.0,   // Fade out between 450-500m
-                    use_aabb: false,
-                },
-            },
-            MovementTracker::new(validated_position, 10.0),
-            Name::new(format!("StarterVehicle_{}", i)),
-            SimpleCarSpecs::default(),
 
-        )).id();
-        
+        // Note: We'll use SpawnValidator to find safe position instead of skipping
+
+        // Create vehicle using DynamicVehicleBundle
+        let vehicle_entity = commands
+            .spawn((
+                DynamicVehicleBundle {
+                    dynamic_content: DynamicContent {
+                        content_type: ContentType::Vehicle,
+                    },
+                    car: Car,
+                    transform: Transform::from_translation(validated_position),
+                    visibility: Visibility::default(),
+                    inherited_visibility: InheritedVisibility::VISIBLE,
+                    view_visibility: ViewVisibility::default(),
+                    rigid_body: RigidBody::Dynamic,
+                    collider: Collider::cuboid(0.76, 0.52, 1.88), // 0.8x visual mesh for GTA-style forgiving collision
+                    collision_groups: CollisionGroups::new(
+                        entity_factory.config.physics.vehicle_group,
+                        entity_factory.config.physics.static_group
+                            | entity_factory.config.physics.vehicle_group
+                            | entity_factory.config.physics.character_group,
+                    ),
+                    velocity: Velocity::default(),
+                    damping: Damping {
+                        linear_damping: 2.0,
+                        angular_damping: 8.0,
+                    },
+                    locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+                    // Use Bevy's built-in LOD system
+                    visibility_range: VisibilityRange {
+                        start_margin: 0.0..0.0,   // Always visible when in range
+                        end_margin: 450.0..500.0, // Fade out between 450-500m
+                        use_aabb: false,
+                    },
+                },
+                MovementTracker::new(validated_position, 10.0),
+                VehicleState::new(VehicleType::SuperCar),
+                Name::new(format!("StarterVehicle_{i}")),
+                SimpleCarSpecs::default(),
+            ))
+            .id();
+
         // Add car body as child entity
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
+            Mesh3d(meshes.add(Cuboid::new(1.9, 1.3, 4.7))),
             MeshMaterial3d(materials.add(color)),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             InheritedVisibility::VISIBLE,
         ));
-        
+
         // Use spawn validator for safe positioning
         if let Some(safe_position) = SpawnValidator::spawn_entity_safely(
             spawn_registry,
@@ -169,25 +178,30 @@ fn setup_starter_vehicles_unified(
                     entity_commands.insert(Transform::from_translation(safe_position));
                 }
             }
-            
+
             // Track spawned vehicle
             existing_content.push((safe_position, ContentType::Vehicle, 25.0));
             spawned_vehicles.push(vehicle_entity);
-            
-            info!("Starter vehicle {} spawned at position: {:?}", i, safe_position);
+
+            info!(
+                "Starter vehicle {} spawned at position: {:?}",
+                i, safe_position
+            );
         } else {
             warn!("Failed to find safe position for starter vehicle {}", i);
             // Register at validated position as fallback
-            spawn_registry.register_entity(vehicle_entity, validated_position, SpawnableType::Vehicle);
+            spawn_registry.register_entity(
+                vehicle_entity,
+                validated_position,
+                SpawnableType::Vehicle,
+            );
             existing_content.push((validated_position, ContentType::Vehicle, 25.0));
             spawned_vehicles.push(vehicle_entity);
         }
     }
-    
+
     spawned_vehicles
 }
-
-
 
 /// Setup luxury cars with proper validation (replaces setup_luxury_cars)
 fn setup_luxury_cars_unified(
@@ -201,7 +215,7 @@ fn setup_luxury_cars_unified(
     _current_time: f32,
 ) -> Vec<Entity> {
     let mut spawned_vehicles = Vec::new();
-    
+
     // Luxury car positions (selected safe positions from original list)
     let luxury_positions = [
         Vec3::new(15.0, 0.0, 8.0),    // Near spawn area
@@ -213,7 +227,7 @@ fn setup_luxury_cars_unified(
         Vec3::new(-70.0, 0.0, 60.0),  // District position
         Vec3::new(120.0, 0.0, 110.0), // Luxury area
     ];
-    
+
     // Luxury Dubai car colors
     let luxury_colors = [
         Color::srgb(1.0, 1.0, 1.0), // Pearl White
@@ -225,16 +239,16 @@ fn setup_luxury_cars_unified(
         Color::srgb(0.2, 0.6, 0.2), // British Racing Green
         Color::srgb(0.6, 0.3, 0.8), // Purple
     ];
-    
+
     for (i, &preferred_position) in luxury_positions.iter().enumerate() {
         let color = luxury_colors[i % luxury_colors.len()];
-        
+
         // Use ground detection service for proper positioning
         let vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
         let ground_height = ground_service.get_ground_height_simple(vehicle_spawn_pos);
         let vehicle_y = ground_height + 0.5;
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
-        
+
         // Validate position using UnifiedEntityFactory
         let validated_position = match entity_factory.validate_position(final_position) {
             Ok(pos) => pos,
@@ -243,42 +257,49 @@ fn setup_luxury_cars_unified(
                 continue;
             }
         };
-        
-        // Note: We'll use SpawnValidator to find safe position instead of skipping
-        
-        // Create luxury vehicle using DynamicVehicleBundle
-        let vehicle_entity = commands.spawn((
-            DynamicVehicleBundle {
-                dynamic_content: DynamicContent { content_type: ContentType::Vehicle },
-                car: Car,
-                transform: Transform::from_translation(validated_position),
-                visibility: Visibility::default(),
-                inherited_visibility: InheritedVisibility::VISIBLE,
-                view_visibility: ViewVisibility::default(),
-                rigid_body: RigidBody::Dynamic,
-                collider: Collider::cuboid(1.0, 0.5, 2.0),
-                collision_groups: CollisionGroups::new(
-                    entity_factory.config.physics.vehicle_group,
-                    entity_factory.config.physics.static_group | 
-                    entity_factory.config.physics.vehicle_group | 
-                    entity_factory.config.physics.character_group
-                ),
-                velocity: Velocity::default(),
-                damping: Damping { linear_damping: 2.0, angular_damping: 8.0 },
-                locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-                // Use Bevy's built-in LOD system
-                visibility_range: VisibilityRange {
-                    start_margin: 0.0..0.0,     // Always visible when in range
-                    end_margin: 450.0..500.0,   // Fade out between 450-500m
-                    use_aabb: false,
-                },
-            },
-            MovementTracker::new(validated_position, 10.0),
-            Name::new(format!("LuxuryCar_{}", i)),
-            SimpleCarSpecs::default(),
 
-        )).id();
-        
+        // Note: We'll use SpawnValidator to find safe position instead of skipping
+
+        // Create luxury vehicle using DynamicVehicleBundle
+        let vehicle_entity = commands
+            .spawn((
+                DynamicVehicleBundle {
+                    dynamic_content: DynamicContent {
+                        content_type: ContentType::Vehicle,
+                    },
+                    car: Car,
+                    transform: Transform::from_translation(validated_position),
+                    visibility: Visibility::default(),
+                    inherited_visibility: InheritedVisibility::VISIBLE,
+                    view_visibility: ViewVisibility::default(),
+                    rigid_body: RigidBody::Dynamic,
+                    collider: Collider::cuboid(0.76, 0.52, 1.88), // 0.8x visual mesh for GTA-style forgiving collision
+                    collision_groups: CollisionGroups::new(
+                        entity_factory.config.physics.vehicle_group,
+                        entity_factory.config.physics.static_group
+                            | entity_factory.config.physics.vehicle_group
+                            | entity_factory.config.physics.character_group,
+                    ),
+                    velocity: Velocity::default(),
+                    damping: Damping {
+                        linear_damping: 2.0,
+                        angular_damping: 8.0,
+                    },
+                    locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+                    // Use Bevy's built-in LOD system
+                    visibility_range: VisibilityRange {
+                        start_margin: 0.0..0.0,   // Always visible when in range
+                        end_margin: 450.0..500.0, // Fade out between 450-500m
+                        use_aabb: false,
+                    },
+                },
+                MovementTracker::new(validated_position, 10.0),
+                VehicleState::new(VehicleType::SuperCar),
+                Name::new(format!("LuxuryCar_{i}")),
+                SimpleCarSpecs::default(),
+            ))
+            .id();
+
         // Add luxury car body with premium materials
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(1.8, 1.0, 3.6))),
@@ -292,7 +313,7 @@ fn setup_luxury_cars_unified(
             ChildOf(vehicle_entity),
             InheritedVisibility::VISIBLE,
         ));
-        
+
         // Use spawn validator for safe positioning
         if let Some(safe_position) = SpawnValidator::spawn_entity_safely(
             spawn_registry,
@@ -306,20 +327,24 @@ fn setup_luxury_cars_unified(
                     entity_commands.insert(Transform::from_translation(safe_position));
                 }
             }
-            
+
             // Track spawned vehicle
             existing_content.push((safe_position, ContentType::Vehicle, 25.0));
             spawned_vehicles.push(vehicle_entity);
-            
+
             info!("Luxury car {} spawned at position: {:?}", i, safe_position);
         } else {
             warn!("Failed to find safe position for luxury car {}", i);
             // Register at validated position as fallback
-            spawn_registry.register_entity(vehicle_entity, validated_position, SpawnableType::Vehicle);
+            spawn_registry.register_entity(
+                vehicle_entity,
+                validated_position,
+                SpawnableType::Vehicle,
+            );
             existing_content.push((validated_position, ContentType::Vehicle, 25.0));
             spawned_vehicles.push(vehicle_entity);
         }
     }
-    
+
     spawned_vehicles
 }

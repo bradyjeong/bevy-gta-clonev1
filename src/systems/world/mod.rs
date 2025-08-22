@@ -1,43 +1,49 @@
-pub mod npc;
-pub mod culling;
-pub mod dynamic_content;
-pub mod performance;
-pub mod road_network;
-pub mod road_mesh;
-pub mod road_generation;
+// pub mod culling; // DELETED: Using Bevy's built-in VisibilityRange instead
 pub mod debug;
-
+pub mod npc;
+pub mod performance;
+pub mod road_generation;
+pub mod road_mesh;
+pub mod road_network;
 
 // NEW UNIFIED WORLD SYSTEM
-pub mod unified_world;
+pub mod async_chunk_generation;
 pub mod layered_generation;
-pub mod unified_lod;
-pub mod npc_lod;
 pub mod npc_spawn;
+pub mod simulation_lod;
+pub mod unified_world;
 // pub mod optimized_lod; // Removed - functionality moved to unified_lod.rs
+pub mod asset_streaming;
+pub mod bevy_vegetation_lod;
+pub mod debug_layers;
 pub mod vegetation_lod;
 // pub mod unified_distance_culling; - REMOVED: Replaced with Bevy's VisibilityRange
 pub mod boundaries;
+pub mod boundary_effects;
+pub mod floating_origin;
 pub mod unified_factory_setup;
 
-pub use npc::*;
-pub use culling::*;
-pub use dynamic_content::*;
-pub use performance::*;
-pub use road_network::*;
-pub use road_mesh::*;
-pub use road_generation::*;
+// pub use culling::*; // DELETED: Using Bevy's built-in VisibilityRange instead
 pub use debug::*;
-
+pub use npc::*;
+pub use performance::*;
+pub use road_generation::*;
+pub use road_mesh::*;
+pub use road_network::*;
 
 // Export unified system components
-pub use unified_world::*;
+pub use async_chunk_generation::*;
 pub use layered_generation::*;
-pub use unified_lod::*;
-pub use npc_lod::*;
 pub use npc_spawn::*;
+pub use simulation_lod::*;
+pub use unified_world::*;
 // pub use optimized_lod::*; // Removed - functionality moved to unified_lod.rs
+pub use asset_streaming::*;
+pub use bevy_vegetation_lod::*;
+pub use debug_layers::*;
 pub use vegetation_lod::*;
 // UnifiedCullable exports removed - using Bevy's VisibilityRange instead
 pub use boundaries::*;
+pub use boundary_effects::*;
+pub use floating_origin::*;
 pub use unified_factory_setup::*;

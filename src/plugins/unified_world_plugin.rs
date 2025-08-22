@@ -1,13 +1,9 @@
-use bevy::prelude::*;
-use crate::plugins::{
-    WorldStreamingPlugin,
-    WorldContentPlugin,
-    WorldLodPlugin,
-    WorldNpcPlugin,
-    WorldDebugPlugin,
-    TimingPlugin,
-};
 use crate::factories::initialize_material_factory;
+use crate::plugins::{
+    TimingPlugin, WorldContentPlugin, WorldDebugPlugin, WorldLodPlugin, WorldNpcPlugin,
+    WorldStreamingPlugin,
+};
+use bevy::prelude::*;
 
 /// Simplified unified world plugin that coordinates focused world sub-plugins.
 /// This follows the simplicity principle by delegating to specialized plugins
@@ -24,7 +20,6 @@ impl Plugin for UnifiedWorldPlugin {
             .add_plugins(WorldLodPlugin)
             .add_plugins(WorldNpcPlugin)
             .add_plugins(WorldDebugPlugin)
-            
             // Initialize material factory
             .add_systems(Startup, initialize_material_factory);
     }

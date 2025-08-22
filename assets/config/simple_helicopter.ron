@@ -4,7 +4,7 @@ SimpleHelicopterConfig(
     // Movement speeds
     lateral_speed: 20.0,        // Side-to-side movement speed
     vertical_speed: 15.0,       // Up/down movement speed
-    forward_speed: 25.0,        // Forward/backward movement speed
+    forward_speed: 83.0,        // Forward/backward movement speed
     
     // Rotation rates
     yaw_rate: 1.5,             // Rotation around Y axis (rad/s)
@@ -14,6 +14,9 @@ SimpleHelicopterConfig(
     // Physics smoothing
     angular_lerp_factor: 4.0,   // Angular velocity smoothing rate
     linear_lerp_factor: 6.0,    // Linear velocity smoothing rate
+    
+    // Gliding physics (engine off)
+    drag_factor: 0.99,          // Momentum decay per second (helicopters have more drag than jets)
     
     // Rotor animation speeds
     main_rotor_rpm: 20.0,       // Main rotor rotation speed (rad/s)

@@ -1,7 +1,8 @@
-use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 use crate::components::*;
-use crate::services::simple_services::{ConfigService, PhysicsService, EnhancedTimingService};
+use crate::services::simple_services::{ConfigService, EnhancedTimingService, PhysicsService};
+use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
+use bevy_rapier3d::prelude::*;
 
 /// Example system showing service injection pattern with simple services
 pub fn service_example_vehicle_creation(
@@ -16,34 +17,35 @@ pub fn service_example_vehicle_creation(
     if !keyboard_input.just_pressed(KeyCode::F10) {
         return;
     }
-    
+
     // Get vehicle configuration from config service
-    let vehicle_config = &config_service.get_config().vehicles.basic_car;
-    
+    let vehicle_config = &config_service.get_config().vehicles.super_car;
+
     // Validate spawn position using physics service
     let spawn_position = Vec3::new(15.0, 2.0, 15.0);
     let validated_position = physics_service.validate_position(spawn_position);
-    
+
     // Validate mass using physics service
     let validated_mass = physics_service.validate_mass(vehicle_config.mass);
-    
+
     // Get collision groups from physics service
     let (_, vehicle_group, _) = physics_service.get_collision_groups();
-    
+
     // Create mesh and material
     let mesh_handle = meshes.add(Cuboid::new(
         vehicle_config.body_size.x,
         vehicle_config.body_size.y,
         vehicle_config.body_size.z,
     ));
-    
+
     let material_handle = materials.add(StandardMaterial {
         base_color: vehicle_config.default_color,
         ..default()
     });
-    
+
     // Create the entity using validated parameters
-    let entity = commands.spawn_empty()
+    let entity = commands
+        .spawn_empty()
         .insert(Mesh3d(mesh_handle))
         .insert(MeshMaterial3d(material_handle))
         .insert(Transform::from_translation(validated_position))
@@ -62,12 +64,12 @@ pub fn service_example_vehicle_creation(
             linear_damping: vehicle_config.linear_damping,
             angular_damping: vehicle_config.angular_damping,
         })
-        .insert(Cullable::new(150.0))
+        .insert(VisibilityRange::abrupt(0.0, 150.0))
         .insert(Name::new("ServiceCreatedCar"))
         .id();
-    
+
     info!(
-        "🚗 SERVICE EXAMPLE: Created vehicle entity {:?} at {:?} with mass {:.2}",
+        "SERVICE EXAMPLE: Created vehicle entity {:?} at {:?} with mass {:.2}",
         entity, validated_position, validated_mass
     );
 }
@@ -79,7 +81,7 @@ pub fn service_example_config_validation(
 ) {
     if keyboard_input.just_pressed(KeyCode::F11) {
         config_service.validate_and_clamp();
-        info!("🔧 SERVICE EXAMPLE: Configuration validated and clamped");
+        info!("SERVICE EXAMPLE: Configuration validated and clamped");
     }
 }
 
@@ -91,9 +93,9 @@ pub fn service_example_timing_check(
     if keyboard_input.just_pressed(KeyCode::F12) {
         let current_time = timing_service.current_time();
         let delta_time = timing_service.delta_time();
-        
+
         info!(
-            "⏱️ SERVICE EXAMPLE: Current time: {:.2}s, Delta: {:.4}s",
+            "SERVICE EXAMPLE: Current time: {:.2}s, Delta: {:.4}s",
             current_time, delta_time
         );
     }

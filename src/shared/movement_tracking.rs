@@ -18,7 +18,7 @@ impl SharedMovementTracker {
             last_update_time: 0.0,
         }
     }
-    
+
     pub fn update(&mut self, new_position: Vec3, current_time: f32) {
         let delta_time = current_time - self.last_update_time;
         if delta_time > 0.0 {
