@@ -65,9 +65,11 @@ pub struct PhysicsConfig {
 
 #[derive(Debug, Clone)]
 pub struct WorldConfig {
-    // Chunk system parameters
-    pub chunk_size: f32,           // 200.0 - Standard chunk size
-    pub map_size: f32,             // 4000.0 - Total world size
+    // Finite world parameters (12km x 12km like GTA V)
+    pub chunk_size: f32,           // 128.0 - Optimized chunk size for 12km world
+    pub map_size: f32,             // 12000.0 - Finite world size (12km x 12km)
+    pub total_chunks_x: usize,     // 94 - Total chunks along X axis (12000/128)
+    pub total_chunks_z: usize,     // 94 - Total chunks along Z axis (12000/128)
     pub streaming_radius: f32,     // 800.0 - Object streaming radius
     
     // LOD distances with performance optimization
@@ -272,9 +274,15 @@ impl Default for PhysicsConfig {
 
 impl Default for WorldConfig {
     fn default() -> Self {
+        let chunk_size = 128.0;
+        let map_size = 12000.0;
+        let total_chunks = (map_size / chunk_size) as usize;
+        
         Self {
-            chunk_size: 200.0,
-            map_size: 4000.0,
+            chunk_size,
+            map_size,
+            total_chunks_x: total_chunks,
+            total_chunks_z: total_chunks,
             streaming_radius: 800.0,
             lod_distances: [150.0, 300.0, 500.0],
             building_density: 0.5,
@@ -492,10 +500,15 @@ impl PhysicsConfig {
 
 impl WorldConfig {
     pub fn validate_and_clamp(&mut self) {
-        // Clamp chunk parameters to prevent memory issues
-        self.chunk_size = self.chunk_size.clamp(50.0, 1000.0);
-        self.map_size = self.map_size.clamp(1000.0, 20000.0);
+        // Clamp chunk parameters for finite world
+        self.chunk_size = self.chunk_size.clamp(64.0, 256.0);
+        self.map_size = self.map_size.clamp(8000.0, 16000.0);
         self.streaming_radius = self.streaming_radius.clamp(200.0, 2000.0);
+        
+        // Recalculate chunk counts after validation
+        let chunks_per_axis = (self.map_size / self.chunk_size) as usize;
+        self.total_chunks_x = chunks_per_axis.clamp(50, 200);
+        self.total_chunks_z = chunks_per_axis.clamp(50, 200);
         
         // Validate LOD distances are in ascending order
         self.lod_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -516,6 +529,40 @@ impl WorldConfig {
         // Validate lake parameters
         self.lake_size = self.lake_size.clamp(50.0, 1000.0);
         self.lake_depth = self.lake_depth.clamp(1.0, 50.0);
+    }
+    
+    /// Get total chunk count for the finite world
+    pub fn total_chunk_count(&self) -> usize {
+        self.total_chunks_x * self.total_chunks_z
+    }
+    
+    /// Convert chunk coordinates to flat array index for Vec<Option<ChunkData>>
+    pub fn chunk_coord_to_index(&self, x: i32, z: i32) -> Option<usize> {
+        let half_chunks_x = (self.total_chunks_x / 2) as i32;
+        let half_chunks_z = (self.total_chunks_z / 2) as i32;
+        
+        // Convert world chunk coords to array coords (0 to total_chunks - 1)
+        let array_x = x + half_chunks_x;
+        let array_z = z + half_chunks_z;
+        
+        // Bounds check for finite world
+        if array_x >= 0 && array_x < self.total_chunks_x as i32 &&
+           array_z >= 0 && array_z < self.total_chunks_z as i32 {
+            Some((array_z as usize) * self.total_chunks_x + (array_x as usize))
+        } else {
+            None
+        }
+    }
+    
+    /// Check if chunk coordinates are within finite world bounds
+    pub fn is_chunk_in_bounds(&self, x: i32, z: i32) -> bool {
+        self.chunk_coord_to_index(x, z).is_some()
+    }
+    
+    /// Get world bounds in world coordinates
+    pub fn world_bounds(&self) -> (f32, f32, f32, f32) {
+        let half_size = self.map_size / 2.0;
+        (-half_size, half_size, -half_size, half_size) // min_x, max_x, min_z, max_z
     }
 }
 

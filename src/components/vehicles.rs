@@ -35,6 +35,39 @@ pub struct Helicopter;
 #[derive(Component)]
 pub struct F16;
 
+// Vehicle health component for boundary effects and damage
+#[derive(Component, Clone, Debug)]
+pub struct VehicleHealth {
+    pub current: f32,
+    pub max: f32,
+}
+
+impl Default for VehicleHealth {
+    fn default() -> Self {
+        Self {
+            current: 100.0,
+            max: 100.0,
+        }
+    }
+}
+
+impl VehicleHealth {
+    pub fn new(max_health: f32) -> Self {
+        Self {
+            current: max_health,
+            max: max_health,
+        }
+    }
+    
+    pub fn is_destroyed(&self) -> bool {
+        self.current <= 0.0
+    }
+    
+    pub fn health_percentage(&self) -> f32 {
+        (self.current / self.max).clamp(0.0, 1.0)
+    }
+}
+
 // Ultra-simplified aircraft flight state - minimal necessary data
 #[derive(Component, Clone)]
 pub struct AircraftFlight {

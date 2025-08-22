@@ -4,6 +4,7 @@ use crate::systems::world::{
     unified_world_streaming_system,
     layered_generation_coordinator,
 };
+use crate::config::GameConfig;
 
 /// Plugin responsible for world streaming and chunk management
 pub struct WorldStreamingPlugin;
@@ -11,7 +12,6 @@ pub struct WorldStreamingPlugin;
 impl Plugin for WorldStreamingPlugin {
     fn build(&self, app: &mut App) {
         app
-            .init_resource::<UnifiedWorldManager>()
             .add_systems(Startup, initialize_streaming_world)
             .add_systems(Update, (
                 unified_world_streaming_system,
@@ -20,9 +20,14 @@ impl Plugin for WorldStreamingPlugin {
     }
 }
 
-fn initialize_streaming_world(mut world_manager: ResMut<UnifiedWorldManager>) {
-    world_manager.chunks.clear();
-    world_manager.placement_grid.clear();
-    world_manager.road_network.reset();
-    println!("DEBUG: World streaming initialized!");
+fn initialize_streaming_world(
+    mut commands: Commands,
+    config: Res<GameConfig>,
+) {
+    // Initialize UnifiedWorldManager with finite world configuration
+    let world_manager = UnifiedWorldManager::from_config(&config);
+    commands.insert_resource(world_manager);
+    
+    println!("DEBUG: World streaming initialized with finite world ({}x{} chunks)!", 
+             config.world.total_chunks_x, config.world.total_chunks_z);
 }

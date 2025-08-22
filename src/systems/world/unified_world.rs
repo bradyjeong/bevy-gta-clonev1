@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 use crate::components::*;
 use crate::systems::world::road_network::RoadNetwork;
+use crate::config::GameConfig;
 
 // UNIFIED WORLD GENERATION SYSTEM
 // This replaces map_system.rs, dynamic_content.rs coordination
@@ -27,19 +28,29 @@ impl ChunkCoord {
         Self { x, z }
     }
     
-    pub fn from_world_pos(world_pos: Vec3) -> Self {
+    pub fn from_world_pos(world_pos: Vec3, chunk_size: f32) -> Self {
         Self {
-            x: (world_pos.x / UNIFIED_CHUNK_SIZE).floor() as i32,
-            z: (world_pos.z / UNIFIED_CHUNK_SIZE).floor() as i32,
+            x: (world_pos.x / chunk_size).floor() as i32,
+            z: (world_pos.z / chunk_size).floor() as i32,
         }
     }
     
-    pub fn to_world_pos(&self) -> Vec3 {
+    // Backwards compatibility with old UNIFIED_CHUNK_SIZE
+    pub fn from_world_pos_legacy(world_pos: Vec3) -> Self {
+        Self::from_world_pos(world_pos, UNIFIED_CHUNK_SIZE)
+    }
+    
+    pub fn to_world_pos_with_size(&self, chunk_size: f32) -> Vec3 {
         Vec3::new(
-            self.x as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5,
+            self.x as f32 * chunk_size + chunk_size * 0.5,
             0.0,
-            self.z as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5,
+            self.z as f32 * chunk_size + chunk_size * 0.5,
         )
+    }
+    
+    // Backwards compatibility
+    pub fn to_world_pos(&self) -> Vec3 {
+        self.to_world_pos_with_size(UNIFIED_CHUNK_SIZE)
     }
     
     pub fn distance_to(&self, other: ChunkCoord) -> f32 {
@@ -176,10 +187,16 @@ impl PlacementGrid {
     }
 }
 
-/// Central resource managing all world generation
+/// Central resource managing all world generation - Now uses finite world with Vec storage
 #[derive(Resource)]
 pub struct UnifiedWorldManager {
-    pub chunks: HashMap<ChunkCoord, ChunkData>,
+    // FINITE WORLD: Vec<Option<ChunkData>> for O(1) access instead of HashMap
+    pub chunks: Vec<Option<ChunkData>>,
+    pub total_chunks_x: usize,
+    pub total_chunks_z: usize,
+    pub chunk_size: f32,
+    pub world_bounds: (f32, f32, f32, f32), // min_x, max_x, min_z, max_z
+    
     pub placement_grid: PlacementGrid,
     pub road_network: RoadNetwork,
     
@@ -194,10 +211,64 @@ pub struct UnifiedWorldManager {
     pub max_chunks_per_frame: usize,
 }
 
+impl UnifiedWorldManager {
+    /// Create UnifiedWorldManager from GameConfig for finite world
+    pub fn from_config(config: &GameConfig) -> Self {
+        let total_chunk_count = config.world.total_chunk_count();
+        
+        Self {
+            chunks: vec![None; total_chunk_count],
+            total_chunks_x: config.world.total_chunks_x,
+            total_chunks_z: config.world.total_chunks_z,
+            chunk_size: config.world.chunk_size,
+            world_bounds: config.world.world_bounds(),
+            placement_grid: PlacementGrid::new(),
+            road_network: RoadNetwork::default(),
+            active_chunk: None,
+            streaming_radius_chunks: (config.world.streaming_radius / config.world.chunk_size).ceil() as i32,
+            last_update: 0.0,
+            chunks_loaded_this_frame: 0,
+            chunks_unloaded_this_frame: 0,
+            max_chunks_per_frame: 4, // Prevent frame drops
+        }
+    }
+    
+    /// Convert chunk coordinates to Vec index (finite world bounds check)
+    fn chunk_coord_to_index(&self, coord: ChunkCoord) -> Option<usize> {
+        let half_chunks_x = (self.total_chunks_x / 2) as i32;
+        let half_chunks_z = (self.total_chunks_z / 2) as i32;
+        
+        // Convert world chunk coords to array coords (0 to total_chunks - 1)
+        let array_x = coord.x + half_chunks_x;
+        let array_z = coord.z + half_chunks_z;
+        
+        // Bounds check for finite world
+        if array_x >= 0 && array_x < self.total_chunks_x as i32 &&
+           array_z >= 0 && array_z < self.total_chunks_z as i32 {
+            Some((array_z as usize) * self.total_chunks_x + (array_x as usize))
+        } else {
+            None
+        }
+    }
+    
+    /// Check if chunk coordinates are within finite world bounds
+    pub fn is_chunk_in_bounds(&self, coord: ChunkCoord) -> bool {
+        self.chunk_coord_to_index(coord).is_some()
+    }
+}
+
 impl Default for UnifiedWorldManager {
     fn default() -> Self {
+        // Default uses small world for backwards compatibility
+        let total_chunks = 32; // 32x32 = 1024 chunks
+        let total_chunk_count = total_chunks * total_chunks;
+        
         Self {
-            chunks: HashMap::new(),
+            chunks: vec![None; total_chunk_count],
+            total_chunks_x: total_chunks,
+            total_chunks_z: total_chunks,
+            chunk_size: UNIFIED_CHUNK_SIZE,
+            world_bounds: (-3200.0, 3200.0, -3200.0, 3200.0), // 6.4km x 6.4km default
             placement_grid: PlacementGrid::new(),
             road_network: RoadNetwork::default(),
             active_chunk: None,
@@ -212,16 +283,25 @@ impl Default for UnifiedWorldManager {
 
 impl UnifiedWorldManager {
     pub fn get_chunk(&self, coord: ChunkCoord) -> Option<&ChunkData> {
-        self.chunks.get(&coord)
+        self.chunk_coord_to_index(coord)
+            .and_then(|index| self.chunks.get(index))
+            .and_then(|chunk| chunk.as_ref())
     }
     
-    pub fn get_chunk_mut(&mut self, coord: ChunkCoord) -> &mut ChunkData {
-        self.chunks.entry(coord).or_insert_with(|| ChunkData::new(coord))
+    pub fn get_chunk_mut(&mut self, coord: ChunkCoord) -> Option<&mut ChunkData> {
+        if let Some(index) = self.chunk_coord_to_index(coord) {
+            if self.chunks[index].is_none() {
+                self.chunks[index] = Some(ChunkData::new(coord));
+            }
+            self.chunks[index].as_mut()
+        } else {
+            None
+        }
     }
     
     pub fn is_chunk_loaded(&self, coord: ChunkCoord) -> bool {
         matches!(
-            self.chunks.get(&coord).map(|c| c.state),
+            self.get_chunk(coord).map(|c| c.state),
             Some(ChunkState::Loaded { .. })
         )
     }
@@ -238,13 +318,15 @@ impl UnifiedWorldManager {
     pub fn cleanup_distant_chunks(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
         let mut to_unload = Vec::new();
         
-        for (coord, chunk) in &mut self.chunks {
-            chunk.distance_to_player = active_pos.distance(coord.to_world_pos());
-            
-            if chunk.distance_to_player > UNIFIED_STREAMING_RADIUS + UNIFIED_CHUNK_SIZE {
-                if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
-                    chunk.state = ChunkState::Unloading;
-                    to_unload.push(*coord);
+        for chunk_opt in &mut self.chunks {
+            if let Some(chunk) = chunk_opt {
+                chunk.distance_to_player = active_pos.distance(chunk.coord.to_world_pos_with_size(self.chunk_size));
+                
+                if chunk.distance_to_player > UNIFIED_STREAMING_RADIUS + self.chunk_size {
+                    if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
+                        chunk.state = ChunkState::Unloading;
+                        to_unload.push(chunk.coord);
+                    }
                 }
             }
         }
@@ -253,20 +335,27 @@ impl UnifiedWorldManager {
     }
     
     pub fn get_chunks_to_load(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
-        let active_chunk = ChunkCoord::from_world_pos(active_pos);
+        let active_chunk = ChunkCoord::from_world_pos(active_pos, self.chunk_size);
         let mut to_load = Vec::new();
         
         for dx in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
             for dz in -self.streaming_radius_chunks..=self.streaming_radius_chunks {
                 let coord = ChunkCoord::new(active_chunk.x + dx, active_chunk.z + dz);
-                let distance = active_pos.distance(coord.to_world_pos());
+                
+                // FINITE WORLD: Skip chunks outside bounds
+                if !self.is_chunk_in_bounds(coord) {
+                    continue;
+                }
+                
+                let distance = active_pos.distance(coord.to_world_pos_with_size(self.chunk_size));
                 
                 if distance <= UNIFIED_STREAMING_RADIUS {
-                    let chunk = self.get_chunk_mut(coord);
-                    if matches!(chunk.state, ChunkState::Unloaded) {
-                        chunk.state = ChunkState::Loading;
-                        chunk.distance_to_player = distance;
-                        to_load.push(coord);
+                    if let Some(chunk) = self.get_chunk_mut(coord) {
+                        if matches!(chunk.state, ChunkState::Unloaded) {
+                            chunk.state = ChunkState::Loading;
+                            chunk.distance_to_player = distance;
+                            to_load.push(coord);
+                        }
                     }
                 }
             }
@@ -277,8 +366,8 @@ impl UnifiedWorldManager {
     
     pub fn clear_placement_grid_for_chunk(&mut self, coord: ChunkCoord) {
         // CRITICAL FIX: Actually clear placement grid entries for this chunk
-        let chunk_center = coord.to_world_pos();
-        let half_size = UNIFIED_CHUNK_SIZE * 0.5;
+        let chunk_center = coord.to_world_pos_with_size(self.chunk_size);
+        let half_size = self.chunk_size * 0.5;
         
         // Calculate grid cell range for this chunk
         let min_x = ((chunk_center.x - half_size) / self.placement_grid.cell_size).floor() as i32;
@@ -329,7 +418,7 @@ pub fn unified_world_streaming_system(
     world_manager.chunks_unloaded_this_frame = 0;
     
     // Update active chunk
-    let current_chunk = ChunkCoord::from_world_pos(active_pos);
+    let current_chunk = ChunkCoord::from_world_pos(active_pos, world_manager.chunk_size);
     let _chunk_changed = world_manager.active_chunk != Some(current_chunk);
     world_manager.active_chunk = Some(current_chunk);
     
@@ -361,11 +450,15 @@ fn initiate_chunk_loading(
 ) {
     // This function starts the chunk loading process
     // The actual content generation will be handled by layer-specific systems
-    let chunk = world_manager.get_chunk_mut(coord);
-    chunk.state = ChunkState::Loading;
+    if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+        chunk.state = ChunkState::Loading;
+    } else {
+        // Chunk is outside finite world bounds - skip loading
+        return;
+    }
     
     // CRITICAL FIX: Convert logical chunk position to render space
-    let world_pos = coord.to_world_pos();
+    let world_pos = coord.to_world_pos_with_size(world_manager.chunk_size);
     
     // Create a marker entity for this chunk and PARENT TO WORLDROOT
     let chunk_entity = commands.spawn((
@@ -379,9 +472,10 @@ fn initiate_chunk_loading(
         ViewVisibility::default(),
     )).id();
     
-    // Chunk entity spawned directly in world space
-    
-    chunk.entities.push(chunk_entity);
+    // Add entity to chunk tracking
+    if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+        chunk.entities.push(chunk_entity);
+    }
 }
 
 fn unload_chunk(
@@ -389,16 +483,18 @@ fn unload_chunk(
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
 ) {
-    if let Some(chunk) = world_manager.chunks.get(&coord) {
-        // CRITICAL FIX: Use despawn to clean up entire hierarchy (auto-recursive in Bevy 0.16)
-        for &entity in &chunk.entities {
-            commands.entity(entity).despawn();
+    if let Some(index) = world_manager.chunk_coord_to_index(coord) {
+        if let Some(chunk) = &world_manager.chunks[index] {
+            // CRITICAL FIX: Use despawn to clean up entire hierarchy (auto-recursive in Bevy 0.16)
+            for &entity in &chunk.entities {
+                commands.entity(entity).despawn();
+            }
+            
+            // Clear from placement grid
+            world_manager.clear_placement_grid_for_chunk(coord);
         }
         
-        // Clear from placement grid
-        world_manager.clear_placement_grid_for_chunk(coord);
+        // Remove chunk data by setting to None (finite world - preserve Vec capacity)
+        world_manager.chunks[index] = None;
     }
-    
-    // Remove chunk data
-    world_manager.chunks.remove(&coord);
 }

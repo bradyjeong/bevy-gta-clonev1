@@ -356,3 +356,129 @@ impl Default for EntityLimits {
         }
     }
 }
+
+/// WorldBounds Resource - Finite world with context-aware boundaries
+#[derive(Resource, Debug, Clone)]
+pub struct WorldBounds {
+    // Core finite world bounds
+    pub min_x: f32,
+    pub max_x: f32,
+    pub min_z: f32,
+    pub max_z: f32,
+    
+    // Context-aware boundary zones (GTA-style)
+    pub warning_zone_size: f32,     // Distance from edge where warnings start
+    pub critical_zone_size: f32,    // Distance from edge where effects trigger
+    pub boundary_enforcement: BoundaryEnforcement,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BoundaryEnforcement {
+    /// Natural barriers - mountains, water, terrain that blocks movement
+    Natural,
+    /// Progressive deterrent - increasing hostility/danger near edges
+    Progressive,
+    /// Hard teleport - instant return to safe zone (fallback only)
+    Teleport,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BoundaryVehicleType {
+    OnFoot,
+    GroundVehicle,
+    Aircraft,
+    Boat,
+    Submarine,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BoundaryZone {
+    Safe,        // Normal gameplay area
+    Warning,     // Visual/audio warnings start
+    Critical,    // Context-specific effects trigger
+    OutOfBounds, // Beyond world limits
+}
+
+impl WorldBounds {
+    /// Create WorldBounds from GameConfig
+    pub fn from_config(world_config: &crate::config::WorldConfig) -> Self {
+        let (min_x, max_x, min_z, max_z) = world_config.world_bounds();
+        
+        Self {
+            min_x,
+            max_x,
+            min_z,
+            max_z,
+            warning_zone_size: 500.0,   // 500m warning zone
+            critical_zone_size: 200.0,  // 200m critical zone  
+            boundary_enforcement: BoundaryEnforcement::Progressive,
+        }
+    }
+    
+    /// Get boundary zone for a position and vehicle type
+    pub fn get_boundary_zone(&self, position: Vec3, _vehicle_type: BoundaryVehicleType) -> BoundaryZone {
+        let distance_to_edge = self.distance_to_nearest_edge(position);
+        
+        if distance_to_edge < 0.0 {
+            BoundaryZone::OutOfBounds
+        } else if distance_to_edge < self.critical_zone_size {
+            BoundaryZone::Critical
+        } else if distance_to_edge < self.warning_zone_size {
+            BoundaryZone::Warning
+        } else {
+            BoundaryZone::Safe
+        }
+    }
+    
+    /// Get distance to nearest world edge (negative if outside bounds)
+    pub fn distance_to_nearest_edge(&self, position: Vec3) -> f32 {
+        let x_distance = (position.x - self.min_x).min(self.max_x - position.x);
+        let z_distance = (position.z - self.min_z).min(self.max_z - position.z);
+        
+        x_distance.min(z_distance)
+    }
+    
+    /// Check if position is within world bounds
+    pub fn is_in_bounds(&self, position: Vec3) -> bool {
+        position.x >= self.min_x && position.x <= self.max_x &&
+        position.z >= self.min_z && position.z <= self.max_z
+    }
+    
+    /// Clamp position to world bounds
+    pub fn clamp_to_bounds(&self, position: Vec3) -> Vec3 {
+        Vec3::new(
+            position.x.clamp(self.min_x, self.max_x),
+            position.y, // Don't clamp Y - allow flying/underground
+            position.z.clamp(self.min_z, self.max_z),
+        )
+    }
+    
+    /// Get safe respawn position near world center
+    pub fn safe_respawn_position(&self) -> Vec3 {
+        let center_x = (self.min_x + self.max_x) / 2.0;
+        let center_z = (self.min_z + self.max_z) / 2.0;
+        
+        // Spawn slightly offset from exact center
+        Vec3::new(center_x + 10.0, 2.0, center_z + 10.0)
+    }
+}
+
+/// Boundary effect component - tracks what boundary effects are active
+#[derive(Component, Debug)]
+pub struct BoundaryEffects {
+    pub current_zone: BoundaryZone,
+    pub vehicle_type: BoundaryVehicleType,
+    pub warning_active: bool,
+    pub effect_intensity: f32, // 0.0 = none, 1.0 = maximum
+}
+
+impl Default for BoundaryEffects {
+    fn default() -> Self {
+        Self {
+            current_zone: BoundaryZone::Safe,
+            vehicle_type: BoundaryVehicleType::OnFoot,
+            warning_active: false,
+            effect_intensity: 0.0,
+        }
+    }
+}

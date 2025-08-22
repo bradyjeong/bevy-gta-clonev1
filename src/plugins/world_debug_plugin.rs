@@ -28,11 +28,13 @@ fn debug_unified_world_activity(
     if current_time - *last_report_time > 5.0 {
         *last_report_time = current_time;
         
-        let loaded_chunks = world_manager.chunks.values()
+        let loaded_chunks = world_manager.chunks.iter()
+            .filter_map(|chunk_opt| chunk_opt.as_ref())
             .filter(|chunk| matches!(chunk.state, crate::systems::world::unified_world::ChunkState::Loaded { .. }))
             .count();
         
-        let loading_chunks = world_manager.chunks.values()
+        let loading_chunks = world_manager.chunks.iter()
+            .filter_map(|chunk_opt| chunk_opt.as_ref())
             .filter(|chunk| matches!(chunk.state, crate::systems::world::unified_world::ChunkState::Loading))
             .count();
         

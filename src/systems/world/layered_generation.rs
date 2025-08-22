@@ -39,10 +39,12 @@ pub fn layered_generation_coordinator(
     
     // Find chunks that need loading
     let mut chunks_to_load = Vec::new();
-    for (chunk_coord, chunk) in &world_manager.chunks {
-        if matches!(chunk.state, ChunkState::Loading) && 
-           current_time - chunk.last_update > 0.1 {
-            chunks_to_load.push(*chunk_coord);
+    for chunk_opt in &world_manager.chunks {
+        if let Some(chunk) = chunk_opt {
+            if matches!(chunk.state, ChunkState::Loading) && 
+               current_time - chunk.last_update > 0.1 {
+                chunks_to_load.push(chunk.coord);
+            }
         }
     }
     
@@ -83,9 +85,10 @@ fn generate_complete_chunk(
     generate_vegetation_for_chunk(commands, world_manager, coord, meshes, materials);
     
     // Mark chunk as complete
-    let chunk = world_manager.get_chunk_mut(coord);
-    chunk.state = ChunkState::Loaded { lod_level: 0 };
-    chunk.last_update = current_time;
+    if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+        chunk.state = ChunkState::Loaded { lod_level: 0 };
+        chunk.last_update = current_time;
+    }
     
     info!("Generated complete chunk at {:?} in single pass", coord);
 }
@@ -102,9 +105,13 @@ pub fn road_layer_system(
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
         .iter()
-        .filter_map(|(coord, chunk)| {
-            if matches!(chunk.state, ChunkState::Loading) && !chunk.roads_generated {
-                Some(*coord)
+        .filter_map(|chunk_opt| {
+            if let Some(chunk) = chunk_opt {
+                if matches!(chunk.state, ChunkState::Loading) && !chunk.roads_generated {
+                    Some(chunk.coord)
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -151,8 +158,9 @@ fn generate_roads_for_chunk(
             }
             
             // Add entity to chunk
-            let chunk = world_manager.get_chunk_mut(coord);
-            chunk.entities.push(road_entity);
+            if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+                chunk.entities.push(road_entity);
+            }
         }
     }
     
@@ -160,8 +168,9 @@ fn generate_roads_for_chunk(
     detect_and_spawn_intersections(commands, world_manager, coord, meshes, materials);
     
     // Mark roads as generated
-    let chunk = world_manager.get_chunk_mut(coord);
-    chunk.roads_generated = true;
+    if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+        chunk.roads_generated = true;
+    }
 }
 
 fn spawn_unified_road_entity(
@@ -296,8 +305,9 @@ fn detect_and_spawn_intersections(
             );
             
             // Add entity to chunk
-            let chunk = world_manager.get_chunk_mut(coord);
-            chunk.entities.push(intersection_entity);
+            if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+                chunk.entities.push(intersection_entity);
+            }
         }
     }
 }
@@ -393,11 +403,15 @@ pub fn building_layer_system(
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
         .iter()
-        .filter_map(|(coord, chunk)| {
-            if matches!(chunk.state, ChunkState::Loading) 
-                && chunk.roads_generated 
-                && !chunk.buildings_generated {
-                Some(*coord)
+        .filter_map(|chunk_opt| {
+            if let Some(chunk) = chunk_opt {
+                if matches!(chunk.state, ChunkState::Loading) 
+                    && chunk.roads_generated 
+                    && !chunk.buildings_generated {
+                    Some(chunk.coord)
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -457,15 +471,17 @@ fn generate_buildings_for_chunk(
                 );
                 
                 // Add entity to chunk
-                let chunk = world_manager.get_chunk_mut(coord);
-                chunk.entities.push(building_entity);
+                if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+                    chunk.entities.push(building_entity);
+                }
             }
         }
     }
     
     // Mark buildings as generated
-    let chunk = world_manager.get_chunk_mut(coord);
-    chunk.buildings_generated = true;
+    if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+        chunk.buildings_generated = true;
+    }
 }
 
 fn spawn_unified_building(
@@ -515,11 +531,15 @@ pub fn vehicle_layer_system(
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
         .iter()
-        .filter_map(|(coord, chunk)| {
-            if matches!(chunk.state, ChunkState::Loading) 
-                && chunk.buildings_generated 
-                && !chunk.vehicles_generated {
-                Some(*coord)
+        .filter_map(|chunk_opt| {
+            if let Some(chunk) = chunk_opt {
+                if matches!(chunk.state, ChunkState::Loading) 
+                    && chunk.buildings_generated 
+                    && !chunk.vehicles_generated {
+                    Some(chunk.coord)
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -573,15 +593,17 @@ fn generate_vehicles_for_chunk(
                 );
                 
                 // Add entity to chunk
-                let chunk = world_manager.get_chunk_mut(coord);
-                chunk.entities.push(vehicle_entity);
+                if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+                    chunk.entities.push(vehicle_entity);
+                }
             }
         }
     }
     
     // Mark vehicles as generated
-    let chunk = world_manager.get_chunk_mut(coord);
-    chunk.vehicles_generated = true;
+    if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+        chunk.vehicles_generated = true;
+    }
 }
 
 fn spawn_unified_vehicle(
@@ -630,11 +652,15 @@ pub fn vegetation_layer_system(
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
         .iter()
-        .filter_map(|(coord, chunk)| {
-            if matches!(chunk.state, ChunkState::Loading) 
-                && chunk.vehicles_generated 
-                && !chunk.vegetation_generated {
-                Some(*coord)
+        .filter_map(|chunk_opt| {
+            if let Some(chunk) = chunk_opt {
+                if matches!(chunk.state, ChunkState::Loading) 
+                    && chunk.vehicles_generated 
+                    && !chunk.vegetation_generated {
+                    Some(chunk.coord)
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -688,15 +714,17 @@ fn generate_vegetation_for_chunk(
                 );
                 
                 // Add entity to chunk
-                let chunk = world_manager.get_chunk_mut(coord);
-                chunk.entities.push(tree_entity);
+                if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+                    chunk.entities.push(tree_entity);
+                }
             }
         }
     }
     
     // Mark vegetation as generated
-    let chunk = world_manager.get_chunk_mut(coord);
-    chunk.vegetation_generated = true;
+    if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+        chunk.vegetation_generated = true;
+    }
 }
 
 fn spawn_unified_tree(

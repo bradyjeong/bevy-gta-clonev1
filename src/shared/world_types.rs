@@ -20,20 +20,4 @@ impl SharedCullable {
     }
 }
 
-/// Shared chunk entity marker to break circular dependencies
-#[derive(Component, Default, Debug, Clone)]
-pub struct SharedChunkEntity {
-    pub chunk_x: i32,
-    pub chunk_z: i32,
-    pub entity_type: String,
-}
 
-impl SharedChunkEntity {
-    pub fn new(chunk_x: i32, chunk_z: i32, entity_type: impl Into<String>) -> Self {
-        Self {
-            chunk_x,
-            chunk_z,
-            entity_type: entity_type.into(),
-        }
-    }
-}
