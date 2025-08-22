@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use crate::systems::world::{ChunkCoord, chunk_coord_to_index};
 
 /// CRITICAL: Centralized Game Configuration - Eliminates 470+ magic numbers
 /// All configurations have validation bounds and safety limits
@@ -538,20 +539,7 @@ impl WorldConfig {
     
     /// Convert chunk coordinates to flat array index for Vec<Option<ChunkData>>
     pub fn chunk_coord_to_index(&self, x: i32, z: i32) -> Option<usize> {
-        let half_chunks_x = (self.total_chunks_x / 2) as i32;
-        let half_chunks_z = (self.total_chunks_z / 2) as i32;
-        
-        // Convert world chunk coords to array coords (0 to total_chunks - 1)
-        let array_x = x + half_chunks_x;
-        let array_z = z + half_chunks_z;
-        
-        // Bounds check for finite world
-        if array_x >= 0 && array_x < self.total_chunks_x as i32 &&
-           array_z >= 0 && array_z < self.total_chunks_z as i32 {
-            Some((array_z as usize) * self.total_chunks_x + (array_x as usize))
-        } else {
-            None
-        }
+        chunk_coord_to_index(ChunkCoord::new(x, z), self.total_chunks_x, self.total_chunks_z)
     }
     
     /// Check if chunk coordinates are within finite world bounds

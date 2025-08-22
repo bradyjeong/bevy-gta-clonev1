@@ -8,6 +8,29 @@ use crate::config::GameConfig;
 // This replaces map_system.rs, dynamic_content.rs coordination
 // Provides single source of truth for world streaming and generation
 
+/// Convert chunk coordinates to flat array index for finite world
+/// Eliminates config duplication between WorldConfig and UnifiedWorldManager
+pub fn chunk_coord_to_index(
+    coord: ChunkCoord, 
+    total_chunks_x: usize, 
+    total_chunks_z: usize
+) -> Option<usize> {
+    let half_chunks_x = (total_chunks_x / 2) as i32;
+    let half_chunks_z = (total_chunks_z / 2) as i32;
+    
+    // Convert world chunk coords to array coords (0 to total_chunks - 1)
+    let array_x = coord.x + half_chunks_x;
+    let array_z = coord.z + half_chunks_z;
+    
+    // Bounds check for finite world
+    if array_x >= 0 && array_x < total_chunks_x as i32 &&
+       array_z >= 0 && array_z < total_chunks_z as i32 {
+        Some((array_z as usize) * total_chunks_x + (array_x as usize))
+    } else {
+        None
+    }
+}
+
 /// Standard chunk size used across all world systems
 pub const UNIFIED_CHUNK_SIZE: f32 = 200.0;
 
@@ -292,20 +315,7 @@ impl UnifiedWorldManager {
     
     /// Convert chunk coordinates to Vec index (finite world bounds check)
     fn chunk_coord_to_index(&self, coord: ChunkCoord) -> Option<usize> {
-        let half_chunks_x = (self.total_chunks_x / 2) as i32;
-        let half_chunks_z = (self.total_chunks_z / 2) as i32;
-        
-        // Convert world chunk coords to array coords (0 to total_chunks - 1)
-        let array_x = coord.x + half_chunks_x;
-        let array_z = coord.z + half_chunks_z;
-        
-        // Bounds check for finite world
-        if array_x >= 0 && array_x < self.total_chunks_x as i32 &&
-           array_z >= 0 && array_z < self.total_chunks_z as i32 {
-            Some((array_z as usize) * self.total_chunks_x + (array_x as usize))
-        } else {
-            None
-        }
+        chunk_coord_to_index(coord, self.total_chunks_x, self.total_chunks_z)
     }
     
     /// Check if chunk coordinates are within finite world bounds
