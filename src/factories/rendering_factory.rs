@@ -174,7 +174,7 @@ impl RenderingFactory {
         let (mesh_handle, material_handle) =
             Self::create_mesh_and_material(meshes, materials, &pattern);
 
-        let entity = match bundle_type {
+        match bundle_type {
             RenderingBundleType::Parent => commands
                 .spawn(CompleteRenderingBundle {
                     mesh: Mesh3d(mesh_handle),
@@ -210,9 +210,7 @@ impl RenderingFactory {
                     view_visibility: ViewVisibility::default(),
                 })
                 .id(),
-        };
-
-        entity
+        }
     }
 
     /// Create mesh and material handles based on pattern

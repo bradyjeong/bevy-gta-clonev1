@@ -1,3 +1,8 @@
+#![allow(
+    clippy::type_complexity,
+    clippy::manual_flatten,
+    clippy::collapsible_if
+)]
 use crate::components::*;
 use crate::config::GameConfig;
 use crate::systems::world::road_network::RoadNetwork;

@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 use crate::components::{ActiveEntity, AircraftFlight, F16, JetFlame};
 use bevy::prelude::*;
 

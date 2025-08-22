@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 use crate::components::{ActiveEntity, HumanAnimation, HumanBehavior, HumanMovement, Player};
 use bevy::prelude::*;
 use rand::Rng;

@@ -136,25 +136,13 @@ pub struct RoadIntersection {
     pub radius: f32,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct RoadNetwork {
     pub roads: HashMap<u32, RoadSpline>,
     pub intersections: HashMap<u32, RoadIntersection>,
     pub next_road_id: u32,
     pub next_intersection_id: u32,
     pub generated_chunks: std::collections::HashSet<(i32, i32)>, // Track generated areas
-}
-
-impl Default for RoadNetwork {
-    fn default() -> Self {
-        Self {
-            roads: HashMap::new(),
-            intersections: HashMap::new(),
-            next_road_id: 0,
-            next_intersection_id: 0,
-            generated_chunks: std::collections::HashSet::new(),
-        }
-    }
 }
 
 impl RoadNetwork {
@@ -274,10 +262,7 @@ impl RoadNetwork {
             let road_id = self.add_curved_road(start, control, end, road_type);
             new_roads.push(road_id);
             roads_added.push("vertical");
-            println!(
-                "DEBUG: Generated VERTICAL MainStreet in chunk ({}, {})",
-                chunk_x, chunk_z
-            );
+            println!("DEBUG: Generated VERTICAL MainStreet in chunk ({chunk_x}, {chunk_z})",);
         }
 
         if chunk_z % 2 == 0 && chunk_x % 2 != 0 {
@@ -295,10 +280,7 @@ impl RoadNetwork {
             let road_id = self.add_curved_road(start, control, end, road_type);
             new_roads.push(road_id);
             roads_added.push("horizontal");
-            println!(
-                "DEBUG: Generated HORIZONTAL MainStreet in chunk ({}, {})",
-                chunk_x, chunk_z
-            );
+            println!("DEBUG: Generated HORIZONTAL MainStreet in chunk ({chunk_x}, {chunk_z})",);
         }
 
         // Add side streets only where no main roads exist
@@ -309,10 +291,7 @@ impl RoadNetwork {
             let end = Vec3::new(base_x + chunk_size * 0.8, height, base_z + chunk_size * 0.8);
             let road_id = self.add_road(start, end, road_type);
             new_roads.push(road_id);
-            println!(
-                "DEBUG: Generated SideStreet in chunk ({}, {}) - no main roads",
-                chunk_x, chunk_z
-            );
+            println!("DEBUG: Generated SideStreet in chunk ({chunk_x}, {chunk_z}) - no main roads",);
         }
 
         // Generate side streets (much fewer)

@@ -86,10 +86,7 @@ pub fn setup_basic_world(
     let ground_height = ground_service.get_ground_height_simple(player_spawn_pos);
     let player_y = ground_height + 0.45; // Position so feet (at -0.4) touch ground
 
-    println!(
-        "DEBUG: Player spawn - ground height: {:.3}, final Y: {:.3}",
-        ground_height, player_y
-    );
+    println!("DEBUG: Player spawn - ground height: {ground_height:.3}, final Y: {player_y:.3}",);
 
     // Player character with human-like components in world coordinates
     let player_entity = commands

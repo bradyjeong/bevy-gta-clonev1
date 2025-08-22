@@ -206,36 +206,36 @@ impl TransformFactory {
 
     // NPC BODY PARTS - Relative to NPC center
     pub fn npc_head(height_factor: f32) -> Transform {
-        let safe_height = height_factor.max(0.1).min(10.0);
+        let safe_height = height_factor.clamp(0.1, 10.0);
         Transform::from_xyz(0.0, safe_height * 0.85, 0.0)
     }
 
     pub fn npc_torso(height_factor: f32) -> Transform {
-        let safe_height = height_factor.max(0.1).min(10.0);
+        let safe_height = height_factor.clamp(0.1, 10.0);
         Transform::from_xyz(0.0, safe_height * 0.5, 0.0)
     }
 
     pub fn npc_left_arm(build: f32, height: f32) -> Transform {
-        let safe_build = build.max(0.1).min(5.0);
-        let safe_height = height.max(0.1).min(10.0);
+        let safe_build = build.clamp(0.1, 5.0);
+        let safe_height = height.clamp(0.1, 10.0);
         Transform::from_xyz(-0.25 * safe_build, safe_height * 0.65, 0.0)
     }
 
     pub fn npc_right_arm(build: f32, height: f32) -> Transform {
-        let safe_build = build.max(0.1).min(5.0);
-        let safe_height = height.max(0.1).min(10.0);
+        let safe_build = build.clamp(0.1, 5.0);
+        let safe_height = height.clamp(0.1, 10.0);
         Transform::from_xyz(0.25 * safe_build, safe_height * 0.65, 0.0)
     }
 
     pub fn npc_left_leg(build: f32, height: f32) -> Transform {
-        let safe_build = build.max(0.1).min(5.0);
-        let safe_height = height.max(0.1).min(10.0);
+        let safe_build = build.clamp(0.1, 5.0);
+        let safe_height = height.clamp(0.1, 10.0);
         Transform::from_xyz(-0.1 * safe_build, safe_height * 0.2, 0.0)
     }
 
     pub fn npc_right_leg(build: f32, height: f32) -> Transform {
-        let safe_build = build.max(0.1).min(5.0);
-        let safe_height = height.max(0.1).min(10.0);
+        let safe_build = build.clamp(0.1, 5.0);
+        let safe_height = height.clamp(0.1, 10.0);
         Transform::from_xyz(0.1 * safe_build, safe_height * 0.2, 0.0)
     }
 
@@ -257,7 +257,7 @@ impl TransformFactory {
     }
 
     pub fn building_base(x: f32, height: f32, z: f32) -> Transform {
-        let safe_height = height.max(0.1).min(1000.0);
+        let safe_height = height.clamp(0.1, 1000.0);
         Transform::from_xyz(x, safe_height / 2.0, z)
     }
 
@@ -281,7 +281,7 @@ impl TransformFactory {
     }
 
     pub fn lake_bottom(lake_position: Vec3, depth: f32) -> Transform {
-        let safe_depth = depth.max(0.1).min(1000.0);
+        let safe_depth = depth.clamp(0.1, 1000.0);
         Transform::from_xyz(
             lake_position.x,
             lake_position.y - safe_depth,
@@ -290,7 +290,7 @@ impl TransformFactory {
     }
 
     pub fn lake_cylinder(lake_position: Vec3, depth: f32) -> Transform {
-        let safe_depth = depth.max(0.1).min(1000.0);
+        let safe_depth = depth.clamp(0.1, 1000.0);
         Transform::from_xyz(
             lake_position.x,
             lake_position.y - safe_depth / 2.0,
@@ -313,7 +313,7 @@ impl TransformFactory {
     }
 
     pub fn elevated_camera(height: f32) -> Transform {
-        let safe_height = height.max(1.0).min(1000.0);
+        let safe_height = height.clamp(1.0, 1000.0);
         Transform::from_xyz(0.0, safe_height, 25.0).looking_at(Vec3::ZERO, Vec3::Y)
     }
 
@@ -324,7 +324,7 @@ impl TransformFactory {
         segment_size: f32,
         road_width: f32,
     ) -> Transform {
-        let safe_segment = segment_size.max(1.0).min(1000.0);
+        let safe_segment = segment_size.clamp(1.0, 1000.0);
         Transform::from_xyz(safe_segment * 1.5, 0.1, road_width)
     }
 
@@ -334,43 +334,43 @@ impl TransformFactory {
         segment_size: f32,
         road_width: f32,
     ) -> Transform {
-        let safe_segment = segment_size.max(1.0).min(1000.0);
+        let safe_segment = segment_size.clamp(1.0, 1000.0);
         Transform::from_xyz(road_width, 0.1, safe_segment * 1.5)
     }
 
     pub fn road_marking_horizontal(segment_size: f32) -> Transform {
-        let safe_segment = segment_size.max(1.0).min(1000.0);
+        let safe_segment = segment_size.clamp(1.0, 1000.0);
         Transform::from_xyz(safe_segment * 1.3, 0.11, 0.4)
     }
 
     pub fn road_marking_vertical(segment_size: f32) -> Transform {
-        let safe_segment = segment_size.max(1.0).min(1000.0);
+        let safe_segment = segment_size.clamp(1.0, 1000.0);
         Transform::from_xyz(0.4, 0.11, safe_segment * 1.3)
     }
 
     // CUSTOM POSITIONING WITH VALIDATION
     pub fn custom_position_safe(x: f32, y: f32, z: f32) -> Transform {
-        let safe_x = x.max(-10000.0).min(10000.0);
-        let safe_y = y.max(-1000.0).min(10000.0);
-        let safe_z = z.max(-10000.0).min(10000.0);
+        let safe_x = x.clamp(-10000.0, 10000.0);
+        let safe_y = y.clamp(-1000.0, 10000.0);
+        let safe_z = z.clamp(-10000.0, 10000.0);
         Transform::from_xyz(safe_x, safe_y, safe_z)
     }
 
     pub fn with_rotation_safe(x: f32, y: f32, z: f32, rotation: Quat) -> Transform {
-        let safe_x = x.max(-10000.0).min(10000.0);
-        let safe_y = y.max(-1000.0).min(10000.0);
-        let safe_z = z.max(-10000.0).min(10000.0);
+        let safe_x = x.clamp(-10000.0, 10000.0);
+        let safe_y = y.clamp(-1000.0, 10000.0);
+        let safe_z = z.clamp(-10000.0, 10000.0);
         Transform::from_xyz(safe_x, safe_y, safe_z).with_rotation(rotation)
     }
 
     pub fn with_scale(x: f32, y: f32, z: f32, scale: Vec3) -> Transform {
-        let safe_x = x.max(-10000.0).min(10000.0);
-        let safe_y = y.max(-1000.0).min(10000.0);
-        let safe_z = z.max(-10000.0).min(10000.0);
+        let safe_x = x.clamp(-10000.0, 10000.0);
+        let safe_y = y.clamp(-1000.0, 10000.0);
+        let safe_z = z.clamp(-10000.0, 10000.0);
         let safe_scale = Vec3::new(
-            scale.x.max(0.001).min(1000.0),
-            scale.y.max(0.001).min(1000.0),
-            scale.z.max(0.001).min(1000.0),
+            scale.x.clamp(0.001, 1000.0),
+            scale.y.clamp(0.001, 1000.0),
+            scale.z.clamp(0.001, 1000.0),
         );
         Transform::from_xyz(safe_x, safe_y, safe_z).with_scale(safe_scale)
     }

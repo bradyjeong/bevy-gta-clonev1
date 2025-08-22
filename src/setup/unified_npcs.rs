@@ -54,22 +54,17 @@ pub fn setup_initial_npcs_unified(
                 Ok(_entity) => {
                     spawned_count += 1;
                     println!(
-                        "DEBUG: Spawned NPC at {:?} (ground: {:.2})",
-                        spawn_position, ground_height
+                        "DEBUG: Spawned NPC at {spawn_position:?} (ground: {ground_height:.2})",
                     );
                 }
                 Err(e) => {
-                    println!(
-                        "WARNING: Failed to spawn NPC at {:?}: {:?}",
-                        spawn_position, e
-                    );
+                    println!("WARNING: Failed to spawn NPC at {spawn_position:?}: {e:?}",);
                 }
             }
         }
     }
 
     println!(
-        "✅ UNIFIED NPC SETUP: Spawned {} NPCs with ground detection (attempted {} positions)",
-        spawned_count, attempts
+        "✅ UNIFIED NPC SETUP: Spawned {spawned_count} NPCs with ground detection (attempted {attempts} positions)",
     );
 }

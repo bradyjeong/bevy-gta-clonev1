@@ -43,8 +43,7 @@ pub fn validate_physics_config(
         let max_f16_vel = specs.max_forward_speed * specs.afterburner_multiplier;
         if max_f16_vel > max_vel {
             panic!(
-                "F16 config error: max_forward_speed * afterburner_multiplier ({:.1}) exceeds max_velocity ({}). Reduce speed limits.",
-                max_f16_vel, max_vel
+                "F16 config error: max_forward_speed * afterburner_multiplier ({max_f16_vel:.1}) exceeds max_velocity ({max_vel}). Reduce speed limits.",
             );
         }
 
@@ -52,10 +51,7 @@ pub fn validate_physics_config(
             || specs.pitch_rate_max > max_ang_vel
             || specs.yaw_rate_max > max_ang_vel
         {
-            panic!(
-                "F16 config error: rotation rates exceed max_angular_velocity ({})",
-                max_ang_vel
-            );
+            panic!("F16 config error: rotation rates exceed max_angular_velocity ({max_ang_vel})",);
         }
     }
 
@@ -66,8 +62,7 @@ pub fn validate_physics_config(
             .max(specs.vertical_speed);
         if max_heli_vel > max_vel {
             panic!(
-                "Helicopter config error: movement speeds ({:.1}) exceed max_velocity ({})",
-                max_heli_vel, max_vel
+                "Helicopter config error: movement speeds ({max_heli_vel:.1}) exceed max_velocity ({max_vel})",
             );
         }
 
@@ -76,8 +71,7 @@ pub fn validate_physics_config(
             || specs.roll_rate > max_ang_vel
         {
             panic!(
-                "Helicopter config error: rotation rates exceed max_angular_velocity ({})",
-                max_ang_vel
+                "Helicopter config error: rotation rates exceed max_angular_velocity ({max_ang_vel})",
             );
         }
     }

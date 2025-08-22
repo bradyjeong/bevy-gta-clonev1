@@ -1,5 +1,8 @@
 use crate::systems::effects::update_waypoint_system;
-use crate::systems::ui::{controls_ui_system, setup_fps_display, update_fps_display, setup_splash_screen, update_splash_screen, SplashScreenState};
+use crate::systems::ui::{
+    SplashScreenState, controls_ui_system, setup_fps_display, setup_splash_screen,
+    update_fps_display, update_splash_screen,
+};
 use bevy::prelude::*;
 
 pub struct UIPlugin;

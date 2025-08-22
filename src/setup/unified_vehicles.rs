@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::bundles::DynamicVehicleBundle;
 use crate::components::*;
 use crate::factories::entity_factory_unified::UnifiedEntityFactory;
@@ -150,7 +151,7 @@ fn setup_starter_vehicles_unified(
                 },
                 MovementTracker::new(validated_position, 10.0),
                 VehicleState::new(VehicleType::SuperCar),
-                Name::new(format!("StarterVehicle_{}", i)),
+                Name::new(format!("StarterVehicle_{i}")),
                 SimpleCarSpecs::default(),
             ))
             .id();
@@ -294,7 +295,7 @@ fn setup_luxury_cars_unified(
                 },
                 MovementTracker::new(validated_position, 10.0),
                 VehicleState::new(VehicleType::SuperCar),
-                Name::new(format!("LuxuryCar_{}", i)),
+                Name::new(format!("LuxuryCar_{i}")),
                 SimpleCarSpecs::default(),
             ))
             .id();

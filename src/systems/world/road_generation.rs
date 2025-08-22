@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::bundles::VisibleChildBundle;
 use crate::components::RoadEntity;
 use crate::components::*;
@@ -70,7 +71,7 @@ pub fn road_network_system(
             // Simple distance check - only remove roads that are extremely far away
             let distance = active_pos.distance(transform.translation);
             if distance > cleanup_radius {
-                println!("DEBUG: Cleaning up road entity at distance {}", distance);
+                println!("DEBUG: Cleaning up road entity at distance {distance}");
                 commands.entity(entity).despawn();
             }
         }

@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 use crate::components::{ActiveEntity, MainCamera, Player};
 use crate::game_state::GameState;
 use bevy::prelude::*;

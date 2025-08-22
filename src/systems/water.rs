@@ -1,9 +1,10 @@
+#![allow(clippy::type_complexity)]
 use crate::components::{Boat, Lake, WaterBody, Yacht};
-use bevy::render::view::visibility::VisibilityRange;
 use crate::factories::{
     MaterialFactory, RenderingBundleType, RenderingFactory, StandardRenderingPattern,
 };
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
 
 pub fn setup_lake(
@@ -200,7 +201,7 @@ pub fn yacht_movement_system(
         // Apply movement with water resistance while preserving gravity
         let drag = 0.95;
         let new_velocity = velocity.linvel * drag + acceleration * time.delta_secs() * 0.1;
-        
+
         // Preserve gravity in Y-axis (yachts can fall if lifted out of water)
         velocity.linvel = Vec3::new(
             new_velocity.x,

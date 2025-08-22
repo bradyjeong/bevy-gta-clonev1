@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::{
     ActiveEntity, AircraftFlight, ControlState, F16, Helicopter, MainRotor, PlayerControlled,
     SimpleF16Specs, SimpleHelicopterSpecs, TailRotor,
@@ -86,10 +87,11 @@ pub fn simple_f16_movement(
             // Engine on: Direct thrust control (arcade style)
             let target_forward_speed = specs.max_forward_speed * flight.throttle * boost_multiplier;
             let target_forward_velocity = transform.forward() * target_forward_speed;
-            
+
             // Add lift assistance when throttling
-            let target_linear_velocity = target_forward_velocity + transform.up() * flight.throttle * specs.lift_per_throttle;
-            
+            let target_linear_velocity = target_forward_velocity
+                + transform.up() * flight.throttle * specs.lift_per_throttle;
+
             velocity.linvel = safe_lerp(
                 velocity.linvel,
                 target_linear_velocity,
@@ -187,7 +189,7 @@ pub fn simple_helicopter_movement(
                 target_linear_velocity,
                 dt * specs.linear_lerp_factor,
             );
-            
+
             // Preserve gravity in Y-axis unless actively controlling vertical movement
             velocity.linvel = if target_linear_velocity.y.abs() > 0.1 {
                 lerped_velocity // Full control including Y when actively moving vertically

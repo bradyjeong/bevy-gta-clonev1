@@ -1,6 +1,7 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::{
-    ActiveEntity, Car, ControlState, F16, Helicopter, HumanMovement, InCar, Player, PlayerControlled,
-    VehicleControlType,
+    ActiveEntity, Car, ControlState, F16, Helicopter, HumanMovement, InCar, Player,
+    PlayerControlled, VehicleControlType,
 };
 use crate::game_state::GameState;
 use crate::systems::queue_active_transfer;
@@ -334,12 +335,19 @@ pub fn interaction_system(
                                     .with_rotation(Quat::IDENTITY),
                             )
                             .insert(RigidBody::Dynamic)
-                            .insert(Collider::capsule(Vec3::new(0.0, -0.4, 0.0), Vec3::new(0.0, 1.0, 0.0), 0.4))
+                            .insert(Collider::capsule(
+                                Vec3::new(0.0, -0.4, 0.0),
+                                Vec3::new(0.0, 1.0, 0.0),
+                                0.4,
+                            ))
                             .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z)
                             .insert(Velocity::default()) // Let Rapier apply gravity naturally
                             .insert(Sleeping::disabled()) // Keep body awake to receive gravity
                             .insert(HumanMovement::default()) // Essential for walking movement
-                            .insert(Damping { linear_damping: 1.2, angular_damping: 3.5 }) // Prevent overspin
+                            .insert(Damping {
+                                linear_damping: 1.2,
+                                angular_damping: 3.5,
+                            }) // Prevent overspin
                             .insert(Visibility::Visible);
 
                         // Transfer control components back to player
@@ -404,12 +412,19 @@ pub fn interaction_system(
                                     .with_rotation(Quat::IDENTITY),
                             )
                             .insert(RigidBody::Dynamic)
-                            .insert(Collider::capsule(Vec3::new(0.0, -0.4, 0.0), Vec3::new(0.0, 1.0, 0.0), 0.4))
+                            .insert(Collider::capsule(
+                                Vec3::new(0.0, -0.4, 0.0),
+                                Vec3::new(0.0, 1.0, 0.0),
+                                0.4,
+                            ))
                             .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z)
                             .insert(Velocity::default()) // Let Rapier apply gravity naturally
                             .insert(Sleeping::disabled()) // Keep body awake to receive gravity
                             .insert(HumanMovement::default()) // Essential for walking movement
-                            .insert(Damping { linear_damping: 1.2, angular_damping: 3.5 }) // Prevent overspin
+                            .insert(Damping {
+                                linear_damping: 1.2,
+                                angular_damping: 3.5,
+                            }) // Prevent overspin
                             .insert(Visibility::Visible);
 
                         // Transfer control components back to player

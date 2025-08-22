@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::bundles::{
     DynamicContentBundle, DynamicPhysicsBundle, VegetationBundle, VisibleChildBundle,
 };
@@ -144,7 +145,7 @@ impl UnifiedEntityFactory {
     }
 
     /// Entities are now spawned directly in world space
-
+    ///
     /// Validate position is safe (no more hard bounds, just safety check)
     pub fn validate_position(&self, position: Vec3) -> Result<Vec3, BundleError> {
         if !position.is_finite() {
@@ -618,7 +619,15 @@ impl UnifiedEntityFactory {
             Mesh3d(head_mesh),
             MeshMaterial3d(head_material),
             Transform::from_xyz(0.0, appearance.height * 0.85, 0.0),
-            VisibilityRange::abrupt(0.0, self.config.world.lod_distances.get(0).copied().unwrap_or(50.0)),
+            VisibilityRange::abrupt(
+                0.0,
+                self.config
+                    .world
+                    .lod_distances
+                    .first()
+                    .copied()
+                    .unwrap_or(50.0),
+            ),
             ChildOf(parent_entity),
         ));
 
@@ -635,7 +644,15 @@ impl UnifiedEntityFactory {
             Mesh3d(body_mesh),
             MeshMaterial3d(body_material),
             Transform::from_xyz(0.0, appearance.height * 0.5, 0.0),
-            VisibilityRange::abrupt(0.0, self.config.world.lod_distances.get(0).copied().unwrap_or(50.0)),
+            VisibilityRange::abrupt(
+                0.0,
+                self.config
+                    .world
+                    .lod_distances
+                    .first()
+                    .copied()
+                    .unwrap_or(50.0),
+            ),
             ChildOf(parent_entity),
         ));
 
@@ -749,7 +766,15 @@ impl UnifiedEntityFactory {
                 frequency: 1.0,
                 phase: 0.0,
             },
-            VisibilityRange::abrupt(0.0, self.config.world.lod_distances.get(2).copied().unwrap_or(300.0)),
+            VisibilityRange::abrupt(
+                0.0,
+                self.config
+                    .world
+                    .lod_distances
+                    .get(2)
+                    .copied()
+                    .unwrap_or(300.0),
+            ),
             ChildOf(water_entity),
         ));
 
@@ -813,7 +838,15 @@ impl UnifiedEntityFactory {
                 Mesh3d(mesh),
                 MeshMaterial3d(material_handle),
                 ExhaustFlame,
-                VisibilityRange::abrupt(0.0, self.config.world.lod_distances.get(0).copied().unwrap_or(50.0)),
+                VisibilityRange::abrupt(
+                    0.0,
+                    self.config
+                        .world
+                        .lod_distances
+                        .first()
+                        .copied()
+                        .unwrap_or(50.0),
+                ),
             ))
             .id();
 

@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use std::collections::HashMap;
@@ -106,10 +107,10 @@ fn load_save_file() -> Result<SaveGameState, String> {
     let save_path = "saves/savegame.ron";
 
     let content =
-        fs::read_to_string(save_path).map_err(|e| format!("Failed to read save file: {}", e))?;
+        fs::read_to_string(save_path).map_err(|e| format!("Failed to read save file: {e}"))?;
 
     let save_data: SaveGameState =
-        ron::from_str(&content).map_err(|e| format!("Failed to parse save file: {}", e))?;
+        ron::from_str(&content).map_err(|e| format!("Failed to parse save file: {e}"))?;
 
     Ok(save_data)
 }

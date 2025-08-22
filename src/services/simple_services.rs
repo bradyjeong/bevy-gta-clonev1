@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 /// Simplified service injection using direct Bevy resources
 /// This provides the service pattern while avoiding complex trait objects
-
+///
 /// Configuration service resource - wraps GameConfig
 #[derive(Resource)]
 pub struct ConfigService {
@@ -132,6 +132,12 @@ impl EnhancedTimingService {
 
     pub fn delta_time(&self) -> f32 {
         self.base_service.delta_time
+    }
+}
+
+impl Default for EnhancedTimingService {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::components::{ActiveEntity, NPC};
-use bevy::render::view::visibility::VisibilityRange;
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::cell::RefCell;

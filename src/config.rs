@@ -4,7 +4,7 @@ use bevy_rapier3d::prelude::*;
 
 /// CRITICAL: Centralized Game Configuration - Eliminates 470+ magic numbers
 /// All configurations have validation bounds and safety limits
-#[derive(Resource, Debug, Clone)]
+#[derive(Resource, Debug, Clone, Default)]
 pub struct GameConfig {
     // Physics Configuration
     pub physics: PhysicsConfig,
@@ -229,22 +229,6 @@ pub struct UIConfig {
     pub border_radius: f32, // 5.0 - Default border radius
 }
 
-impl Default for GameConfig {
-    fn default() -> Self {
-        Self {
-            physics: PhysicsConfig::default(),
-            world: WorldConfig::default(),
-            vehicles: VehicleConfig::default(),
-            npc: NPCConfig::default(),
-            performance: PerformanceConfig::default(),
-            audio: AudioConfig::default(),
-
-            camera: CameraConfig::default(),
-            ui: UIConfig::default(),
-        }
-    }
-}
-
 impl Default for PhysicsConfig {
     fn default() -> Self {
         Self {
@@ -308,8 +292,8 @@ impl Default for VehicleConfig {
                 horn_volume: 0.9,
             },
             helicopter: VehicleTypeConfig {
-                body_size: Vec3::new(3.0, 3.0, 12.0),       // Visual mesh size
-                collider_size: Vec3::new(2.4, 2.4, 9.6),    // 0.8x visual for GTA-style forgiving collision
+                body_size: Vec3::new(3.0, 3.0, 12.0),    // Visual mesh size
+                collider_size: Vec3::new(2.4, 2.4, 9.6), // 0.8x visual for GTA-style forgiving collision
                 max_speed: 83.0,
                 acceleration: 30.0,
                 mass: 2500.0,
@@ -320,8 +304,8 @@ impl Default for VehicleConfig {
                 horn_volume: 0.5,
             },
             f16: VehicleTypeConfig {
-                body_size: Vec3::new(15.0, 5.0, 10.0),      // Visual mesh size  
-                collider_size: Vec3::new(12.0, 4.0, 8.0),   // 0.8x visual for GTA-style forgiving collision
+                body_size: Vec3::new(15.0, 5.0, 10.0),    // Visual mesh size
+                collider_size: Vec3::new(12.0, 4.0, 8.0), // 0.8x visual for GTA-style forgiving collision
                 max_speed: 600.0,
                 acceleration: 80.0,
                 mass: 8000.0,
@@ -537,7 +521,6 @@ impl WorldConfig {
 
 impl VehicleConfig {
     pub fn validate_and_clamp(&mut self) {
-
         self.super_car.validate_and_clamp();
         self.helicopter.validate_and_clamp();
         self.f16.validate_and_clamp();

@@ -225,7 +225,7 @@ impl UnifiedPerformanceTracker {
                 self.add_alert(PerformanceAlert {
                     category,
                     severity: AlertSeverity::Warning,
-                    message: format!("{:?} system slow: {:.2}ms", category, time_ms),
+                    message: format!("{category:?} system slow: {time_ms:.2}ms"),
                     timestamp: Instant::now(),
                     value: time_ms,
                     threshold: 10.0,
@@ -243,7 +243,7 @@ impl UnifiedPerformanceTracker {
         let timing = self
             .system_timings
             .entry(system_name.to_string())
-            .or_insert(SystemTiming::default());
+            .or_default();
         timing.last_execution_time = time_ms;
         timing.execution_count += 1;
         timing.total_time += time_ms as f64;
@@ -335,7 +335,7 @@ impl UnifiedPerformanceTracker {
             alerts_to_add.push(PerformanceAlert {
                 category: PerformanceCategory::System,
                 severity: AlertSeverity::Warning,
-                message: format!("Frame spike detected: {:.2}ms", frame_time_ms),
+                message: format!("Frame spike detected: {frame_time_ms:.2}ms"),
                 timestamp: Instant::now(),
                 value: frame_time_ms,
                 threshold: frame_spike_threshold,
@@ -351,7 +351,7 @@ impl UnifiedPerformanceTracker {
                 alerts_to_add.push(PerformanceAlert {
                     category: PerformanceCategory::System,
                     severity: AlertSeverity::Critical,
-                    message: format!("Sustained low FPS: {:.1} (target: {:.1})", fps, target_fps),
+                    message: format!("Sustained low FPS: {fps:.1} (target: {target_fps:.1})"),
                     timestamp: Instant::now(),
                     value: fps,
                     threshold: target_fps * 0.8,
@@ -396,7 +396,7 @@ impl UnifiedPerformanceTracker {
             self.add_alert(PerformanceAlert {
                 category: PerformanceCategory::System,
                 severity: AlertSeverity::Warning,
-                message: format!("High memory usage: {:.1} GB", memory_pressure),
+                message: format!("High memory usage: {memory_pressure:.1} GB"),
                 timestamp: Instant::now(),
                 value: memory_pressure,
                 threshold: 2.0,
@@ -508,7 +508,7 @@ impl UnifiedPerformanceTracker {
         if !self.frame_analyzer.fps_history.is_empty() {
             let avg_fps = self.frame_analyzer.fps_history.iter().sum::<f32>()
                 / self.frame_analyzer.fps_history.len() as f32;
-            report.push_str(&format!("Frame Analysis:\n"));
+            report.push_str("Frame Analysis:\n");
             report.push_str(&format!(
                 "   Current FPS: {:.1} | Target: {:.1}\n",
                 self.frame_analyzer.fps_history.back().unwrap_or(&0.0),
@@ -559,7 +559,7 @@ impl UnifiedPerformanceTracker {
         }
 
         // Memory usage
-        report.push_str(&format!("\n💾 Memory Usage:\n"));
+        report.push_str("\n💾 Memory Usage:\n");
         report.push_str(&format!(
             "   Total: {:.1} GB | Peak: {:.1} GB\n",
             self.memory_tracker.memory_pressure,
@@ -587,7 +587,7 @@ impl UnifiedPerformanceTracker {
         ));
 
         // Entity statistics
-        report.push_str(&format!("\nEntity Statistics:\n"));
+        report.push_str("\nEntity Statistics:\n");
         report.push_str(&format!(
             "   Total: {} | Active: {} | Culled: {}\n",
             self.entity_counters.total_entities,
@@ -606,10 +606,8 @@ impl UnifiedPerformanceTracker {
                     AlertSeverity::Emergency => "EMRG",
                 };
                 report.push_str(&format!(
-                    "   {} {}: {}\n",
-                    severity_icon,
-                    format!("{:?}", alert.category),
-                    alert.message
+                    "   {} {:?}: {}\n",
+                    severity_icon, alert.category, alert.message
                 ));
             }
         }
@@ -652,7 +650,7 @@ pub fn unified_performance_monitoring_system(
     // Generate periodic reports
     if tracker.last_report.elapsed() > tracker.report_interval {
         let report = tracker.generate_report();
-        println!("{}", report);
+        println!("{report}");
         tracker.last_report = Instant::now();
     }
 }

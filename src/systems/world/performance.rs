@@ -1,7 +1,7 @@
 use crate::components::PerformanceStats;
-use bevy::render::view::visibility::VisibilityRange;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 
 pub fn performance_monitoring_system(
     time: Res<Time>,

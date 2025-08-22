@@ -52,9 +52,9 @@ fn debug_unified_world_activity(
             .count();
 
         println!("UNIFIED WORLD STATUS:");
-        println!("  Total chunks: {}", world_manager.chunks.len());
-        println!("  Loaded chunks: {}", loaded_chunks);
-        println!("  Loading chunks: {}", loading_chunks);
+        println!("  Total chunks: {}", world_manager.chunks.len()); // expression; keep as-is
+        println!("  Loaded chunks: {loaded_chunks}");
+        println!("  Loading chunks: {loading_chunks}");
         println!(
             "  Roads generated: {}",
             world_manager.road_network.roads.len()

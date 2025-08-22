@@ -29,7 +29,7 @@ pub fn update_fps_display(
     if let Ok(mut text) = fps_text_query.single_mut() {
         if let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(fps) = fps_diag.smoothed() {
-                text.0 = format!("FPS: {:.0}", fps);
+                text.0 = format!("FPS: {fps:.0}");
             }
         }
     }

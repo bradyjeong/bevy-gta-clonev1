@@ -220,7 +220,7 @@ impl Default for SimpleCarSpecs {
             angular_lerp_factor: 6.0_f32.clamp(1.0, 20.0), // Smooth rotation response
             emergency_brake_linear: 0.1_f32.clamp(0.01, 1.0), // Multiplier - keep some movement
             emergency_brake_angular: 0.5_f32.clamp(0.01, 1.0), // Multiplier
-            drag_factor: 0.98_f32.clamp(0.9, 1.0), // Momentum decay per second when no input
+            drag_factor: 0.98_f32.clamp(0.9, 1.0),  // Momentum decay per second when no input
         }
     }
 }
@@ -251,7 +251,7 @@ impl Default for SimpleHelicopterSpecs {
             roll_rate: 1.0_f32.clamp(0.1, 5.0),        // rad/s
             angular_lerp_factor: 4.0_f32.clamp(1.0, 20.0), // Smooth control response
             linear_lerp_factor: 6.0_f32.clamp(1.0, 20.0), // Smooth movement response
-            drag_factor: 0.99_f32.clamp(0.9, 1.0), // Momentum decay per second when no input
+            drag_factor: 0.99_f32.clamp(0.9, 1.0),     // Momentum decay per second when no input
             main_rotor_rpm: 20.0_f32.clamp(1.0, 100.0), // rad/s - main rotor speed
             tail_rotor_rpm: 35.0_f32.clamp(1.0, 100.0), // rad/s - tail rotor speed
         }

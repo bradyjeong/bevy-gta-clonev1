@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::ControlState;
 use crate::components::{ActiveEntity, Car, SimpleCarSpecs};
 use crate::config::GameConfig;
@@ -41,23 +42,23 @@ pub fn car_movement(
             }
 
             // Steering (only when moving)
-            if control_state.is_accelerating() || control_state.is_braking() {
-                if control_state.steering.abs() > 0.1 {
-                    target_angular_velocity.y = control_state.steering * specs.rotation_speed;
-                }
+            if (control_state.is_accelerating() || control_state.is_braking())
+                && control_state.steering.abs() > 0.1
+            {
+                target_angular_velocity.y = control_state.steering * specs.rotation_speed;
             }
         }
 
         // Apply movement with momentum decay when no input (GTA-style)
         let dt = PhysicsUtilities::stable_dt(&time);
-        
+
         if has_input {
             let lerped_velocity = safe_lerp(
                 velocity.linvel,
                 target_linear_velocity,
                 dt * specs.linear_lerp_factor,
             );
-            
+
             // Preserve gravity in Y-axis for cars (they should fall off cliffs)
             velocity.linvel = Vec3::new(
                 lerped_velocity.x,

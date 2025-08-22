@@ -130,7 +130,7 @@ pub use safe_active_entity::{
 };
 
 // Validation systems
-pub use validation::{MeshColliderConfig, ColliderType, validate_vehicle_consistency};
+pub use validation::{ColliderType, MeshColliderConfig, validate_vehicle_consistency};
 
 // Floating origin system - REMOVED: Finite world doesn't need coordinate translation
 

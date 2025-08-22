@@ -67,7 +67,7 @@ fn format_key_name(key: KeyCode) -> String {
         KeyCode::F4 => "F4".to_string(),
         // Extract just the key part from debug format (removes "Key" prefix)
         _ => {
-            let debug_str = format!("{:?}", key);
+            let debug_str = format!("{key:?}");
             if debug_str.starts_with("Key") {
                 debug_str
                     .strip_prefix("Key")

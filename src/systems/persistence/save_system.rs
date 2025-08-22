@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use chrono::{DateTime, Utc};
@@ -32,17 +33,17 @@ impl From<Transform> for SerializableTransform {
     }
 }
 
-impl Into<Transform> for SerializableTransform {
-    fn into(self) -> Transform {
+impl From<SerializableTransform> for Transform {
+    fn from(val: SerializableTransform) -> Self {
         Transform {
-            translation: Vec3::from_array(self.translation),
+            translation: Vec3::from_array(val.translation),
             rotation: Quat::from_xyzw(
-                self.rotation[0],
-                self.rotation[1],
-                self.rotation[2],
-                self.rotation[3],
+                val.rotation[0],
+                val.rotation[1],
+                val.rotation[2],
+                val.rotation[3],
             ),
-            scale: Vec3::from_array(self.scale),
+            scale: Vec3::from_array(val.scale),
         }
     }
 }
@@ -62,11 +63,11 @@ impl From<Velocity> for SerializableVelocity {
     }
 }
 
-impl Into<Velocity> for SerializableVelocity {
-    fn into(self) -> Velocity {
+impl From<SerializableVelocity> for Velocity {
+    fn from(val: SerializableVelocity) -> Self {
         Velocity {
-            linvel: Vec3::from_array(self.linvel),
-            angvel: Vec3::from_array(self.angvel),
+            linvel: Vec3::from_array(val.linvel),
+            angvel: Vec3::from_array(val.angvel),
         }
     }
 }
@@ -117,15 +118,15 @@ impl From<VehicleState> for SerializableVehicleState {
     }
 }
 
-impl Into<VehicleState> for SerializableVehicleState {
-    fn into(self) -> VehicleState {
+impl From<SerializableVehicleState> for VehicleState {
+    fn from(val: SerializableVehicleState) -> Self {
         VehicleState {
-            vehicle_type: self.vehicle_type,
-            color: Color::srgba(self.color[0], self.color[1], self.color[2], self.color[3]),
-            max_speed: self.max_speed,
-            acceleration: self.acceleration,
-            damage: self.damage,
-            fuel: self.fuel,
+            vehicle_type: val.vehicle_type,
+            color: Color::srgba(val.color[0], val.color[1], val.color[2], val.color[3]),
+            max_speed: val.max_speed,
+            acceleration: val.acceleration,
+            damage: val.damage,
+            fuel: val.fuel,
             current_lod: crate::components::VehicleLOD::StateOnly,
             last_lod_check: 0.0,
         }
@@ -294,7 +295,7 @@ pub fn save_game_system(
             velocity: (*velocity).into(),
             is_active,
             vehicle_state: vehicle_state.clone().into(),
-            aircraft_flight_data: Some((&*aircraft_flight).into()),
+            aircraft_flight_data: Some((aircraft_flight).into()),
         });
     }
 
@@ -358,7 +359,7 @@ fn backup_saves() {
 
     // Shift existing backups
     for i in (1..MAX_BACKUPS).rev() {
-        let old_backup = format!("saves/savegame.backup.{}.ron", i);
+        let old_backup = format!("saves/savegame.backup.{i}.ron");
         let new_backup = format!("saves/savegame.backup.{}.ron", i + 1);
         let _ = fs::rename(&old_backup, &new_backup);
     }

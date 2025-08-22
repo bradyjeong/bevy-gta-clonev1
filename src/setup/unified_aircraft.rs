@@ -80,7 +80,7 @@ fn spawn_aircraft_unified(
     // Calculate spawn position (aircraft spawn at appropriate height above ground)
     let spawn_height = match aircraft_type {
         AircraftType::Helicopter => 1.2, // Helicopter collider half-height (1.2) + small margin
-        AircraftType::F16 => 1.0,        // F16 cuboid half-height (1.0) to ensure bottom touches ground
+        AircraftType::F16 => 1.0, // F16 cuboid half-height (1.0) to ensure bottom touches ground
     };
 
     let spawn_position = Vec3::new(

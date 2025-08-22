@@ -103,9 +103,9 @@ impl MeshFactory {
         depth: f32,
     ) -> Handle<Mesh> {
         // Input validation for critical safeguards
-        let safe_width = width.max(0.1).min(1000.0);
-        let safe_height = height.max(0.1).min(1000.0);
-        let safe_depth = depth.max(0.1).min(1000.0);
+        let safe_width = width.clamp(0.1, 1000.0);
+        let safe_height = height.clamp(0.1, 1000.0);
+        let safe_depth = depth.clamp(0.1, 1000.0);
         meshes.add(Cuboid::new(safe_width, safe_height, safe_depth))
     }
 
@@ -126,8 +126,8 @@ impl MeshFactory {
         width: f32,
         length: f32,
     ) -> Handle<Mesh> {
-        let safe_width = width.max(0.1).min(100.0);
-        let safe_length = length.max(0.1).min(1000.0);
+        let safe_width = width.clamp(0.1, 100.0);
+        let safe_length = length.clamp(0.1, 1000.0);
         meshes.add(Cuboid::new(safe_width, 0.1, safe_length))
     }
 
@@ -136,8 +136,8 @@ impl MeshFactory {
         width: f32,
         length: f32,
     ) -> Handle<Mesh> {
-        let safe_width = width.max(0.1).min(10.0);
-        let safe_length = length.max(0.1).min(100.0);
+        let safe_width = width.clamp(0.1, 10.0);
+        let safe_length = length.clamp(0.1, 100.0);
         meshes.add(Cuboid::new(safe_width, 0.11, safe_length))
     }
 
@@ -147,13 +147,13 @@ impl MeshFactory {
         radius: f32,
         depth: f32,
     ) -> Handle<Mesh> {
-        let safe_radius = radius.max(1.0).min(1000.0);
-        let safe_depth = depth.max(0.1).min(100.0);
+        let safe_radius = radius.clamp(1.0, 1000.0);
+        let safe_depth = depth.clamp(0.1, 100.0);
         meshes.add(Cylinder::new(safe_radius, safe_depth))
     }
 
     pub fn create_water_plane(meshes: &mut ResMut<Assets<Mesh>>, size: f32) -> Handle<Mesh> {
-        let safe_size = size.max(1.0).min(10000.0);
+        let safe_size = size.clamp(1.0, 10000.0);
         meshes.add(Plane3d::default().mesh().size(safe_size, safe_size))
     }
 
@@ -163,7 +163,7 @@ impl MeshFactory {
 
     // NPC COMPONENTS - Character parts
     pub fn create_npc_head(meshes: &mut ResMut<Assets<Mesh>>, build_factor: f32) -> Handle<Mesh> {
-        let safe_build = build_factor.max(0.1).min(5.0);
+        let safe_build = build_factor.clamp(0.1, 5.0);
         meshes.add(Sphere::new(0.12 * safe_build))
     }
 
@@ -172,8 +172,8 @@ impl MeshFactory {
         build: f32,
         height: f32,
     ) -> Handle<Mesh> {
-        let safe_build = build.max(0.1).min(5.0);
-        let safe_height = height.max(0.1).min(10.0);
+        let safe_build = build.clamp(0.1, 5.0);
+        let safe_height = height.clamp(0.1, 10.0);
         meshes.add(Cuboid::new(
             0.4 * safe_build,
             0.6 * safe_height,
@@ -186,8 +186,8 @@ impl MeshFactory {
         radius: f32,
         length: f32,
     ) -> Handle<Mesh> {
-        let safe_radius = radius.max(0.01).min(1.0);
-        let safe_length = length.max(0.1).min(5.0);
+        let safe_radius = radius.clamp(0.01, 1.0);
+        let safe_length = length.clamp(0.1, 5.0);
         meshes.add(Capsule3d::new(safe_radius, safe_length))
     }
 
@@ -196,8 +196,8 @@ impl MeshFactory {
         build: f32,
         height: f32,
     ) -> Handle<Mesh> {
-        let safe_build = build.max(0.1).min(5.0);
-        let safe_height = height.max(0.1).min(10.0);
+        let safe_build = build.clamp(0.1, 5.0);
+        let safe_height = height.clamp(0.1, 10.0);
         meshes.add(Capsule3d::new(0.3 * safe_build, safe_height * 0.8))
     }
 
@@ -206,8 +206,8 @@ impl MeshFactory {
         build: f32,
         height: f32,
     ) -> Handle<Mesh> {
-        let safe_build = build.max(0.1).min(5.0);
-        let safe_height = height.max(0.1).min(10.0);
+        let safe_build = build.clamp(0.1, 5.0);
+        let safe_height = height.clamp(0.1, 10.0);
         meshes.add(Capsule3d::new(0.25 * safe_build, safe_height))
     }
 
@@ -225,12 +225,12 @@ impl MeshFactory {
     }
 
     pub fn create_star(meshes: &mut ResMut<Assets<Mesh>>, size: f32) -> Handle<Mesh> {
-        let safe_size = size.max(0.1).min(100.0);
+        let safe_size = size.clamp(0.1, 100.0);
         meshes.add(Sphere::new(safe_size))
     }
 
     pub fn create_cloud(meshes: &mut ResMut<Assets<Mesh>>, scale: f32) -> Handle<Mesh> {
-        let safe_scale = scale.max(1.0).min(1000.0);
+        let safe_scale = scale.clamp(1.0, 1000.0);
         meshes.add(Sphere::new(safe_scale))
     }
 
@@ -246,14 +246,14 @@ impl MeshFactory {
         height: f32,
         depth: f32,
     ) -> Handle<Mesh> {
-        let safe_width = width.max(0.001).min(10000.0);
-        let safe_height = height.max(0.001).min(10000.0);
-        let safe_depth = depth.max(0.001).min(10000.0);
+        let safe_width = width.clamp(0.001, 10000.0);
+        let safe_height = height.clamp(0.001, 10000.0);
+        let safe_depth = depth.clamp(0.001, 10000.0);
         meshes.add(Cuboid::new(safe_width, safe_height, safe_depth))
     }
 
     pub fn create_custom_sphere(meshes: &mut ResMut<Assets<Mesh>>, radius: f32) -> Handle<Mesh> {
-        let safe_radius = radius.max(0.001).min(5000.0);
+        let safe_radius = radius.clamp(0.001, 5000.0);
         meshes.add(Sphere::new(safe_radius))
     }
 
@@ -262,8 +262,8 @@ impl MeshFactory {
         radius: f32,
         height: f32,
     ) -> Handle<Mesh> {
-        let safe_radius = radius.max(0.001).min(1000.0);
-        let safe_height = height.max(0.001).min(10000.0);
+        let safe_radius = radius.clamp(0.001, 1000.0);
+        let safe_height = height.clamp(0.001, 10000.0);
         meshes.add(Cylinder::new(safe_radius, safe_height))
     }
 
@@ -272,8 +272,8 @@ impl MeshFactory {
         radius: f32,
         length: f32,
     ) -> Handle<Mesh> {
-        let safe_radius = radius.max(0.001).min(100.0);
-        let safe_length = length.max(0.001).min(1000.0);
+        let safe_radius = radius.clamp(0.001, 100.0);
+        let safe_length = length.clamp(0.001, 1000.0);
         meshes.add(Capsule3d::new(safe_radius, safe_length))
     }
 

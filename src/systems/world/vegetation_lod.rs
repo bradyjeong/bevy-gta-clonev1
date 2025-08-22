@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 use crate::components::*;
 use crate::services::distance_cache::{DistanceCache, get_cached_distance};
 use bevy::prelude::*;
@@ -183,7 +184,7 @@ pub fn vegetation_lod_performance_monitor(
     // Only log every 5 seconds to reduce spam
     use std::time::{Duration, Instant};
     thread_local! {
-        static LAST_LOG: std::cell::Cell<Option<Instant>> = std::cell::Cell::new(None);
+        static LAST_LOG: std::cell::Cell<Option<Instant>> = const { std::cell::Cell::new(None) };
     }
 
     if cfg!(feature = "debug-ui") {

@@ -47,7 +47,7 @@ impl GroundDetectionService {
             let ground_height = ray_origin.y - intersection;
 
             // Validate ground height is reasonable
-            if ground_height >= MIN_GROUND_HEIGHT && ground_height <= MAX_GROUND_HEIGHT {
+            if (MIN_GROUND_HEIGHT..=MAX_GROUND_HEIGHT).contains(&ground_height) {
                 return ground_height;
             }
         }

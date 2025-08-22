@@ -222,7 +222,9 @@ impl Cullable {
 }
 
 // Helper function to convert Cullable distances to VisibilityRange
-pub fn cullable_to_visibility_range(max_distance: f32) -> bevy::render::view::visibility::VisibilityRange {
+pub fn cullable_to_visibility_range(
+    max_distance: f32,
+) -> bevy::render::view::visibility::VisibilityRange {
     use bevy::render::view::visibility::VisibilityRange;
     VisibilityRange::abrupt(0.0, max_distance)
 }
@@ -314,21 +316,11 @@ impl Default for PerformanceStats {
 }
 
 // Mesh caching components
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct MeshCache {
     pub road_meshes: std::collections::HashMap<String, Handle<Mesh>>,
     pub npc_body_meshes: std::collections::HashMap<String, Handle<Mesh>>,
     pub intersection_meshes: std::collections::HashMap<String, Handle<Mesh>>,
-}
-
-impl Default for MeshCache {
-    fn default() -> Self {
-        Self {
-            road_meshes: std::collections::HashMap::new(),
-            npc_body_meshes: std::collections::HashMap::new(),
-            intersection_meshes: std::collections::HashMap::new(),
-        }
-    }
 }
 
 // Entity limit tracking

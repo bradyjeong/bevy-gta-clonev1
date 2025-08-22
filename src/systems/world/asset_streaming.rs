@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::ActiveEntity;
+use bevy::prelude::*;
 
 /// Minimal asset streaming system for memory management
 /// This handles loading/unloading heavy assets, not visibility (Bevy handles that)
@@ -40,7 +40,9 @@ pub fn asset_streaming_system(
     let current_time = time.elapsed_secs();
     *operations = 0;
 
-    let Ok(active_transform) = active_query.single() else { return };
+    let Ok(active_transform) = active_query.single() else {
+        return;
+    };
     let player_pos = active_transform.translation;
 
     for (entity, transform, mut streamable) in streamable_query.iter_mut() {
@@ -60,13 +62,17 @@ pub fn asset_streaming_system(
         // Unload assets beyond streaming distance
         if distance > settings.unload_distance {
             // Remove heavy components but keep entity for state tracking
-            commands.entity(entity)
+            commands
+                .entity(entity)
                 .remove::<Mesh3d>()
                 .remove::<MeshMaterial3d<StandardMaterial>>()
                 .remove::<bevy_rapier3d::prelude::Collider>();
-            
+
             *operations += 1;
-            info!("Unloaded heavy assets for entity {:?} at {}m distance", entity, distance);
+            info!(
+                "Unloaded heavy assets for entity {:?} at {}m distance",
+                entity, distance
+            );
         }
     }
 }
@@ -82,8 +88,10 @@ pub fn asset_loading_system(
     mut operations: Local<usize>,
 ) {
     let _current_time = time.elapsed_secs();
-    
-    let Ok(active_transform) = active_query.single() else { return };
+
+    let Ok(active_transform) = active_query.single() else {
+        return;
+    };
     let player_pos = active_transform.translation;
 
     for (entity, transform, _streamable) in reload_query.iter() {
@@ -97,7 +105,10 @@ pub fn asset_loading_system(
         if distance < settings.max_loaded_distance {
             // This would need to be integrated with your entity factories
             // to restore the original mesh/material/collider components
-            info!("Should reload assets for entity {:?} at {}m distance", entity, distance);
+            info!(
+                "Should reload assets for entity {:?} at {}m distance",
+                entity, distance
+            );
             *operations += 1;
         }
     }

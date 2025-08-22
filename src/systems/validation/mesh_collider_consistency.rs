@@ -1,23 +1,26 @@
+use crate::config::*;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::config::*;
 
 /// Mesh-Collider Consistency System
 /// Ensures visual meshes properly align with physics colliders
 /// Following AGENT.md simplicity principles with automated validation
-
+///
 /// Configuration for mesh-collider relationship
 #[derive(Debug, Clone)]
 pub struct MeshColliderConfig {
     pub collider_size: Vec3,
-    pub visual_scale: f32,  // Multiplier for visual size (typically 1.5-2.0)
+    pub visual_scale: f32, // Multiplier for visual size (typically 1.5-2.0)
     pub collider_type: ColliderType,
 }
 
 #[derive(Debug, Clone)]
 pub enum ColliderType {
     Cuboid,
-    Capsule { radius_scale: f32, height_scale: f32 },
+    Capsule {
+        radius_scale: f32,
+        height_scale: f32,
+    },
 }
 
 impl MeshColliderConfig {
@@ -43,21 +46,27 @@ impl MeshColliderConfig {
     /// Create matching mesh and collider pair
     pub fn create_pair(&self, meshes: &mut ResMut<Assets<Mesh>>) -> (Handle<Mesh>, Collider) {
         let visual_size = self.collider_size * self.visual_scale;
-        
+
         match self.collider_type {
             ColliderType::Cuboid => {
                 let mesh = meshes.add(Cuboid::new(visual_size.x, visual_size.y, visual_size.z));
                 let collider = Collider::cuboid(
                     self.collider_size.x / 2.0,
-                    self.collider_size.y / 2.0, 
-                    self.collider_size.z / 2.0
+                    self.collider_size.y / 2.0,
+                    self.collider_size.z / 2.0,
                 );
                 (mesh, collider)
-            },
-            ColliderType::Capsule { radius_scale, height_scale } => {
+            }
+            ColliderType::Capsule {
+                radius_scale,
+                height_scale,
+            } => {
                 let radius = self.collider_size.x * radius_scale;
                 let height = self.collider_size.z * height_scale;
-                let mesh = meshes.add(Capsule3d::new(radius * self.visual_scale, height * self.visual_scale));
+                let mesh = meshes.add(Capsule3d::new(
+                    radius * self.visual_scale,
+                    height * self.visual_scale,
+                ));
                 let collider = Collider::capsule_z(radius, height / 2.0);
                 (mesh, collider)
             }
@@ -70,16 +79,16 @@ impl MeshColliderConfig {
         if self.collider_size.min_element() < config.physics.min_collider_size {
             return Err(format!("Collider too small: {:?}", self.collider_size));
         }
-        
+
         if self.collider_size.max_element() > config.physics.max_collider_size {
             return Err(format!("Collider too large: {:?}", self.collider_size));
         }
-        
+
         // Check visual scale reasonableness
         if self.visual_scale < 0.5 || self.visual_scale > 3.0 {
             return Err(format!("Visual scale unrealistic: {}", self.visual_scale));
         }
-        
+
         Ok(())
     }
 }
@@ -88,32 +97,43 @@ impl MeshColliderConfig {
 pub fn validate_vehicle_consistency(config: Res<GameConfig>) {
     let vehicles = [
         ("SuperCar", &config.vehicles.super_car),
-        ("Helicopter", &config.vehicles.helicopter), 
+        ("Helicopter", &config.vehicles.helicopter),
         ("F16", &config.vehicles.f16),
     ];
-    
+
     for (name, vehicle_config) in vehicles {
         let collider_size = vehicle_config.collider_size;
         let body_size = vehicle_config.body_size;
-        
+
         // Check if collider is reasonable fraction of mesh (GTA-style: collider < mesh)
         let ratio = collider_size / body_size;
-        
+
         if ratio.min_element() < 0.5 {
-            warn!("Vehicle {}: collider too small! Body: {:?}, Collider: {:?}", 
-                  name, body_size, collider_size);
+            warn!(
+                "Vehicle {}: collider too small! Body: {:?}, Collider: {:?}",
+                name, body_size, collider_size
+            );
         }
-        
+
         if ratio.max_element() > 1.0 {
-            warn!("Vehicle {}: collider larger than mesh! Ratio: {:?}", name, ratio);
+            warn!(
+                "Vehicle {}: collider larger than mesh! Ratio: {:?}",
+                name, ratio
+            );
         }
-        
+
         // Check for GTA-style forgiving collision (0.7-0.9x)
         let avg_ratio = (ratio.x + ratio.y + ratio.z) / 3.0;
-        if avg_ratio >= 0.7 && avg_ratio <= 0.9 {
-            info!("Vehicle {}: GTA-style forgiving collision OK ({:.1}x)", name, avg_ratio);
+        if (0.7..=0.9).contains(&avg_ratio) {
+            info!(
+                "Vehicle {}: GTA-style forgiving collision OK ({:.1}x)",
+                name, avg_ratio
+            );
         } else {
-            warn!("Vehicle {}: collision ratio not GTA-style! Average: {:.2}x (should be 0.7-0.9x)", name, avg_ratio);
+            warn!(
+                "Vehicle {}: collision ratio not GTA-style! Average: {:.2}x (should be 0.7-0.9x)",
+                name, avg_ratio
+            );
         }
     }
 }
@@ -123,13 +143,19 @@ pub fn validate_vehicle_consistency(config: Res<GameConfig>) {
 pub fn debug_render_colliders(
     mut gizmos: Gizmos,
     query: Query<(&Transform, &Collider), With<crate::components::Player>>,
-    vehicle_query: Query<(&Transform, &Collider), (With<crate::components::VehicleBody>, Without<crate::components::Player>)>,
+    vehicle_query: Query<
+        (&Transform, &Collider),
+        (
+            With<crate::components::VehicleBody>,
+            Without<crate::components::Player>,
+        ),
+    >,
 ) {
     // Draw player collider in green
     for (transform, collider) in query.iter() {
         draw_collider_gizmo(&mut gizmos, transform, collider, Color::srgb(0.0, 1.0, 0.0));
     }
-    
+
     // Draw vehicle colliders in red
     for (transform, collider) in vehicle_query.iter() {
         draw_collider_gizmo(&mut gizmos, transform, collider, Color::srgb(1.0, 0.0, 0.0));
@@ -137,12 +163,21 @@ pub fn debug_render_colliders(
 }
 
 #[cfg(feature = "debug-ui")]
-fn draw_collider_gizmo(gizmos: &mut Gizmos, transform: &Transform, collider: &Collider, color: Color) {
+fn draw_collider_gizmo(
+    gizmos: &mut Gizmos,
+    transform: &Transform,
+    collider: &Collider,
+    color: Color,
+) {
     match collider.shape() {
         bevy_rapier3d::prelude::ColliderShape::Cuboid(cuboid) => {
-            let size = Vec3::new(cuboid.half_extents.x * 2.0, cuboid.half_extents.y * 2.0, cuboid.half_extents.z * 2.0);
+            let size = Vec3::new(
+                cuboid.half_extents.x * 2.0,
+                cuboid.half_extents.y * 2.0,
+                cuboid.half_extents.z * 2.0,
+            );
             gizmos.cuboid(*transform, color);
-        },
+        }
         bevy_rapier3d::prelude::ColliderShape::Capsule(capsule) => {
             // Draw capsule as cylinder wireframe
             gizmos.cylinder(
@@ -150,9 +185,9 @@ fn draw_collider_gizmo(gizmos: &mut Gizmos, transform: &Transform, collider: &Co
                 transform.rotation,
                 capsule.half_height * 2.0,
                 capsule.radius,
-                color
+                color,
             );
-        },
+        }
         _ => {
             // Draw generic sphere for other shapes
             gizmos.sphere(transform.translation, transform.rotation, 1.0, color);
@@ -164,17 +199,26 @@ fn draw_collider_gizmo(gizmos: &mut Gizmos, transform: &Transform, collider: &Co
 pub struct ConsistentVehicleFactory;
 
 impl ConsistentVehicleFactory {
-    pub fn create_super_car(config: &VehicleTypeConfig, meshes: &mut ResMut<Assets<Mesh>>) -> (Handle<Mesh>, Collider) {
+    pub fn create_super_car(
+        config: &VehicleTypeConfig,
+        meshes: &mut ResMut<Assets<Mesh>>,
+    ) -> (Handle<Mesh>, Collider) {
         let mesh_config = MeshColliderConfig::new_cuboid(config.collider_size * 2.0, 1.0);
         mesh_config.create_pair(meshes)
     }
-    
-    pub fn create_helicopter(config: &VehicleTypeConfig, meshes: &mut ResMut<Assets<Mesh>>) -> (Handle<Mesh>, Collider) {
+
+    pub fn create_helicopter(
+        config: &VehicleTypeConfig,
+        meshes: &mut ResMut<Assets<Mesh>>,
+    ) -> (Handle<Mesh>, Collider) {
         let mesh_config = MeshColliderConfig::new_cuboid(config.collider_size * 2.0, 1.0);
         mesh_config.create_pair(meshes)
     }
-    
-    pub fn create_f16(config: &VehicleTypeConfig, meshes: &mut ResMut<Assets<Mesh>>) -> (Handle<Mesh>, Collider) {
+
+    pub fn create_f16(
+        config: &VehicleTypeConfig,
+        meshes: &mut ResMut<Assets<Mesh>>,
+    ) -> (Handle<Mesh>, Collider) {
         let mesh_config = MeshColliderConfig::new_capsule(config.collider_size * 2.0, 1.0);
         mesh_config.create_pair(meshes)
     }

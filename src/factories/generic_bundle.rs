@@ -23,7 +23,7 @@ pub enum ParticleEffectType {
 
 /// CRITICAL: Generic Bundle System - Trait-based bundle creation with type safety
 /// Eliminates 200+ duplicate bundle patterns with compile-time validation
-
+///
 /// Core trait for bundle specifications
 pub trait BundleSpec: Send + Sync + 'static {
     type Bundle: Bundle;
@@ -70,8 +70,7 @@ impl std::fmt::Display for BundleError {
             } => {
                 write!(
                     f,
-                    "Position {:?} is out of bounds (max: {})",
-                    position, max_coord
+                    "Position {position:?} is out of bounds (max: {max_coord})",
                 )
             }
             BundleError::InvalidSize {
@@ -81,8 +80,7 @@ impl std::fmt::Display for BundleError {
             } => {
                 write!(
                     f,
-                    "Size {:?} is invalid (min: {}, max: {})",
-                    size, min_size, max_size
+                    "Size {size:?} is invalid (min: {min_size}, max: {max_size})",
                 )
             }
             BundleError::InvalidMass {
@@ -92,8 +90,7 @@ impl std::fmt::Display for BundleError {
             } => {
                 write!(
                     f,
-                    "Mass {} is invalid (min: {}, max: {})",
-                    mass, min_mass, max_mass
+                    "Mass {mass} is invalid (min: {min_mass}, max: {max_mass})",
                 )
             }
             BundleError::InvalidVelocity {
@@ -102,12 +99,11 @@ impl std::fmt::Display for BundleError {
             } => {
                 write!(
                     f,
-                    "Velocity {} exceeds maximum (max: {})",
-                    velocity, max_velocity
+                    "Velocity {velocity} exceeds maximum (max: {max_velocity})",
                 )
             }
             BundleError::InvalidEntityType { entity_type } => {
-                write!(f, "Invalid entity type: {}", entity_type)
+                write!(f, "Invalid entity type: {entity_type}")
             }
         }
     }
@@ -192,18 +188,10 @@ impl BundleSpec for VehicleBundleSpec {
                 linear_damping: vehicle_config.linear_damping,
                 angular_damping: vehicle_config.angular_damping,
             },
-            visibility_range: if self.include_visibility {
-                VisibilityRange {
-                    start_margin: 0.0..0.0,
-                    end_margin: 450.0..500.0,
-                    use_aabb: false,
-                }
-            } else {
-                VisibilityRange {
-                    start_margin: 0.0..0.0,
-                    end_margin: 450.0..500.0,
-                    use_aabb: false,
-                }
+            visibility_range: VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..500.0,
+                use_aabb: false,
             },
         }
     }

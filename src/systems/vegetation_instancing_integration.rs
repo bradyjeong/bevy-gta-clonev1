@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 use crate::components::*;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
@@ -6,7 +7,10 @@ use bevy::render::view::visibility::VisibilityRange;
 /// This system would be called by your main vegetation spawning system
 pub fn integrate_vegetation_with_instancing_system(
     mut commands: Commands,
-    vegetation_query: Query<(Entity, &Transform), (With<VisibilityRange>, Without<VegetationBatchable>)>,
+    vegetation_query: Query<
+        (Entity, &Transform),
+        (With<VisibilityRange>, Without<VegetationBatchable>),
+    >,
     _frame_counter: Res<FrameCounter>,
 ) {
     // Convert existing vegetation entities to use instancing
@@ -73,7 +77,7 @@ pub fn spawn_test_vegetation_system(
 
         commands
             .spawn(InstancedVegetationBundle::new(
-                &format!("TestVegetation_{}", i),
+                &format!("TestVegetation_{i}"),
                 Transform::from_translation(Vec3::new(x, y, z)),
                 vegetation_type,
             ))

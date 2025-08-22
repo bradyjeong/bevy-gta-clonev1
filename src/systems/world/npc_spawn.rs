@@ -1,6 +1,5 @@
 use crate::components::{
-    NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorType, NPCGender, NPCLOD, NPCState,
-    NPCType,
+    NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorType, NPCGender, NPCLOD, NPCState, NPCType,
 };
 use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
@@ -102,10 +101,7 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
         ))
         .id();
 
-    println!(
-        "DEBUG: Spawned NPC at {:?} (ground: {:.2})",
-        spawn_position, ground_height
-    );
+    println!("DEBUG: Spawned NPC at {spawn_position:?} (ground: {ground_height:.2})",);
     entity
 }
 
@@ -181,7 +177,8 @@ pub fn spawn_simple_npc(commands: &mut Commands, position: Vec3) -> Entity {
             Transform::from_translation(position),
             Visibility::Visible,
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),        ))
+            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
+        ))
         .id()
 }
 
@@ -215,7 +212,8 @@ pub fn spawn_npc_with_new_architecture(commands: &mut Commands, position: Vec3) 
             Transform::from_translation(position),
             Visibility::Visible,
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),        ))
+            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
+        ))
         .id()
 }
 
@@ -236,9 +234,6 @@ pub fn migrate_legacy_npcs(
             .entity(entity)
             .insert((npc_state, ManagedTiming::new(EntityTimerType::NPCLOD)));
 
-        println!(
-            "DEBUG: Migrated NPC entity {:?} to unified architecture",
-            entity
-        );
+        println!("DEBUG: Migrated NPC entity {entity:?} to unified architecture",);
     }
 }

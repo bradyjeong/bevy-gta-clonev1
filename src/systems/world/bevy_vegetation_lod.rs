@@ -1,5 +1,5 @@
-use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use crate::components::*;
+use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 
 /// New vegetation LOD system using Bevy's built-in VisibilityRange
 /// This replaces the old manual mesh-swapping system with multiple child entities
@@ -31,12 +31,14 @@ pub fn spawn_vegetation_with_lod(
     vegetation_type: VegetationType,
 ) -> Entity {
     // Create parent entity
-    let parent = commands.spawn((
-        Transform::from_translation(position),
-        Visibility::Visible,
-        VegetationParent { vegetation_type },
-        Name::new("VegetationLOD"),
-    )).id();
+    let parent = commands
+        .spawn((
+            Transform::from_translation(position),
+            Visibility::Visible,
+            VegetationParent { vegetation_type },
+            Name::new("VegetationLOD"),
+        ))
+        .id();
 
     // Create LOD level 0: Full detail (0-50m)
     let full_mesh = create_full_vegetation_mesh(vegetation_type);
@@ -73,7 +75,7 @@ pub fn spawn_vegetation_with_lod(
         Transform::IDENTITY,
         VisibilityRange::abrupt(150.0, 300.0), // Visible from 150-300m
         VegetationLODLevel { level: 2 },
-        VegetationBillboard { 
+        VegetationBillboard {
             original_scale: Vec3::ONE,
             billboard_size: Vec2::new(2.0, 3.0),
         },
@@ -116,8 +118,17 @@ fn create_vegetation_material(vegetation_type: VegetationType, alpha: f32) -> St
     };
 
     StandardMaterial {
-        base_color: Color::srgba(base_color.to_srgba().red, base_color.to_srgba().green, base_color.to_srgba().blue, alpha),
-        alpha_mode: if alpha < 1.0 { AlphaMode::Blend } else { AlphaMode::Opaque },
+        base_color: Color::srgba(
+            base_color.to_srgba().red,
+            base_color.to_srgba().green,
+            base_color.to_srgba().blue,
+            alpha,
+        ),
+        alpha_mode: if alpha < 1.0 {
+            AlphaMode::Blend
+        } else {
+            AlphaMode::Opaque
+        },
         ..default()
     }
 }
@@ -125,9 +136,14 @@ fn create_vegetation_material(vegetation_type: VegetationType, alpha: f32) -> St
 /// System to make billboard vegetation face the camera (runs only for billboard LOD)
 pub fn vegetation_billboard_facing_system(
     camera_query: Query<&Transform, (With<Camera>, Without<VegetationLODLevel>)>,
-    mut billboard_query: Query<&mut Transform, (With<VegetationLODLevel>, With<VegetationBillboard>)>,
+    mut billboard_query: Query<
+        &mut Transform,
+        (With<VegetationLODLevel>, With<VegetationBillboard>),
+    >,
 ) {
-    let Ok(camera_transform) = camera_query.single() else { return };
+    let Ok(camera_transform) = camera_query.single() else {
+        return;
+    };
     let camera_pos = camera_transform.translation;
 
     for mut transform in billboard_query.iter_mut() {

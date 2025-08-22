@@ -1,3 +1,10 @@
+#![allow(
+    clippy::too_many_arguments,
+    clippy::type_complexity,
+    clippy::manual_flatten,
+    clippy::explicit_counter_loop,
+    clippy::collapsible_if
+)]
 use crate::bundles::VisibleChildBundle;
 use crate::components::*;
 use crate::resources::{MaterialKey, MaterialRegistry};
@@ -66,7 +73,7 @@ pub fn layered_generation_coordinator(
             coord,
             &mut meshes,
             &mut materials,
-            &mut *material_registry,
+            &mut material_registry,
             current_time,
         );
         loaded_this_frame += 1;
@@ -167,7 +174,7 @@ pub fn road_layer_system(
             coord,
             &mut meshes,
             &mut materials,
-            &mut *material_registry,
+            &mut material_registry,
         );
     }
 }
@@ -345,8 +352,7 @@ fn detect_and_spawn_intersections(
     // Create intersection entities
     for (position, connected_roads, intersection_type, road_type) in detected_intersections {
         println!(
-            "🚧 DEBUG: Creating intersection entity at {:?} with type {:?} and road type {:?}",
-            position, intersection_type, road_type
+            "🚧 DEBUG: Creating intersection entity at {position:?} with type {intersection_type:?} and road type {road_type:?}",
         );
         let intersection_id = world_manager.road_network.add_intersection(
             position,
@@ -359,10 +365,7 @@ fn detect_and_spawn_intersections(
             .intersections
             .get(&intersection_id)
         {
-            println!(
-                "🚧 DEBUG: Successfully spawned intersection entity {}",
-                intersection_id
-            );
+            println!("🚧 DEBUG: Successfully spawned intersection entity {intersection_id}",);
             // Create a simple intersection without material registry for now
             let intersection_entity = commands
                 .spawn((
@@ -510,7 +513,7 @@ pub fn building_layer_system(
             coord,
             &mut meshes,
             &mut materials,
-            &mut *material_registry,
+            &mut material_registry,
         );
     }
 }
@@ -645,7 +648,7 @@ pub fn vehicle_layer_system(
             coord,
             &mut meshes,
             &mut materials,
-            &mut *material_registry,
+            &mut material_registry,
         );
     }
 }
@@ -766,7 +769,7 @@ pub fn vegetation_layer_system(
             coord,
             &mut meshes,
             &mut materials,
-            &mut *material_registry,
+            &mut material_registry,
         );
     }
 }

@@ -1,4 +1,8 @@
-use bevy::{prelude::*, render::view::{RenderLayers, visibility::VisibilityRange}};
+#![allow(clippy::type_complexity)]
+use bevy::{
+    prelude::*,
+    render::view::{RenderLayers, visibility::VisibilityRange},
+};
 
 /// Debug rendering layers for selective visualization
 pub const DEBUG_LAYER: usize = 1;
@@ -6,9 +10,7 @@ pub const UI_LAYER: usize = 2;
 pub const WORLD_LAYER: usize = 0; // Default layer
 
 /// Setup debug camera that only renders debug layer
-pub fn setup_debug_camera(
-    _commands: Commands,
-) {
+pub fn setup_debug_camera(_commands: Commands) {
     #[cfg(feature = "debug-ui")]
     {
         commands.spawn((
@@ -36,7 +38,8 @@ pub fn add_debug_visualization(
             ..default()
         });
 
-        for (entity, transform) in entity_query.iter().take(10) { // Limit to first 10 for demo
+        for (entity, transform) in entity_query.iter().take(10) {
+            // Limit to first 10 for demo
             // Add debug wireframe sphere to show visibility range
             commands.entity(entity).with_children(|parent| {
                 parent.spawn((

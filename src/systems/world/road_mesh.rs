@@ -142,10 +142,10 @@ fn calculate_segments(road: &RoadSpline) -> usize {
 
     if road.control_points.len() > 2 {
         // Curved road - reduced segments
-        (base_segments).max(4).min(30) // Much fewer segments
+        (base_segments).clamp(4, 30) // Much fewer segments
     } else {
         // Straight road - minimal segments
-        base_segments.max(2).min(8) // Much fewer segments
+        base_segments.clamp(2, 8) // Much fewer segments
     }
 }
 

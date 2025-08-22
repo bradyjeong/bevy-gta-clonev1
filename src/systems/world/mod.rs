@@ -13,10 +13,10 @@ pub mod npc_spawn;
 pub mod simulation_lod;
 pub mod unified_world;
 // pub mod optimized_lod; // Removed - functionality moved to unified_lod.rs
-pub mod vegetation_lod;
+pub mod asset_streaming;
 pub mod bevy_vegetation_lod;
 pub mod debug_layers;
-pub mod asset_streaming;
+pub mod vegetation_lod;
 // pub mod unified_distance_culling; - REMOVED: Replaced with Bevy's VisibilityRange
 pub mod boundaries;
 pub mod boundary_effects;
@@ -38,10 +38,10 @@ pub use npc_spawn::*;
 pub use simulation_lod::*;
 pub use unified_world::*;
 // pub use optimized_lod::*; // Removed - functionality moved to unified_lod.rs
-pub use vegetation_lod::*;
+pub use asset_streaming::*;
 pub use bevy_vegetation_lod::*;
 pub use debug_layers::*;
-pub use asset_streaming::*;
+pub use vegetation_lod::*;
 // UnifiedCullable exports removed - using Bevy's VisibilityRange instead
 pub use boundaries::*;
 pub use boundary_effects::*;
