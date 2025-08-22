@@ -11,7 +11,8 @@ impl MeshFactory {
     }
 
     pub fn create_sports_car_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        meshes.add(Cuboid::new(1.8, 1.0, 4.2)) // Fixed: height 1.0 matches collider
+        // Match collider proportions: cuboid(0.95, 0.65, 2.35) scaled up for visibility
+        meshes.add(Cuboid::new(1.9, 1.3, 4.7)) // 2x collider dimensions for visual size
     }
 
     pub fn create_suv_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
@@ -23,12 +24,13 @@ impl MeshFactory {
     }
 
     pub fn create_helicopter_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // Create a more realistic helicopter fuselage shape using a capsule
-        meshes.add(Capsule3d::new(0.8, 4.0)) // Radius, height - helicopter shape
+        // Match collider dimensions: cuboid(1.5, 1.5, 6.0) from config
+        meshes.add(Cuboid::new(3.0, 3.0, 12.0)) // 2x collider dimensions for visual size
     }
 
     pub fn create_boat_hull(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        meshes.add(Cuboid::new(8.0, 2.0, 20.0))
+        // Match collider dimensions: cuboid(4.0, 1.0, 10.0) from water.rs
+        meshes.add(Cuboid::new(8.0, 2.0, 20.0)) // 2x collider for visual size
     }
 
     pub fn create_yacht_cabin(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
@@ -277,11 +279,10 @@ impl MeshFactory {
 
     /// Create F16 fighter jet body (main fuselage) - Fixed: aligned with physics forward (-Z)
     pub fn create_f16_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // Fixed: length along Z-axis to match physics forward direction (-Z)
-        // Nose at +Z, tail at -Z to align with Transform::forward()
-        let width = 3.0_f32.clamp(0.1, 10.0); // X-axis (width)
-        let height = 3.0_f32.clamp(0.1, 10.0); // Y-axis (height)  
-        let depth = 16.0_f32.clamp(0.1, 50.0); // Z-axis (length)
+        // Match collider dimensions: capsule_z(7.5, 2.5) = 15m long, 5m diameter
+        let width = 5.0_f32.clamp(0.1, 10.0); // X-axis (diameter)
+        let height = 5.0_f32.clamp(0.1, 10.0); // Y-axis (diameter)  
+        let depth = 15.0_f32.clamp(0.1, 50.0); // Z-axis (length)
         meshes.add(Cuboid::new(width, height, depth))
     }
 

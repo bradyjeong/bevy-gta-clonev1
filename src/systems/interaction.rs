@@ -331,8 +331,9 @@ pub fn interaction_system(
                             .remove::<InCar>()
                             .insert(
                                 Transform::from_translation(exit_position)
-                                    .with_rotation(helicopter_transform.rotation),
+                                    .with_rotation(Quat::IDENTITY),
                             )
+                            .insert(RigidBody::Dynamic)
                             .insert(Velocity::default()) // Let Rapier apply gravity naturally
                             .insert(Visibility::Visible);
 
@@ -395,8 +396,9 @@ pub fn interaction_system(
                             .remove::<InCar>()
                             .insert(
                                 Transform::from_translation(exit_position)
-                                    .with_rotation(f16_transform.rotation),
+                                    .with_rotation(Quat::IDENTITY),
                             )
+                            .insert(RigidBody::Dynamic)
                             .insert(Velocity::default()) // Let Rapier apply gravity naturally
                             .insert(Visibility::Visible);
 
