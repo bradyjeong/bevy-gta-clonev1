@@ -5,6 +5,7 @@ use crate::systems::world::{
     layered_generation_coordinator,
 };
 use crate::config::GameConfig;
+use crate::resources::MaterialRegistry;
 
 /// Plugin responsible for world streaming and chunk management
 pub struct WorldStreamingPlugin;
@@ -12,7 +13,10 @@ pub struct WorldStreamingPlugin;
 impl Plugin for WorldStreamingPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Startup, initialize_streaming_world)
+            .add_systems(Startup, (
+                initialize_streaming_world,
+                initialize_material_registry,
+            ).chain())
             .add_systems(Update, (
                 unified_world_streaming_system,
                 layered_generation_coordinator,
@@ -30,4 +34,12 @@ fn initialize_streaming_world(
     
     println!("DEBUG: World streaming initialized with finite world ({}x{} chunks)!", 
              config.world.total_chunks_x, config.world.total_chunks_z);
+}
+
+fn initialize_material_registry(mut commands: Commands) {
+    // Initialize MaterialRegistry for performance optimization
+    let material_registry = MaterialRegistry::new();
+    commands.insert_resource(material_registry);
+    
+    println!("🏭 MATERIAL REGISTRY: Initialized for cached material reuse");
 }

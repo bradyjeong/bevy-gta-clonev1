@@ -9,6 +9,7 @@ use crate::systems::world::unified_world::{
 };
 use crate::systems::world::road_network::{RoadNetwork, RoadSpline, RoadType, IntersectionType};
 use crate::systems::world::road_mesh::{generate_road_mesh, generate_road_markings_mesh, generate_intersection_mesh};
+use crate::resources::{MaterialRegistry, MaterialKey};
 
 // SIMPLIFIED CHUNK LOADING - Replaces complex layered state machine
 
@@ -33,6 +34,7 @@ pub fn layered_generation_coordinator(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut material_registry: ResMut<MaterialRegistry>,
     time: Res<Time>,
 ) {
     let current_time = time.elapsed_secs();
@@ -56,7 +58,7 @@ pub fn layered_generation_coordinator(
         }
         
         // Generate all content layers in one pass
-        generate_complete_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, current_time);
+        generate_complete_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, &mut *material_registry, current_time);
         loaded_this_frame += 1;
     }
 }
@@ -69,20 +71,21 @@ fn generate_complete_chunk(
     coord: ChunkCoord,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    material_registry: &mut MaterialRegistry,
     current_time: f32,
 ) {
     // Generate all content layers in sequence
     // 1. Roads (foundation for everything else)
-    generate_roads_for_chunk(commands, world_manager, coord, meshes, materials);
+    generate_roads_for_chunk(commands, world_manager, coord, meshes, materials, material_registry);
     
     // 2. Buildings (depend on road layout)  
-    generate_buildings_for_chunk(commands, world_manager, coord, meshes, materials);
+    generate_buildings_for_chunk(commands, world_manager, coord, meshes, materials, material_registry);
     
     // 3. Vehicles (spawn on roads)
-    generate_vehicles_for_chunk(commands, world_manager, coord, meshes, materials);
+    generate_vehicles_for_chunk(commands, world_manager, coord, meshes, materials, material_registry);
     
     // 4. Vegetation (fill empty spaces)
-    generate_vegetation_for_chunk(commands, world_manager, coord, meshes, materials);
+    generate_vegetation_for_chunk(commands, world_manager, coord, meshes, materials, material_registry);
     
     // Mark chunk as complete
     if let Some(chunk) = world_manager.get_chunk_mut(coord) {
@@ -101,6 +104,7 @@ pub fn road_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut material_registry: ResMut<MaterialRegistry>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -119,7 +123,7 @@ pub fn road_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_roads_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        generate_roads_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, &mut *material_registry);
     }
 }
 
@@ -129,6 +133,7 @@ fn generate_roads_for_chunk(
     coord: ChunkCoord,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    material_registry: &mut MaterialRegistry,
 ) {
     // Use existing road network generation logic but adapted for unified system
     let new_road_ids = world_manager.road_network.generate_chunk_roads(coord.x, coord.z);
@@ -143,6 +148,7 @@ fn generate_roads_for_chunk(
                 &road,
                 meshes,
                 materials,
+                material_registry,
             );
             
             // Add road to placement grid
@@ -180,11 +186,12 @@ fn spawn_unified_road_entity(
     road: &RoadSpline,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    material_registry: &mut MaterialRegistry,
 ) -> Entity {
     let center_pos = road.evaluate(0.5);
     
-    let road_material = create_road_material(&road.road_type, materials);
-    let marking_material = create_marking_material(materials);
+    let road_material = create_road_material(&road.road_type, materials, material_registry);
+    let marking_material = create_marking_material(materials, material_registry);
     
     let road_entity = commands.spawn((
         UnifiedChunkEntity {
@@ -232,8 +239,8 @@ fn detect_and_spawn_intersections(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     coord: ChunkCoord,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    _meshes: &mut ResMut<Assets<Mesh>>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
     let chunk_center = coord.to_world_pos();
     let chunk_size = UNIFIED_CHUNK_SIZE;
@@ -294,15 +301,22 @@ fn detect_and_spawn_intersections(
         
         if let Some(intersection) = world_manager.road_network.intersections.get(&intersection_id) {
             println!("🚧 DEBUG: Successfully spawned intersection entity {}", intersection_id);
-            let intersection_entity = spawn_unified_intersection_entity(
-                commands,
-                coord,
-                intersection_id,
-                intersection,
-                road_type,
-                meshes,
-                materials,
-            );
+            // Create a simple intersection without material registry for now
+            let intersection_entity = commands.spawn((
+                UnifiedChunkEntity {
+                    coord,
+                    layer: ContentLayer::Roads,
+                },
+                IntersectionEntity { intersection_id },
+                Transform::from_translation(intersection.position),
+                GlobalTransform::default(),
+                Visibility::default(),
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
+                DynamicContent {
+                    content_type: ContentType::Road,
+                },
+            )).id();
             
             // Add entity to chunk
             if let Some(chunk) = world_manager.get_chunk_mut(coord) {
@@ -350,6 +364,7 @@ fn determine_dominant_road_type(road_type1: &RoadType, road_type2: &RoadType) ->
 }
 
 /// Spawn intersection entity with dominant road material to prevent color conflicts
+#[allow(dead_code)]
 fn spawn_unified_intersection_entity(
     commands: &mut Commands,
     chunk_coord: ChunkCoord,
@@ -358,11 +373,12 @@ fn spawn_unified_intersection_entity(
     dominant_road_type: RoadType,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    material_registry: &mut MaterialRegistry,
 ) -> Entity {
     let position = intersection.position;
     
     // Use dominant road type material to prevent color conflicts
-    let intersection_material = create_road_material(&dominant_road_type, materials);
+    let intersection_material = create_road_material(&dominant_road_type, materials, material_registry);
     
     let intersection_entity = commands.spawn((
         UnifiedChunkEntity {
@@ -399,6 +415,7 @@ pub fn building_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut material_registry: ResMut<MaterialRegistry>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -419,7 +436,7 @@ pub fn building_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_buildings_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        generate_buildings_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, &mut *material_registry);
     }
 }
 
@@ -429,6 +446,7 @@ fn generate_buildings_for_chunk(
     coord: ChunkCoord,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    _material_registry: &mut MaterialRegistry,
 ) {
     let chunk_center = coord.to_world_pos();
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
@@ -527,6 +545,7 @@ pub fn vehicle_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut material_registry: ResMut<MaterialRegistry>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -547,7 +566,7 @@ pub fn vehicle_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_vehicles_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        generate_vehicles_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, &mut *material_registry);
     }
 }
 
@@ -557,6 +576,7 @@ fn generate_vehicles_for_chunk(
     coord: ChunkCoord,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    _material_registry: &mut MaterialRegistry,
 ) {
     let chunk_center = coord.to_world_pos();
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
@@ -648,6 +668,7 @@ pub fn vegetation_layer_system(
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut material_registry: ResMut<MaterialRegistry>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -668,7 +689,7 @@ pub fn vegetation_layer_system(
         .collect();
     
     for coord in chunks_to_process {
-        generate_vegetation_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials);
+        generate_vegetation_for_chunk(&mut commands, &mut world_manager, coord, &mut meshes, &mut materials, &mut *material_registry);
     }
 }
 
@@ -678,6 +699,7 @@ fn generate_vegetation_for_chunk(
     coord: ChunkCoord,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    _material_registry: &mut MaterialRegistry,
 ) {
     let chunk_center = coord.to_world_pos();
     let half_size = UNIFIED_CHUNK_SIZE * 0.5;
@@ -791,7 +813,11 @@ fn is_point_on_road_spline_unified(position: Vec3, road: &RoadSpline, tolerance:
     false
 }
 
-fn create_road_material(road_type: &RoadType, materials: &mut ResMut<Assets<StandardMaterial>>) -> Handle<StandardMaterial> {
+fn create_road_material(
+    road_type: &RoadType, 
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    material_registry: &mut MaterialRegistry,
+) -> Handle<StandardMaterial> {
     let (base_color, roughness) = match road_type {
         RoadType::Highway => (Color::srgb(0.4, 0.4, 0.45), 0.8),
         RoadType::MainStreet => (Color::srgb(0.35, 0.35, 0.4), 0.8),
@@ -799,25 +825,17 @@ fn create_road_material(road_type: &RoadType, materials: &mut ResMut<Assets<Stan
         RoadType::Alley => (Color::srgb(0.5, 0.5, 0.45), 0.6),
     };
     
-    materials.add(StandardMaterial {
-        base_color,
-        perceptual_roughness: roughness,
-        metallic: 0.0,
-        reflectance: 0.2,
-        emissive: Color::BLACK.into(),
-        ..default()
-    })
+    let key = MaterialKey::road(base_color).with_roughness(roughness);
+    material_registry.get_or_create(materials, key)
 }
 
-fn create_marking_material(materials: &mut ResMut<Assets<StandardMaterial>>) -> Handle<StandardMaterial> {
-    materials.add(StandardMaterial {
-        base_color: Color::srgb(0.95, 0.95, 0.95),
-        emissive: LinearRgba::new(0.2, 0.2, 0.2, 1.0),
-        perceptual_roughness: 0.6,
-        metallic: 0.0,
-        reflectance: 0.5,
-        ..default()
-    })
+fn create_marking_material(
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    material_registry: &mut MaterialRegistry,
+) -> Handle<StandardMaterial> {
+    let color = Color::srgb(0.95, 0.95, 0.95);
+    let key = MaterialKey::road_marking(color).with_roughness(0.6);
+    material_registry.get_or_create(materials, key)
 }
 
 
