@@ -3,6 +3,7 @@ use crate::systems::world::{
     update_simulation_lod,
     track_simulation_lod_stats,
     SimulationLODStats,
+    SimulationLODTimer,
 };
 
 /// Lightweight LOD plugin using Bevy's VisibilityRange + minimal SimulationLOD
@@ -13,8 +14,9 @@ pub struct WorldLodPlugin;
 impl Plugin for WorldLodPlugin {
     fn build(&self, app: &mut App) {
         app
-            // Initialize simulation LOD stats resource (optional)
+            // Initialize simulation LOD resources
             .init_resource::<SimulationLODStats>()
+            .init_resource::<SimulationLODTimer>()
             
             // Lightweight simulation LOD update (runs every 0.25s, not every frame)
             .add_systems(Update, update_simulation_lod)

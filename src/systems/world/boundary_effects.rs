@@ -82,8 +82,8 @@ pub fn boundary_effects_system(
 
 /// Aircraft boundary effects - mechanical failure and wing damage
 fn apply_aircraft_boundary_effects(
-    entity: Entity,
-    commands: &mut Commands,
+    _entity: Entity,
+    _commands: &mut Commands,
     transform: &mut Transform,
     vehicle_state: &mut VehicleState,
     boundary_effects: &BoundaryEffects,
@@ -141,12 +141,12 @@ fn apply_aircraft_boundary_effects(
 
 /// Boat boundary effects - rough seas and weather
 fn apply_boat_boundary_effects(
-    entity: Entity,
-    commands: &mut Commands,
+    _entity: Entity,
+    _commands: &mut Commands,
     transform: &mut Transform,
     vehicle_state: &mut VehicleState,
     boundary_effects: &BoundaryEffects,
-    vehicle_health: Option<Mut<VehicleHealth>>,
+    _vehicle_health: Option<Mut<VehicleHealth>>,
     time: &Res<Time>,
 ) {
     let intensity = boundary_effects.effect_intensity;
@@ -195,9 +195,9 @@ fn apply_boat_boundary_effects(
 
 /// On-foot boundary effects - increasing hostility and danger
 fn apply_onfoot_boundary_effects(
-    entity: Entity,
-    commands: &mut Commands,
-    transform: &mut Transform,
+    _entity: Entity,
+    _commands: &mut Commands,
+    _transform: &mut Transform,
     vehicle_state: &mut VehicleState,
     boundary_effects: &BoundaryEffects,
     mut vehicle_health: Option<Mut<VehicleHealth>>,
@@ -246,13 +246,13 @@ fn apply_onfoot_boundary_effects(
 
 /// Ground vehicle boundary effects - terrain and mechanical issues
 fn apply_ground_vehicle_boundary_effects(
-    entity: Entity,
-    commands: &mut Commands,
-    transform: &mut Transform,
+    _entity: Entity,
+    _commands: &mut Commands,
+    _transform: &mut Transform,
     vehicle_state: &mut VehicleState,
     boundary_effects: &BoundaryEffects,
-    vehicle_health: Option<Mut<VehicleHealth>>,
-    time: &Res<Time>,
+    _vehicle_health: Option<Mut<VehicleHealth>>,
+    _time: &Res<Time>,
 ) {
     let intensity = boundary_effects.effect_intensity;
     
@@ -284,8 +284,8 @@ fn apply_ground_vehicle_boundary_effects(
 
 /// Submarine boundary effects - pressure and oxygen limits
 fn apply_submarine_boundary_effects(
-    entity: Entity,
-    commands: &mut Commands,
+    _entity: Entity,
+    _commands: &mut Commands,
     transform: &mut Transform,
     vehicle_state: &mut VehicleState,
     boundary_effects: &BoundaryEffects,

@@ -80,6 +80,6 @@ pub use lod::*;
 pub use dirty_flags::*;
 pub use instanced_vegetation::*;
 pub use control_state::*;
-pub use safety::*;
+// pub use safety::*; // Disabled - conflicts with world::WorldBounds in finite world
 pub use unified_vehicle::*;
 pub use entity_types::*;

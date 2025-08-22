@@ -28,23 +28,28 @@ impl SimulationLODRadius {
     pub const VEGETATION_RADIUS: f32 = 100.0; // Vegetation animations within 100m
 }
 
+/// Timer resource for SimulationLOD updates - replaces unsafe static mut
+#[derive(Resource)]
+pub struct SimulationLODTimer(pub Timer);
+
+impl Default for SimulationLODTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(0.25, TimerMode::Repeating))
+    }
+}
+
 /// Lightweight simulation LOD update system
 /// Runs every 0.25s (not every frame) for optimal performance
 /// Only updates simulation level, never touches rendering or meshes
 pub fn update_simulation_lod(
     mut simulation_query: Query<(&Transform, &SimulationLODRadius, &mut SimulationLOD)>,
     active_query: Query<&Transform, With<ActiveEntity>>,
+    mut timer: ResMut<SimulationLODTimer>,
     time: Res<Time>,
 ) {
     // Only update every 250ms to reduce CPU overhead
-    static mut LAST_UPDATE: f32 = 0.0;
-    let current_time = time.elapsed_secs();
-    
-    unsafe {
-        if current_time - LAST_UPDATE < 0.25 {
-            return;
-        }
-        LAST_UPDATE = current_time;
+    if !timer.0.tick(time.delta()).just_finished() {
+        return;
     }
     
     let Ok(active_transform) = active_query.single() else { return };
@@ -77,7 +82,7 @@ pub fn should_simulate_high_detail(sim_lod: &SimulationLOD) -> bool {
 pub fn example_ai_system(
     query: Query<(Entity, &Transform, &SimulationLOD)>,
 ) {
-    for (entity, _transform, sim_lod) in &query {
+    for (_entity, _transform, sim_lod) in &query {
         match sim_lod {
             SimulationLOD::High => {
                 // Full AI processing, pathfinding, behavior trees, etc.

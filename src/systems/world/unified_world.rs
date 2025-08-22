@@ -66,6 +66,55 @@ impl ChunkCoord {
     }
 }
 
+/// Zero-allocation iterator for ring pattern chunk coordinates
+/// Replaces generate_ring_coords to eliminate Vec allocation per streaming tick
+pub struct RingCoordinatesIter {
+    center: ChunkCoord,
+    ring: i32,
+    current_index: i32,
+    max_index: i32,
+}
+
+impl RingCoordinatesIter {
+    pub fn new(center: ChunkCoord, ring: i32) -> Self {
+        let max_index = if ring == 0 { 1 } else { ring * 8 };
+        Self {
+            center,
+            ring,
+            current_index: 0,
+            max_index,
+        }
+    }
+}
+
+impl Iterator for RingCoordinatesIter {
+    type Item = ChunkCoord;
+    
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_index >= self.max_index {
+            return None;
+        }
+        
+        let coord = if self.ring == 0 {
+            self.center
+        } else {
+            let i = self.current_index;
+            let (dx, dz) = match i / (self.ring * 2) {
+                0 => (-self.ring + (i % (self.ring * 2)), -self.ring), // Top edge
+                1 => (self.ring, -self.ring + (i % (self.ring * 2))),  // Right edge  
+                2 => (self.ring - (i % (self.ring * 2)), self.ring),   // Bottom edge
+                3 => (-self.ring, self.ring - (i % (self.ring * 2))),  // Left edge
+                _ => (0, 0), // Should never happen
+            };
+            
+            ChunkCoord::new(self.center.x + dx, self.center.z + dz)
+        };
+        
+        self.current_index += 1;
+        Some(coord)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ChunkState {
     Unloaded,
@@ -352,7 +401,7 @@ impl UnifiedWorldManager {
         
         // PERFORMANCE: Use ring pattern instead of nested loops for better cache locality
         for ring in 0..=self.streaming_radius_chunks {
-            for coord in self.generate_ring_coords(active_chunk, ring) {
+            for coord in RingCoordinatesIter::new(active_chunk, ring) {
                 // FINITE WORLD: Skip chunks outside bounds
                 if !self.is_chunk_in_bounds(coord) {
                     continue;
@@ -376,29 +425,7 @@ impl UnifiedWorldManager {
         to_load
     }
     
-    /// Generate ring pattern coordinates for cache-friendly iteration
-    fn generate_ring_coords(&self, center: ChunkCoord, ring: i32) -> Vec<ChunkCoord> {
-        if ring == 0 {
-            return vec![center];
-        }
-        
-        let mut coords = Vec::new();
-        
-        // Generate coordinates in ring pattern (clockwise from top-left)
-        for i in 0..(ring * 8) {
-            let (dx, dz) = match i / (ring * 2) {
-                0 => (-ring + (i % (ring * 2)), -ring), // Top edge
-                1 => (ring, -ring + (i % (ring * 2))),  // Right edge  
-                2 => (ring - (i % (ring * 2)), ring),   // Bottom edge
-                3 => (-ring, ring - (i % (ring * 2))),  // Left edge
-                _ => (0, 0), // Should never happen
-            };
-            
-            coords.push(ChunkCoord::new(center.x + dx, center.z + dz));
-        }
-        
-        coords
-    }
+    // generate_ring_coords replaced with RingCoordinatesIter for zero-allocation iteration
     
     pub fn clear_placement_grid_for_chunk(&mut self, coord: ChunkCoord) {
         // CRITICAL FIX: Actually clear placement grid entries for this chunk

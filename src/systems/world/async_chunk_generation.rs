@@ -71,7 +71,6 @@ pub fn queue_async_chunk_generation(
     mut async_queue: ResMut<AsyncChunkQueue>,
     mut world_manager: ResMut<UnifiedWorldManager>,
     active_query: Query<&Transform, With<crate::components::player::ActiveEntity>>,
-    time: Res<Time>,
 ) {
     // Only queue new tasks if we have capacity
     if !async_queue.has_capacity() {
@@ -138,17 +137,18 @@ pub fn process_completed_chunks(
         
         if result.success {
             // Spawn entities on main thread using generated data
-            spawn_entities_from_async_data(
+            let spawned_entities = spawn_entities_from_async_data(
                 &mut commands, 
                 &mut meshes, 
                 &mut materials, 
                 &result
             );
             
-            // Mark chunk as loaded
+            // Mark chunk as loaded and track spawned entities
             if let Some(chunk) = world_manager.get_chunk_mut(coord) {
                 chunk.state = ChunkState::Loaded { lod_level: 0 };
                 chunk.last_update = time.elapsed_secs();
+                chunk.entities.extend(spawned_entities); // Track entities for cleanup
             }
             
             info!("Async chunk generation completed for {:?} in {:.2}ms", 
@@ -220,31 +220,40 @@ async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
 }
 
 /// Spawn entities on main thread from async generation data
+/// Returns list of spawned entities for chunk tracking
 fn spawn_entities_from_async_data(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     result: &ChunkGenerationResult,
-) {
+) -> Vec<Entity> {
+    let mut spawned_entities = Vec::new();
+    
     for entity_data in &result.entities_data {
-        match entity_data.content_type {
+        let entity = match entity_data.content_type {
             ContentType::Building => {
-                spawn_async_building(commands, meshes, materials, entity_data);
+                spawn_async_building(commands, meshes, materials, entity_data)
             },
             ContentType::Tree => {
-                spawn_async_vegetation(commands, meshes, materials, entity_data);
+                spawn_async_vegetation(commands, meshes, materials, entity_data)
             },
             ContentType::Vehicle => {
-                spawn_async_vehicle(commands, meshes, materials, entity_data);
+                spawn_async_vehicle(commands, meshes, materials, entity_data)
             },
             ContentType::NPC => {
-                spawn_async_npc(commands, meshes, materials, entity_data);
+                spawn_async_npc(commands, meshes, materials, entity_data)
             },
             ContentType::Road => {
-                spawn_async_road(commands, meshes, materials, entity_data);
+                spawn_async_road(commands, meshes, materials, entity_data)
             },
+        };
+        
+        if let Some(entity) = entity {
+            spawned_entities.push(entity);
         }
     }
+    
+    spawned_entities
 }
 
 /// Spawn building from async data
@@ -253,7 +262,7 @@ fn spawn_async_building(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     data: &EntityGenerationData,
-) {
+) -> Option<Entity> {
     use bevy::render::view::VisibilityRange;
     
     let mesh = meshes.add(Mesh::from(Cuboid::from_size(data.scale)));
@@ -262,7 +271,7 @@ fn spawn_async_building(
         ..default()
     });
     
-    commands.spawn((
+    let entity = commands.spawn((
         Mesh3d(mesh),
         MeshMaterial3d(material),
         Transform::from_translation(data.position)
@@ -281,7 +290,9 @@ fn spawn_async_building(
         crate::components::world::DynamicContent {
             content_type: ContentType::Building,
         },
-    ));
+    )).id();
+    
+    Some(entity)
 }
 
 /// Spawn vegetation from async data
@@ -290,7 +301,7 @@ fn spawn_async_vegetation(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     data: &EntityGenerationData,
-) {
+) -> Option<Entity> {
     use bevy::render::view::VisibilityRange;
     
     let mesh = meshes.add(Mesh::from(Cylinder::new(data.scale.x * 0.1, data.scale.y)));
@@ -299,7 +310,7 @@ fn spawn_async_vegetation(
         ..default()
     });
     
-    commands.spawn((
+    let entity = commands.spawn((
         Mesh3d(mesh),
         MeshMaterial3d(material),
         Transform::from_translation(data.position)
@@ -312,7 +323,9 @@ fn spawn_async_vegetation(
         crate::components::world::DynamicContent {
             content_type: ContentType::Tree,
         },
-    ));
+    )).id();
+    
+    Some(entity)
 }
 
 /// Placeholder functions for other content types
@@ -321,8 +334,9 @@ fn spawn_async_vehicle(
     _meshes: &mut ResMut<Assets<Mesh>>,
     _materials: &mut ResMut<Assets<StandardMaterial>>,
     _data: &EntityGenerationData,
-) {
+) -> Option<Entity> {
     // TODO: Implement async vehicle spawning
+    None
 }
 
 fn spawn_async_npc(
@@ -330,8 +344,9 @@ fn spawn_async_npc(
     _meshes: &mut ResMut<Assets<Mesh>>,
     _materials: &mut ResMut<Assets<StandardMaterial>>,
     _data: &EntityGenerationData,
-) {
+) -> Option<Entity> {
     // TODO: Implement async NPC spawning
+    None
 }
 
 fn spawn_async_road(
@@ -339,6 +354,7 @@ fn spawn_async_road(
     _meshes: &mut ResMut<Assets<Mesh>>,
     _materials: &mut ResMut<Assets<StandardMaterial>>,
     _data: &EntityGenerationData,
-) {
+) -> Option<Entity> {
     // TODO: Implement async road spawning
+    None
 }

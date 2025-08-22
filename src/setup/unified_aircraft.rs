@@ -1,6 +1,7 @@
 use bevy::{prelude::*, render::view::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 use crate::components::*;
+use crate::components::safety::HighSpeed;
 use crate::constants::*;
 use crate::factories::{MeshFactory, MaterialFactory};
 use crate::services::ground_detection::GroundDetectionService;
