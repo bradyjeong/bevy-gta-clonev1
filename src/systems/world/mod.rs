@@ -1,4 +1,4 @@
-pub mod culling;
+// pub mod culling; // DELETED: Using Bevy's built-in VisibilityRange instead
 pub mod debug;
 pub mod npc;
 pub mod performance;
@@ -14,13 +14,16 @@ pub mod simulation_lod;
 pub mod unified_world;
 // pub mod optimized_lod; // Removed - functionality moved to unified_lod.rs
 pub mod vegetation_lod;
+pub mod bevy_vegetation_lod;
+pub mod debug_layers;
+pub mod asset_streaming;
 // pub mod unified_distance_culling; - REMOVED: Replaced with Bevy's VisibilityRange
 pub mod boundaries;
 pub mod boundary_effects;
 pub mod floating_origin;
 pub mod unified_factory_setup;
 
-pub use culling::*;
+// pub use culling::*; // DELETED: Using Bevy's built-in VisibilityRange instead
 pub use debug::*;
 pub use npc::*;
 pub use performance::*;
@@ -36,6 +39,9 @@ pub use simulation_lod::*;
 pub use unified_world::*;
 // pub use optimized_lod::*; // Removed - functionality moved to unified_lod.rs
 pub use vegetation_lod::*;
+pub use bevy_vegetation_lod::*;
+pub use debug_layers::*;
+pub use asset_streaming::*;
 // UnifiedCullable exports removed - using Bevy's VisibilityRange instead
 pub use boundaries::*;
 pub use boundary_effects::*;

@@ -204,6 +204,8 @@ pub const NPC_LOD_MEDIUM_DISTANCE: f32 = 50.0;
 pub const NPC_LOD_LOW_DISTANCE: f32 = 75.0;
 pub const NPC_LOD_CULL_DISTANCE: f32 = 100.0;
 
+// DEPRECATED: Use VisibilityRange from Bevy instead
+// This is kept for legacy compatibility during migration
 #[derive(Component)]
 pub struct Cullable {
     pub max_distance: f32,
@@ -217,6 +219,12 @@ impl Cullable {
             is_culled: false,
         }
     }
+}
+
+// Helper function to convert Cullable distances to VisibilityRange
+pub fn cullable_to_visibility_range(max_distance: f32) -> bevy::render::view::visibility::VisibilityRange {
+    use bevy::render::view::visibility::VisibilityRange;
+    VisibilityRange::abrupt(0.0, max_distance)
 }
 
 // Road system components

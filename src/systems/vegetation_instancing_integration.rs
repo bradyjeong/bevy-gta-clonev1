@@ -1,11 +1,12 @@
 use crate::components::*;
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 
 /// Integration system to demonstrate vegetation instancing
 /// This system would be called by your main vegetation spawning system
 pub fn integrate_vegetation_with_instancing_system(
     mut commands: Commands,
-    vegetation_query: Query<(Entity, &Transform), (With<Cullable>, Without<VegetationBatchable>)>,
+    vegetation_query: Query<(Entity, &Transform), (With<VisibilityRange>, Without<VegetationBatchable>)>,
     _frame_counter: Res<FrameCounter>,
 ) {
     // Convert existing vegetation entities to use instancing
@@ -76,7 +77,7 @@ pub fn spawn_test_vegetation_system(
                 Transform::from_translation(Vec3::new(x, y, z)),
                 vegetation_type,
             ))
-            .insert(Cullable::new(config.culling_distance));
+            .insert(VisibilityRange::abrupt(0.0, config.culling_distance));
     }
 
     info!("Spawned 100 test vegetation entities for instancing");

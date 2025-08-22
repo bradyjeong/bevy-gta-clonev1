@@ -8,13 +8,12 @@ edition = "2024"
 doctest = false
 
 [features]
-default = ["simple_render_culler"]
+default = []
 debug-movement = []
 debug-audio = []
 debug-ui = []
 debug-timing = []
 profile-worldgen = []
-simple_render_culler = []
 
 # Removed gta_simple binary - using main.rs as default
 

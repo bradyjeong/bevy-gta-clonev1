@@ -1,6 +1,7 @@
 use crate::components::*;
 use crate::constants::*;
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
 
 /// Luxury color schemes for the Bugatti Chiron
@@ -91,10 +92,7 @@ pub fn setup_luxury_bugatti_chiron(
                 linear_damping: 1.0,
                 angular_damping: 5.0,
             },
-            Cullable {
-                max_distance: 1000.0,
-                is_culled: false,
-            },
+            VisibilityRange::abrupt(0.0, 1000.0),
             CollisionGroups::new(
                 VEHICLE_GROUP,
                 STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,

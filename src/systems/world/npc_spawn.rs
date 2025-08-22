@@ -1,8 +1,8 @@
 use crate::components::{
-    Cullable, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorType, NPCGender, NPCLOD, NPCState,
+    NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorType, NPCGender, NPCLOD, NPCState,
     NPCType,
 };
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 
 use crate::config::GameConfig;
@@ -147,10 +147,7 @@ pub fn spawn_simple_npc_with_ground_detection(
             Transform::from_translation(spawn_position),
             Visibility::Visible,
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            Cullable {
-                max_distance: NPC_LOD_CULL_DISTANCE,
-                is_culled: false,
-            },
+            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
         ))
         .id()
 }
@@ -184,11 +181,7 @@ pub fn spawn_simple_npc(commands: &mut Commands, position: Vec3) -> Entity {
             Transform::from_translation(position),
             Visibility::Visible,
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            Cullable {
-                max_distance: NPC_LOD_CULL_DISTANCE,
-                is_culled: false,
-            },
-        ))
+            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),        ))
         .id()
 }
 
@@ -222,11 +215,7 @@ pub fn spawn_npc_with_new_architecture(commands: &mut Commands, position: Vec3) 
             Transform::from_translation(position),
             Visibility::Visible,
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            Cullable {
-                max_distance: NPC_LOD_CULL_DISTANCE,
-                is_culled: false,
-            },
-        ))
+            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),        ))
         .id()
 }
 

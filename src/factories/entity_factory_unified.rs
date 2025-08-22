@@ -6,7 +6,7 @@ use crate::factories::generic_bundle::{
     BundleError, ColliderShape, GenericBundleFactory, ParticleEffectType,
 };
 use crate::factories::{MaterialFactory, MeshFactory};
-use bevy::{prelude::*, render::view::VisibilityRange};
+use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use std::collections::HashMap;
@@ -617,10 +617,7 @@ impl UnifiedEntityFactory {
             Mesh3d(head_mesh),
             MeshMaterial3d(head_material),
             Transform::from_xyz(0.0, appearance.height * 0.85, 0.0),
-            Cullable {
-                max_distance: self.config.world.lod_distances[0],
-                is_culled: false,
-            },
+            VisibilityRange::abrupt(0.0, self.config.world.lod_distances.get(0).copied().unwrap_or(50.0)),
             ChildOf(parent_entity),
         ));
 
@@ -637,10 +634,7 @@ impl UnifiedEntityFactory {
             Mesh3d(body_mesh),
             MeshMaterial3d(body_material),
             Transform::from_xyz(0.0, appearance.height * 0.5, 0.0),
-            Cullable {
-                max_distance: self.config.world.lod_distances[0],
-                is_culled: false,
-            },
+            VisibilityRange::abrupt(0.0, self.config.world.lod_distances.get(0).copied().unwrap_or(50.0)),
             ChildOf(parent_entity),
         ));
 
@@ -754,10 +748,7 @@ impl UnifiedEntityFactory {
                 frequency: 1.0,
                 phase: 0.0,
             },
-            Cullable {
-                max_distance: self.config.world.lod_distances[2],
-                is_culled: false,
-            },
+            VisibilityRange::abrupt(0.0, self.config.world.lod_distances.get(2).copied().unwrap_or(300.0)),
             ChildOf(water_entity),
         ));
 
@@ -821,10 +812,7 @@ impl UnifiedEntityFactory {
                 Mesh3d(mesh),
                 MeshMaterial3d(material_handle),
                 ExhaustFlame,
-                Cullable {
-                    max_distance: self.config.world.lod_distances[0],
-                    is_culled: false,
-                },
+                VisibilityRange::abrupt(0.0, self.config.world.lod_distances.get(0).copied().unwrap_or(50.0)),
             ))
             .id();
 

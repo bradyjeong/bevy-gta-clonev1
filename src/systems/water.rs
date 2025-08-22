@@ -1,4 +1,5 @@
-use crate::components::{Boat, Cullable, Lake, WaterBody, Yacht};
+use crate::components::{Boat, Lake, WaterBody, Yacht};
+use bevy::render::view::visibility::VisibilityRange;
 use crate::factories::{
     MaterialFactory, RenderingBundleType, RenderingFactory, StandardRenderingPattern,
 };
@@ -121,7 +122,7 @@ pub fn setup_yacht(
             wake_enabled: true,
         },
         Boat,
-        Cullable::new(300.0),
+        VisibilityRange::abrupt(0.0, 300.0),
         Name::new("Yacht"),
     ));
 

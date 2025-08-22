@@ -1,4 +1,5 @@
-use crate::components::{Cullable, PerformanceStats};
+use crate::components::PerformanceStats;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 
@@ -6,14 +7,16 @@ pub fn performance_monitoring_system(
     time: Res<Time>,
     mut stats: ResMut<PerformanceStats>,
     entity_query: Query<Entity>,
-    cullable_query: Query<&Cullable>,
+    _visibility_query: Query<&VisibilityRange>,
     diagnostics: Res<DiagnosticsStore>,
 ) {
     let current_time = time.elapsed_secs();
 
     // Update stats
     stats.entity_count = entity_query.iter().count();
-    stats.culled_entities = cullable_query.iter().filter(|c| c.is_culled).count();
+    // Note: With VisibilityRange, culling is handled automatically by Bevy
+    // We can track entities with visibility ranges, but not "culled" state
+    stats.culled_entities = 0; // This metric is deprecated with VisibilityRange
 
     // Get frame time from diagnostics
     if let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {

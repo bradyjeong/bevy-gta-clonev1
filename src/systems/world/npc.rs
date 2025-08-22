@@ -1,4 +1,5 @@
-use crate::components::{ActiveEntity, Cullable, NPC};
+use crate::components::{ActiveEntity, NPC};
+use bevy::render::view::visibility::VisibilityRange;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
@@ -11,7 +12,7 @@ thread_local! {
 /// Simple NPC movement that follows direct AI patterns
 pub fn simple_npc_movement(
     time: Res<Time>,
-    mut npc_query: Query<(Entity, &mut Transform, &mut Velocity, &mut NPC, &Cullable)>,
+    mut npc_query: Query<(Entity, &mut Transform, &mut Velocity, &mut NPC), With<VisibilityRange>>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
     let current_time = time.elapsed_secs();
@@ -23,12 +24,9 @@ pub fn simple_npc_movement(
         Vec3::ZERO
     };
 
-    for (_entity, mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
-        // Skip if culled
-        if cullable.is_culled {
-            velocity.linvel = Vec3::ZERO;
-            continue;
-        }
+    for (_entity, mut transform, mut velocity, mut npc) in npc_query.iter_mut() {
+        // Note: With VisibilityRange, Bevy handles culling automatically
+        // NPCs continue to update their AI even when not visible
 
         // Only update NPCs at their specific intervals (staggered updates)
         if current_time - npc.last_update < npc.update_interval {
@@ -80,7 +78,7 @@ pub fn simple_npc_movement(
 /// Legacy NPC movement system - kept for backwards compatibility
 pub fn optimized_npc_movement(
     time: Res<Time>,
-    mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC, &Cullable)>,
+    mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC), With<VisibilityRange>>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
     let current_time = time.elapsed_secs();
@@ -92,12 +90,8 @@ pub fn optimized_npc_movement(
         Vec3::ZERO
     };
 
-    for (mut transform, mut velocity, mut npc, cullable) in npc_query.iter_mut() {
-        // Skip if culled
-        if cullable.is_culled {
-            velocity.linvel = Vec3::ZERO;
-            continue;
-        }
+    for (mut transform, mut velocity, mut npc) in npc_query.iter_mut() {
+        // Note: With VisibilityRange, Bevy handles culling automatically
 
         // Only update NPCs at their specific intervals (staggered updates)
         if current_time - npc.last_update < npc.update_interval {

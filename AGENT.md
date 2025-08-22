@@ -76,6 +76,13 @@ CORE PRINCIPLE: Keep communication simple and direct.
 - Lint: `cargo clippy` | Format: `cargo fmt` | Run: `cargo run`
 - Features: `cargo run --features debug-movement,debug-audio,debug-ui`
 
+## Rendering & Visibility (UPDATED - Migration to Bevy 0.16 Built-ins)
+- **MIGRATED TO BEVY BUILT-INS**: Replaced custom Cullable component with Bevy's VisibilityRange
+- **DELETED SYSTEMS**: Removed distance_culling_system and render_optimization_system  
+- **NEW APPROACH**: Use VisibilityRange::abrupt(0.0, max_distance) for automatic distance culling
+- **DEBUG LAYERS**: RenderLayers system for selective debug visualization (F3 toggle)
+- **ASSET STREAMING**: Minimal system for memory management (not rendering culling)
+
 ## Git Safety & Pre-commit Rules
 CRITICAL safety rules for version control and code quality.
 

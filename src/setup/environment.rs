@@ -1,7 +1,7 @@
 use crate::bundles::VisibleChildBundle;
-use crate::components::world::Cullable;
 use crate::constants::*;
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
 
 // NOTE: Roads are now fully dynamic - no static setup needed
@@ -107,10 +107,7 @@ pub fn setup_palm_trees(
             CollisionGroups::new(STATIC_GROUP, Group::ALL),
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(palm_entity),
-            Cullable {
-                max_distance: 200.0,
-                is_culled: false,
-            },
+            VisibilityRange::abrupt(0.0, 200.0),
         ));
     }
 }
