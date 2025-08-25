@@ -1,4 +1,4 @@
-use crate::components::*;
+use crate::components::{ActiveEntity, Car};
 use crate::services::simple_services::{ConfigService, EnhancedTimingService, PhysicsService};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;

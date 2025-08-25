@@ -107,11 +107,11 @@ impl TimingService {
 
     /// Check if an entity should update based on its individual timer
     pub fn should_update_entity(&mut self, entity: Entity) -> bool {
-        if let Some(timer) = self.entity_timers.get_mut(&entity) {
-            if self.current_time - timer.last_update >= timer.interval {
-                timer.last_update = self.current_time;
-                return true;
-            }
+        if let Some(timer) = self.entity_timers.get_mut(&entity)
+            && self.current_time - timer.last_update >= timer.interval
+        {
+            timer.last_update = self.current_time;
+            return true;
         }
         false
     }

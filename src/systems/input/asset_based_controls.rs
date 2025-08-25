@@ -124,14 +124,13 @@ pub fn process_loaded_controls_system(
     controls_assets: Res<Assets<VehicleControlsConfig>>,
     controls_handle: Option<Res<VehicleControlsHandle>>,
 ) {
-    if let Some(handle) = controls_handle {
-        if let Some(config) = controls_assets.get(&handle.0) {
-            if loaded_controls.config.is_none() {
-                info!("Vehicle controls loaded successfully!");
-                loaded_controls.config = Some(config.clone());
-                loaded_controls.loading = false;
-            }
-        }
+    if let Some(handle) = controls_handle
+        && let Some(config) = controls_assets.get(&handle.0)
+        && loaded_controls.config.is_none()
+    {
+        info!("Vehicle controls loaded successfully!");
+        loaded_controls.config = Some(config.clone());
+        loaded_controls.loading = false;
     }
 }
 

@@ -640,11 +640,11 @@ pub fn unified_performance_monitoring_system(
     }
 
     // Update frame timing from diagnostics
-    if let Some(fps_diagnostic) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
-        if let Some(fps) = fps_diagnostic.smoothed() {
-            let frame_time_ms = 1000.0 / fps as f32;
-            tracker.update_frame_timing(frame_time_ms, fps as f32);
-        }
+    if let Some(fps_diagnostic) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
+        && let Some(fps) = fps_diagnostic.smoothed()
+    {
+        let frame_time_ms = 1000.0 / fps as f32;
+        tracker.update_frame_timing(frame_time_ms, fps as f32);
     }
 
     // Generate periodic reports

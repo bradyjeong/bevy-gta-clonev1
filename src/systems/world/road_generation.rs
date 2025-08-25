@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::bundles::VisibleChildBundle;
 use crate::components::RoadEntity;
-use crate::components::*;
+use crate::components::{ActiveEntity, ContentType, DynamicContent, NPC};
 use crate::systems::world::road_mesh::{generate_road_markings_mesh, generate_road_mesh};
 use crate::systems::world::road_network::RoadNetwork;
 use bevy::prelude::*;
@@ -125,7 +125,7 @@ fn spawn_road_entity(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    use crate::constants::*;
+    use crate::constants::{STATIC_GROUP, VEHICLE_GROUP};
 
     // Calculate road start position for better distance calculations
     let start_pos = road.evaluate(0.0);
@@ -279,13 +279,12 @@ pub fn update_road_dependent_systems(
 
     // Similar for NPCs
     for mut transform in npc_query.iter_mut() {
-        if !is_on_road_spline(transform.translation, &road_network, 1.0) {
-            if let Some(nearest_road_pos) =
+        if !is_on_road_spline(transform.translation, &road_network, 1.0)
+            && let Some(nearest_road_pos) =
                 find_nearest_road_position(transform.translation, &road_network)
-            {
-                transform.translation.x = nearest_road_pos.x;
-                transform.translation.z = nearest_road_pos.z;
-            }
+        {
+            transform.translation.x = nearest_road_pos.x;
+            transform.translation.z = nearest_road_pos.z;
         }
     }
 }

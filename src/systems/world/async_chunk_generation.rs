@@ -4,7 +4,7 @@ use futures_lite::future;
 use std::collections::HashMap;
 
 use crate::components::world::ContentType;
-use crate::systems::world::{ChunkCoord, ChunkState, UnifiedWorldManager};
+use crate::systems::world::unified_world::{ChunkCoord, ChunkState, UnifiedWorldManager};
 
 /// Async chunk generation system following Oracle recommendations
 /// Moves heavy chunk generation work off main thread for smooth 60+ FPS

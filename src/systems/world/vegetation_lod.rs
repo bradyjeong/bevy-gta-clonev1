@@ -1,5 +1,8 @@
 #![allow(clippy::type_complexity)]
-use crate::components::*;
+use crate::components::{
+    ActiveEntity, PerformanceStats, VegetationBillboard, VegetationDetailLevel, VegetationLOD,
+    VegetationMeshLOD,
+};
 use crate::services::distance_cache::{DistanceCache, get_cached_distance};
 use bevy::prelude::*;
 
@@ -56,12 +59,11 @@ pub fn vegetation_lod_system(
         };
 
         // Update mesh if LOD level changed
-        if old_level != veg_lod.detail_level {
-            if let Ok(mesh_lod) = mesh_lod_query.get(entity) {
-                if let Some(new_mesh) = mesh_lod.get_mesh_for_level(veg_lod.detail_level) {
-                    mesh_handle.0 = new_mesh.clone();
-                }
-            }
+        if old_level != veg_lod.detail_level
+            && let Ok(mesh_lod) = mesh_lod_query.get(entity)
+            && let Some(new_mesh) = mesh_lod.get_mesh_for_level(veg_lod.detail_level)
+        {
+            mesh_handle.0 = new_mesh.clone();
         }
     }
 }

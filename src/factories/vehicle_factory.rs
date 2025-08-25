@@ -1,6 +1,9 @@
 use crate::bundles::{DynamicPhysicsBundle, VisibleChildBundle};
 use crate::components::water::Yacht;
-use crate::components::*;
+use crate::components::{
+    AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, MainRotor, SimpleCarSpecs,
+    SimpleF16Specs, SimpleHelicopterSpecs, TailRotor, VehicleState, VehicleType,
+};
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use crate::systems::MovementTracker;
@@ -69,6 +72,7 @@ impl VehicleFactory {
                 },
                 Car,
                 VehicleState::new(VehicleType::SuperCar),
+                SimpleCarSpecs::default(),
                 LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
                 Damping {
                     linear_damping: 1.0,
@@ -128,6 +132,7 @@ impl VehicleFactory {
                 },
                 Helicopter,
                 VehicleState::new(VehicleType::Helicopter),
+                SimpleHelicopterSpecs::default(),
                 Damping {
                     linear_damping: 2.0,
                     angular_damping: 8.0,
@@ -144,6 +149,24 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
+        ));
+
+        // Add main rotor
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(8.0, 0.02, 0.3))),
+            MeshMaterial3d(materials.add(color)),
+            Transform::from_xyz(0.0, 1.5, 0.0),
+            ChildOf(vehicle_entity),
+            MainRotor,
+        ));
+
+        // Add tail rotor
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(1.0, 0.02, 0.2))),
+            MeshMaterial3d(materials.add(color)),
+            Transform::from_xyz(0.0, 1.0, 6.0),
+            ChildOf(vehicle_entity),
+            TailRotor,
         ));
 
         Ok(vehicle_entity)
@@ -186,6 +209,8 @@ impl VehicleFactory {
                 },
                 F16,
                 VehicleState::new(VehicleType::F16),
+                AircraftFlight::default(),
+                SimpleF16Specs::default(),
                 Damping {
                     linear_damping: 0.5,
                     angular_damping: 3.0,
@@ -243,7 +268,7 @@ impl VehicleFactory {
                     },
                 },
                 Yacht::default(),
-                VehicleState::new(VehicleType::SuperCar), // Use SuperCar for yacht physics
+                VehicleState::new(VehicleType::Yacht),
                 Damping {
                     linear_damping: 3.0,
                     angular_damping: 10.0,
@@ -283,6 +308,7 @@ impl VehicleFactory {
                 self.spawn_helicopter(commands, meshes, materials, position, color)
             }
             VehicleType::F16 => self.spawn_f16(commands, meshes, materials, position, color),
+            VehicleType::Yacht => self.spawn_yacht(commands, meshes, materials, position, color),
         }
     }
 

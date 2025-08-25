@@ -1,5 +1,5 @@
 use crate::systems::effects::update_beacon_visibility;
-use crate::systems::world::{UnifiedWorldManager, debug_player_position};
+use crate::systems::world::{debug::debug_player_position, unified_world::UnifiedWorldManager};
 use bevy::prelude::*;
 
 /// Plugin responsible for world debugging and monitoring

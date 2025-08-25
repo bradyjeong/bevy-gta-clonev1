@@ -5,9 +5,12 @@ use std::time::Instant;
 
 use crate::GameConfig;
 use crate::components::dirty_flags::{DirtyPriority, DirtyVegetationInstancing, FrameCounter};
-use crate::components::instanced_vegetation::*;
+use crate::components::instanced_vegetation::{
+    InstanceData, InstancedBush, InstancedLeafCluster, InstancedPalmFrond, InstancedTreeTrunk,
+    VegetationBatchable, VegetationInstancingConfig, VegetationType,
+};
 use crate::components::player::ActiveEntity;
-use crate::components::world::*;
+use crate::components::world::Cullable;
 
 /// System to collect vegetation entities for instancing with performance optimization
 pub fn collect_vegetation_instances_system(
@@ -553,7 +556,7 @@ pub fn animate_vegetation_instances_system(
     let wind_strength = 0.05; // Reduced from 0.1 to reduce flickering
 
     // Only update every 3rd frame to reduce flickering from constant dirty marking
-    if ((wind_time * 60.0) as u32) % 3 != 0 {
+    if !((wind_time * 60.0) as u32).is_multiple_of(3) {
         return;
     }
 

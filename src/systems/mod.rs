@@ -133,7 +133,7 @@ pub use validation::{ColliderType, MeshColliderConfig, validate_vehicle_consiste
 // Floating origin system - REMOVED: Finite world doesn't need coordinate translation
 
 // World boundary systems
-pub use world::{WorldBounds, aircraft_boundary_system, world_boundary_system};
+pub use world::boundaries::{WorldBounds, aircraft_boundary_system, world_boundary_system};
 
 // Simple service examples
 pub use simple_service_example::{

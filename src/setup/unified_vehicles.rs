@@ -1,5 +1,5 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
-use crate::components::*;
+use crate::components::ContentType;
 use crate::factories::VehicleFactory;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
@@ -127,10 +127,10 @@ fn setup_starter_vehicles_unified(
             vehicle_entity,
         ) {
             // Update transform if position was adjusted
-            if safe_position != validated_position {
-                if let Ok(mut entity_commands) = commands.get_entity(vehicle_entity) {
-                    entity_commands.insert(Transform::from_translation(safe_position));
-                }
+            if safe_position != validated_position
+                && let Ok(mut entity_commands) = commands.get_entity(vehicle_entity)
+            {
+                entity_commands.insert(Transform::from_translation(safe_position));
             }
 
             // Track spawned vehicle
@@ -229,10 +229,10 @@ fn setup_luxury_cars_unified(
             vehicle_entity,
         ) {
             // Update transform if position was adjusted
-            if safe_position != validated_position {
-                if let Ok(mut entity_commands) = commands.get_entity(vehicle_entity) {
-                    entity_commands.insert(Transform::from_translation(safe_position));
-                }
+            if safe_position != validated_position
+                && let Ok(mut entity_commands) = commands.get_entity(vehicle_entity)
+            {
+                entity_commands.insert(Transform::from_translation(safe_position));
             }
 
             // Track spawned vehicle

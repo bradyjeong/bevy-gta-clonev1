@@ -6,7 +6,7 @@
     clippy::collapsible_if
 )]
 use crate::bundles::VisibleChildBundle;
-use crate::components::*;
+use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
 use crate::resources::{MaterialKey, MaterialRegistry};
 use crate::systems::world::road_mesh::{
     generate_intersection_mesh, generate_road_markings_mesh, generate_road_mesh,

@@ -23,27 +23,10 @@ pub mod boundary_effects;
 pub mod floating_origin;
 pub mod unified_factory_setup;
 
-// pub use culling::*; // DELETED: Using Bevy's built-in VisibilityRange instead
-pub use debug::*;
-pub use npc::*;
-pub use performance::*;
-pub use road_generation::*;
-pub use road_mesh::*;
-pub use road_network::*;
+// All wildcard exports removed - use explicit paths like world::debug::toggle_debug_overlay
+// This enforces clear dependency relationships and prevents hidden coupling
 
-// Export unified system components
-pub use async_chunk_generation::*;
-pub use layered_generation::*;
-pub use npc_spawn::*;
-pub use simulation_lod::*;
-pub use unified_world::*;
-// pub use optimized_lod::*; // Removed - functionality moved to unified_lod.rs
-pub use asset_streaming::*;
-pub use bevy_vegetation_lod::*;
-pub use debug_layers::*;
-pub use vegetation_lod::*;
-// UnifiedCullable exports removed - using Bevy's VisibilityRange instead
-pub use boundaries::*;
-pub use boundary_effects::*;
-pub use floating_origin::*;
-pub use unified_factory_setup::*;
+// Example usage:
+// - world::road_generation::spawn_roads()
+// - world::npc::spawn_npc()
+// - world::unified_world::UnifiedWorldSystem

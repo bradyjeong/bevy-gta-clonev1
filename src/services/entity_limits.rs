@@ -60,38 +60,38 @@ impl EntityLimitManager {
     ) {
         match entity_type {
             ContentType::Building => {
-                if self.building_entities.len() >= self.max_buildings {
-                    if let Some((oldest_entity, _)) = self.building_entities.first().copied() {
-                        commands.entity(oldest_entity).despawn();
-                        self.building_entities.remove(0);
-                    }
+                if self.building_entities.len() >= self.max_buildings
+                    && let Some((oldest_entity, _)) = self.building_entities.first().copied()
+                {
+                    commands.entity(oldest_entity).despawn();
+                    self.building_entities.remove(0);
                 }
                 self.building_entities.push((entity, timestamp));
             }
             ContentType::Vehicle => {
-                if self.vehicle_entities.len() >= self.max_vehicles {
-                    if let Some((oldest_entity, _)) = self.vehicle_entities.first().copied() {
-                        commands.entity(oldest_entity).despawn();
-                        self.vehicle_entities.remove(0);
-                    }
+                if self.vehicle_entities.len() >= self.max_vehicles
+                    && let Some((oldest_entity, _)) = self.vehicle_entities.first().copied()
+                {
+                    commands.entity(oldest_entity).despawn();
+                    self.vehicle_entities.remove(0);
                 }
                 self.vehicle_entities.push((entity, timestamp));
             }
             ContentType::NPC => {
-                if self.npc_entities.len() >= self.max_npcs {
-                    if let Some((oldest_entity, _)) = self.npc_entities.first().copied() {
-                        commands.entity(oldest_entity).despawn();
-                        self.npc_entities.remove(0);
-                    }
+                if self.npc_entities.len() >= self.max_npcs
+                    && let Some((oldest_entity, _)) = self.npc_entities.first().copied()
+                {
+                    commands.entity(oldest_entity).despawn();
+                    self.npc_entities.remove(0);
                 }
                 self.npc_entities.push((entity, timestamp));
             }
             ContentType::Tree => {
-                if self.tree_entities.len() >= self.max_trees {
-                    if let Some((oldest_entity, _)) = self.tree_entities.first().copied() {
-                        commands.entity(oldest_entity).despawn();
-                        self.tree_entities.remove(0);
-                    }
+                if self.tree_entities.len() >= self.max_trees
+                    && let Some((oldest_entity, _)) = self.tree_entities.first().copied()
+                {
+                    commands.entity(oldest_entity).despawn();
+                    self.tree_entities.remove(0);
                 }
                 self.tree_entities.push((entity, timestamp));
             }

@@ -1,6 +1,6 @@
 use crate::bundles::DynamicContentBundle;
 use crate::components::world::BuildingType as WorldBuildingType;
-use crate::components::*;
+use crate::components::{Building, ContentType, DynamicContent};
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use bevy::prelude::*;

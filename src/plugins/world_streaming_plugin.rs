@@ -1,7 +1,8 @@
 use crate::config::GameConfig;
 use crate::resources::MaterialRegistry;
 use crate::systems::world::{
-    UnifiedWorldManager, layered_generation_coordinator, unified_world_streaming_system,
+    layered_generation::layered_generation_coordinator, unified_world::UnifiedWorldManager,
+    unified_world::unified_world_streaming_system,
 };
 use bevy::prelude::*;
 

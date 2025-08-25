@@ -48,7 +48,7 @@ impl DistanceCache {
 
         // Clean up old entries every 120 frames (~2 seconds at 60 FPS)
         // Spread cleanup over multiple frames to prevent spikes
-        if self.current_frame % 120 == 0 {
+        if self.current_frame.is_multiple_of(120) {
             self.cleanup_old_entries_gradually();
         }
 

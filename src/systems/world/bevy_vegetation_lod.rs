@@ -1,4 +1,4 @@
-use crate::components::*;
+use crate::components::VegetationBillboard;
 use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 
 /// New vegetation LOD system using Bevy's built-in VisibilityRange

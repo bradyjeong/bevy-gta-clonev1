@@ -1,4 +1,4 @@
-use crate::components::*;
+use crate::components::ExhaustFlame;
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::{BundleError, GenericBundleFactory, ParticleEffectType};
 use bevy::prelude::*;

@@ -1,4 +1,7 @@
-use crate::components::*;
+use crate::components::{
+    Building, Car, DynamicContent, MovementController, NPCAppearance, NPCBehaviorComponent,
+    NPCState, VehicleState, VehicleType,
+};
 use crate::services::distance_cache::MovementTracker;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
 use bevy::prelude::*;

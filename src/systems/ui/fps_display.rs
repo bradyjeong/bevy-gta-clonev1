@@ -26,11 +26,10 @@ pub fn update_fps_display(
     diagnostics: Res<DiagnosticsStore>,
     mut fps_text_query: Query<&mut Text, With<FpsText>>,
 ) {
-    if let Ok(mut text) = fps_text_query.single_mut() {
-        if let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
-            if let Some(fps) = fps_diag.smoothed() {
-                text.0 = format!("FPS: {fps:.0}");
-            }
-        }
+    if let Ok(mut text) = fps_text_query.single_mut()
+        && let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
+        && let Some(fps) = fps_diag.smoothed()
+    {
+        text.0 = format!("FPS: {fps:.0}");
     }
 }

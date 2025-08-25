@@ -1,5 +1,8 @@
 #![allow(clippy::type_complexity)]
-use crate::components::*;
+use crate::components::{
+    FrameCounter, InstancedVegetationBundle, VegetationBatchable, VegetationInstancingConfig,
+    VegetationType,
+};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 

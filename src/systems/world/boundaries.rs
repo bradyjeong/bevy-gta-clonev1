@@ -1,5 +1,5 @@
 #![allow(clippy::type_complexity)]
-use crate::components::*;
+use crate::components::{Car, F16, Helicopter, Yacht};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 

@@ -65,20 +65,23 @@ pub mod world_lod_plugin;
 pub mod world_npc_plugin;
 pub mod world_streaming_plugin;
 
-pub use game_core::*;
-pub use game_setup::*;
-pub use input_plugin::*;
-pub use player_plugin::*;
-pub use ui_plugin::*;
-pub use unified_world_plugin::*;
-pub use vegetation_lod_plugin::*;
-pub use vehicle_plugin::*;
-pub use water_plugin::*;
+// Core game plugins
+pub use game_core::GameCorePlugin;
+pub use game_setup::GameSetupPlugin;
+pub use input_plugin::InputPlugin;
+pub use player_plugin::PlayerPlugin;
+pub use ui_plugin::UIPlugin;
 
-// New focused world plugins
-pub use timing_plugin::*;
-pub use world_content_plugin::*;
-pub use world_debug_plugin::*;
-pub use world_lod_plugin::*;
-pub use world_npc_plugin::*;
-pub use world_streaming_plugin::*;
+// World and rendering plugins
+pub use unified_world_plugin::UnifiedWorldPlugin;
+pub use vegetation_lod_plugin::VegetationLODPlugin;
+pub use vehicle_plugin::VehiclePlugin;
+pub use water_plugin::WaterPlugin;
+
+// Specialized world plugins
+pub use timing_plugin::TimingPlugin;
+pub use world_content_plugin::WorldContentPlugin;
+pub use world_debug_plugin::WorldDebugPlugin;
+pub use world_lod_plugin::WorldLodPlugin;
+pub use world_npc_plugin::WorldNpcPlugin;
+pub use world_streaming_plugin::WorldStreamingPlugin;

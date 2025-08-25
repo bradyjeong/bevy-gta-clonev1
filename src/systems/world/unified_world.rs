@@ -3,7 +3,7 @@
     clippy::manual_flatten,
     clippy::collapsible_if
 )]
-use crate::components::*;
+use crate::components::{ActiveEntity, ContentType};
 use crate::config::GameConfig;
 use crate::systems::world::road_network::RoadNetwork;
 use bevy::prelude::*;

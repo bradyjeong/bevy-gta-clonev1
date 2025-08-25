@@ -19,10 +19,10 @@ pub fn performance_monitoring_system(
     stats.culled_entities = 0; // This metric is deprecated with VisibilityRange
 
     // Get frame time from diagnostics
-    if let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
-        if let Some(fps_avg) = fps_diag.smoothed() {
-            stats.frame_time = (1000.0 / fps_avg) as f32; // Convert to milliseconds
-        }
+    if let Some(fps_diag) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
+        && let Some(fps_avg) = fps_diag.smoothed()
+    {
+        stats.frame_time = (1000.0 / fps_avg) as f32; // Convert to milliseconds
     }
 
     // Report every 5 seconds

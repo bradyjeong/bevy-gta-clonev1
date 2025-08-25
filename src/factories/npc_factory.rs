@@ -1,5 +1,5 @@
 use crate::components::world::NPCGender;
-use crate::components::*;
+use crate::components::{NPC, NPCAppearance, NPCState};
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use bevy::prelude::*;

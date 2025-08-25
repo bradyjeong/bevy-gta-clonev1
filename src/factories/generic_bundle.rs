@@ -1,6 +1,13 @@
-use crate::bundles::*;
-use crate::components::*;
-use crate::config::*;
+use crate::bundles::{
+    BuildingBundle, DynamicContentBundle, DynamicPhysicsBundle, DynamicVehicleBundle, NPCBundle,
+    PhysicsBundle, StaticPhysicsBundle, UnifiedChunkBundle, VegetationBundle, VehicleBundle,
+};
+use crate::components::{
+    Building, BuildingType, Car, ContentType, DynamicContent, MovementController, NPCAppearance,
+    NPCBehaviorComponent, NPCBehaviorType, NPCLOD, NPCState, NPCType, VehicleLOD, VehicleState,
+    VehicleType,
+};
+use crate::config::GameConfig;
 use crate::services::distance_cache::MovementTracker;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
 use bevy::{prelude::*, render::view::VisibilityRange};
@@ -133,6 +140,7 @@ impl BundleSpec for VehicleBundleSpec {
             VehicleType::SuperCar => &config.vehicles.super_car,
             VehicleType::Helicopter => &config.vehicles.helicopter,
             VehicleType::F16 => &config.vehicles.f16,
+            VehicleType::Yacht => &config.vehicles.super_car, // Use car config for yacht
         };
 
         // Apply overrides with validation
@@ -208,23 +216,23 @@ impl BundleSpec for VehicleBundleSpec {
         }
 
         // Validate overrides if present
-        if let Some(max_speed) = self.max_speed_override {
-            if max_speed <= 0.0 || max_speed > config.physics.max_velocity {
-                return Err(BundleError::InvalidVelocity {
-                    velocity: max_speed,
-                    max_velocity: config.physics.max_velocity,
-                });
-            }
+        if let Some(max_speed) = self.max_speed_override
+            && (max_speed <= 0.0 || max_speed > config.physics.max_velocity)
+        {
+            return Err(BundleError::InvalidVelocity {
+                velocity: max_speed,
+                max_velocity: config.physics.max_velocity,
+            });
         }
 
-        if let Some(mass) = self.mass_override {
-            if mass < config.physics.min_mass || mass > config.physics.max_mass {
-                return Err(BundleError::InvalidMass {
-                    mass,
-                    min_mass: config.physics.min_mass,
-                    max_mass: config.physics.max_mass,
-                });
-            }
+        if let Some(mass) = self.mass_override
+            && (mass < config.physics.min_mass || mass > config.physics.max_mass)
+        {
+            return Err(BundleError::InvalidMass {
+                mass,
+                min_mass: config.physics.min_mass,
+                max_mass: config.physics.max_mass,
+            });
         }
 
         Ok(())

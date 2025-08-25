@@ -142,6 +142,7 @@ pub enum VehicleType {
     SuperCar,
     Helicopter,
     F16,
+    Yacht,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -171,6 +172,7 @@ impl VehicleState {
             VehicleType::SuperCar => (70.0, 40.0),
             VehicleType::Helicopter => (83.0, 30.0),
             VehicleType::F16 => (600.0, 80.0),
+            VehicleType::Yacht => (45.0, 25.0),
         };
 
         Self {

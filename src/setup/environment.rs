@@ -1,5 +1,5 @@
 use crate::bundles::VisibleChildBundle;
-use crate::constants::*;
+use crate::constants::STATIC_GROUP;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;

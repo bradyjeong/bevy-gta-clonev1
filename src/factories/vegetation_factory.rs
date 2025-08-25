@@ -1,5 +1,5 @@
 use crate::bundles::VegetationBundle;
-use crate::components::*;
+use crate::components::{ContentType, DynamicContent, VegetationLOD};
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use bevy::prelude::*;

@@ -1,4 +1,4 @@
-use crate::config::*;
+use crate::config::{GameConfig, VehicleTypeConfig};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 

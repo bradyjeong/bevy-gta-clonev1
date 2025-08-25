@@ -1,5 +1,5 @@
-use crate::components::*;
-use crate::constants::*;
+use crate::components::Car;
+use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;

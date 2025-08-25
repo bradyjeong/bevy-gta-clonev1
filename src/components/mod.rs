@@ -68,16 +68,47 @@ pub mod instanced_vegetation;
 pub mod safety;
 pub mod unified_vehicle;
 
-pub use effects::*;
-pub use lod::*;
-pub use player::*;
-pub use vehicles::*;
-pub use water::*;
-pub use world::*;
+// Core entity components
+pub use player::{
+    ActiveEntity, BodyPart, HumanAnimation, HumanBehavior, HumanMovement, InCar, Player,
+    PlayerBody, PlayerBodyMesh, PlayerHead, PlayerLeftArm, PlayerLeftLeg, PlayerRightArm,
+    PlayerRightLeg, PlayerTorso,
+};
 
-pub use control_state::*;
-pub use dirty_flags::*;
-pub use instanced_vegetation::*;
-// pub use safety::*; // Disabled - conflicts with world::WorldBounds in finite world
+pub use vehicles::{
+    AircraftFlight, Car, F16, Helicopter, MainRotor, SimpleCarSpecs, SimpleF16Specs,
+    SimpleHelicopterSpecs, TailRotor, VehicleHealth, VehicleLOD, VehicleRendering, VehicleState,
+    VehicleType,
+};
+
+pub use world::{
+    BoundaryEffects, Buildable, Building, BuildingType, ContentType, CullingSettings,
+    DynamicContent, DynamicTerrain, IntersectionEntity, Landmark, MainCamera, MovementController,
+    NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorComponent, NPCBehaviorType, NPCBodyPart,
+    NPCGender, NPCHead, NPCLOD, NPCLeftArm, NPCLeftLeg, NPCRendering, NPCRightArm, NPCRightLeg,
+    NPCState, NPCTorso, NPCType, PerformanceCritical, PerformanceStats, RoadEntity, WorldBounds,
+};
+
+pub use water::{Boat, Lake, WaterBody, WaterWave, Yacht};
+
+// Visual and rendering components
+pub use effects::{
+    ControlsDisplay, ControlsText, ExhaustFlame, FlameEffect, JetFlame, VehicleBeacon, WaypointText,
+};
+
+pub use lod::{VegetationBillboard, VegetationDetailLevel, VegetationLOD, VegetationMeshLOD};
+
+pub use instanced_vegetation::{
+    InstanceData, InstancedBush, InstancedLeafCluster, InstancedPalmFrond, InstancedTreeTrunk,
+    InstancedVegetationBundle, VegetationBatchable, VegetationInstancingConfig, VegetationType,
+};
+
+// Control and optimization components
+pub use control_state::{AIControlled, ControlState, PlayerControlled, VehicleControlType};
+pub use dirty_flags::{
+    DirtyFlagsMetrics, DirtyLOD, DirtyVegetationInstancing, DirtyVisibility, FrameCounter,
+};
+pub use unified_vehicle::UnifiedVehicleSpecs;
+
+// Entity types and utilities (non-component types)
 pub use entity_types::*;
-pub use unified_vehicle::*;

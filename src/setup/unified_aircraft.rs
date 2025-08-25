@@ -1,6 +1,9 @@
 use crate::components::safety::HighSpeed;
-use crate::components::*;
-use crate::constants::*;
+use crate::components::{
+    AircraftFlight, F16, Helicopter, MainRotor, SimpleF16Specs, SimpleHelicopterSpecs, TailRotor,
+    VehicleState, VehicleType,
+};
+use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
 use crate::factories::{MaterialFactory, MeshFactory};
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};

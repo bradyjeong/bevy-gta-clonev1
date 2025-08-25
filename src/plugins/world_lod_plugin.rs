@@ -1,4 +1,4 @@
-use crate::systems::world::{
+use crate::systems::world::simulation_lod::{
     SimulationLODStats, SimulationLODTimer, track_simulation_lod_stats, update_simulation_lod,
 };
 use bevy::prelude::*;

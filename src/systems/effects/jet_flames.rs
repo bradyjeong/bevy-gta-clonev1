@@ -43,34 +43,34 @@ pub fn update_jet_flames_unified(
                 );
 
                 // Update color if flame has material
-                if let Ok(MeshMaterial3d(material_handle)) = material_query.get(child) {
-                    if let Some(material) = material_assets.get_mut(material_handle) {
-                        let color = if flight.afterburner_active {
-                            // Blue-white hot flame for afterburner
-                            Color::srgb(
-                                0.8 + flame_intensity * 0.2,
-                                0.6 + flame_intensity * 0.4,
-                                1.0,
-                            )
-                        } else {
-                            // Orange-red flame for normal thrust
-                            Color::srgb(
-                                1.0,
-                                0.3 + flame_intensity * 0.5,
-                                0.1 + flame_intensity * 0.2,
-                            )
-                        };
+                if let Ok(MeshMaterial3d(material_handle)) = material_query.get(child)
+                    && let Some(material) = material_assets.get_mut(material_handle)
+                {
+                    let color = if flight.afterburner_active {
+                        // Blue-white hot flame for afterburner
+                        Color::srgb(
+                            0.8 + flame_intensity * 0.2,
+                            0.6 + flame_intensity * 0.4,
+                            1.0,
+                        )
+                    } else {
+                        // Orange-red flame for normal thrust
+                        Color::srgb(
+                            1.0,
+                            0.3 + flame_intensity * 0.5,
+                            0.1 + flame_intensity * 0.2,
+                        )
+                    };
 
-                        // Add flickering brightness
-                        let flicker = (time.elapsed_secs() * 12.0).sin() * 0.1 + 1.0;
-                        let flicker_color = Color::srgb(
-                            color.to_srgba().red * flicker,
-                            color.to_srgba().green * flicker,
-                            color.to_srgba().blue * flicker,
-                        );
-                        material.base_color = flicker_color;
-                        material.emissive = LinearRgba::from(color) * (flame_intensity * 2.0 + 0.5);
-                    }
+                    // Add flickering brightness
+                    let flicker = (time.elapsed_secs() * 12.0).sin() * 0.1 + 1.0;
+                    let flicker_color = Color::srgb(
+                        color.to_srgba().red * flicker,
+                        color.to_srgba().green * flicker,
+                        color.to_srgba().blue * flicker,
+                    );
+                    material.base_color = flicker_color;
+                    material.emissive = LinearRgba::from(color) * (flame_intensity * 2.0 + 0.5);
                 }
             }
         }

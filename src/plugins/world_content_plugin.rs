@@ -1,9 +1,8 @@
 use crate::systems::world::{
-    building_layer_system,
-    road_layer_system,
-    vegetation_layer_system,
+    layered_generation::{
+        building_layer_system, road_layer_system, vegetation_layer_system, vehicle_layer_system,
+    },
     // dynamic_terrain_system - DISABLED: conflicts with WorldRoot coordinate shifting
-    vehicle_layer_system,
 };
 use bevy::prelude::*;
 

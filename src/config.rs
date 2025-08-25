@@ -1,4 +1,4 @@
-use crate::systems::world::{ChunkCoord, chunk_coord_to_index};
+use crate::systems::world::unified_world::{ChunkCoord, chunk_coord_to_index};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
