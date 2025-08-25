@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+use crate::services::terrain_service::TerrainService;
+
 const GROUND_DETECTION_HEIGHT: f32 = 100.0; // Cast ray from this height
 const DEFAULT_GROUND_HEIGHT: f32 = 0.0; // Fallback if no ground found
 const MIN_GROUND_HEIGHT: f32 = -10.0; // Minimum valid ground height
@@ -89,21 +91,18 @@ impl GroundDetectionService {
     }
 
     /// Get ground height without requiring RapierContext access
-    /// Uses simple terrain estimation until physics integration is fixed
-    pub fn get_ground_height_simple(&self, position: Vec2) -> f32 {
-        // Match the actual terrain height from setup_basic_world
-        // Terrain is at y=-0.15, so ground surface is at -0.1
-
-        // Keep spawn area (within 10 units of origin) perfectly flat to prevent sliding
-        let spawn_area_radius = 10.0;
-        let distance_from_spawn = (position.x.powi(2) + position.y.powi(2)).sqrt();
-
-        if distance_from_spawn < spawn_area_radius {
-            -0.1 // Perfectly flat ground around spawn
-        } else {
-            let noise_height = (position.x * 0.01).sin() * (position.y * 0.01).cos() * 0.1;
-            -0.1 + noise_height // Terrain surface with small variation
+    /// Uses terrain service for consistent height queries
+    pub fn get_ground_height_simple(&self, position: Vec2, terrain_service: &TerrainService) -> f32 {
+        if !self.enabled {
+            return self.fallback_height;
         }
+        
+        // Use terrain service for height queries
+        // Maintains compatibility while using unified terrain system
+        let terrain_height = terrain_service.height_at_vec2(position);
+        
+        // Apply surface offset for compatibility (terrain is at -0.15, surface at -0.1)
+        terrain_height + 0.05
     }
 
     /// Check if a position is suitable for NPC spawning (avoiding roads, buildings, etc.)

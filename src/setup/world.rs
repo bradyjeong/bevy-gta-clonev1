@@ -7,6 +7,7 @@ use crate::components::{
 use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
 use crate::services::distance_cache::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
+use crate::services::terrain_service::TerrainService;
 use crate::systems::audio::FootstepTimer;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
@@ -19,6 +20,7 @@ pub fn setup_basic_world(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
+    terrain_service: Res<TerrainService>,
 ) {
     // No longer need WorldRoot - spawn entities directly in world space
 
@@ -87,7 +89,7 @@ pub fn setup_basic_world(
 
     // Calculate proper ground position for player spawn
     let player_spawn_pos = Vec2::new(0.0, 0.0);
-    let ground_height = ground_service.get_ground_height_simple(player_spawn_pos);
+    let ground_height = ground_service.get_ground_height_simple(player_spawn_pos, &terrain_service);
     let player_y = ground_height + 0.45; // Position so feet (at -0.4) touch ground
 
     println!("DEBUG: Player spawn - ground height: {ground_height:.3}, final Y: {player_y:.3}",);

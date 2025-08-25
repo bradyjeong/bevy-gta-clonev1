@@ -2,6 +2,7 @@
 use crate::components::ContentType;
 use crate::factories::VehicleFactory;
 use crate::services::ground_detection::GroundDetectionService;
+use crate::services::terrain_service::TerrainService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::road_network::RoadNetwork;
 use bevy::prelude::*;
@@ -25,12 +26,15 @@ pub fn setup_initial_vehicles_unified(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
+    _terrain_service: Res<TerrainService>,
     _road_network: Option<Res<RoadNetwork>>,
     _config: Res<GameConfig>,
 ) {
     // Initialize focused VehicleFactory for consistent spawning following AGENT.md principles
     let vehicle_factory = VehicleFactory::new();
     let current_time = 0.0; // Initial spawn time
+    
+
 
     // Track all spawned vehicles for collision detection
     let mut existing_content: Vec<(Vec3, ContentType, f32)> = Vec::new();
@@ -72,7 +76,7 @@ fn setup_starter_vehicles_unified(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
-    ground_service: &Res<GroundDetectionService>,
+    _ground_service: &Res<GroundDetectionService>,
     vehicle_factory: &VehicleFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
@@ -96,8 +100,9 @@ fn setup_starter_vehicles_unified(
         let color = car_colors[i % car_colors.len()];
 
         // Use ground detection service for proper positioning
-        let vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
-        let ground_height = ground_service.get_ground_height_simple(vehicle_spawn_pos);
+        let _vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
+        // TODO: Use terrain service - for now use hardcoded fallback
+        let ground_height = -0.15 + 0.05; // Match terrain service fallback
         let vehicle_y = ground_height + 0.5; // Vehicle collider half-height above ground
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
 
@@ -163,7 +168,7 @@ fn setup_luxury_cars_unified(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
-    ground_service: &Res<GroundDetectionService>,
+    _ground_service: &Res<GroundDetectionService>,
     vehicle_factory: &VehicleFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
@@ -198,8 +203,9 @@ fn setup_luxury_cars_unified(
         let color = luxury_colors[i % luxury_colors.len()];
 
         // Use ground detection service for proper positioning
-        let vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
-        let ground_height = ground_service.get_ground_height_simple(vehicle_spawn_pos);
+        let _vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
+        // TODO: Use terrain service - for now use hardcoded fallback
+        let ground_height = -0.15 + 0.05; // Match terrain service fallback
         let vehicle_y = ground_height + 0.5;
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
 

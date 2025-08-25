@@ -6,6 +6,7 @@ use crate::components::{
 use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
 use crate::factories::{MaterialFactory, MeshFactory};
 use crate::services::ground_detection::GroundDetectionService;
+use crate::services::terrain_service::TerrainService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use bevy::{prelude::*, render::view::VisibilityRange};
 use bevy_rapier3d::prelude::*;
@@ -36,6 +37,7 @@ pub fn setup_initial_aircraft_unified(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
+    terrain_service: Res<TerrainService>,
     _config: Res<GameConfig>,
 ) {
     // Aircraft spawn positions (well-spaced from other content)
@@ -53,6 +55,7 @@ pub fn setup_initial_aircraft_unified(
             &mut materials,
             &mut spawn_registry,
             &ground_service,
+            &terrain_service,
             preferred_pos,
             aircraft_type,
         ) {
@@ -67,18 +70,20 @@ pub fn setup_initial_aircraft_unified(
 }
 
 /// Spawn a single aircraft with ground detection and validation
+#[allow(clippy::too_many_arguments)]
 fn spawn_aircraft_unified(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
     ground_service: &Res<GroundDetectionService>,
+    terrain_service: &Res<TerrainService>,
     preferred_position: Vec3,
     aircraft_type: AircraftType,
 ) -> Option<Entity> {
     // Get ground height for proper positioning
     let ground_height = ground_service
-        .get_ground_height_simple(Vec2::new(preferred_position.x, preferred_position.z));
+        .get_ground_height_simple(Vec2::new(preferred_position.x, preferred_position.z), terrain_service);
 
     // Calculate spawn position (aircraft spawn at appropriate height above ground)
     let spawn_height = match aircraft_type {

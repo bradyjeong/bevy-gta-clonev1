@@ -7,6 +7,7 @@ use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;
 use crate::resources::WorldRng;
 use crate::services::ground_detection::GroundDetectionService;
+use crate::services::terrain_service::TerrainService;
 use crate::services::timing_service::TimingService;
 use rand::prelude::*;
 
@@ -18,6 +19,7 @@ pub fn spawn_new_npc_system(
     timing_service: Res<TimingService>,
     npc_query: Query<Entity, With<NPCState>>,
     ground_service: Res<GroundDetectionService>,
+    terrain_service: Res<TerrainService>,
     mut world_rng: ResMut<WorldRng>,
     _config: Res<GameConfig>,
 ) {
@@ -42,6 +44,7 @@ pub fn spawn_new_npc_system(
                     &mut commands,
                     position,
                     &ground_service,
+                    &terrain_service,
                     &mut world_rng,
                 );
                 break; // Found valid position, spawn and exit
@@ -55,10 +58,11 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
     commands: &mut Commands,
     position: Vec2,
     ground_service: &GroundDetectionService,
+    terrain_service: &TerrainService,
     world_rng: &mut WorldRng,
 ) -> Entity {
     // Use simplified ground detection
-    let ground_height = ground_service.get_ground_height_simple(position);
+    let ground_height = ground_service.get_ground_height_simple(position, terrain_service);
     let ground_clearance = 0.02; // Very small clearance to avoid clipping
     let spawn_height = ground_height + ground_clearance; // Place NPC feet on ground
 

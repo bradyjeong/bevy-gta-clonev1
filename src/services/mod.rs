@@ -4,6 +4,7 @@ pub mod simple_services;
 pub mod timing_service;
 
 pub mod ground_detection;
+pub mod terrain_service;
 
 pub use distance_cache::{
     DistanceCache, DistanceCachePlugin, MovementTracker, get_cached_distance,

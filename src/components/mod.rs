@@ -57,6 +57,7 @@
 pub mod effects;
 pub mod lod;
 pub mod player;
+pub mod terrain;
 pub mod vehicles;
 pub mod water;
 pub mod world;
@@ -90,6 +91,8 @@ pub use world::{
 };
 
 pub use water::{Boat, Lake, WaterBody, WaterWave, Yacht};
+
+pub use terrain::{TerrainChunk, TerrainMeta};
 
 // Visual and rendering components
 pub use effects::{

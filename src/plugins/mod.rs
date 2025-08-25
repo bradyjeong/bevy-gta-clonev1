@@ -51,6 +51,7 @@ pub mod game_core;
 pub mod game_setup;
 pub mod input_plugin;
 pub mod player_plugin;
+pub mod terrain_plugin;
 pub mod ui_plugin;
 pub mod unified_world_plugin;
 pub mod vegetation_lod_plugin;
@@ -70,6 +71,7 @@ pub use game_core::GameCorePlugin;
 pub use game_setup::GameSetupPlugin;
 pub use input_plugin::InputPlugin;
 pub use player_plugin::PlayerPlugin;
+pub use terrain_plugin::TerrainPlugin;
 pub use ui_plugin::UIPlugin;
 
 // World and rendering plugins
