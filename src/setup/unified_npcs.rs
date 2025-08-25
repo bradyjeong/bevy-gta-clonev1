@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::prelude::*;
 
 use crate::GameConfig;
-use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+use crate::factories::NPCFactory;
 use crate::services::ground_detection::GroundDetectionService;
 
 /// UNIFIED NPC SETUP SYSTEM
@@ -18,10 +18,10 @@ pub fn setup_initial_npcs_unified(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     ground_service: Res<GroundDetectionService>,
-    game_config: Res<GameConfig>,
+    _game_config: Res<GameConfig>,
 ) {
-    // Initialize UnifiedEntityFactory for consistent spawning
-    let mut entity_factory = UnifiedEntityFactory::with_config(game_config.clone());
+    // Initialize focused NPCFactory for consistent spawning following AGENT.md principles
+    let npc_factory = NPCFactory::new();
 
     let mut rng = thread_rng();
     let mut spawned_count = 0;
@@ -43,13 +43,13 @@ pub fn setup_initial_npcs_unified(
             let ground_height = ground_service.get_ground_height_simple(position);
             let spawn_position = Vec3::new(x, ground_height + 0.1, z);
 
-            // Use UnifiedEntityFactory for consistent spawning
-            match entity_factory.spawn_npc_consolidated(
+            // Use focused NPCFactory for consistent spawning
+            match npc_factory.spawn_npc(
                 &mut commands,
                 &mut meshes,
                 &mut materials,
                 spawn_position,
-                0.0, // Initial time
+                None, // Auto-select NPC type
             ) {
                 Ok(_entity) => {
                     spawned_count += 1;

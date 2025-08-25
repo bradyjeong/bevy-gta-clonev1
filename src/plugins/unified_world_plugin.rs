@@ -1,4 +1,4 @@
-use crate::factories::initialize_material_factory;
+use crate::factories::material_factory::initialize_material_factory;
 use crate::plugins::{
     TimingPlugin, WorldContentPlugin, WorldDebugPlugin, WorldLodPlugin, WorldNpcPlugin,
     WorldStreamingPlugin,

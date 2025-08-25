@@ -61,45 +61,42 @@
 //! 3. Include validation and default values
 //! 4. Export from this module
 
-// Unified factory system - replaces all duplicate factories
-pub mod entity_factory_unified;
-
-// Focused factory modules (following AGENT.md simplicity principles)
-// pub mod entity_limits; // Moved to services/
+// Utility modules for position and collision detection
 pub mod collision_detector;
 pub mod position_validator;
 
-// Domain-specific factories (following simplicity guidelines)
+// Domain-specific factories with single responsibilities (following AGENT.md principles)
 pub mod building_factory;
-
+pub mod effect_factory;
 pub mod entity_limit;
 pub mod npc_factory;
-pub mod tree_factory;
+pub mod vegetation_factory;
+pub mod vehicle_factory;
 
-// Specialized factories
+// Specialized utility factories
 pub mod generic_bundle;
 pub mod material_factory;
 pub mod mesh_factory;
 pub mod rendering_factory;
 pub mod transform_factory;
 
-// Public API - unified factory system
-pub use entity_factory_unified::*;
+// Utility module exports (explicit imports, no wildcards per AGENT.md)
+pub use collision_detector::CollisionDetector;
+pub use position_validator::PositionValidator;
 
-// Focused module exports (AGENT.md compliant architecture)
-pub use collision_detector::*;
-pub use position_validator::*;
-
-// Domain-specific factory exports
-pub use building_factory::*;
-
+// Domain-specific factory exports with explicit imports (no wildcards)
+pub use building_factory::{BuildingFactory, BuildingType};
+pub use effect_factory::{EffectFactory, ParticleEffect};
 pub use entity_limit::{EntityLimit, EntityLimitManager, EntityType};
-pub use npc_factory::*;
-pub use tree_factory::*; // Avoid conflict with unified factory
+pub use npc_factory::{NPCFactory, NPCType};
+pub use vegetation_factory::{VegetationFactory, VegetationType};
+pub use vehicle_factory::VehicleFactory;
 
-// Specialized factory exports
-pub use generic_bundle::*;
-pub use material_factory::*;
-pub use mesh_factory::*;
-pub use rendering_factory::*;
-pub use transform_factory::*;
+// Specialized factory exports (selective imports)
+pub use generic_bundle::{BundleError, GenericBundleFactory};
+pub use material_factory::{MaterialFactory, initialize_material_factory};
+pub use mesh_factory::MeshFactory;
+pub use rendering_factory::{
+    RenderingBundleType, RenderingFactory, StandardRenderingPattern, VehicleBodyType,
+};
+pub use transform_factory::TransformFactory;

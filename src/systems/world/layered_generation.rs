@@ -588,15 +588,12 @@ fn spawn_unified_building(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
-    // REPLACED: Use UnifiedEntityFactory for building spawning
-    // This eliminates duplicate building spawning code
-    use crate::GameConfig;
-    use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+    // Use focused BuildingFactory for clean, single-responsibility design
+    use crate::factories::BuildingFactory;
 
-    let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
-    let current_time = 0.0; // Placeholder time
+    let factory = BuildingFactory::new();
 
-    match factory.spawn_building_consolidated(commands, meshes, materials, position, current_time) {
+    match factory.spawn_building(commands, meshes, materials, position, None) {
         Ok(entity) => {
             // Add chunk-specific components to maintain compatibility
             commands.entity(entity).insert((UnifiedChunkEntity {
@@ -709,15 +706,21 @@ fn spawn_unified_vehicle(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
-    // REPLACED: Use UnifiedEntityFactory for vehicle spawning
-    // This eliminates duplicate vehicle spawning code
-    use crate::GameConfig;
-    use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+    // Use focused VehicleFactory for clean, single-responsibility design
+    use crate::components::VehicleType;
+    use crate::factories::VehicleFactory;
+    use rand::Rng;
 
-    let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
-    let current_time = 0.0; // Placeholder time
+    let factory = VehicleFactory::new();
+    let mut rng = rand::thread_rng();
+    let vehicle_types = [
+        VehicleType::SuperCar,
+        VehicleType::Helicopter,
+        VehicleType::F16,
+    ];
+    let vehicle_type = vehicle_types[rng.gen_range(0..vehicle_types.len())];
 
-    match factory.spawn_vehicle_consolidated(commands, meshes, materials, position, current_time) {
+    match factory.spawn_vehicle_by_type(commands, meshes, materials, vehicle_type, position, None) {
         Ok(entity) => {
             // Add chunk-specific components to maintain compatibility
             commands.entity(entity).insert((UnifiedChunkEntity {
@@ -829,15 +832,12 @@ fn spawn_unified_tree(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) -> Entity {
-    // REPLACED: Use UnifiedEntityFactory for tree spawning
-    // This eliminates duplicate tree spawning code
-    use crate::GameConfig;
-    use crate::factories::entity_factory_unified::UnifiedEntityFactory;
+    // Use focused VegetationFactory for clean, single-responsibility design
+    use crate::factories::VegetationFactory;
 
-    let mut factory = UnifiedEntityFactory::with_config(GameConfig::default());
-    let current_time = 0.0; // Placeholder time
+    let factory = VegetationFactory::new();
 
-    match factory.spawn_tree_consolidated(commands, meshes, materials, position, current_time) {
+    match factory.spawn_tree(commands, meshes, materials, position, None) {
         Ok(entity) => {
             // Add chunk-specific components to maintain compatibility
             commands.entity(entity).insert((UnifiedChunkEntity {
