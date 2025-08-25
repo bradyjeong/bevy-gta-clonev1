@@ -14,31 +14,9 @@ pub fn setup_lake(
 ) {
     let lake_size = 200.0;
     let lake_depth = 5.0;
-    let lake_position = Vec3::new(300.0, -2.0, 300.0); // Positioned away from spawn and below ground
+    let lake_position = Vec3::new(300.0, 0.0, 300.0); // Positioned away from spawn at ground level
 
-    // Create lake basin (carved out ground) - FACTORY PATTERN
-    let basin_entity = RenderingFactory::create_rendering_entity(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        StandardRenderingPattern::WaterBottom {
-            size: lake_size,
-            color: Color::srgb(0.3, 0.25, 0.2),
-        },
-        Vec3::new(
-            lake_position.x,
-            lake_position.y - lake_depth / 2.0,
-            lake_position.z,
-        ),
-        RenderingBundleType::Standalone,
-        None,
-    );
-
-    commands.entity(basin_entity).insert((
-        RigidBody::Fixed,
-        Collider::cylinder(lake_depth / 2.0, lake_size / 2.0),
-        Name::new("Lake Basin"),
-    ));
+    // Lake basin will be handled by terrain carving later
 
     // Create lake water surface - FACTORY PATTERN
     let water_entity = RenderingFactory::create_rendering_entity(
@@ -69,26 +47,7 @@ pub fn setup_lake(
         Name::new("Lake"),
     ));
 
-    // Create lake bottom
-    commands.spawn((
-        Mesh3d(
-            meshes.add(
-                Plane3d::default()
-                    .mesh()
-                    .size(lake_size * 0.9, lake_size * 0.9),
-            ),
-        ),
-        MeshMaterial3d(MaterialFactory::create_water_bottom_material(
-            &mut materials,
-            Color::srgb(0.2, 0.15, 0.1),
-        )),
-        Transform::from_xyz(
-            lake_position.x,
-            lake_position.y - lake_depth,
-            lake_position.z,
-        ),
-        Name::new("Lake Bottom"),
-    ));
+    // Lake bottom will be part of terrain heightmap
 }
 
 pub fn setup_yacht(
@@ -96,7 +55,7 @@ pub fn setup_yacht(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let yacht_position = Vec3::new(300.0, -1.0, 300.0); // On the lake surface
+    let yacht_position = Vec3::new(300.0, 1.0, 300.0); // On the lake surface
 
     // Yacht hull - FACTORY PATTERN
     let yacht_id = RenderingFactory::create_rendering_entity(

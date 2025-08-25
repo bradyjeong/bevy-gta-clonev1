@@ -34,8 +34,8 @@ impl BuildingGenerator {
             let local_z = world_rng.global().gen_range(-half_size..half_size);
             let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
 
-            // Check if position is valid (not on road, not overlapping other buildings)
-            if !self.is_on_road(position, world) {
+            // Check if position is valid (not on road, not overlapping other buildings, not in water)
+            if !self.is_on_road(position, world) && !self.is_in_water_area(position) {
                 let building_size = world_rng.global().gen_range(8.0..15.0);
                 if world.placement_grid.can_place(
                     position,
@@ -88,7 +88,7 @@ impl BuildingGenerator {
                 });
                 Ok(entity)
             }
-            Err(e) => Err(format!("Failed to spawn building: {}", e)),
+            Err(e) => Err(format!("Failed to spawn building: {e}")),
         }
     }
 
@@ -122,5 +122,15 @@ impl BuildingGenerator {
         }
 
         false
+    }
+
+    /// Check if position is in water area - same logic as PositionValidator
+    fn is_in_water_area(&self, position: Vec3) -> bool {
+        let lake_center = Vec3::new(300.0, 0.0, 300.0);
+        let lake_size = 200.0;
+        let buffer = 20.0;
+
+        let distance = Vec2::new(position.x - lake_center.x, position.z - lake_center.z).length();
+        distance < (lake_size / 2.0 + buffer)
     }
 }

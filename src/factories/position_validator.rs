@@ -126,7 +126,7 @@ impl PositionValidator {
     /// - Focused responsibility: Only water area checking
     fn is_in_water_area(&self, position: Vec3) -> bool {
         // Lake position and size (must match water.rs setup)
-        let lake_center = Vec3::new(300.0, -2.0, 300.0);
+        let lake_center = Vec3::new(300.0, 0.0, 300.0);
         let lake_size = 200.0;
         let buffer = 20.0; // Extra buffer around lake
 

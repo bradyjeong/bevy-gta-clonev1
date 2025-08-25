@@ -27,6 +27,10 @@ impl RoadGenerator {
         // Create road entities and add to placement grid
         for road_id in new_road_ids {
             if let Some(road) = world.road_network.roads.get(&road_id).cloned() {
+                // Skip roads that pass through water areas
+                if self.road_intersects_water(&road) {
+                    continue;
+                }
                 let road_entity = self.spawn_road_entity(
                     commands,
                     coord,
@@ -232,6 +236,27 @@ impl RoadGenerator {
         }
 
         None
+    }
+
+    /// Check if road intersects water area
+    fn road_intersects_water(&self, road: &RoadSpline) -> bool {
+        let lake_center = Vec3::new(300.0, 0.0, 300.0);
+        let lake_size = 200.0;
+        let buffer = 10.0; // Smaller buffer for roads
+
+        // Sample road spline at multiple points
+        let samples = 10;
+        for i in 0..samples {
+            let t = i as f32 / (samples - 1) as f32;
+            let road_point = road.evaluate(t);
+            let distance =
+                Vec2::new(road_point.x - lake_center.x, road_point.z - lake_center.z).length();
+
+            if distance < (lake_size / 2.0 + buffer) {
+                return true;
+            }
+        }
+        false
     }
 
     fn create_road_material(
