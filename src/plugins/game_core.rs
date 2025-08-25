@@ -10,13 +10,16 @@ use crate::plugins::{
     InputPlugin, PlayerPlugin, UIPlugin, UnifiedWorldPlugin, VegetationLODPlugin, VehiclePlugin,
     WaterPlugin,
 };
+use crate::resources::WorldRng;
 use crate::services::GroundDetectionPlugin;
 use crate::systems::physics::apply_universal_physics_safeguards;
 use crate::systems::{
     // Coordinate safety systems (simplified for finite world)
     ActiveEntityTransferred,
+    DebugUIPlugin,
     DistanceCacheDebugPlugin,
     DistanceCachePlugin,
+    PerformancePlugin,
     SpawnValidationPlugin,
     TransformSyncPlugin,
     UnifiedDistanceCalculatorPlugin,
@@ -71,6 +74,7 @@ impl Plugin for GameCorePlugin {
             .init_resource::<DirtyFlagsMetrics>()
             .init_resource::<MeshCache>()
             .init_resource::<EntityLimits>()
+            .init_resource::<WorldRng>()
             // Coordinate safety resources
             // World boundary system
             .init_resource::<WorldBounds>()
@@ -100,7 +104,9 @@ impl Plugin for GameCorePlugin {
                 UnifiedDistanceCalculatorPlugin,
                 DistanceCacheDebugPlugin,
                 TransformSyncPlugin,
+                PerformancePlugin,
                 UnifiedPerformancePlugin,
+                DebugUIPlugin,
             ))
             // UI Systems
             .add_plugins(UIPlugin)

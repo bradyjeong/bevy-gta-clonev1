@@ -8,6 +8,7 @@ pub mod road_network;
 
 // NEW UNIFIED WORLD SYSTEM
 pub mod async_chunk_generation;
+pub mod generators; // NEW: Focused chunk generators following AGENT.md simplicity principles
 pub mod layered_generation;
 pub mod npc_spawn;
 pub mod simulation_lod;

@@ -1,10 +1,4 @@
 use bevy::prelude::*;
-use rand::Rng;
-use std::cell::RefCell;
-
-thread_local! {
-    static PLAYER_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
 
 #[derive(Component)]
 pub struct Player;
@@ -58,7 +52,7 @@ impl Default for HumanAnimation {
             body_sway_amplitude: 0.015,
             breathing_rate: 1.4,
             idle_fidget_timer: 0.0,
-            next_fidget_time: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(3.0..8.0)),
+            next_fidget_time: 5.0, // Default 5.0 seconds - randomization can be done at spawn time
             is_walking: false,
             is_running: false,
         }
@@ -81,12 +75,11 @@ impl Default for HumanBehavior {
         Self {
             reaction_time: 0.0,
             input_delay_timer: 0.0,
-            movement_variation: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.95..1.05)),
+            movement_variation: 1.0, // Default 1.0 - no variation initially
             directional_drift: Vec3::ZERO,
             last_direction_change: 0.0,
-            personality_speed_modifier: PLAYER_RNG
-                .with(|rng| rng.borrow_mut().gen_range(0.95..1.05)),
-            confidence_level: PLAYER_RNG.with(|rng| rng.borrow_mut().gen_range(0.8..1.0)),
+            personality_speed_modifier: 1.0, // Default 1.0 - no modifier initially
+            confidence_level: 0.9,           // Default confidence level
         }
     }
 }

@@ -1,12 +1,8 @@
 #![allow(clippy::type_complexity)]
 use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, Player};
+
 use bevy::prelude::*;
 use rand::Rng;
-use std::cell::RefCell;
-
-thread_local! {
-    static AUDIO_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
 
 #[derive(Component)]
 pub struct FootstepTimer {
@@ -15,7 +11,8 @@ pub struct FootstepTimer {
 
 impl Default for FootstepTimer {
     fn default() -> Self {
-        let interval = AUDIO_RNG.with(|rng| rng.borrow_mut().gen_range(0.45..0.55));
+        // Use fixed interval for consistent timing - randomization can be done elsewhere if needed
+        let interval = 0.5; // Default 0.5 second interval
         Self {
             timer: Timer::from_seconds(interval, TimerMode::Repeating),
         }
@@ -73,7 +70,7 @@ pub fn footstep_system(
             ));
 
             // Add variation to next step interval
-            let new_interval = AUDIO_RNG.with(|rng| rng.borrow_mut().gen_range(0.45..0.55));
+            let new_interval = rand::thread_rng().gen_range(0.45..0.55);
             let speed_multiplier = if animation.is_running { 0.6 } else { 1.0 };
             timer.timer.set_duration(std::time::Duration::from_secs_f32(
                 new_interval * speed_multiplier,

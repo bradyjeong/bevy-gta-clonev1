@@ -86,7 +86,7 @@ pub mod parallel_physics;
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
-pub mod performance_monitor;
+pub mod performance; // Simplified performance system (replaces performance_monitor)
 // pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
 pub mod batching;
 // Explicit exports following simplicity guidelines - only export what's needed
@@ -98,8 +98,10 @@ pub use crate::services::{
 pub use crate::services::{EntityTimerType, ManagedTiming, SystemType, TimingService, TimingStats};
 pub use batching::frame_counter_system;
 pub use distance_cache_debug::DistanceCacheDebugPlugin;
-pub use performance_monitor::{
-    PerformanceCategory, UnifiedPerformancePlugin, UnifiedPerformanceTracker,
+// Simplified performance system
+pub use performance::{
+    DebugUIPlugin, PerformanceCategory, PerformancePlugin, UnifiedPerformancePlugin,
+    UnifiedPerformanceTracker,
 };
 pub use safety::validate_physics_config;
 pub use spawn_validation::{SpawnRegistry, SpawnValidationPlugin, SpawnValidator, SpawnableType};

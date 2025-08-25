@@ -1,13 +1,9 @@
 use crate::components::{ActiveEntity, NPC};
+
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
-use std::cell::RefCell;
-
-thread_local! {
-    static NPC_RNG: RefCell<rand::rngs::ThreadRng> = RefCell::new(rand::thread_rng());
-}
 
 /// Simple NPC movement that follows direct AI patterns
 pub fn simple_npc_movement(
@@ -53,9 +49,9 @@ pub fn simple_npc_movement(
         // If close to target, pick a new random target
         if distance < 5.0 {
             npc.target_position = Vec3::new(
-                NPC_RNG.with(|rng| rng.borrow_mut().gen_range(-900.0..900.0)),
+                rand::thread_rng().gen_range(-900.0..900.0),
                 1.0,
-                NPC_RNG.with(|rng| rng.borrow_mut().gen_range(-900.0..900.0)),
+                rand::thread_rng().gen_range(-900.0..900.0),
             );
         } else {
             // Simple, direct NPC movement
@@ -118,9 +114,9 @@ pub fn optimized_npc_movement(
         // If close to target, pick a new random target
         if distance < 5.0 {
             npc.target_position = Vec3::new(
-                NPC_RNG.with(|rng| rng.borrow_mut().gen_range(-900.0..900.0)),
+                rand::thread_rng().gen_range(-900.0..900.0),
                 1.0,
-                NPC_RNG.with(|rng| rng.borrow_mut().gen_range(-900.0..900.0)),
+                rand::thread_rng().gen_range(-900.0..900.0),
             );
         } else {
             // Move towards target (legacy implementation)

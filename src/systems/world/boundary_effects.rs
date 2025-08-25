@@ -5,6 +5,7 @@ use rand::Rng;
 use crate::components::player::ActiveEntity;
 use crate::components::vehicles::{VehicleHealth, VehicleState};
 use crate::components::world::{BoundaryEffects, BoundaryVehicleType, BoundaryZone, WorldBounds};
+use crate::resources::WorldRng;
 
 /// GTA-style context-aware boundary system
 /// Each vehicle type gets natural-feeling boundary effects instead of invisible walls
@@ -21,6 +22,7 @@ pub fn boundary_effects_system(
         ),
         With<ActiveEntity>,
     >,
+    mut world_rng: ResMut<WorldRng>,
     time: Res<Time>,
 ) {
     for (entity, mut transform, mut vehicle_state, mut boundary_effects, vehicle_health) in
@@ -56,6 +58,7 @@ pub fn boundary_effects_system(
                     &boundary_effects,
                     vehicle_health,
                     &time,
+                    &mut world_rng,
                 );
             }
             BoundaryVehicleType::Boat => {
@@ -67,6 +70,7 @@ pub fn boundary_effects_system(
                     &boundary_effects,
                     vehicle_health,
                     &time,
+                    &mut world_rng,
                 );
             }
             BoundaryVehicleType::OnFoot => {
@@ -78,6 +82,7 @@ pub fn boundary_effects_system(
                     &boundary_effects,
                     vehicle_health,
                     &time,
+                    &mut world_rng,
                 );
             }
             BoundaryVehicleType::GroundVehicle => {
@@ -89,6 +94,7 @@ pub fn boundary_effects_system(
                     &boundary_effects,
                     vehicle_health,
                     &time,
+                    &mut world_rng,
                 );
             }
             BoundaryVehicleType::Submarine => {
@@ -100,6 +106,7 @@ pub fn boundary_effects_system(
                     &boundary_effects,
                     vehicle_health,
                     &time,
+                    &mut world_rng,
                 );
             }
         }
@@ -128,6 +135,7 @@ fn apply_aircraft_boundary_effects(
     boundary_effects: &BoundaryEffects,
     mut vehicle_health: Option<Mut<VehicleHealth>>,
     time: &Res<Time>,
+    world_rng: &mut WorldRng,
 ) {
     let intensity = boundary_effects.effect_intensity;
 
@@ -138,7 +146,7 @@ fn apply_aircraft_boundary_effects(
             vehicle_state.max_speed = original_speed * (1.0 - intensity * 0.3); // Up to 30% speed loss
 
             // Occasional warning messages
-            if rand::thread_rng().gen_bool(0.01 * intensity as f64) {
+            if world_rng.global().gen_bool(0.01 * intensity as f64) {
                 info!("Aircraft warning: Engine performance degrading near world boundary");
             }
         }
@@ -159,7 +167,7 @@ fn apply_aircraft_boundary_effects(
             }
 
             // Random complete failures
-            if rand::thread_rng().gen_bool(0.02 * intensity as f64) {
+            if world_rng.global().gen_bool(0.02 * intensity as f64) {
                 vehicle_state.max_speed *= 0.1; // Near-complete engine failure
                 info!("Aircraft critical: Engine failure at world boundary!");
             }
@@ -187,6 +195,7 @@ fn apply_boat_boundary_effects(
     boundary_effects: &BoundaryEffects,
     _vehicle_health: Option<Mut<VehicleHealth>>,
     time: &Res<Time>,
+    world_rng: &mut WorldRng,
 ) {
     let intensity = boundary_effects.effect_intensity;
 
@@ -216,7 +225,7 @@ fn apply_boat_boundary_effects(
             vehicle_state.max_speed *= 1.0 - (intensity * 0.6);
             vehicle_state.acceleration *= 1.0 - (intensity * 0.4);
 
-            if rand::thread_rng().gen_bool((0.01 * intensity) as f64) {
+            if world_rng.global().gen_bool((0.01 * intensity) as f64) {
                 info!("Boat warning: Storm conditions at world boundary!");
             }
         }
@@ -241,6 +250,7 @@ fn apply_onfoot_boundary_effects(
     boundary_effects: &BoundaryEffects,
     mut vehicle_health: Option<Mut<VehicleHealth>>,
     time: &Res<Time>,
+    world_rng: &mut WorldRng,
 ) {
     let intensity = boundary_effects.effect_intensity;
 
@@ -250,7 +260,7 @@ fn apply_onfoot_boundary_effects(
             vehicle_state.max_speed *= 1.0 - (intensity * 0.2);
 
             // Occasional warning about dangerous area
-            if rand::thread_rng().gen_bool((0.005 * intensity) as f64) {
+            if world_rng.global().gen_bool((0.005 * intensity) as f64) {
                 info!("Warning: Dangerous area ahead - hostile wildlife detected");
             }
         }
@@ -265,7 +275,7 @@ fn apply_onfoot_boundary_effects(
             }
 
             // Spawn hostile creatures/environmental hazards
-            if rand::thread_rng().gen_bool((0.01 * intensity) as f64) {
+            if world_rng.global().gen_bool((0.01 * intensity) as f64) {
                 // TODO: Spawn hostile NPCs or environmental hazards
                 info!("Hostile encounter at world boundary!");
             }
@@ -292,6 +302,7 @@ fn apply_ground_vehicle_boundary_effects(
     boundary_effects: &BoundaryEffects,
     _vehicle_health: Option<Mut<VehicleHealth>>,
     _time: &Res<Time>,
+    world_rng: &mut WorldRng,
 ) {
     let intensity = boundary_effects.effect_intensity;
 
@@ -307,7 +318,7 @@ fn apply_ground_vehicle_boundary_effects(
             vehicle_state.acceleration *= 1.0 - (intensity * 0.5);
 
             // Random tire punctures or mechanical issues
-            if rand::thread_rng().gen_bool((0.005 * intensity) as f64) {
+            if world_rng.global().gen_bool((0.005 * intensity) as f64) {
                 vehicle_state.max_speed *= 0.5; // Engine trouble
                 info!("Vehicle trouble: Mechanical failure in rough terrain!");
             }
@@ -330,6 +341,7 @@ fn apply_submarine_boundary_effects(
     boundary_effects: &BoundaryEffects,
     mut vehicle_health: Option<Mut<VehicleHealth>>,
     time: &Res<Time>,
+    world_rng: &mut WorldRng,
 ) {
     let intensity = boundary_effects.effect_intensity;
 
@@ -338,7 +350,7 @@ fn apply_submarine_boundary_effects(
             // Increasing pressure - slight performance loss
             vehicle_state.max_speed *= 1.0 - (intensity * 0.2);
 
-            if rand::thread_rng().gen_bool((0.01 * intensity) as f64) {
+            if world_rng.global().gen_bool((0.01 * intensity) as f64) {
                 info!("Submarine warning: Pressure increasing at depth limits");
             }
         }

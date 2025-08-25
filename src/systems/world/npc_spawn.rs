@@ -5,6 +5,7 @@ use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 
 use crate::config::GameConfig;
+use crate::resources::WorldRng;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::services::timing_service::{EntityTimerType, ManagedTiming, TimingService};
 use rand::prelude::*;
@@ -17,6 +18,7 @@ pub fn spawn_new_npc_system(
     timing_service: Res<TimingService>,
     npc_query: Query<Entity, With<NPCState>>,
     ground_service: Res<GroundDetectionService>,
+    mut world_rng: ResMut<WorldRng>,
     _config: Res<GameConfig>,
 ) {
     // Limit NPC spawning to avoid performance issues (unified entity limits)
@@ -28,13 +30,11 @@ pub fn spawn_new_npc_system(
     // Spawn new NPCs occasionally using unified spawning pipeline
     if timing_service.current_time % 10.0 < 0.1 {
         // REDUCED: From 5.0 to 10.0 seconds
-        let mut rng = thread_rng();
-
         // Try to find a valid spawn position using unified validation
         for _ in 0..5 {
             // REDUCED: From 10 to 5 attempts
-            let x = rng.gen_range(-50.0..50.0);
-            let z = rng.gen_range(-50.0..50.0);
+            let x = world_rng.global().gen_range(-50.0..50.0);
+            let z = world_rng.global().gen_range(-50.0..50.0);
             let position = Vec2::new(x, z);
 
             if ground_service.is_spawn_position_valid(position) {
@@ -42,6 +42,7 @@ pub fn spawn_new_npc_system(
                     &mut commands,
                     position,
                     &ground_service,
+                    &mut world_rng,
                 );
                 break; // Found valid position, spawn and exit
             }
@@ -54,9 +55,8 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
     commands: &mut Commands,
     position: Vec2,
     ground_service: &GroundDetectionService,
+    world_rng: &mut WorldRng,
 ) -> Entity {
-    let mut rng = thread_rng();
-
     // Use simplified ground detection
     let ground_height = ground_service.get_ground_height_simple(position);
     let ground_clearance = 0.02; // Very small clearance to avoid clipping
@@ -71,20 +71,20 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
                 npc_type: NPCType::Civilian,
                 appearance: NPCAppearance {
                     height: 1.8, // Standard NPC height
-                    build: rng.gen_range(0.8..1.2),
+                    build: world_rng.global().gen_range(0.8..1.2),
                     skin_tone: Color::linear_rgb(0.8, 0.7, 0.6),
                     hair_color: Color::linear_rgb(0.4, 0.3, 0.2),
                     shirt_color: Color::linear_rgb(
-                        rng.gen_range(0.2..0.8),
-                        rng.gen_range(0.2..0.8),
-                        rng.gen_range(0.2..0.8),
+                        world_rng.global().gen_range(0.2..0.8),
+                        world_rng.global().gen_range(0.2..0.8),
+                        world_rng.global().gen_range(0.2..0.8),
                     ),
                     pants_color: Color::linear_rgb(
-                        rng.gen_range(0.1..0.6),
-                        rng.gen_range(0.1..0.6),
-                        rng.gen_range(0.1..0.6),
+                        world_rng.global().gen_range(0.1..0.6),
+                        world_rng.global().gen_range(0.1..0.6),
+                        world_rng.global().gen_range(0.1..0.6),
                     ),
-                    gender: if rng.gen_bool(0.5) {
+                    gender: if world_rng.global().gen_bool(0.5) {
                         NPCGender::Male
                     } else {
                         NPCGender::Female
@@ -92,7 +92,7 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
                 },
                 behavior: NPCBehaviorType::Wandering,
                 target_position: spawn_position,
-                speed: rng.gen_range(2.0..4.0),
+                speed: world_rng.global().gen_range(2.0..4.0),
                 current_lod: NPCLOD::Full,
                 last_lod_check: 0.0,
             },
@@ -111,11 +111,10 @@ pub fn spawn_simple_npc_with_ground_detection(
     position: Vec2,
     ground_service: &GroundDetectionService,
     rapier_context: &RapierContext,
+    world_rng: &mut WorldRng,
 ) -> Entity {
-    let mut rng = thread_rng();
-
     // Create NPC with new state-based architecture
-    let npc_type = match rng.gen_range(0..4) {
+    let npc_type = match world_rng.global().gen_range(0..4) {
         0 => NPCType::Civilian,
         1 => NPCType::Worker,
         2 => NPCType::Police,
@@ -149,11 +148,13 @@ pub fn spawn_simple_npc_with_ground_detection(
 }
 
 /// Legacy spawn a single NPC using the simplified system
-pub fn spawn_simple_npc(commands: &mut Commands, position: Vec3) -> Entity {
-    let mut rng = thread_rng();
-
+pub fn spawn_simple_npc(
+    commands: &mut Commands,
+    position: Vec3,
+    world_rng: &mut WorldRng,
+) -> Entity {
     // Create NPC with new state-based architecture
-    let npc_type = match rng.gen_range(0..4) {
+    let npc_type = match world_rng.global().gen_range(0..4) {
         0 => NPCType::Civilian,
         1 => NPCType::Worker,
         2 => NPCType::Police,
@@ -183,11 +184,13 @@ pub fn spawn_simple_npc(commands: &mut Commands, position: Vec3) -> Entity {
 }
 
 /// NPC spawn using unified factory (replaces legacy functions)
-pub fn spawn_npc_with_new_architecture(commands: &mut Commands, position: Vec3) -> Entity {
-    let mut rng = thread_rng();
-
+pub fn spawn_npc_with_new_architecture(
+    commands: &mut Commands,
+    position: Vec3,
+    world_rng: &mut WorldRng,
+) -> Entity {
     // Create NPC with new state-based architecture
-    let npc_type = match rng.gen_range(0..4) {
+    let npc_type = match world_rng.global().gen_range(0..4) {
         0 => NPCType::Civilian,
         1 => NPCType::Worker,
         2 => NPCType::Police,

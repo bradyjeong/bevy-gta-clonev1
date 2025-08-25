@@ -1,5 +1,5 @@
 use crate::services::distance_cache::DistanceCache;
-use crate::systems::performance_monitor::{PerformanceCategory, UnifiedPerformanceTracker};
+use crate::systems::performance::{PerformanceCategory, UnifiedPerformanceTracker};
 use bevy::prelude::*;
 use std::collections::HashMap;
 
