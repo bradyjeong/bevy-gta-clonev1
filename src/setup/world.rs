@@ -1,15 +1,14 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::{
     ActiveEntity, BodyPart, ControlState, ControlsDisplay, ControlsText, DynamicTerrain,
-    HumanAnimation, HumanBehavior, HumanMovement, MainCamera, Player, PlayerBody, PlayerControlled,
-    PlayerHead, PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg, PlayerTorso,
-    VehicleControlType,
+    HumanAnimation, HumanMovement, MainCamera, Player, PlayerBody, PlayerControlled, PlayerHead,
+    PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg, PlayerTorso, VehicleControlType,
 };
 use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
 use crate::services::distance_cache::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::audio::FootstepTimer;
-use crate::systems::human_behavior::HumanEmotions;
+
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -120,10 +119,8 @@ pub fn setup_basic_world(
     commands.entity(player_entity).insert((
         HumanMovement::default(),
         HumanAnimation::default(),
-        HumanBehavior::default(),
         PlayerBody::default(),
         FootstepTimer::default(),
-        HumanEmotions::default(),
         MovementTracker::new(Vec3::new(0.0, 1.0, 0.0), 5.0), // Track movement with 5m threshold
         // Control components for new input system
         ControlState::default(),

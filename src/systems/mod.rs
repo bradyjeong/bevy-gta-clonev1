@@ -52,7 +52,7 @@
 pub mod audio;
 pub mod camera;
 pub mod effects;
-pub mod human_behavior;
+
 pub mod interaction;
 pub mod movement;
 pub mod world;

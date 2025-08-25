@@ -70,9 +70,9 @@ pub mod unified_vehicle;
 
 // Core entity components
 pub use player::{
-    ActiveEntity, BodyPart, HumanAnimation, HumanBehavior, HumanMovement, InCar, Player,
-    PlayerBody, PlayerBodyMesh, PlayerHead, PlayerLeftArm, PlayerLeftLeg, PlayerRightArm,
-    PlayerRightLeg, PlayerTorso,
+    ActiveEntity, BodyPart, HumanAnimation, HumanMovement, InCar, Player, PlayerBody,
+    PlayerBodyMesh, PlayerHead, PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg,
+    PlayerTorso,
 };
 
 pub use vehicles::{

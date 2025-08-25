@@ -60,31 +60,6 @@ impl Default for HumanAnimation {
 }
 
 #[derive(Component)]
-pub struct HumanBehavior {
-    pub reaction_time: f32,
-    pub input_delay_timer: f32,
-    pub movement_variation: f32,
-    pub directional_drift: Vec3,
-    pub last_direction_change: f32,
-    pub personality_speed_modifier: f32,
-    pub confidence_level: f32,
-}
-
-impl Default for HumanBehavior {
-    fn default() -> Self {
-        Self {
-            reaction_time: 0.0,
-            input_delay_timer: 0.0,
-            movement_variation: 1.0, // Default 1.0 - no variation initially
-            directional_drift: Vec3::ZERO,
-            last_direction_change: 0.0,
-            personality_speed_modifier: 1.0, // Default 1.0 - no modifier initially
-            confidence_level: 0.9,           // Default confidence level
-        }
-    }
-}
-
-#[derive(Component)]
 pub struct PlayerBody {
     pub base_transform: Transform,
     pub head_offset: Vec3,
