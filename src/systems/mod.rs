@@ -82,7 +82,7 @@ pub mod rendering;
 pub mod simple_service_example;
 pub mod vegetation_instancing_integration;
 
-pub mod parallel_physics;
+
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 

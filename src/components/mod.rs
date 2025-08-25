@@ -63,7 +63,7 @@ pub mod world;
 
 pub mod control_state;
 pub mod dirty_flags;
-pub mod entity_types;
+
 pub mod instanced_vegetation;
 pub mod safety;
 pub mod unified_vehicle;
@@ -110,5 +110,4 @@ pub use dirty_flags::{
 };
 pub use unified_vehicle::UnifiedVehicleSpecs;
 
-// Entity types and utilities (non-component types)
-pub use entity_types::*;
+
