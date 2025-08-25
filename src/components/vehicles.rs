@@ -76,7 +76,7 @@ pub struct AircraftFlight {
 }
 
 // Simplified F16 specifications - all tuning constants data-driven
-#[derive(Component, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Component, Clone)]
 pub struct SimpleF16Specs {
     pub max_forward_speed: f32, // Maximum forward velocity (m/s)
     pub roll_rate_max: f32,     // Maximum roll rate (rad/s)
@@ -137,7 +137,7 @@ pub struct TailRotor;
 
 // NEW LOD SYSTEM
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub enum VehicleType {
     SuperCar,
     Helicopter,

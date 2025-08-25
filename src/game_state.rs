@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(
-    States, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize,
-)]
+#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameState {
     #[default]
     Walking,

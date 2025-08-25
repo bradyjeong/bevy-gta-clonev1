@@ -1,8 +1,7 @@
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
 
 /// Unified vehicle specifications - merges duplicate data from SimpleF16Specs and VehicleState
-#[derive(Component, Clone, Serialize, Deserialize, Debug)]
+#[derive(Component, Clone, Debug)]
 pub struct UnifiedVehicleSpecs {
     // Physics properties
     pub mass: f32,

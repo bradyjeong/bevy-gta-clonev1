@@ -7,8 +7,8 @@ use crate::components::world::{EntityLimits, MeshCache};
 use crate::components::{CullingSettings, DirtyFlagsMetrics, PerformanceStats};
 use crate::config::GameConfig;
 use crate::plugins::{
-    InputPlugin, PersistencePlugin, PlayerPlugin, UIPlugin, UnifiedWorldPlugin,
-    VegetationLODPlugin, VehiclePlugin, WaterPlugin,
+    InputPlugin, PlayerPlugin, UIPlugin, UnifiedWorldPlugin, VegetationLODPlugin, VehiclePlugin,
+    WaterPlugin,
 };
 use crate::services::GroundDetectionPlugin;
 use crate::systems::physics::apply_universal_physics_safeguards;
@@ -102,8 +102,8 @@ impl Plugin for GameCorePlugin {
                 TransformSyncPlugin,
                 UnifiedPerformancePlugin,
             ))
-            // Persistence and UI Systems
-            .add_plugins((PersistencePlugin, UIPlugin))
+            // UI Systems
+            .add_plugins(UIPlugin)
             // Setup world root entity at startup
             // No longer need WorldRoot setup
             // Coordinate safety systems with seamless world shifting

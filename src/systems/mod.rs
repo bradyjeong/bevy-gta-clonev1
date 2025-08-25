@@ -39,7 +39,6 @@
 //!
 //! ### Utility Systems
 //! - `debug`: Development and debugging tools
-//! - `persistence`: Save/load functionality
 //! - `transform_sync`: Transform synchronization
 //! - `rendering`: Render pipeline customization
 //!
@@ -67,7 +66,6 @@ pub mod vehicles;
 pub mod water;
 // pub mod timing_service; // Moved to services/
 pub mod input;
-pub mod persistence;
 pub mod safety;
 pub mod spawn_validation;
 pub mod validation;

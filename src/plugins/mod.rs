@@ -28,7 +28,6 @@
 //! - `input_plugin`: Input handling and mapping
 //!
 //! ### Utility Plugins
-//! - `persistence_plugin`: Save/load game state
 //!
 //! ## Event Flow Architecture
 //!
@@ -37,7 +36,7 @@
 //!       ↓              ↓              ↓
 //! UI Plugin ← Vehicle Plugin → World Plugin
 //!       ↓              ↓              ↓
-//! Persistence ← Audio Effects → Vegetation
+//! Audio Effects → Vegetation
 //! ```
 //!
 //! ## Adding New Plugins
@@ -51,7 +50,6 @@
 pub mod game_core;
 pub mod game_setup;
 pub mod input_plugin;
-pub mod persistence_plugin;
 pub mod player_plugin;
 pub mod ui_plugin;
 pub mod unified_world_plugin;
@@ -70,7 +68,6 @@ pub mod world_streaming_plugin;
 pub use game_core::*;
 pub use game_setup::*;
 pub use input_plugin::*;
-pub use persistence_plugin::*;
 pub use player_plugin::*;
 pub use ui_plugin::*;
 pub use unified_world_plugin::*;
