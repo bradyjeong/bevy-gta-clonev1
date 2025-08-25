@@ -1,5 +1,5 @@
 use crate::systems::water::{
-    setup_lake, setup_yacht, water_wave_system, yacht_buoyancy_system, yacht_movement_system,
+    setup_water_surfaces, setup_yacht, water_wave_system, yacht_buoyancy_system, yacht_movement_system,
     yacht_water_constraint_system,
 };
 use bevy::prelude::*;
@@ -8,7 +8,7 @@ pub struct WaterPlugin;
 
 impl Plugin for WaterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (setup_lake, setup_yacht))
+        app.add_systems(Startup, (setup_water_surfaces, setup_yacht))
             .add_systems(
                 Update,
                 (

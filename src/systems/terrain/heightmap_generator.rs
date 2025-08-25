@@ -113,13 +113,8 @@ pub fn generate_heightmap(config: &TerrainConfig) -> Vec<Vec<f32>> {
                 height = config.base_height + (height - config.base_height) * falloff_factor;
             }
             
-            // Check for water areas
-            if let Some(water) = config.get_water_area_at(world_x, world_z) {
-                // Create smooth depression for water
-                let dist = ((world_x - water.center.0).powi(2) + (world_z - water.center.1).powi(2)).sqrt();
-                let water_factor = (1.0 - dist / water.radius).clamp(0.0, 1.0);
-                height = height + (water.depth - height) * water_factor;
-            }
+            // Apply water basin carving
+            height = carve_water_basins_at_point(world_x, world_z, height, config);
             
             heights[x][z] = height;
         }
@@ -132,6 +127,41 @@ pub fn generate_heightmap(config: &TerrainConfig) -> Vec<Vec<f32>> {
     
     info!("Heightmap generation complete");
     heights
+}
+
+/// Phase 4: Water basin carving for natural water basins
+/// 
+/// Creates smooth circular depressions in terrain for natural water areas.
+/// Uses linear falloff from edge to center for realistic shoreline slopes.
+/// 
+/// Design principles:
+/// - Simple linear falloff algorithm for predictable results
+/// - Walkable shoreline slopes (not too steep)
+/// - Natural integration with existing terrain noise
+/// - Multiple overlapping water areas supported
+pub fn carve_water_basins_at_point(world_x: f32, world_z: f32, base_height: f32, config: &TerrainConfig) -> f32 {
+    let mut final_height = base_height;
+    
+    // Apply carving for each water area (supports overlapping basins)
+    for water in &config.water_areas {
+        let distance = ((world_x - water.center.0).powi(2) + (world_z - water.center.1).powi(2)).sqrt();
+        
+        if distance <= water.radius {
+            // Linear falloff from edge to center for natural slopes
+            let edge_factor = (water.radius - distance) / water.radius;
+            let edge_factor_smoothed = edge_factor.clamp(0.0, 1.0);
+            
+            // Target depth at this point (linear interpolation)
+            let target_depth = water.depth * edge_factor_smoothed;
+            
+            // Create smooth transition to water depth
+            // Ensure we don't raise terrain above original height
+            let carved_height = final_height + (target_depth - final_height) * edge_factor_smoothed;
+            final_height = carved_height.min(final_height);
+        }
+    }
+    
+    final_height
 }
 
 /// Simple heightmap smoothing using 3x3 kernel
@@ -380,5 +410,41 @@ mod tests {
         // Test boundary conditions
         let boundary_height = heightmap_mesh.get_height_at_world(60.0, 60.0);
         assert_eq!(boundary_height, 0.0); // Should return 0 for out of bounds
+    }
+    
+    #[test]
+    fn test_water_basin_carving() {
+        use super::super::asset_based_terrain::{TerrainConfig, WaterArea};
+        
+        let config = TerrainConfig {
+            resolution: 64,
+            world_size: 200.0,
+            base_height: 0.0,
+            water_areas: vec![
+                WaterArea {
+                    center: (0.0, 0.0),
+                    radius: 20.0,
+                    depth: -5.0,
+                    description: "Test lake".to_string(),
+                }
+            ],
+            ..Default::default()
+        };
+        
+        // Test carving at water center
+        let center_height = carve_water_basins_at_point(0.0, 0.0, 0.0, &config);
+        assert!(center_height < 0.0, "Water center should be carved below base height");
+        
+        // Test carving at water edge
+        let edge_height = carve_water_basins_at_point(20.0, 0.0, 0.0, &config);
+        assert!(edge_height >= 0.0, "Water edge should remain at or above base height");
+        
+        // Test no carving outside water area
+        let outside_height = carve_water_basins_at_point(30.0, 0.0, 0.0, &config);
+        assert_eq!(outside_height, 0.0, "Outside water area should not be carved");
+        
+        // Test smooth transition - point halfway from center to edge
+        let mid_height = carve_water_basins_at_point(10.0, 0.0, 0.0, &config);
+        assert!(mid_height < 0.0 && mid_height > center_height, "Midpoint should show smooth transition");
     }
 }
