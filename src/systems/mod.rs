@@ -52,6 +52,7 @@
 pub mod audio;
 pub mod camera;
 pub mod effects;
+pub mod terrain;
 
 pub mod interaction;
 pub mod movement;
@@ -117,6 +118,12 @@ pub use world::{
 
 // Asset-based input system types only
 pub use input::{LoadedVehicleControls, VehicleControlsConfig};
+
+// Asset-based terrain configuration types
+pub use terrain::{TerrainConfig, LoadedTerrainConfig, WaterArea};
+
+// Terrain service (re-exported for external access)
+pub use crate::services::terrain_service::TerrainService;
 
 // Physics utilities
 pub use physics::PhysicsUtilities;

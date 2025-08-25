@@ -1,0 +1,46 @@
+// Terrain Configuration
+// This file defines terrain parameters for procedural generation
+// Edit this file to change terrain settings without touching code
+
+TerrainConfig(
+    world_size: 4096.0,
+    resolution: 512,
+    base_height: -0.15,
+    hill_scale: 15.0,
+    noise_seed: 12345,
+    chunk_size: 64.0,
+    water_areas: [
+        WaterArea(
+            center: (100.0, 100.0),
+            radius: 50.0,
+            depth: -5.0,
+            description: "Central lake"
+        ),
+        WaterArea(
+            center: (-200.0, 300.0),
+            radius: 30.0,
+            depth: -3.0,
+            description: "Mountain pond"
+        ),
+        WaterArea(
+            center: (400.0, -150.0),
+            radius: 80.0,
+            depth: -8.0,
+            description: "Desert oasis"
+        ),
+    ],
+    performance: PerformanceSettings(
+        max_terrain_distance: 2000.0,
+        lod_levels: 4,
+        enable_frustum_culling: true,
+        chunk_cache_size: 64,
+    ),
+    generation: GenerationSettings(
+        noise_octaves: 4,
+        noise_frequency: 0.01,
+        noise_persistence: 0.5,
+        noise_lacunarity: 2.0,
+        terrain_smoothing: true,
+        edge_falloff: 100.0,
+    ),
+)

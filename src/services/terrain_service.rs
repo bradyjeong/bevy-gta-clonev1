@@ -1,13 +1,16 @@
 use bevy::prelude::*;
+use crate::systems::terrain::TerrainConfig;
 
 const TERRAIN_FALLBACK_HEIGHT: f32 = -0.15; // Compatible with existing ground detection
 const TERRAIN_CHUNK_SIZE: f32 = 64.0; // Size of terrain chunks in world units
 
 /// Service for terrain height queries and management
-/// Phase 1: Flat fallback, designed for future heightmap integration
+/// Phase 2: Asset-driven configuration with hot-reload support
 #[derive(Resource)]
 pub struct TerrainService {
     pub enabled: bool,
+    pub config: Option<TerrainConfig>,
+    // Legacy fallback values for compatibility
     pub fallback_height: f32,
     pub chunk_size: f32,
 }
@@ -16,6 +19,7 @@ impl Default for TerrainService {
     fn default() -> Self {
         Self {
             enabled: true,
+            config: None,
             fallback_height: TERRAIN_FALLBACK_HEIGHT,
             chunk_size: TERRAIN_CHUNK_SIZE,
         }
@@ -27,21 +31,32 @@ impl TerrainService {
     pub fn new(fallback_height: f32, chunk_size: f32) -> Self {
         Self {
             enabled: true,
+            config: None,
             fallback_height,
             chunk_size,
         }
     }
     
+    /// Update terrain service with loaded configuration
+    pub fn update_config(&mut self, config: TerrainConfig) {
+        info!("TerrainService: Updated with asset configuration");
+        self.config = Some(config);
+    }
+    
     /// Get terrain height at a specific world position
-    /// Phase 1: Returns flat fallback height for compatibility
-    pub fn height_at(&self, _x: f32, _z: f32) -> f32 {
+    /// Phase 2: Asset-driven with water areas and configuration support
+    pub fn height_at(&self, x: f32, z: f32) -> f32 {
         if !self.enabled {
             return self.fallback_height;
         }
         
-        // Phase 1: Flat terrain for compatibility with existing ground detection
-        // Future phases will implement actual heightmap queries here
-        self.fallback_height
+        // Use loaded configuration if available
+        if let Some(ref config) = self.config {
+            config.get_terrain_height_at(x, z)
+        } else {
+            // Fallback to legacy behavior for compatibility
+            self.fallback_height
+        }
     }
     
     /// Get terrain height at a Vec2 position for convenience
@@ -63,16 +78,26 @@ impl TerrainService {
     
     /// Get the chunk coordinates for a world position
     pub fn world_to_chunk(&self, x: f32, z: f32) -> (i32, i32) {
-        let chunk_x = (x / self.chunk_size).floor() as i32;
-        let chunk_z = (z / self.chunk_size).floor() as i32;
+        let chunk_size = self.config
+            .as_ref()
+            .map(|c| c.chunk_size)
+            .unwrap_or(self.chunk_size);
+            
+        let chunk_x = (x / chunk_size).floor() as i32;
+        let chunk_z = (z / chunk_size).floor() as i32;
         (chunk_x, chunk_z)
     }
     
     /// Get the world position of a chunk's origin
     pub fn chunk_to_world(&self, chunk_x: i32, chunk_z: i32) -> Vec2 {
+        let chunk_size = self.config
+            .as_ref()
+            .map(|c| c.chunk_size)
+            .unwrap_or(self.chunk_size);
+            
         Vec2::new(
-            chunk_x as f32 * self.chunk_size,
-            chunk_z as f32 * self.chunk_size,
+            chunk_x as f32 * chunk_size,
+            chunk_z as f32 * chunk_size,
         )
     }
     
@@ -92,5 +117,44 @@ impl TerrainService {
     /// Update fallback height (useful for different terrain levels)
     pub fn set_fallback_height(&mut self, height: f32) {
         self.fallback_height = height;
+    }
+    
+    /// Check if position is in water (uses asset configuration)
+    pub fn is_water_at(&self, x: f32, z: f32) -> bool {
+        if let Some(ref config) = self.config {
+            config.is_water_at(x, z)
+        } else {
+            false // No water areas without configuration
+        }
+    }
+    
+    /// Get water depth at position (returns None if not in water)
+    pub fn get_water_depth_at(&self, x: f32, z: f32) -> Option<f32> {
+        if let Some(ref config) = self.config {
+            config.get_water_area_at(x, z).map(|water| water.depth)
+        } else {
+            None
+        }
+    }
+    
+    /// Get world size from configuration
+    pub fn get_world_size(&self) -> f32 {
+        self.config
+            .as_ref()
+            .map(|c| c.world_size)
+            .unwrap_or(4096.0) // Default world size
+    }
+    
+    /// Get terrain resolution from configuration
+    pub fn get_resolution(&self) -> u32 {
+        self.config
+            .as_ref()
+            .map(|c| c.resolution)
+            .unwrap_or(512) // Default resolution
+    }
+    
+    /// Check if asset configuration is loaded
+    pub fn has_config(&self) -> bool {
+        self.config.is_some()
     }
 }
