@@ -7,7 +7,7 @@ use bevy_rapier3d::prelude::*;
 use crate::config::GameConfig;
 use crate::resources::WorldRng;
 use crate::services::ground_detection::GroundDetectionService;
-use crate::services::timing_service::{EntityTimerType, ManagedTiming, TimingService};
+use crate::services::timing_service::TimingService;
 use rand::prelude::*;
 
 /// Spawn NPCs using the new architecture while maintaining compatibility
@@ -220,23 +220,4 @@ pub fn spawn_npc_with_new_architecture(
         .id()
 }
 
-/// Migration system - converts old NPC entities to unified architecture
-pub fn migrate_legacy_npcs(
-    mut commands: Commands,
-    legacy_npc_query: Query<(Entity, &crate::components::NPC, &Transform), Without<NPCState>>,
-) {
-    for (entity, legacy_npc, _transform) in legacy_npc_query.iter() {
-        // Create new state component based on legacy data
-        let mut npc_state = NPCState::new(NPCType::Civilian);
-        npc_state.target_position = legacy_npc.target_position;
-        npc_state.speed = legacy_npc.speed;
-        npc_state.current_lod = NPCLOD::StateOnly; // Start with no rendering
 
-        // Add new components while keeping the old one for compatibility
-        commands
-            .entity(entity)
-            .insert((npc_state, ManagedTiming::new(EntityTimerType::NPCLOD)));
-
-        println!("DEBUG: Migrated NPC entity {entity:?} to unified architecture",);
-    }
-}

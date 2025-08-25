@@ -34,7 +34,7 @@ pub enum PerformanceCategory {
 }
 ```
 
-### 2. Performance Integration (src/systems/performance_integration.rs)
+### 2. Performance Integration (DEPRECATED - System Removed)
 
 **Integration Points:**
 - **Existing PerformanceStats**: Integrates with legacy performance tracking

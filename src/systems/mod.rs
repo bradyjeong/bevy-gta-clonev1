@@ -87,7 +87,6 @@ pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
 pub mod performance; // Simplified performance system (replaces performance_monitor)
-// pub mod performance_integration; // Temporarily disabled - depends on deleted batching system
 pub mod batching;
 // Explicit exports following simplicity guidelines - only export what's needed
 // Core systems that are commonly used across plugins
