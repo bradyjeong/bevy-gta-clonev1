@@ -219,5 +219,3 @@ pub fn spawn_npc_with_new_architecture(
         ))
         .id()
 }
-
-

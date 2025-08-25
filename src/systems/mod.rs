@@ -82,12 +82,11 @@ pub mod rendering;
 pub mod simple_service_example;
 pub mod vegetation_instancing_integration;
 
-
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
-pub mod performance; // Simplified performance system (replaces performance_monitor)
 pub mod batching;
+pub mod performance; // Simplified performance system (replaces performance_monitor)
 // Explicit exports following simplicity guidelines - only export what's needed
 // Core systems that are commonly used across plugins
 pub use crate::services::{

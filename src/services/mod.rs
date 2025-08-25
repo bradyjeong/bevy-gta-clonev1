@@ -3,7 +3,6 @@ pub mod entity_limits;
 pub mod simple_services;
 pub mod timing_service;
 
-
 pub mod ground_detection;
 
 pub use distance_cache::{

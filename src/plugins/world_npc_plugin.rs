@@ -1,7 +1,4 @@
-use crate::systems::world::{
-    npc::simple_npc_movement,
-    npc_spawn::spawn_new_npc_system,
-};
+use crate::systems::world::{npc::simple_npc_movement, npc_spawn::spawn_new_npc_system};
 use bevy::prelude::*;
 
 /// Plugin responsible for NPC spawning, behavior, and management
