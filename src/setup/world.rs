@@ -9,6 +9,7 @@ use crate::services::distance_cache::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::services::terrain_service::TerrainService;
 use crate::systems::audio::FootstepTimer;
+use crate::systems::terrain::{LoadedTerrainConfig, spawn_heightmap_terrain};
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
 use bevy::prelude::*;
@@ -21,6 +22,7 @@ pub fn setup_basic_world(
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
     terrain_service: Res<TerrainService>,
+    loaded_config: Res<LoadedTerrainConfig>,
 ) {
     // No longer need WorldRoot - spawn entities directly in world space
 
@@ -67,16 +69,23 @@ pub fn setup_basic_world(
             ));
         });
 
-    // FINITE TERRAIN - Ground plane for finite world (4km x 4km)
-    commands.spawn((
-        DynamicTerrain,
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(4096.0, 4096.0))), // 4km x 4km
-        MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))),
-        Transform::from_xyz(0.0, -0.15, 0.0), // 15cm below road surface at y=0.0
-        RigidBody::Fixed,
-        Collider::cuboid(2048.0, 0.05, 2048.0), // 2km radius terrain collider
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
-    ));
+    // HEIGHTMAP TERRAIN - Generated from noise using terrain.ron configuration
+    if let Some(ref config) = loaded_config.config {
+        info!("Spawning heightmap-generated terrain from configuration");
+        spawn_heightmap_terrain(&mut commands, &mut meshes, &mut materials, config);
+    } else {
+        // Fallback to flat plane if terrain config isn't loaded yet
+        warn!("Terrain configuration not loaded, falling back to flat plane");
+        commands.spawn((
+            DynamicTerrain,
+            Mesh3d(meshes.add(Plane3d::default().mesh().size(4096.0, 4096.0))), // 4km x 4km
+            MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))),
+            Transform::from_xyz(0.0, -0.15, 0.0), // 15cm below road surface at y=0.0
+            RigidBody::Fixed,
+            Collider::cuboid(2048.0, 0.05, 2048.0), // 2km radius terrain collider
+            CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        ));
+    }
 
     // OCEAN BOUNDARY - Visual boundary around world edges
     commands.spawn((

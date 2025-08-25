@@ -141,13 +141,48 @@ impl TerrainConfig {
     }
     
     /// Get terrain height with water areas considered
+    /// Phase 3: Uses heightmap data when available, fallback to noise generation
     pub fn get_terrain_height_at(&self, x: f32, z: f32) -> f32 {
         if let Some(water) = self.get_water_area_at(x, z) {
             water.depth
         } else {
-            // Future: implement noise-based height generation here
-            self.base_height
+            // Use simple noise-based height for real-time queries
+            // This matches the heightmap generation but is computed on demand
+            self.get_noise_height_at(x, z)
         }
+    }
+    
+    /// Generate height using same noise algorithm as heightmap generator
+    /// Used for real-time height queries that match the generated terrain mesh
+    pub fn get_noise_height_at(&self, x: f32, z: f32) -> f32 {
+        use noise::{NoiseFn, Perlin};
+        
+        let perlin = Perlin::new(self.noise_seed);
+        let mut height = 0.0;
+        let mut amplitude = self.hill_scale;
+        let mut frequency = self.generation.noise_frequency;
+        
+        // Generate fractal noise (same as heightmap generator)
+        for _ in 0..self.generation.noise_octaves {
+            height += perlin.get([x as f64 * frequency as f64, z as f64 * frequency as f64]) as f32 * amplitude;
+            amplitude *= self.generation.noise_persistence;
+            frequency *= self.generation.noise_lacunarity;
+        }
+        
+        // Add base height
+        height += self.base_height;
+        
+        // Apply edge falloff
+        if self.generation.edge_falloff > 0.0 {
+            let half_size = self.world_size * 0.5;
+            let edge_dist = half_size - (x.abs().max(z.abs()));
+            if edge_dist < self.generation.edge_falloff {
+                let falloff_factor = (edge_dist / self.generation.edge_falloff).clamp(0.0, 1.0);
+                height = self.base_height + (height - self.base_height) * falloff_factor;
+            }
+        }
+        
+        height
     }
 }
 

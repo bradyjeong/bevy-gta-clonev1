@@ -5,7 +5,7 @@ use crate::services::terrain_service::TerrainService;
 use crate::systems::terrain::{
     TerrainConfig, LoadedTerrainConfig,
     load_terrain_config_system, process_loaded_terrain_config_system,
-    debug_terrain_config_system,
+    debug_terrain_config_system, replace_terrain_when_config_loads,
 };
 
 /// Plugin for terrain system management
@@ -33,6 +33,7 @@ impl Plugin for TerrainPlugin {
             .add_systems(Update, (
                 process_loaded_terrain_config_system,
                 update_terrain_service_with_config,
+                replace_terrain_when_config_loads,
                 debug_terrain_config_system,
             ));
             
