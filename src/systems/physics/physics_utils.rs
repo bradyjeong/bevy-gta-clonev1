@@ -82,7 +82,7 @@ impl CollisionGroupHelper {
 /// Runs AFTER physics step to catch any corruption before other systems see it
 pub fn apply_universal_physics_safeguards(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut Velocity, &mut Transform), With<RigidBody>>,
+    mut query: Query<(Entity, &mut Velocity, &mut Transform), (With<RigidBody>, Without<RigidBodyDisabled>)>,
     config: Res<GameConfig>,
 ) {
     for (entity, mut velocity, mut transform) in query.iter_mut() {
