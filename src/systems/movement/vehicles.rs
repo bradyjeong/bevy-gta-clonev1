@@ -59,21 +59,17 @@ pub fn car_movement(
                 dt * specs.linear_lerp_factor,
             );
 
-            // Preserve gravity in Y-axis for cars (they should fall off cliffs)
-            velocity.linvel = Vec3::new(
-                lerped_velocity.x,
-                velocity.linvel.y, // Preserve gravity
-                lerped_velocity.z,
-            );
+            // Apply X/Z movement, let Rapier handle gravity acceleration in Y
+            velocity.linvel.x = lerped_velocity.x;
+            velocity.linvel.z = lerped_velocity.z;
+            // Don't modify Y velocity - let gravity accelerate naturally
         } else {
             // No input: Apply frame-rate independent momentum decay (car coasts like GTA V)
             let drag_per_second = specs.drag_factor;
             let frame_drag = drag_per_second.powf(dt);
-            velocity.linvel = Vec3::new(
-                velocity.linvel.x * frame_drag,
-                velocity.linvel.y, // Preserve gravity
-                velocity.linvel.z * frame_drag,
-            );
+            velocity.linvel.x *= frame_drag;
+            velocity.linvel.z *= frame_drag;
+            // Don't modify Y velocity - let gravity accelerate naturally
         }
         velocity.angvel = safe_lerp(
             velocity.angvel,

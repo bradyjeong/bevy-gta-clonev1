@@ -7,6 +7,7 @@ pub fn camera_follow_system(
     mut camera_query: Query<&mut Transform, (With<MainCamera>, Without<ActiveEntity>)>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<MainCamera>)>,
     config: Res<GameConfig>,
+    time: Res<Time>,
 ) {
     let Ok(mut camera_transform) = camera_query.single_mut() else {
         return;
@@ -41,11 +42,12 @@ pub fn camera_follow_system(
         return;
     }
 
-    // Smooth camera movement using interpolation - much more responsive
+    // Frame-rate independent camera smoothing
+    let lerp_factor = (config.camera.lerp_speed * time.delta_secs()).clamp(0.0, 1.0);
     camera_transform.translation = safe_lerp(
         camera_transform.translation,
         target_pos,
-        config.camera.lerp_speed,
+        lerp_factor,
     );
 
     // Camera looks toward the entity slightly above ground (closer to parallel)

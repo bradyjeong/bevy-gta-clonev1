@@ -22,10 +22,11 @@ impl PhysicsUtilities {
             Vec3SafeExt::clamp_length(velocity.angvel, config.physics.max_angular_velocity);
     }
 
-    /// Unified stable delta-time for all vehicle systems
-    /// Prevents physics instability from frame rate spikes
-    pub fn stable_dt(time: &Time) -> f32 {
-        time.delta_secs().clamp(0.001, 0.05)
+    /// Fixed delta-time for physics systems running in FixedUpdate
+    /// Uses Bevy's fixed timestep for consistent physics behavior
+    pub fn stable_dt(_time: &Time) -> f32 {
+        // In Bevy 0.16, use fixed timestep for FixedUpdate systems
+        1.0 / 60.0 // Standard 60Hz physics timestep
     }
 
     /// Emergency failsafe for extreme coordinate corruption (>100km)

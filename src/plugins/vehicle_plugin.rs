@@ -1,5 +1,5 @@
 use crate::systems::movement::{
-    car_movement, rotate_helicopter_rotors, simple_f16_movement, simple_helicopter_movement,
+    rotate_helicopter_rotors,
 };
 use crate::systems::setup::on_f16_spawned;
 use bevy::prelude::*;
@@ -9,7 +9,7 @@ use crate::systems::effects::{exhaust_effects_system, update_jet_flames_unified}
 use crate::systems::safety::validate_physics_config;
 // LOD system replaced with Bevy's VisibilityRange + simulation_lod
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
-use crate::game_state::GameState;
+
 
 pub struct VehiclePlugin;
 
@@ -29,13 +29,10 @@ impl Plugin for VehiclePlugin {
 
                     // LOD now handled by Bevy's VisibilityRange automatically
 
-                    // Movement systems (simplified for AGENT.md compliance)
-                    car_movement.run_if(in_state(GameState::Driving)),
-                    // Simplified vehicle movement systems only
-
-                    // Aircraft systems: simplified versions only (complex moved to examples/)
-                    simple_helicopter_movement.run_if(in_state(GameState::Flying)),
-                    simple_f16_movement.run_if(in_state(GameState::Jetting)),
+                    // Movement systems moved to FixedUpdate in game_core.rs
+                    // car_movement.run_if(in_state(GameState::Driving)),
+                    // simple_helicopter_movement.run_if(in_state(GameState::Flying)),
+                    // simple_f16_movement.run_if(in_state(GameState::Jetting)),
                     // Visual rotor animation for helicopters
                     rotate_helicopter_rotors,
                     exhaust_effects_system,
