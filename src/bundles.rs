@@ -1,5 +1,5 @@
 use crate::components::{
-    Building, Car, DynamicContent, MovementController, NPCAppearance, NPCBehaviorComponent,
+    Building, Car, DynamicContent, HumanMovement, MovementController, NPCAppearance, NPCBehaviorComponent,
     NPCState, VehicleState, VehicleType,
 };
 use crate::services::distance_cache::MovementTracker;
@@ -195,4 +195,37 @@ pub struct UnifiedChunkBundle {
     pub inherited_visibility: InheritedVisibility,
     pub view_visibility: ViewVisibility,
     pub visibility_range: VisibilityRange,
+}
+
+/// Bundle for player physics restoration when exiting vehicles
+#[derive(Bundle)]
+pub struct PlayerPhysicsBundle {
+    pub rigid_body: RigidBody,
+    pub collider: Collider,
+    pub locked_axes: LockedAxes,
+    pub velocity: Velocity,
+    pub sleeping: Sleeping,
+    pub damping: Damping,
+    pub movement: HumanMovement,
+}
+
+impl Default for PlayerPhysicsBundle {
+    fn default() -> Self {
+        Self {
+            rigid_body: RigidBody::Dynamic,
+            collider: Collider::capsule(
+                Vec3::new(0.0, -0.4, 0.0),
+                Vec3::new(0.0, 1.0, 0.0),
+                0.4,
+            ),
+            locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+            velocity: Velocity::default(),
+            sleeping: Sleeping::disabled(),
+            damping: Damping {
+                linear_damping: 1.2,
+                angular_damping: 3.5,
+            },
+            movement: HumanMovement::default(),
+        }
+    }
 }

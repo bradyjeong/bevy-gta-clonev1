@@ -1,6 +1,9 @@
 use crate::factories::material_factory::initialize_material_factory;
 use crate::plugins::{
-    TimingPlugin, WorldContentPlugin, WorldDebugPlugin, WorldLodPlugin, WorldNpcPlugin,
+    TimingPlugin, 
+    // TODO: Replace real-time chunk generation with asset streaming like GTA
+    // WorldContentPlugin, 
+    WorldDebugPlugin, WorldLodPlugin, WorldNpcPlugin,
     WorldStreamingPlugin,
 };
 use bevy::prelude::*;
@@ -16,7 +19,10 @@ impl Plugin for UnifiedWorldPlugin {
             // Add focused world plugins
             .add_plugins(TimingPlugin)
             .add_plugins(WorldStreamingPlugin)
-            .add_plugins(WorldContentPlugin)
+            // TODO: Replace real-time chunk generation with asset streaming like GTA
+            // Problem: Current system generates procedural content synchronously causing frame spikes
+            // Solution: Pre-build all chunks at startup, then stream pre-made content
+            // .add_plugins(WorldContentPlugin)
             .add_plugins(WorldLodPlugin)
             .add_plugins(WorldNpcPlugin)
             .add_plugins(WorldDebugPlugin)

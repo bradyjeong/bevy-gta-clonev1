@@ -2,16 +2,18 @@ use crate::components::{ActiveEntity, MainCamera};
 use crate::config::GameConfig;
 use crate::util::safe_math::safe_lerp;
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 pub fn camera_follow_system(
     mut camera_query: Query<&mut Transform, (With<MainCamera>, Without<ActiveEntity>)>,
-    active_query: Query<&Transform, (With<ActiveEntity>, Without<MainCamera>)>,
+    active_query: Query<(&Transform, Option<&Velocity>), (With<ActiveEntity>, Without<MainCamera>)>,
     config: Res<GameConfig>,
+    time: Res<Time>,
 ) {
     let Ok(mut camera_transform) = camera_query.single_mut() else {
         return;
     };
-    let Ok(active_transform) = active_query.single() else {
+    let Ok((active_transform, velocity)) = active_query.single() else {
         return;
     };
 
@@ -41,11 +43,18 @@ pub fn camera_follow_system(
         return;
     }
 
-    // Smooth camera movement using interpolation - much more responsive
+    // Speed-dependent camera smoothing
+    let current_speed = velocity.map_or(0.0, |v| v.linvel.length());
+    
+    // Base lerp speed with speed multiplier (faster = more responsive camera)
+    let speed_multiplier = 1.0 + (current_speed / 50.0).clamp(0.0, 3.0); // Scale 0-150 units/s to 1x-4x
+    let dynamic_lerp_speed = config.camera.lerp_speed * speed_multiplier;
+    
+    let lerp_factor = (dynamic_lerp_speed * time.delta_secs()).clamp(0.0, 1.0);
     camera_transform.translation = safe_lerp(
         camera_transform.translation,
         target_pos,
-        config.camera.lerp_speed,
+        lerp_factor,
     );
 
     // Camera looks toward the entity slightly above ground (closer to parallel)

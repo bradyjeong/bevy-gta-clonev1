@@ -398,7 +398,7 @@ impl Default for CameraConfig {
         Self {
             distance: 8.0,    // Much closer to player
             height: 1.5,      // Lower for more parallel to ground
-            lerp_speed: 0.25, // Much more responsive camera
+            lerp_speed: 2.5, // Near-instant camera response
             look_ahead_distance: 10.0,
             look_ahead_height: 2.0,
         }

@@ -118,6 +118,12 @@ impl Plugin for GameCorePlugin {
             .add_systems(
                 FixedUpdate,
                 (
+                    // Move movement systems to fixed timestep BEFORE Rapier
+                    (
+                        crate::systems::movement::car_movement,
+                        crate::systems::movement::simple_helicopter_movement,
+                        crate::systems::movement::simple_f16_movement,
+                    ),
                     // Universal physics safeguards run AFTER Rapier physics step
                     apply_universal_physics_safeguards,
                     // World boundary enforcement

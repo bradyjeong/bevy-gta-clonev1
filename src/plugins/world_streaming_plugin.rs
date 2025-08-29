@@ -1,7 +1,9 @@
 use crate::config::GameConfig;
 use crate::resources::MaterialRegistry;
 use crate::systems::world::{
-    layered_generation::layered_generation_coordinator, unified_world::UnifiedWorldManager,
+    // TEMP: Disabled to test if chunk generation causes jolting
+    // layered_generation::layered_generation_coordinator, 
+    unified_world::UnifiedWorldManager,
     unified_world::unified_world_streaming_system,
 };
 use bevy::prelude::*;
@@ -19,7 +21,8 @@ impl Plugin for WorldStreamingPlugin {
             Update,
             (
                 unified_world_streaming_system,
-                layered_generation_coordinator,
+                // TODO: Replace with async chunk instantiation system
+                // layered_generation_coordinator,
             )
                 .chain(),
         );
