@@ -1,12 +1,39 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::{
-    ActiveEntity, Car, ControlState, F16, Helicopter, HumanMovement, InCar, Player,
+    ActiveEntity, Car, ControlState, F16, Helicopter, InCar, Player,
     PlayerControlled, VehicleControlType,
 };
+use crate::bundles::PlayerPhysicsBundle;
 use crate::game_state::GameState;
 use crate::systems::queue_active_transfer;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+
+/// Enhanced vehicle exit helper with physics restoration
+fn transfer_player_from_vehicle_with_physics(
+    commands: &mut Commands,
+    player: Entity,
+    vehicle: Entity,
+    exit_position: Vec3,
+    exit_rotation: Quat,
+) {
+    // Remove control from vehicle
+    commands.entity(vehicle)
+        .remove::<ControlState>()
+        .remove::<PlayerControlled>()
+        .remove::<VehicleControlType>();
+
+    // Restore player control, physics, and visibility
+    commands.entity(player)
+        .remove::<InCar>()
+        .remove::<ChildOf>()
+        .insert(PlayerControlled)
+        .insert(ControlState::default())
+        .insert(VehicleControlType::Walking)
+        .insert(Visibility::Visible)
+        .insert(Transform::from_translation(exit_position).with_rotation(exit_rotation))
+        .insert(PlayerPhysicsBundle::default());
+}
 
 pub fn interaction_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -32,7 +59,7 @@ pub fn interaction_system(
     car_query: Query<(Entity, &Transform), (With<Car>, Without<Player>)>,
     helicopter_query: Query<(Entity, &Transform), (With<Helicopter>, Without<Player>)>,
     f16_query: Query<(Entity, &Transform), (With<F16>, Without<Player>)>,
-    vehicle_control_query: Query<
+    _vehicle_control_query: Query<
         (
             Option<&ControlState>,
             Option<&PlayerControlled>,
@@ -240,8 +267,7 @@ pub fn interaction_system(
             if let Ok(active_car) = active_query.single() {
                 // Get the specific active car's transform and control components
                 if let Ok((_, car_transform)) = car_query.get(active_car) {
-                    // Get control components from the car
-                    let vehicle_control_components = vehicle_control_query.get(active_car).ok();
+
 
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
@@ -251,42 +277,14 @@ pub fn interaction_system(
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_car, player_entity);
 
-                        // Remove control components from car (ActiveEntity handled by transfer system)
-                        commands
-                            .entity(active_car)
-                            .remove::<ControlState>()
-                            .remove::<PlayerControlled>()
-                            .remove::<VehicleControlType>();
-
-                        // Remove the child relationship and position the player in world space
-                        let mut player_commands = commands.entity(player_entity);
-                        player_commands
-                            .remove::<ChildOf>()
-                            .remove::<InCar>()
-                            .insert(
-                                Transform::from_translation(exit_position)
-                                    .with_rotation(car_transform.rotation),
-                            )
-                            .insert(Velocity::default()) // Let Rapier apply gravity naturally
-                            .insert(Visibility::Visible);
-
-                        // Transfer control components back to player
-                        if let Some((control_state, player_controlled, _)) =
-                            vehicle_control_components
-                        {
-                            if let Some(control_state) = control_state {
-                                player_commands.insert(control_state.clone());
-                            } else {
-                                player_commands.insert(ControlState::default());
-                            }
-
-                            if player_controlled.is_some() {
-                                player_commands.insert(PlayerControlled);
-                            }
-
-                            // Set back to walking control type
-                            player_commands.insert(VehicleControlType::Walking);
-                        }
+                        // Use centralized physics restoration helper
+                        transfer_player_from_vehicle_with_physics(
+                            &mut commands,
+                            player_entity,
+                            active_car,
+                            exit_position,
+                            car_transform.rotation,
+                        );
 
                         info!(
                             "ActiveEntity transferred from Car({:?}) back to Player({:?})",
@@ -304,9 +302,7 @@ pub fn interaction_system(
             if let Ok(active_helicopter) = active_query.single() {
                 // Get the specific active helicopter's transform
                 if let Ok((_, helicopter_transform)) = helicopter_query.get(active_helicopter) {
-                    // Get control components from the helicopter
-                    let vehicle_control_components =
-                        vehicle_control_query.get(active_helicopter).ok();
+
 
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
@@ -318,55 +314,14 @@ pub fn interaction_system(
                             + helicopter_transform.right() * 4.0
                             + Vec3::new(0.0, -1.0, 0.0); // Drop to ground level
 
-                        // Remove control components from helicopter
-                        commands
-                            .entity(active_helicopter)
-                            .remove::<ControlState>()
-                            .remove::<PlayerControlled>()
-                            .remove::<VehicleControlType>();
-
-                        // Remove the child relationship and position the player in world space
-                        let mut player_commands = commands.entity(player_entity);
-                        player_commands
-                            .remove::<ChildOf>()
-                            .remove::<InCar>()
-                            .insert(
-                                Transform::from_translation(exit_position)
-                                    .with_rotation(Quat::IDENTITY),
-                            )
-                            .insert(RigidBody::Dynamic)
-                            .insert(Collider::capsule(
-                                Vec3::new(0.0, -0.4, 0.0),
-                                Vec3::new(0.0, 1.0, 0.0),
-                                0.4,
-                            ))
-                            .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z)
-                            .insert(Velocity::default()) // Let Rapier apply gravity naturally
-                            .insert(Sleeping::disabled()) // Keep body awake to receive gravity
-                            .insert(HumanMovement::default()) // Essential for walking movement
-                            .insert(Damping {
-                                linear_damping: 1.2,
-                                angular_damping: 3.5,
-                            }) // Prevent overspin
-                            .insert(Visibility::Visible);
-
-                        // Transfer control components back to player
-                        if let Some((control_state, player_controlled, _)) =
-                            vehicle_control_components
-                        {
-                            if let Some(control_state) = control_state {
-                                player_commands.insert(control_state.clone());
-                            } else {
-                                player_commands.insert(ControlState::default());
-                            }
-
-                            if player_controlled.is_some() {
-                                player_commands.insert(PlayerControlled);
-                            }
-
-                            // Set back to walking control type
-                            player_commands.insert(VehicleControlType::Walking);
-                        }
+                        // Use centralized physics restoration helper
+                        transfer_player_from_vehicle_with_physics(
+                            &mut commands,
+                            player_entity,
+                            active_helicopter,
+                            exit_position,
+                            Quat::IDENTITY,
+                        );
 
                         info!("Exited helicopter at position: {:?}", exit_position);
                     }
@@ -382,8 +337,7 @@ pub fn interaction_system(
             if let Ok(active_f16) = active_query.single() {
                 // Get the specific active F16's transform
                 if let Ok((_, f16_transform)) = f16_query.get(active_f16) {
-                    // Get control components from the F16
-                    let vehicle_control_components = vehicle_control_query.get(active_f16).ok();
+
 
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
@@ -395,55 +349,14 @@ pub fn interaction_system(
                             + f16_transform.right() * 6.0
                             + Vec3::new(0.0, -2.0, 0.0); // Drop to ground level
 
-                        // Remove control components from F16
-                        commands
-                            .entity(active_f16)
-                            .remove::<ControlState>()
-                            .remove::<PlayerControlled>()
-                            .remove::<VehicleControlType>();
-
-                        // Remove the child relationship and position the player in world space
-                        let mut player_commands = commands.entity(player_entity);
-                        player_commands
-                            .remove::<ChildOf>()
-                            .remove::<InCar>()
-                            .insert(
-                                Transform::from_translation(exit_position)
-                                    .with_rotation(Quat::IDENTITY),
-                            )
-                            .insert(RigidBody::Dynamic)
-                            .insert(Collider::capsule(
-                                Vec3::new(0.0, -0.4, 0.0),
-                                Vec3::new(0.0, 1.0, 0.0),
-                                0.4,
-                            ))
-                            .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z)
-                            .insert(Velocity::default()) // Let Rapier apply gravity naturally
-                            .insert(Sleeping::disabled()) // Keep body awake to receive gravity
-                            .insert(HumanMovement::default()) // Essential for walking movement
-                            .insert(Damping {
-                                linear_damping: 1.2,
-                                angular_damping: 3.5,
-                            }) // Prevent overspin
-                            .insert(Visibility::Visible);
-
-                        // Transfer control components back to player
-                        if let Some((control_state, player_controlled, _)) =
-                            vehicle_control_components
-                        {
-                            if let Some(control_state) = control_state {
-                                player_commands.insert(control_state.clone());
-                            } else {
-                                player_commands.insert(ControlState::default());
-                            }
-
-                            if player_controlled.is_some() {
-                                player_commands.insert(PlayerControlled);
-                            }
-
-                            // Set back to walking control type
-                            player_commands.insert(VehicleControlType::Walking);
-                        }
+                        // Use centralized physics restoration helper
+                        transfer_player_from_vehicle_with_physics(
+                            &mut commands,
+                            player_entity,
+                            active_f16,
+                            exit_position,
+                            Quat::IDENTITY,
+                        );
 
                         info!("Exited F16 at position: {:?}", exit_position);
                     }

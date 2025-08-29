@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::components::{VehicleType, PlayerControlled, ControlState, VehicleControlType};
+use crate::bundles::PlayerPhysicsBundle;
 
 /// Events for vehicle entry/exit - replaces giant match blocks
 #[derive(Event, Debug)]
@@ -60,13 +61,13 @@ pub fn transfer_player_to_vehicle(
     commands.entity(player).insert(crate::components::InCar(vehicle));
 }
 
-/// Generic vehicle exit helper - eliminates duplication
-pub fn transfer_player_from_vehicle(
+/// Enhanced vehicle exit helper with physics restoration
+pub fn transfer_player_from_vehicle_with_physics(
     commands: &mut Commands,
     player: Entity,
     vehicle: Entity,
-    exit_offset: Vec3,
-    player_transform: &Transform,
+    exit_position: Vec3,
+    exit_rotation: Quat,
 ) {
     // Remove control from vehicle
     commands.entity(vehicle)
@@ -75,8 +76,7 @@ pub fn transfer_player_from_vehicle(
         .remove::<ControlState>()
         .remove::<VehicleControlType>();
 
-    // Restore player control and visibility
-    let exit_position = player_transform.translation + exit_offset;
+    // Restore player control, physics, and visibility
     commands.entity(player)
         .remove::<crate::components::InCar>()
         .remove::<crate::components::ChildOf>()
@@ -85,5 +85,24 @@ pub fn transfer_player_from_vehicle(
         .insert(ControlState::default())
         .insert(VehicleControlType::Walking)
         .insert(Visibility::Visible)
-        .insert(Transform::from_translation(exit_position));
+        .insert(Transform::from_translation(exit_position).with_rotation(exit_rotation))
+        .insert(PlayerPhysicsBundle::default());
+}
+
+/// Legacy helper for backward compatibility
+pub fn transfer_player_from_vehicle(
+    commands: &mut Commands,
+    player: Entity,
+    vehicle: Entity,
+    exit_offset: Vec3,
+    player_transform: &Transform,
+) {
+    let exit_position = player_transform.translation + exit_offset;
+    transfer_player_from_vehicle_with_physics(
+        commands,
+        player,
+        vehicle,
+        exit_position,
+        Quat::IDENTITY,
+    );
 }
