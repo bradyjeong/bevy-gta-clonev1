@@ -1,0 +1,15 @@
+(
+    name: "Central Lake",
+    bounds: (200.0, 200.0, 400.0, 400.0), // Lake at (200,200) to (400,400) - 200x200 area
+    base_level: 0.0,
+    tide: (
+        amplitude: 0.1,
+        period_sec: 240.0,
+    ),
+    wave_params: Some((
+        amplitude: 0.3,
+        frequency: 0.15,
+        speed: 1.0,
+    )),
+    surface_color: (0.15, 0.5, 0.9, 0.6),
+)
