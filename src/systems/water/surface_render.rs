@@ -1,4 +1,4 @@
-use crate::components::water_new::WaterRegion;
+use crate::components::unified_water::UnifiedWaterBody;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 
@@ -7,7 +7,7 @@ pub fn surface_render_system(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    water_regions: Query<(Entity, &WaterRegion), Added<WaterRegion>>,
+    water_regions: Query<(Entity, &UnifiedWaterBody), Added<UnifiedWaterBody>>,
 ) {
     for (entity, region) in water_regions.iter() {
         // Calculate water plane dimensions
@@ -38,7 +38,7 @@ pub fn surface_render_system(
         let surface_entity = commands.spawn((
             Mesh3d(water_mesh),
             MeshMaterial3d(water_material),
-            Transform::from_xyz(center_x, region.current_level, center_z),
+            Transform::from_xyz(center_x, region.get_water_surface_level(0.0), center_z),
             VisibilityRange::abrupt(0.0, 2000.0), // Visible up to 2km
             Name::new(format!("{} Surface", region.name)),
         )).id();
@@ -60,21 +60,19 @@ pub fn surface_render_system(
 /// Update water surface positions based on tide changes
 pub fn update_water_surface_system(
     time: Res<Time>,
-    mut water_regions: Query<&mut WaterRegion>,
-    mut surface_transforms: Query<(&mut Transform, &Name), Without<WaterRegion>>,
+    water_regions: Query<&UnifiedWaterBody>,
+    mut surface_transforms: Query<(&mut Transform, &Name), Without<UnifiedWaterBody>>,
 ) {
     let current_time = time.elapsed_secs();
 
-    for mut region in water_regions.iter_mut() {
-        let new_level = region.get_water_level(current_time);
-        
-        // Only update if level changed significantly
-        if (new_level - region.current_level).abs() > 0.01 {
-            region.current_level = new_level;
+    for region in water_regions.iter() {
+        let new_level = region.get_water_surface_level(current_time);
 
-            // Update all water surface transforms that match this region
-            for (mut transform, name) in surface_transforms.iter_mut() {
-                if name.as_str().contains(&region.name) && name.as_str().contains("Surface") {
+        // Update all water surface transforms that match this region
+        for (mut transform, name) in surface_transforms.iter_mut() {
+            if name.as_str().contains(&region.name) && name.as_str().contains("Surface") {
+                // Only update if level changed significantly
+                if (new_level - transform.translation.y).abs() > 0.01 {
                     transform.translation.y = new_level;
                 }
             }

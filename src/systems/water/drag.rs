@@ -1,4 +1,4 @@
-use crate::components::water_new::{WaterRegion, WaterBodyId};
+use crate::components::unified_water::{UnifiedWaterBody, WaterBodyId};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -9,7 +9,7 @@ pub fn water_drag_system(
         (Entity, &GlobalTransform, &mut Velocity, &Collider),
         With<WaterBodyId>
     >,
-    water_regions: Query<&WaterRegion>,
+    water_regions: Query<&UnifiedWaterBody>,
 ) {
     let current_time = time.elapsed_secs();
 

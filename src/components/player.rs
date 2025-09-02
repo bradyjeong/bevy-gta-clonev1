@@ -41,6 +41,12 @@ pub struct HumanAnimation {
     pub next_fidget_time: f32,
     pub is_walking: bool,
     pub is_running: bool,
+    pub is_swimming: bool,
+    // Swimming animation fields
+    pub swim_stroke_cycle: f32,
+    pub swim_stroke_frequency: f32,
+    pub swim_kick_cycle: f32,
+    pub swim_speed: f32,
 }
 
 impl Default for HumanAnimation {
@@ -55,6 +61,11 @@ impl Default for HumanAnimation {
             next_fidget_time: 5.0, // Default 5.0 seconds - randomization can be done at spawn time
             is_walking: false,
             is_running: false,
+            is_swimming: false,
+            swim_stroke_cycle: 0.0,
+            swim_stroke_frequency: 2.0 * std::f32::consts::PI * 0.8, // ~0.8 Hz stroke rate
+            swim_kick_cycle: 0.0,
+            swim_speed: 0.0,
         }
     }
 }

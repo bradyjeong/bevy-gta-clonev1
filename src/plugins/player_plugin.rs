@@ -31,7 +31,7 @@ impl Plugin for PlayerPlugin {
                     .run_if(in_state(GameState::Walking)),
                 human_player_animation
                     .after(animation_flag_system)
-                    .run_if(in_state(GameState::Walking)),
+                    .run_if(in_state(GameState::Walking).or(in_state(GameState::Swimming))),
                 footstep_system.run_if(in_state(GameState::Walking)),
                 cleanup_footstep_sounds,
                 camera_follow_system,

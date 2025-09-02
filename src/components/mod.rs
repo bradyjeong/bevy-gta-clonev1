@@ -60,6 +60,7 @@ pub mod player;
 pub mod vehicles;
 pub mod water;
 pub mod water_new;
+pub mod unified_water;
 pub mod world;
 
 pub mod control_state;

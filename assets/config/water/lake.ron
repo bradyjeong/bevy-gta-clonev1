@@ -1,7 +1,8 @@
 (
     name: "Central Lake",
-    bounds: (200.0, 200.0, 400.0, 400.0), // Lake at (200,200) to (400,400) - 200x200 area
-    base_level: 0.0,
+    bounds: (200.0, 200.0, 400.0, 400.0),
+    surface_level: 1.2,      // Actual water surface height above ground
+    depth: 2.5,              // Lake is 2.5 units deep
     tide: (
         amplitude: 0.1,
         period_sec: 240.0,

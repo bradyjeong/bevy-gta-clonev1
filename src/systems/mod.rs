@@ -67,6 +67,8 @@ pub mod water;
 // pub mod timing_service; // Moved to services/
 pub mod input;
 pub mod safety;
+pub mod swimming;
+pub mod terrain_water_manager;
 pub mod spawn_validation;
 pub mod validation;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
@@ -127,8 +129,8 @@ pub use safe_active_entity::{
     active_transfer_executor_system, queue_active_transfer,
 };
 
-// Validation systems
-pub use validation::{ColliderType, MeshColliderConfig, validate_vehicle_consistency};
+// Validation systems - TEMPORARILY DISABLED
+// pub use validation::{ColliderType, MeshColliderConfig, validate_vehicle_consistency};
 
 // Floating origin system - REMOVED: Finite world doesn't need coordinate translation
 

@@ -66,6 +66,18 @@ pub fn debug_player_position(
                     }
                 }
             }
+            GameState::Swimming => {
+                if let Ok(player_transform) = _player_query.single() {
+                    if player_transform.translation.x.abs() > 100.0
+                        || player_transform.translation.z.abs() > 100.0
+                    {
+                        info!(
+                            "DEBUG: Player swimming at position: {:?}",
+                            player_transform.translation
+                        );
+                    }
+                }
+            }
         }
     }
 }
