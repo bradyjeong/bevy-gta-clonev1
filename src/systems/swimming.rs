@@ -1,7 +1,9 @@
 use bevy::prelude::*;
+use bevy::math::EulerRot;
 use bevy_rapier3d::prelude::*;
 use crate::components::{Player, ActiveEntity, HumanAnimation, HumanMovement, VehicleControlType, ControlState};
 use crate::components::unified_water::{UnifiedWaterBody, WaterBodyId};
+use crate::util::transform_utils::horizontal_forward;
 
 use crate::game_state::GameState;
 
@@ -13,6 +15,16 @@ pub struct Swimming {
     pub state: SwimState,
 }
 
+#[derive(Component)]
+pub struct ProneRotation {
+    pub target_pitch: f32,      // -π/2 for prone, 0 for upright  
+    pub current_pitch: f32,     // interpolated pitch value
+    pub going_prone: bool,      // true -> prone, false -> stand up
+}
+
+#[derive(Component)]
+pub struct ExitingSwim;
+
 const ENTER_THRESHOLD: f32 = 0.10;  // >10% submerged → enter (DEBUG: lowered)
 const EXIT_THRESHOLD: f32 = 0.05;   // <5% submerged → exit (DEBUG: lowered)
 
@@ -22,21 +34,28 @@ pub fn swim_state_transition_system(
     time: Res<Time>,
     mut state: ResMut<NextState<GameState>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(Entity, &Transform, &Collider, Option<&Swimming>), (With<Player>, With<ActiveEntity>)>,
+    mut query: Query<(Entity, &Transform, &Collider, Option<&Swimming>, Option<&mut ProneRotation>, Option<&mut Velocity>), (With<Player>, With<ActiveEntity>)>,
     water_regions: Query<&UnifiedWaterBody>,
 ) {
     let now = time.elapsed_secs();
 
     // Emergency reset with F2 key
     if keyboard_input.just_pressed(KeyCode::F2) {
-        for (entity, _, _, swimming) in &mut query {
+        for (entity, _, _, swimming, _prone_rotation, velocity) in &mut query {
             if swimming.is_some() {
+                // Clamp velocity to prevent physics spikes on emergency exit
+                if let Some(mut vel) = velocity {
+                    if vel.linvel.y > 2.0 { vel.linvel.y = 2.0; }
+                    if vel.linvel.y < -1.0 { vel.linvel.y = -1.0; }
+                }
+                
                 commands.entity(entity)
                     .remove::<Swimming>()
                     .remove::<GravityScale>()
                     .remove::<Damping>()
                     .remove::<WaterBodyId>()
-                    .insert(VehicleControlType::Walking);
+                    .insert(VehicleControlType::Walking)
+                    .insert(ExitingSwim); // Signal smooth return to upright
                 state.set(GameState::Walking);
                 info!("Emergency exit from swimming mode with F2");
             }
@@ -44,7 +63,7 @@ pub fn swim_state_transition_system(
         return;
     }
 
-    for (entity, transform, collider, swimming) in &mut query {
+    for (entity, transform, collider, swimming, prone_rotation, velocity) in &mut query {
         let pos = transform.translation;
         
         // DEBUG: Log player position and water regions
@@ -61,68 +80,77 @@ pub fn swim_state_transition_system(
         
         let water = water_regions.iter().find(|w| w.contains_point(pos.x, pos.z));
         
-        if water.is_none() {
-            // On land - cleanup if needed
-            if swimming.is_some() {
-                commands.entity(entity)
-                    .remove::<Swimming>()
-                    .remove::<GravityScale>()
-                    .remove::<Damping>()
-                    .remove::<WaterBodyId>()
-                    .insert(VehicleControlType::Walking);  // Switch back to walking controls
-                state.set(GameState::Walking);  // Update UI state
-                info!("Player exited swimming mode - returned to land");
-            }
-            continue;
-        } else {
-            // DEBUG: Found water region
-            if (now % 2.0) < 0.016 {
-                info!("Player is in water region: {}", water.unwrap().name);
-            }
-        }
-        
-        let water = water.unwrap();
+        // Calculate submersion ratio first - always check submersion for hysteresis
         let half_ext = collider.as_cuboid()
             .map(|c| Vec3::new(c.half_extents().x, c.half_extents().y, c.half_extents().z))
             .unwrap_or(Vec3::splat(0.5));
-        let submersion = water.calculate_submersion_ratio(transform, half_ext, now);
+            
+        let submersion = if let Some(w) = water {
+            // DEBUG: Found water region
+            if (now % 2.0) < 0.016 {
+                info!("Player is in water region: {}", w.name);
+            }
+            w.calculate_submersion_ratio(transform, half_ext, now)
+        } else {
+            // Not in any water region - treat as completely out of water
+            0.0
+        };
         
         // DEBUG: Log submersion ratio and water level details
         if (now % 1.0) < 0.016 { // More frequent logging
-            let water_level = water.get_water_surface_level(now);
-            let entity_bottom = pos.y - half_ext.y;
-            let entity_top = pos.y + half_ext.y;
-            info!("🌊 WATER DEBUG:");
-            info!("  Water level: {:.3}, Player Y: {:.3}", water_level, pos.y);
-            info!("  Player bottom: {:.3}, Player top: {:.3}", entity_bottom, entity_top);
-            info!("  Player half extents: ({:.3}, {:.3}, {:.3})", half_ext.x, half_ext.y, half_ext.z);
-            info!("  Submersion ratio: {:.3} (need {:.2} to enter)", submersion, ENTER_THRESHOLD);
-            
-            if submersion > 0.0 {
-                info!("  🏊 SUBMERSION DETECTED! Ratio: {:.3}", submersion);
-            }
-            if entity_bottom < water_level {
-                info!("  👣 FEET IN WATER! Bottom: {:.3} < Water: {:.3}", entity_bottom, water_level);
+            if let Some(w) = water {
+                let water_level = w.get_water_surface_level(now);
+                let entity_bottom = pos.y - half_ext.y;
+                let entity_top = pos.y + half_ext.y;
+                info!("🌊 WATER DEBUG:");
+                info!("  Water level: {:.3}, Player Y: {:.3}", water_level, pos.y);
+                info!("  Player bottom: {:.3}, Player top: {:.3}", entity_bottom, entity_top);
+                info!("  Player half extents: ({:.3}, {:.3}, {:.3})", half_ext.x, half_ext.y, half_ext.z);
+                info!("  Submersion ratio: {:.3} (need {:.2} to enter)", submersion, ENTER_THRESHOLD);
+                
+                if submersion > 0.0 {
+                    info!("  🏊 SUBMERSION DETECTED! Ratio: {:.3}", submersion);
+                }
+                if entity_bottom < water_level {
+                    info!("  👣 FEET IN WATER! Bottom: {:.3} < Water: {:.3}", entity_bottom, water_level);
+                }
             }
         }
 
         match swimming {
             None => {
-                if submersion > ENTER_THRESHOLD {
+                if submersion > ENTER_THRESHOLD && water.is_some() {
                     // ENTER SWIM MODE
                     commands.entity(entity)
                         .insert(Swimming { state: SwimState::Surface })
                         .insert(GravityScale(0.1))  // Light gravity to prevent floating
                         .insert(Damping { linear_damping: 6.0, angular_damping: 3.0 }) // Higher damping in water
                         .insert(WaterBodyId)  // Enable water physics
-                        .insert(VehicleControlType::Swimming);  // Switch to swimming controls
+                        .insert(VehicleControlType::Swimming)  // Switch to swimming controls
+                        .insert(ProneRotation { 
+                            target_pitch: -std::f32::consts::FRAC_PI_2, // -90° for prone
+                            current_pitch: 0.0,                         // start upright
+                            going_prone: true,
+                        });
                     state.set(GameState::Swimming);  // Update UI state
                     info!("Player entered swimming mode at {:.1}% submersion", submersion * 100.0);
                 }
             }
             Some(swim) => {
-                // Hysteresis exit - prevents flicker
+                // Exit based on submersion hysteresis - prevents flicker
                 if submersion < EXIT_THRESHOLD {
+                    // Clamp velocity to prevent physics spikes on exit
+                    if let Some(mut vel) = velocity {
+                        if vel.linvel.y > 2.0 { vel.linvel.y = 2.0; }
+                        if vel.linvel.y < -1.0 { vel.linvel.y = -1.0; }
+                    }
+                    
+                    // Signal ProneRotation to return to upright position
+                    if let Some(mut prone) = prone_rotation {
+                        prone.going_prone = false; // Signal to return to upright
+                        prone.target_pitch = 0.0;  // Return to upright
+                    }
+                    
                     commands.entity(entity)
                         .remove::<Swimming>()
                         .remove::<GravityScale>()
@@ -134,17 +162,19 @@ pub fn swim_state_transition_system(
                     continue;
                 }
 
-                // Surface vs Diving state
-                let head_y = transform.translation.y + half_ext.y;
-                let water_level = water.get_water_surface_level(now);
-                let new_state = if head_y < water_level - 0.2 {
-                    SwimState::Diving
-                } else {
-                    SwimState::Surface
-                };
-                
-                if swim.state != new_state {
-                    commands.entity(entity).insert(Swimming { state: new_state });
+                // Surface vs Diving state (only if still in water)
+                if let Some(w) = water {
+                    let head_y = transform.translation.y + half_ext.y;
+                    let water_level = w.get_water_surface_level(now);
+                    let new_state = if head_y < water_level - 0.2 {
+                        SwimState::Diving
+                    } else {
+                        SwimState::Surface
+                    };
+                    
+                    if swim.state != new_state {
+                        commands.entity(entity).insert(Swimming { state: new_state });
+                    }
                 }
             }
         }
@@ -169,12 +199,15 @@ pub fn swim_velocity_apply_system(
     // Horizontal movement (from control state)
     let mut dir = Vec3::ZERO;
     
+    // Use horizontal forward direction to handle prone swimming correctly
+    let hori_fwd = horizontal_forward(transform);
+    
     // Convert control state to movement direction
     if control_state.throttle > 0.0 {
-        dir += *transform.forward();
+        dir += hori_fwd;
     }
     if control_state.brake > 0.0 {
-        dir -= *transform.forward();
+        dir -= hori_fwd;
     }
     
     // Apply steering to turn the player direction
@@ -304,6 +337,47 @@ pub fn swim_animation_flag_system(
         if (time.elapsed_secs() % 2.0) < 0.016 {
             info!("🏊 BIOMECH ANIM: is_swimming={}, input_intensity={:.2}, stroke_freq={:.2}, speed={:.2}", 
                   anim.is_swimming, input_intensity, anim.swim_stroke_frequency, movement.current_speed);
+        }
+    }
+}
+
+/// Apply prone rotation to player transform when swimming
+pub fn apply_prone_rotation_system(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Transform, &mut ProneRotation, Option<&ExitingSwim>), (With<Player>, With<ActiveEntity>)>,
+) {
+    let Ok((entity, mut transform, mut prone, exiting_swim)) = query.single_mut() else {
+        return;
+    };
+    
+    // If exiting swimming, signal return to upright
+    if exiting_swim.is_some() && prone.going_prone {
+        prone.going_prone = false;
+        prone.target_pitch = 0.0;  // Return to upright
+        commands.entity(entity).remove::<ExitingSwim>(); // Remove the signal
+        info!("Signaled return to upright position after land exit");
+    }
+
+    // Interpolate only the pitch, preserve physics-driven yaw
+    let rate = 5.0; // How quickly to rotate
+    let dt = time.delta_secs();
+    let t = 1.0 - (-rate * dt).exp(); // Maps dt to (0,1)
+    
+    // Interpolate pitch towards target
+    prone.current_pitch = prone.current_pitch + (prone.target_pitch - prone.current_pitch) * t;
+    
+    // Extract current yaw (let physics handle it) and apply interpolated pitch
+    let (yaw, _old_pitch, roll) = transform.rotation.to_euler(EulerRot::YXZ);
+    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, prone.current_pitch, roll);
+    
+    // Check if we're close enough to the target when returning to upright
+    if !prone.going_prone {
+        let pitch_diff = (prone.current_pitch - prone.target_pitch).abs();
+        if pitch_diff < 0.01 { // Close enough 
+            prone.current_pitch = prone.target_pitch; // Snap to exact target
+            commands.entity(entity).remove::<ProneRotation>(); // Remove component when done
+            info!("Player returned to upright position");
         }
     }
 }

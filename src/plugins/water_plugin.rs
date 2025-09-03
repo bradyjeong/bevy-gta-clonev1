@@ -8,6 +8,7 @@ use crate::systems::water::{
 use crate::systems::swimming::{
     swim_state_transition_system, swim_velocity_apply_system,
     swim_animation_flag_system, reset_animation_on_land_system,
+    apply_prone_rotation_system,
 };
 use crate::game_state::GameState;
 
@@ -48,6 +49,7 @@ impl Plugin for WaterPlugin {
                     surface_render_system, 
                     update_water_surface_system,
                     swim_animation_flag_system.run_if(in_state(GameState::Swimming)),
+                    apply_prone_rotation_system, // Run always to handle return to upright
                     reset_animation_on_land_system,
                 ),
             );
