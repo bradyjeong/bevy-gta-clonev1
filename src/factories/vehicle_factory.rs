@@ -1,5 +1,6 @@
 use crate::bundles::{DynamicPhysicsBundle, VisibleChildBundle};
 use crate::components::water::Yacht;
+use crate::components::water_new::WaterBodyId;
 use crate::components::{
     AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, MainRotor, SimpleCarSpecs,
     SimpleF16Specs, SimpleHelicopterSpecs, TailRotor, VehicleState, VehicleType,
@@ -269,6 +270,7 @@ impl VehicleFactory {
                 },
                 Yacht::default(),
                 VehicleState::new(VehicleType::Yacht),
+                WaterBodyId, // Mark yacht for water physics
                 Damping {
                     linear_damping: 3.0,
                     angular_damping: 10.0,

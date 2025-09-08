@@ -22,6 +22,7 @@ fn generate_dynamic_controls_text(
     // Convert GameState to VehicleControlType
     let vehicle_type = match state {
         GameState::Walking => VehicleControlType::Walking,
+        GameState::Swimming => VehicleControlType::Swimming,
         GameState::Driving => VehicleControlType::Car,
         GameState::Flying => VehicleControlType::Helicopter,
         GameState::Jetting => VehicleControlType::F16,
@@ -34,6 +35,7 @@ fn generate_dynamic_controls_text(
         // Fallback if controls haven't loaded yet
         match state {
             GameState::Walking => "LOADING WALKING CONTROLS...".to_string(),
+            GameState::Swimming => "LOADING SWIMMING CONTROLS...".to_string(),
             GameState::Driving => "LOADING VEHICLE CONTROLS...".to_string(),
             GameState::Flying => "LOADING HELICOPTER CONTROLS...".to_string(),
             GameState::Jetting => "LOADING F16 CONTROLS...".to_string(),

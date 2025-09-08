@@ -9,6 +9,7 @@ use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, Player};
 pub struct PlayerInputData {
     pub input_direction: Vec3,
     pub rotation_input: f32,
+    pub vertical_input: f32,  // NEW: W = +1, S = -1
     pub is_running: bool,
 }
 
@@ -17,6 +18,7 @@ impl Default for PlayerInputData {
         Self {
             input_direction: Vec3::ZERO,
             rotation_input: 0.0,
+            vertical_input: 0.0,  // NEW
             is_running: false,
         }
     }
@@ -40,13 +42,14 @@ pub fn read_input_system(
 
     input_data.rotation_input = control_state.steering;
     input_data.is_running = control_state.run;
+    input_data.vertical_input = control_state.vertical;  // NEW: Consume W/S for diving
 }
 
 pub fn velocity_apply_system(
     input_data: Res<PlayerInputData>,
     mut player_query: Query<
         (&mut Velocity, &mut HumanMovement),
-        (With<Player>, With<ActiveEntity>),
+        (With<Player>, With<ActiveEntity>, Without<crate::systems::swimming::Swimming>),  // NEW FILTER
     >,
 ) {
     let Ok((mut velocity, mut movement)) = player_query.single_mut() else {
@@ -161,6 +164,12 @@ pub fn human_player_animation(
         return;
     };
 
+    // Debug animation system running
+    if (time.elapsed_secs() % 3.0) < 0.016 {
+        info!("🎭 ANIMATION DEBUG: is_swimming={}, is_walking={}, speed={:.2}", 
+              animation.is_swimming, animation.is_walking, movement.current_speed);
+    }
+
     let _dt = time.delta_secs();
     let time_elapsed = time.elapsed_secs();
 
@@ -193,108 +202,195 @@ pub fn human_player_animation(
     let breathing_cycle = (time_elapsed * animation.breathing_rate).sin();
     let idle_sway = (time_elapsed * 0.7).sin() * 0.5 + (time_elapsed * 1.1).cos() * 0.3;
 
-    // Apply head bobbing and breathing
+    // Apply head animation - walking, swimming, or idle
     if let Ok(mut head_transform) = head_query.single_mut() {
-        let head_bob = if animation.is_walking {
-            walk_cycle * animation.head_bob_amplitude
+        if animation.is_swimming {
+            // Swimming: Head turns side to side for breathing
+            let breath_phase = (time_elapsed * animation.swim_stroke_frequency * 0.5).sin();
+            let head_turn = breath_phase * 0.3; // Side-to-side breathing motion
+            let head_bob = breath_phase * 0.05; // Slight vertical bob
+            
+            head_transform.translation.y = 1.2 + head_bob;
+            head_transform.translation.x = head_turn * 0.1;
+            head_transform.rotation = Quat::from_rotation_y(head_turn);
         } else {
-            breathing_cycle * 0.008
-        };
+            // Walking/idle: normal head movement
+            let head_bob = if animation.is_walking {
+                walk_cycle * animation.head_bob_amplitude
+            } else {
+                breathing_cycle * 0.008
+            };
 
-        let head_sway = if animation.is_walking {
-            walk_cycle * 0.5 * animation.body_sway_amplitude
-        } else {
-            idle_sway * 0.005
-        };
+            let head_sway = if animation.is_walking {
+                walk_cycle * 0.5 * animation.body_sway_amplitude
+            } else {
+                idle_sway * 0.005
+            };
 
-        head_transform.translation.y = 1.2 + head_bob;
-        head_transform.translation.x = head_sway;
-    }
-
-    // Apply torso swaying and breathing
-    if let Ok(mut torso_transform) = torso_query.single_mut() {
-        let body_sway = if animation.is_walking {
-            walk_cycle * animation.body_sway_amplitude
-        } else {
-            idle_sway * 0.005
-        };
-
-        let body_breathing = breathing_cycle * 0.008;
-
-        torso_transform.translation.y = 0.6 + body_breathing;
-        torso_transform.translation.x = body_sway;
-
-        // Slight forward lean when running
-        if animation.is_running {
-            torso_transform.rotation = Quat::from_rotation_x(-0.1);
-        } else {
-            torso_transform.rotation = Quat::IDENTITY;
+            head_transform.translation.y = 1.2 + head_bob;
+            head_transform.translation.x = head_sway;
+            head_transform.rotation = Quat::IDENTITY;
         }
     }
 
-    // Animate arms swinging
-    if let Ok(mut left_arm_transform) = left_arm_query.single_mut() {
-        let arm_swing = if animation.is_walking {
-            walk_cycle * 0.8 // Increased from 0.5 for more pronounced arm swing
+    // Apply torso animation - walking, swimming, or idle
+    if let Ok(mut torso_transform) = torso_query.single_mut() {
+        if animation.is_swimming {
+            // Swimming: Body roll with strokes + streamlined position
+            let stroke_phase = (time_elapsed * animation.swim_stroke_frequency).sin();
+            let body_roll = stroke_phase * 0.2; // Roll left/right with arm strokes
+            let streamline_lean = -0.15; // Slight forward lean for streamlined position
+            
+            torso_transform.translation.y = 0.6;
+            torso_transform.translation.x = body_roll * 0.1;
+            torso_transform.rotation = Quat::from_rotation_x(streamline_lean) * Quat::from_rotation_z(body_roll);
         } else {
-            idle_sway * 0.05
-        };
+            // Walking/idle: normal torso movement
+            let body_sway = if animation.is_walking {
+                walk_cycle * animation.body_sway_amplitude
+            } else {
+                idle_sway * 0.005
+            };
 
-        left_arm_transform.translation.x = -0.4;
-        left_arm_transform.translation.y = 0.7;
-        left_arm_transform.translation.z = arm_swing * 0.35; // Increased from 0.2 for more movement
-        left_arm_transform.rotation = Quat::from_rotation_x(arm_swing);
+            let body_breathing = breathing_cycle * 0.008;
+
+            torso_transform.translation.y = 0.6 + body_breathing;
+            torso_transform.translation.x = body_sway;
+
+            // Slight forward lean when running
+            if animation.is_running {
+                torso_transform.rotation = Quat::from_rotation_x(-0.1);
+            } else {
+                torso_transform.rotation = Quat::IDENTITY;
+            }
+        }
+    }
+
+    // Animate arms - walking or swimming
+    if let Ok(mut left_arm_transform) = left_arm_query.single_mut() {
+        if animation.is_swimming {
+            // Debug - confirm we're in swimming branch
+            if (time_elapsed % 3.0) < 0.016 {
+                info!("🔥 ENTERING SWIMMING ARM ANIMATION BRANCH");
+            }
+            // Swimming: Freestyle stroke - left arm leads
+            let stroke_phase = (time_elapsed * animation.swim_stroke_frequency).sin();
+            let arm_forward = stroke_phase * 1.2; // Forward/back stroke motion
+            let arm_down = (stroke_phase * 0.5).max(0.0) * 0.3; // Downward catch phase
+            
+            // Debug animation values occasionally
+            if (time_elapsed % 2.0) < 0.016 {
+                info!("🏊 SWIM ANIM DEBUG: stroke_freq={:.2}, stroke_phase={:.2}, arm_forward={:.2}", 
+                      animation.swim_stroke_frequency, stroke_phase, arm_forward);
+            }
+            
+            left_arm_transform.translation.x = -0.4;
+            left_arm_transform.translation.y = 0.7 - arm_down;
+            left_arm_transform.translation.z = arm_forward * 0.6;
+            left_arm_transform.rotation = Quat::from_rotation_x(arm_forward * 1.2);
+        } else {
+            // Walking/idle: arm swing or reset from swimming
+            let arm_swing = if animation.is_walking {
+                walk_cycle * 0.8
+            } else {
+                idle_sway * 0.05
+            };
+
+            left_arm_transform.translation.x = -0.4;
+            left_arm_transform.translation.y = 0.7;
+            left_arm_transform.translation.z = arm_swing * 0.35;
+            left_arm_transform.rotation = Quat::from_rotation_x(arm_swing);
+        }
     }
 
     if let Ok(mut right_arm_transform) = right_arm_query.single_mut() {
-        let arm_swing = if animation.is_walking {
-            -walk_cycle * 0.8 // Increased from 0.5 for more pronounced arm swing
+        if animation.is_swimming {
+            // Swimming: Freestyle stroke - right arm offset by π (alternating)
+            let stroke_phase = (time_elapsed * animation.swim_stroke_frequency + std::f32::consts::PI).sin();
+            let arm_forward = stroke_phase * 1.2;
+            let arm_down = (stroke_phase * 0.5).max(0.0) * 0.3;
+            
+            right_arm_transform.translation.x = 0.4;
+            right_arm_transform.translation.y = 0.7 - arm_down;
+            right_arm_transform.translation.z = arm_forward * 0.6;
+            right_arm_transform.rotation = Quat::from_rotation_x(arm_forward * 1.2);
         } else {
-            -idle_sway * 0.05
-        };
+            // Walking: arm swing
+            let arm_swing = if animation.is_walking {
+                -walk_cycle * 0.8
+            } else {
+                -idle_sway * 0.05
+            };
 
-        right_arm_transform.translation.x = 0.4;
-        right_arm_transform.translation.y = 0.7;
-        right_arm_transform.translation.z = arm_swing * 0.35; // Increased from 0.2 for more movement
-        right_arm_transform.rotation = Quat::from_rotation_x(arm_swing);
+            right_arm_transform.translation.x = 0.4;
+            right_arm_transform.translation.y = 0.7;
+            right_arm_transform.translation.z = arm_swing * 0.35;
+            right_arm_transform.rotation = Quat::from_rotation_x(arm_swing);
+        }
     }
 
-    // Animate legs walking
+    // Animate legs - walking or swimming
     if let Ok(mut left_leg_transform) = left_leg_query.single_mut() {
-        let leg_swing = if animation.is_walking {
-            walk_cycle * 0.7 // Increased from 0.4 for more pronounced leg swing
+        if animation.is_swimming {
+            // Swimming: Flutter kick - rapid up/down motion
+            let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0).sin(); // 3x faster than arms
+            let leg_kick = kick_phase * 0.4; // Up/down kicking motion
+            let leg_bend = (kick_phase * 0.5).abs() * 0.8; // Knee bending
+            
+            left_leg_transform.translation.x = -0.15;
+            left_leg_transform.translation.y = 0.0 + leg_kick * 0.2;
+            left_leg_transform.translation.z = -leg_bend * 0.3; // Bend backward
+            left_leg_transform.rotation = Quat::from_rotation_x(-leg_bend);
         } else {
-            0.0
-        };
+            // Walking: leg swing
+            let leg_swing = if animation.is_walking {
+                walk_cycle * 0.7
+            } else {
+                0.0
+            };
 
-        let leg_lift = if animation.is_walking {
-            (walk_cycle * 0.5).max(0.0) * 0.15 // Increased from 0.1 for higher leg lift
-        } else {
-            0.0
-        };
+            let leg_lift = if animation.is_walking {
+                (walk_cycle * 0.5).max(0.0) * 0.15
+            } else {
+                0.0
+            };
 
-        left_leg_transform.translation.x = -0.15;
-        left_leg_transform.translation.y = 0.0 + leg_lift;
-        left_leg_transform.translation.z = leg_swing * 0.25; // Increased from 0.15 for more forward/back movement
-        left_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
+            left_leg_transform.translation.x = -0.15;
+            left_leg_transform.translation.y = 0.0 + leg_lift;
+            left_leg_transform.translation.z = leg_swing * 0.25;
+            left_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
+        }
     }
 
     if let Ok(mut right_leg_transform) = right_leg_query.single_mut() {
-        let leg_swing = if animation.is_walking {
-            walk_cycle_offset * 0.7 // Increased from 0.4 for more pronounced leg swing
+        if animation.is_swimming {
+            // Swimming: Flutter kick - alternating with left leg
+            let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0 + std::f32::consts::PI * 0.5).sin();
+            let leg_kick = kick_phase * 0.4;
+            let leg_bend = (kick_phase * 0.5).abs() * 0.8;
+            
+            right_leg_transform.translation.x = 0.15;
+            right_leg_transform.translation.y = 0.0 + leg_kick * 0.2;
+            right_leg_transform.translation.z = -leg_bend * 0.3;
+            right_leg_transform.rotation = Quat::from_rotation_x(-leg_bend);
         } else {
-            0.0
-        };
+            // Walking: leg swing
+            let leg_swing = if animation.is_walking {
+                walk_cycle_offset * 0.7
+            } else {
+                0.0
+            };
 
-        let leg_lift = if animation.is_walking {
-            (walk_cycle_offset * 0.5).max(0.0) * 0.15 // Increased from 0.1 for higher leg lift
-        } else {
-            0.0
-        };
+            let leg_lift = if animation.is_walking {
+                (walk_cycle_offset * 0.5).max(0.0) * 0.15
+            } else {
+                0.0
+            };
 
-        right_leg_transform.translation.x = 0.15;
-        right_leg_transform.translation.y = 0.0 + leg_lift;
-        right_leg_transform.translation.z = leg_swing * 0.25; // Increased from 0.15 for more forward/back movement
-        right_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
+            right_leg_transform.translation.x = 0.15;
+            right_leg_transform.translation.y = 0.0 + leg_lift;
+            right_leg_transform.translation.z = leg_swing * 0.25;
+            right_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
+        }
     }
 }

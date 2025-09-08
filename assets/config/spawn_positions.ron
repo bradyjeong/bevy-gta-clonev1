@@ -8,6 +8,6 @@ SpawnConfig(
     ],
     vehicle_positions: [
         (position: (20.0, 0.0, 40.0), vehicle_type: Car),
-        (position: (60.0, 0.0, 40.0), vehicle_type: Yacht),
+        (position: (300.0, 1.0, 300.0), vehicle_type: Yacht), // Place yacht in center of lake
     ],
 )

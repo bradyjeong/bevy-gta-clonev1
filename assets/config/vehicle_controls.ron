@@ -23,6 +23,25 @@ VehicleControlsConfig(
             ],
         ),
         
+        Swimming: VehicleControls(
+            name: "Swimming",
+            description: "Swimming controls in water",
+            primary_controls: [
+                (action: Forward, key: ArrowUp, description: "Swim forward"),
+                (action: Backward, key: ArrowDown, description: "Swim backward"),
+                (action: TurnLeft, key: ArrowLeft, description: "Turn left"),
+                (action: TurnRight, key: ArrowRight, description: "Turn right"),
+            ],
+            secondary_controls: [
+                (action: VerticalUp, key: KeyW, description: "Surface / Swim up"),
+                (action: VerticalDown, key: KeyS, description: "Dive / Swim down"),
+            ],
+            meta_controls: [
+                (action: Interact, key: KeyF, description: "Interact"),
+                (action: DebugInfo, key: F1, description: "Toggle debug info"),
+            ],
+        ),
+        
         Car: VehicleControls(
             name: "Car",
             description: "Standard vehicle controls",

@@ -262,6 +262,10 @@ pub fn interaction_system(
                 }
             }
         }
+        GameState::Swimming => {
+            // Swimming doesn't have vehicle interaction - same as walking
+            // Could add underwater vehicle interaction here in the future
+        }
         GameState::Driving => {
             // Exit car
             if let Ok(active_car) = active_query.single() {

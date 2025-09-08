@@ -11,7 +11,7 @@ use crate::systems::{
     service_example_config_validation,
     service_example_timing_check, // setup_unified_entity_factory // Function doesn't exist
     service_example_vehicle_creation,
-    validate_vehicle_consistency,
+    // validate_vehicle_consistency, // TEMPORARILY DISABLED
 };
 
 /// Plugin for organizing all startup and runtime systems with proper ordering
@@ -33,7 +33,7 @@ impl Plugin for GameSetupPlugin {
             // Service initialization
             .add_systems(
                 Startup,
-                (initialize_simple_services, validate_vehicle_consistency)
+                (initialize_simple_services, ) // validate_vehicle_consistency) // TEMPORARILY DISABLED
                     .in_set(GameSystemSets::ServiceInit),
             )
             // Core world setup

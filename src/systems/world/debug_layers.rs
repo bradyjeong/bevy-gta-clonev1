@@ -10,10 +10,10 @@ pub const UI_LAYER: usize = 2;
 pub const WORLD_LAYER: usize = 0; // Default layer
 
 /// Setup debug camera that only renders debug layer
-pub fn setup_debug_camera(_commands: Commands) {
+pub fn setup_debug_camera(mut _commands: Commands) {
     #[cfg(feature = "debug-ui")]
     {
-        commands.spawn((
+        _commands.spawn((
             Camera3d::default(),
             RenderLayers::layer(DEBUG_LAYER),
             Transform::from_xyz(0.0, 50.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
@@ -22,14 +22,15 @@ pub fn setup_debug_camera(_commands: Commands) {
     }
 }
 
-/// Add debug visualization to existing entities
+/// Add debug visualization to existing entities - TEMPORARILY DISABLED
 pub fn add_debug_visualization(
     _commands: Commands,
     _meshes: ResMut<Assets<Mesh>>,
     _materials: ResMut<Assets<StandardMaterial>>,
     _entity_query: Query<(Entity, &Transform), (With<VisibilityRange>, Without<Camera>)>,
 ) {
-    #[cfg(feature = "debug-ui")]
+    // TEMPORARILY DISABLED
+    #[cfg(never)] // was: "debug-ui" 
     {
         let debug_material = materials.add(StandardMaterial {
             base_color: Color::srgba(1.0, 0.0, 0.0, 0.3),

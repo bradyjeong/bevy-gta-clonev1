@@ -132,6 +132,7 @@ pub struct AIControlled;
 )]
 pub enum VehicleControlType {
     Walking,
+    Swimming,
     Car,
     Helicopter,
     F16,
@@ -149,6 +150,7 @@ impl VehicleControlType {
     pub fn name(&self) -> &'static str {
         match self {
             Self::Walking => "Walking",
+            Self::Swimming => "Swimming",
             Self::Car => "Car",
             Self::Helicopter => "Helicopter",
             Self::F16 => "F16 Fighter Jet",
@@ -168,7 +170,7 @@ impl VehicleControlType {
 
     /// Check if this vehicle type uses ground vehicle controls
     pub fn uses_ground_controls(&self) -> bool {
-        matches!(self, Self::Walking | Self::Car | Self::Yacht)
+        matches!(self, Self::Walking | Self::Swimming | Self::Car | Self::Yacht)
     }
 }
 

@@ -1,0 +1,18 @@
+Swimming: VehicleControls(
+    name: "Swimming",
+    description: "Swimming controls in water",
+    primary_controls: [
+        (action: Forward, key: ArrowUp, description: "Swim forward"),
+        (action: Backward, key: ArrowDown, description: "Swim backward"),
+        (action: TurnLeft, key: ArrowLeft, description: "Turn left"),
+        (action: TurnRight, key: ArrowRight, description: "Turn right"),
+    ],
+    secondary_controls: [
+        (action: VerticalUp, key: KeyW, description: "Surface"),
+        (action: VerticalDown, key: KeyS, description: "Dive"),
+        (action: Run, key: ShiftLeft, description: "Swim faster"),
+    ],
+    meta_controls: [
+        (action: Interact, key: KeyF, description: "Interact"),
+    ],
+)
