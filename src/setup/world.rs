@@ -88,17 +88,28 @@ pub fn setup_basic_world(
     // Calculate proper ground position for player spawn
     let player_spawn_pos = Vec2::new(0.0, 0.0);
     let ground_height = ground_service.get_ground_height_simple(player_spawn_pos);
-    let player_y = ground_height + 0.45; // Position so feet (at -0.4) touch ground
+    // Distance from transform origin to collider bottom: -(-0.45) = 0.45
+    let player_y = ground_height + 0.45; // Position so collider bottom touches ground
 
     println!("DEBUG: Player spawn - ground height: {ground_height:.3}, final Y: {player_y:.3}",);
 
     // Player character with human-like components in world coordinates
+    // Align collider bottom with visual feet at y=-0.45
+    const FOOT_LEVEL: f32 = -0.45;
+    const CAPSULE_RADIUS: f32 = 0.25; // Slimmer for better door navigation
+    const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS; // -0.20
+    const UPPER_SPHERE_Y: f32 = 1.45; // ~1.70m total height
+    
     let player_entity = commands
         .spawn((
             Player,
             ActiveEntity,
             RigidBody::Dynamic,
-            Collider::capsule(Vec3::new(0.0, -0.4, 0.0), Vec3::new(0.0, 1.0, 0.0), 0.4),
+            Collider::capsule(
+                Vec3::new(0.0, LOWER_SPHERE_Y, 0.0),
+                Vec3::new(0.0, UPPER_SPHERE_Y, 0.0),
+                CAPSULE_RADIUS,
+            ),
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             Velocity::zero(),
             Transform::from_xyz(0.0, player_y, 0.0),
