@@ -109,6 +109,12 @@ pub struct PlayerLeftLeg;
 pub struct PlayerRightLeg;
 
 #[derive(Component)]
+pub struct PlayerLeftFoot;
+
+#[derive(Component)]
+pub struct PlayerRightFoot;
+
+#[derive(Component)]
 pub struct BodyPart {
     pub rest_position: Vec3,
     pub rest_rotation: Quat,

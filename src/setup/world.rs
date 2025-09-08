@@ -250,6 +250,7 @@ pub fn setup_basic_world(
         MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))), // Black shoes
         Transform::from_xyz(-0.15, -0.4, 0.1),
         ChildOf(player_entity),
+        crate::components::player::PlayerLeftFoot,
         VisibleChildBundle::default(),
     ));
 
@@ -259,6 +260,7 @@ pub fn setup_basic_world(
         MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))), // Black shoes
         Transform::from_xyz(0.15, -0.4, 0.1),
         ChildOf(player_entity),
+        crate::components::player::PlayerRightFoot,
         VisibleChildBundle::default(),
     ));
 

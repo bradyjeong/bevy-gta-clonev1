@@ -4,6 +4,7 @@ use bevy_rapier3d::prelude::*;
 
 use crate::components::ControlState;
 use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, Player};
+use crate::components::player::{PlayerLeftFoot, PlayerRightFoot};
 
 #[derive(Resource)]
 pub struct PlayerInputData {
@@ -157,6 +158,33 @@ pub fn human_player_animation(
             Without<crate::components::PlayerLeftArm>,
             Without<crate::components::PlayerRightArm>,
             Without<crate::components::PlayerLeftLeg>,
+        ),
+    >,
+    mut left_foot_query: Query<
+        &mut Transform,
+        (
+            With<PlayerLeftFoot>,
+            Without<Player>,
+            Without<crate::components::PlayerTorso>,
+            Without<crate::components::PlayerHead>,
+            Without<crate::components::PlayerLeftArm>,
+            Without<crate::components::PlayerRightArm>,
+            Without<crate::components::PlayerLeftLeg>,
+            Without<crate::components::PlayerRightLeg>,
+        ),
+    >,
+    mut right_foot_query: Query<
+        &mut Transform,
+        (
+            With<PlayerRightFoot>,
+            Without<Player>,
+            Without<crate::components::PlayerTorso>,
+            Without<crate::components::PlayerHead>,
+            Without<crate::components::PlayerLeftArm>,
+            Without<crate::components::PlayerRightArm>,
+            Without<crate::components::PlayerLeftLeg>,
+            Without<crate::components::PlayerRightLeg>,
+            Without<PlayerLeftFoot>,
         ),
     >,
 ) {
@@ -391,6 +419,71 @@ pub fn human_player_animation(
             right_leg_transform.translation.y = 0.0 + leg_lift;
             right_leg_transform.translation.z = leg_swing * 0.25;
             right_leg_transform.rotation = Quat::from_rotation_x(leg_swing);
+        }
+    }
+
+    // Animate feet to follow their respective legs
+    if let Ok(mut left_foot_transform) = left_foot_query.single_mut() {
+        if animation.is_swimming {
+            // Swimming: feet follow leg kick motion
+            let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0).sin();
+            let leg_kick = kick_phase * 0.4;
+            let leg_bend = (kick_phase * 0.5).abs() * 0.8;
+            
+            left_foot_transform.translation.x = -0.15;
+            left_foot_transform.translation.y = -0.4 + leg_kick * 0.2; // Follow leg Y movement
+            left_foot_transform.translation.z = 0.1 - leg_bend * 0.3; // Follow leg bending
+            left_foot_transform.rotation = Quat::from_rotation_x(-leg_bend * 0.5); // Partial leg rotation
+        } else {
+            // Walking: feet follow leg swing and lifting
+            let leg_swing = if animation.is_walking {
+                walk_cycle * 0.7
+            } else {
+                0.0
+            };
+
+            let leg_lift = if animation.is_walking {
+                (walk_cycle * 0.5).max(0.0) * 0.15
+            } else {
+                0.0
+            };
+
+            left_foot_transform.translation.x = -0.15;
+            left_foot_transform.translation.y = -0.4 + leg_lift; // Follow leg lifting
+            left_foot_transform.translation.z = 0.1 + leg_swing * 0.25; // Follow leg swing
+            left_foot_transform.rotation = Quat::from_rotation_x(leg_swing * 0.5); // Partial leg rotation
+        }
+    }
+
+    if let Ok(mut right_foot_transform) = right_foot_query.single_mut() {
+        if animation.is_swimming {
+            // Swimming: feet follow leg kick motion (alternating)
+            let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0 + std::f32::consts::PI * 0.5).sin();
+            let leg_kick = kick_phase * 0.4;
+            let leg_bend = (kick_phase * 0.5).abs() * 0.8;
+            
+            right_foot_transform.translation.x = 0.15;
+            right_foot_transform.translation.y = -0.4 + leg_kick * 0.2; // Follow leg Y movement
+            right_foot_transform.translation.z = 0.1 - leg_bend * 0.3; // Follow leg bending
+            right_foot_transform.rotation = Quat::from_rotation_x(-leg_bend * 0.5); // Partial leg rotation
+        } else {
+            // Walking: feet follow leg swing and lifting
+            let leg_swing = if animation.is_walking {
+                walk_cycle_offset * 0.7
+            } else {
+                0.0
+            };
+
+            let leg_lift = if animation.is_walking {
+                (walk_cycle_offset * 0.5).max(0.0) * 0.15
+            } else {
+                0.0
+            };
+
+            right_foot_transform.translation.x = 0.15;
+            right_foot_transform.translation.y = -0.4 + leg_lift; // Follow leg lifting
+            right_foot_transform.translation.z = 0.1 + leg_swing * 0.25; // Follow leg swing
+            right_foot_transform.rotation = Quat::from_rotation_x(leg_swing * 0.5); // Partial leg rotation
         }
     }
 }
