@@ -261,9 +261,9 @@ pub fn swim_velocity_apply_system(
         if control_state.vertical > 0.0 {
             // W key - swim toward surface with leg assistance
             if current_depth > 0.3 {
-                vertical_velocity = (2.0 + leg_vertical_power);  // Fast ascent when deep
+                vertical_velocity = 2.0 + leg_vertical_power;  // Fast ascent when deep
             } else if current_depth > -0.2 {
-                vertical_velocity = (0.5 + leg_vertical_power * 0.5);  // Slow ascent near surface
+                vertical_velocity = 0.5 + leg_vertical_power * 0.5;  // Slow ascent near surface
             } else {
                 vertical_velocity = -0.5; // Gentle sink if too high above water
             }
