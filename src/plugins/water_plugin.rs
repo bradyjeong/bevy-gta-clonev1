@@ -1,4 +1,4 @@
-use crate::components::unified_water::{UnifiedWaterAsset, GlobalOcean};
+use crate::components::unified_water::UnifiedWaterAsset;
 use crate::systems::water::{
     load_unified_water_assets, process_loaded_unified_water_assets,
     buoyancy_system, water_drag_system,
@@ -23,9 +23,8 @@ impl Plugin for WaterPlugin {
             // Register RON asset loader for water regions
             .add_plugins(RonAssetPlugin::<UnifiedWaterAsset>::new(&["ron"]))
             
-            // Register water assets and resources
+            // Register water assets
             .init_asset::<UnifiedWaterAsset>()
-            .init_resource::<GlobalOcean>()
             
             // Asset loading systems
             .add_systems(Startup, (load_unified_water_assets, spawn_test_yacht))

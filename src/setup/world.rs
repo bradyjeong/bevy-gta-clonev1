@@ -76,14 +76,7 @@ pub fn setup_basic_world(
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
     ));
 
-    // OCEAN BOUNDARY - Visual boundary around world edges
-    commands.spawn((
-        Name::new("Ocean"),
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(6000.0, 6000.0))), // Larger than terrain
-        MeshMaterial3d(materials.add(Color::srgb(0.1, 0.3, 0.6))),          // Ocean blue
-        Transform::from_xyz(0.0, -0.5, 0.0),                                // Below terrain
-                                                                            // No physics - just visual
-    ));
+    // OCEAN BOUNDARY - Removed for procedural terrain implementation
 
     // Calculate proper ground position for player spawn
     let player_spawn_pos = Vec2::new(0.0, 0.0);

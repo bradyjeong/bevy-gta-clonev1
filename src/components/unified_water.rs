@@ -76,13 +76,7 @@ pub struct WaveParams {
 #[derive(Component, Default)]
 pub struct WaterBodyId;
 
-/// Global ocean resource for world-wide water effects
-#[derive(Resource, Default)]
-pub struct GlobalOcean {
-    pub base_level: f32,
-    pub tide_phase: f32,
-    pub tide_amplitude: f32,
-}
+// GlobalOcean removed - using only lake water bodies now
 
 impl Default for UnifiedWaterBody {
     fn default() -> Self {
