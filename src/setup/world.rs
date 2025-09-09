@@ -8,6 +8,7 @@ use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
 use crate::services::distance_cache::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::audio::FootstepTimer;
+use crate::systems::terrain_heightfield::{TerrainHeightfield, HeightfieldTerrain, GlobalTerrainHeights};
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
 use bevy::prelude::*;
@@ -65,15 +66,28 @@ pub fn setup_basic_world(
             ));
         });
 
-    // FINITE TERRAIN - Ground plane for finite world (4km x 4km)
+    // HEIGHTFIELD TERRAIN - Single source of truth for visual and physics (4km x 4km)
+    let terrain = TerrainHeightfield::new_flat(
+        64,  // Grid resolution 64x64
+        64,
+        Vec3::new(4096.0, 10.0, 4096.0), // 4km x 4km, 10m max height
+    );
+
+    // Add terrain heights as global resource
+    commands.insert_resource(GlobalTerrainHeights {
+        heightfield: TerrainHeightfield::new_flat(64, 64, Vec3::new(4096.0, 10.0, 4096.0)),
+    });
+
+    // Spawn unified heightfield terrain entity
     commands.spawn((
         DynamicTerrain,
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(4096.0, 4096.0))), // 4km x 4km
-        MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))),
-        Transform::from_xyz(0.0, -0.15, 0.0), // 15cm below road surface at y=0.0
+        HeightfieldTerrain,
+        Mesh3d(meshes.add(terrain.create_visual_mesh())),
+        MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))), // Same color as original
+        Transform::from_xyz(0.0, -0.15, 0.0), // Same position as original
         RigidBody::Fixed,
-        Collider::cuboid(2048.0, 0.05, 2048.0), // 2km radius terrain collider
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
+        terrain.create_physics_collider(), // Heightfield collider
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
     ));
 
     // OCEAN BOUNDARY - Removed for procedural terrain implementation

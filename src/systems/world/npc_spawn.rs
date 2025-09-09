@@ -8,6 +8,7 @@ use crate::config::GameConfig;
 use crate::resources::WorldRng;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::services::timing_service::TimingService;
+use crate::systems::terrain_heightfield::GlobalTerrainHeights;
 use rand::prelude::*;
 
 /// Spawn NPCs using the new architecture while maintaining compatibility
@@ -110,7 +111,7 @@ pub fn spawn_simple_npc_with_ground_detection(
     commands: &mut Commands,
     position: Vec2,
     ground_service: &GroundDetectionService,
-    rapier_context: &RapierContext,
+    terrain_heights: Option<&GlobalTerrainHeights>,
     world_rng: &mut WorldRng,
 ) -> Entity {
     // Create NPC with new state-based architecture
@@ -125,7 +126,7 @@ pub fn spawn_simple_npc_with_ground_detection(
     let height = npc_state.appearance.height;
 
     // Get ground height at spawn position
-    let ground_y = ground_service.get_spawn_height(position, height, rapier_context);
+    let ground_y = ground_service.get_spawn_height(position, height, terrain_heights);
     let spawn_position = Vec3::new(position.x, ground_y, position.y);
 
     // Use simplified entity creation

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use crate::systems::terrain_heightfield::GlobalTerrainHeights;
 
 const GROUND_DETECTION_HEIGHT: f32 = 100.0; // Cast ray from this height
 const DEFAULT_GROUND_HEIGHT: f32 = 0.0; // Fallback if no ground found
@@ -23,8 +24,24 @@ impl Default for GroundDetectionService {
 }
 
 impl GroundDetectionService {
-    /// Get ground height at a given XZ position using raycasting
-    pub fn get_ground_height(&self, position: Vec2, rapier_context: &RapierContext) -> f32 {
+    /// Get ground height at a given XZ position - SINGLE SOURCE OF TRUTH via heightfield
+    pub fn get_ground_height(&self, position: Vec2, terrain_heights: Option<&GlobalTerrainHeights>) -> f32 {
+        if !self.enabled {
+            return self.fallback_height;
+        }
+
+        // PRIMARY: Use heightfield terrain data (single source of truth)
+        if let Some(heights) = terrain_heights {
+            return heights.get_height_at_position(position);
+        }
+
+        // FALLBACK: Return default if no heightfield available
+        warn!("❌ GroundDetectionService: No terrain heightfield available, using fallback height {}", self.fallback_height);
+        self.fallback_height
+    }
+
+    /// Legacy raycast method - DEPRECATED, use get_ground_height() instead
+    pub fn get_ground_height_legacy_raycast(&self, position: Vec2, rapier_context: &RapierContext) -> f32 {
         if !self.enabled {
             return self.fallback_height;
         }
@@ -61,9 +78,9 @@ impl GroundDetectionService {
         &self,
         position: Vec2,
         entity_height: f32,
-        rapier_context: &RapierContext,
+        terrain_heights: Option<&GlobalTerrainHeights>,
     ) -> f32 {
-        let ground_height = self.get_ground_height(position, rapier_context);
+        let ground_height = self.get_ground_height(position, terrain_heights);
         // Place entity with its bottom at ground level
         ground_height + entity_height * 0.5
     }
