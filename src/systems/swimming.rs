@@ -4,6 +4,7 @@ use bevy_rapier3d::prelude::*;
 use crate::components::{Player, ActiveEntity, HumanAnimation, HumanMovement, VehicleControlType, ControlState};
 use crate::components::unified_water::{UnifiedWaterBody, WaterBodyId};
 use crate::util::transform_utils::horizontal_forward;
+use crate::bundles::PlayerPhysicsBundle;
 
 use crate::game_state::GameState;
 
@@ -55,7 +56,8 @@ pub fn swim_state_transition_system(
                     .remove::<Damping>()
                     .remove::<WaterBodyId>()
                     .insert(VehicleControlType::Walking)
-                    .insert(ExitingSwim); // Signal smooth return to upright
+                    .insert(ExitingSwim) // Signal smooth return to upright
+                    .insert(PlayerPhysicsBundle::default()); // Restore clean physics state
                 state.set(GameState::Walking);
                 info!("Emergency exit from swimming mode with F2");
             }
@@ -156,7 +158,8 @@ pub fn swim_state_transition_system(
                         .remove::<GravityScale>()
                         .remove::<Damping>()
                         .remove::<WaterBodyId>()
-                        .insert(VehicleControlType::Walking);  // Switch back to walking controls
+                        .insert(VehicleControlType::Walking)  // Switch back to walking controls
+                        .insert(PlayerPhysicsBundle::default()); // Restore clean physics state
                     state.set(GameState::Walking);  // Update UI state
                     info!("Player exited swimming mode at {:.1}% submersion", submersion * 100.0);
                     continue;
