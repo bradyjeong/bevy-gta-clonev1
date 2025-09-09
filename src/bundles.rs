@@ -211,12 +211,18 @@ pub struct PlayerPhysicsBundle {
 
 impl Default for PlayerPhysicsBundle {
     fn default() -> Self {
+        // Match the initial spawn collider dimensions from world.rs
+        const FOOT_LEVEL: f32 = -0.45;
+        const CAPSULE_RADIUS: f32 = 0.25; // Slimmer for better door navigation
+        const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS; // -0.20
+        const UPPER_SPHERE_Y: f32 = 1.45; // ~1.70m total height
+        
         Self {
             rigid_body: RigidBody::Dynamic,
             collider: Collider::capsule(
-                Vec3::new(0.0, -0.4, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-                0.4,
+                Vec3::new(0.0, LOWER_SPHERE_Y, 0.0),
+                Vec3::new(0.0, UPPER_SPHERE_Y, 0.0),
+                CAPSULE_RADIUS,
             ),
             locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             velocity: Velocity::default(),
