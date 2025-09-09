@@ -432,7 +432,7 @@ pub fn human_player_animation(
             
             left_foot_transform.translation.x = -0.15;
             left_foot_transform.translation.y = -0.4 + leg_kick * 0.2; // Follow leg Y movement
-            left_foot_transform.translation.z = 0.1 - leg_bend * 0.3; // Follow leg bending
+            left_foot_transform.translation.z = -leg_bend * 0.3; // Match leg bending exactly
             left_foot_transform.rotation = Quat::from_rotation_x(-leg_bend * 0.5); // Partial leg rotation
         } else {
             // Walking: feet follow leg swing and lifting
@@ -450,7 +450,7 @@ pub fn human_player_animation(
 
             left_foot_transform.translation.x = -0.15;
             left_foot_transform.translation.y = -0.4 + leg_lift; // Follow leg lifting
-            left_foot_transform.translation.z = 0.1 + leg_swing * 0.25; // Follow leg swing
+            left_foot_transform.translation.z = leg_swing * 0.25; // Match leg swing exactly
             left_foot_transform.rotation = Quat::from_rotation_x(leg_swing * 0.5); // Partial leg rotation
         }
     }
@@ -464,7 +464,7 @@ pub fn human_player_animation(
             
             right_foot_transform.translation.x = 0.15;
             right_foot_transform.translation.y = -0.4 + leg_kick * 0.2; // Follow leg Y movement
-            right_foot_transform.translation.z = 0.1 - leg_bend * 0.3; // Follow leg bending
+            right_foot_transform.translation.z = -leg_bend * 0.3; // Match leg bending exactly
             right_foot_transform.rotation = Quat::from_rotation_x(-leg_bend * 0.5); // Partial leg rotation
         } else {
             // Walking: feet follow leg swing and lifting
@@ -482,7 +482,7 @@ pub fn human_player_animation(
 
             right_foot_transform.translation.x = 0.15;
             right_foot_transform.translation.y = -0.4 + leg_lift; // Follow leg lifting
-            right_foot_transform.translation.z = 0.1 + leg_swing * 0.25; // Follow leg swing
+            right_foot_transform.translation.z = leg_swing * 0.25; // Match leg swing exactly
             right_foot_transform.rotation = Quat::from_rotation_x(leg_swing * 0.5); // Partial leg rotation
         }
     }
