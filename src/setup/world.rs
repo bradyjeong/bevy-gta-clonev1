@@ -77,6 +77,8 @@ pub fn setup_basic_world(
     // Add terrain heights as global resource - SINGLE SOURCE OF TRUTH
     commands.insert_resource(GlobalTerrainHeights {
         heightfield: terrain,
+        // CRITICAL FIX #3: Initialize mesh handle to None (will be created on first use)
+        mesh_handle: None,
     });
 
     // NOTE: Terrain entity creation moved to spawn_heightfield_terrain() system

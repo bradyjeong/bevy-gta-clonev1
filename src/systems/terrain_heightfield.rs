@@ -72,14 +72,44 @@ impl TerrainHeightfield {
         self.get_height_at_grid(grid_x_int, grid_z_int) * self.scale.y
     }
 
-    /// Create visual mesh from height data
+    /// Compute mathematically correct world-space normal at vertex using Oracle's formula
+    #[inline]
+    fn vertex_normal(&self, x: usize, z: usize) -> [f32; 3] {
+        let xm = if x == 0 { x } else { x - 1 };
+        let xp = if x == self.width - 1 { x } else { x + 1 };
+        let zm = if z == 0 { z } else { z - 1 };
+        let zp = if z == self.height - 1 { z } else { z + 1 };
+
+        let h_l = self.get_height_at_grid(xm, z);
+        let h_r = self.get_height_at_grid(xp, z);
+        let h_d = self.get_height_at_grid(x, zm);
+        let h_u = self.get_height_at_grid(x, zp);
+
+        // Convert gradients to world units (Oracle's critical fix)
+        let dx = (h_r - h_l) / (2.0 * self.scale.x / (self.width - 1) as f32);
+        let dz = (h_u - h_d) / (2.0 * self.scale.z / (self.height - 1) as f32);
+
+        // Physically correct normal formula from heightfield gradient
+        let nx = -dx * self.scale.y;
+        let nz = -dz * self.scale.y;
+        let n = Vec3::new(nx, 1.0, nz).normalize();
+        [n.x, n.y, n.z]
+    }
+
+    /// Create visual mesh from height data with proper performance optimizations
     pub fn create_visual_mesh(&self) -> Mesh {
+        // CRITICAL FIX #2: Oracle's performance optimization - pre-allocate exactly
+        let n_verts = self.width * self.height;
         let mut vertices = Vec::new();
         let mut normals = Vec::new();
         let mut uvs = Vec::new();
         let mut indices = Vec::new();
+        vertices.reserve_exact(n_verts);
+        normals.reserve_exact(n_verts);
+        uvs.reserve_exact(n_verts);
+        indices.reserve_exact((self.width - 1) * (self.height - 1) * 6);
 
-        // Generate vertices
+        // Generate vertices with mathematically correct normals
         for z in 0..self.height {
             for x in 0..self.width {
                 let height_val = self.get_height_at_grid(x, z);
@@ -90,7 +120,8 @@ impl TerrainHeightfield {
                 let world_z = (z as f32 / (self.height - 1) as f32 - 0.5) * self.scale.z;
                 
                 vertices.push([world_x, world_y, world_z]);
-                normals.push([0.0, 1.0, 0.0]); // Flat terrain - all normals point up
+                // CRITICAL FIX #1: Use Oracle's mathematically correct normal calculation
+                normals.push(self.vertex_normal(x, z));
                 uvs.push([x as f32 / (self.width - 1) as f32, z as f32 / (self.height - 1) as f32]);
             }
         }
@@ -136,34 +167,36 @@ pub fn spawn_heightfield_terrain(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    terrain_heights: Res<GlobalTerrainHeights>,
+    mut terrain_heights: ResMut<GlobalTerrainHeights>,
 ) {
     info!("🏔️ SPAWNING HEIGHTFIELD TERRAIN from shared resource instance");
     
-    // Use the SHARED heightfield instance - single source of truth
-    let terrain = &terrain_heights.heightfield;
+    // CRITICAL FIX #3: Use memory-safe mesh handle creation
+    let mesh_handle = terrain_heights.get_or_create_mesh_handle(&mut meshes);
 
     // Spawn unified heightfield terrain entity using shared data
     commands.spawn((
         HeightfieldTerrain,
-        Mesh3d(meshes.add(terrain.create_visual_mesh())),
+        Mesh3d(mesh_handle),
         MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))), // Same color as original
         Transform::from_xyz(0.0, -0.15, 0.0), // Same position as original
         RigidBody::Fixed,
-        terrain.create_physics_collider(), // Heightfield collider from SHARED data
+        terrain_heights.heightfield.create_physics_collider(), // Heightfield collider from SHARED data
         CollisionGroups::new(
             crate::constants::STATIC_GROUP,
             crate::constants::VEHICLE_GROUP | crate::constants::CHARACTER_GROUP,
         ),
     ));
     
-    info!("✅ HEIGHTFIELD TERRAIN spawned using SINGLE shared instance");
+    info!("✅ HEIGHTFIELD TERRAIN spawned using memory-safe SINGLE shared instance");
 }
 
 /// Resource to provide global terrain height queries
 #[derive(Resource)]
 pub struct GlobalTerrainHeights {
     pub heightfield: TerrainHeightfield,
+    // CRITICAL FIX #3: Store mesh handle to prevent GPU memory leaks
+    pub mesh_handle: Option<Handle<Mesh>>,
 }
 
 impl GlobalTerrainHeights {
@@ -172,7 +205,8 @@ impl GlobalTerrainHeights {
         self.heightfield.get_height_at_world_pos(world_pos) - 0.15 // Account for terrain Y offset
     }
 
-    /// Update heightfield and return what needs to be refreshed
+    /// Update heightfield and return what needs to be refreshed  
+    /// CRITICAL FIX #3: Properly manage mesh handle to prevent GPU memory leaks
     pub fn update_heightfield(&mut self, new_heightfield: TerrainHeightfield) -> TerrainUpdateEvent {
         self.heightfield = new_heightfield;
         
@@ -180,6 +214,32 @@ impl GlobalTerrainHeights {
             needs_mesh_update: true,
             needs_collider_update: true,
             needs_entity_repositioning: true,
+        }
+    }
+
+    /// Create or update visual mesh, reusing existing handle to prevent memory leaks
+    pub fn get_or_create_mesh_handle(&mut self, meshes: &mut Assets<Mesh>) -> Handle<Mesh> {
+        match &self.mesh_handle {
+            Some(handle) => {
+                // Reuse existing handle and mutate mesh in place
+                if let Some(mesh) = meshes.get_mut(handle) {
+                    // Replace mesh data completely (no clear method in Bevy 0.16)
+                    let new_mesh = self.heightfield.create_visual_mesh();
+                    *mesh = new_mesh;
+                } else {
+                    // Handle was removed from assets, create new one
+                    let new_handle = meshes.add(self.heightfield.create_visual_mesh());
+                    self.mesh_handle = Some(new_handle.clone());
+                    return new_handle;
+                }
+                handle.clone()
+            }
+            None => {
+                // First time creation
+                let new_handle = meshes.add(self.heightfield.create_visual_mesh());
+                self.mesh_handle = Some(new_handle.clone());
+                new_handle
+            }
         }
     }
 }
@@ -197,7 +257,7 @@ pub fn handle_terrain_updates(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut terrain_events: EventReader<TerrainUpdateEvent>,
-    terrain_heights: Res<GlobalTerrainHeights>,
+    mut terrain_heights: ResMut<GlobalTerrainHeights>,
     mut terrain_query: Query<(Entity, &mut Mesh3d, &HeightfieldTerrain)>,
 ) {
     for event in terrain_events.read() {
@@ -205,8 +265,9 @@ pub fn handle_terrain_updates(
             // Update all heightfield terrain entities
             for (entity, mut mesh_handle, _) in terrain_query.iter_mut() {
                 if event.needs_mesh_update {
-                    // Replace mesh with updated heightfield mesh
-                    *mesh_handle = Mesh3d(meshes.add(terrain_heights.heightfield.create_visual_mesh()));
+                    // CRITICAL FIX #3: Use memory-safe mesh handle reuse
+                    let updated_handle = terrain_heights.get_or_create_mesh_handle(&mut meshes);
+                    *mesh_handle = Mesh3d(updated_handle);
                 }
                 
                 if event.needs_collider_update {
@@ -492,47 +553,167 @@ mod tests {
         }
     }
     
-    #[test]  
+    #[test]
     fn test_terrain_boundaries_exact() {
-        // Test that terrain boundaries are exactly where we expect them
-        let terrain = TerrainHeightfield::new_flat(64, 64, Vec3::new(4096.0, 10.0, 4096.0));
+    // Test that terrain boundaries are exactly where we expect them
+    let terrain = TerrainHeightfield::new_flat(64, 64, Vec3::new(4096.0, 10.0, 4096.0));
+    
+    // Check that terrain extends from -2048 to +2048 in both X and Z
+    // Based on visual mesh generation: world_x = (x/(width-1) - 0.5) * scale.x
+    
+    // Corner grid positions
+    let corner_positions = [
+    (0, 0),                           // Grid corner -> world corner
+    (63, 0),                         // Other corners
+    (0, 63),
+    (63, 63),
+    ];
+    
+    for (grid_x, grid_z) in corner_positions {
+    // Calculate expected world position from mesh generation formula
+    let expected_world_x = (grid_x as f32 / (64 - 1) as f32 - 0.5) * 4096.0;
+    let expected_world_z = (grid_z as f32 / (64 - 1) as f32 - 0.5) * 4096.0;
+    let expected_world_pos = Vec2::new(expected_world_x, expected_world_z);
+    
+    // Convert back to grid using our conversion function
+    let converted_grid = terrain.world_to_grid(expected_world_pos);
+    
+    let expected_grid = Vec2::new(grid_x as f32, grid_z as f32);
+    let diff = (converted_grid - expected_grid).length();
+    
+    assert!(diff < 0.001,
+    "Grid corner ({},{}) -> world {:?} -> grid {:?}, diff={:.6}",
+    grid_x, grid_z, expected_world_pos, converted_grid, diff);
+    }
+    
+    // Validate exact boundaries
+    assert!((terrain.grid_to_world(Vec2::new(0.0, 0.0)).x - (-2048.0)).abs() < 0.001,
+    "Left boundary should be -2048");
+    assert!((terrain.grid_to_world(Vec2::new(63.0, 0.0)).x - 2048.0).abs() < 0.001,
+    "Right boundary should be +2048");
+    assert!((terrain.grid_to_world(Vec2::new(0.0, 0.0)).y - (-2048.0)).abs() < 0.001,
+    "Bottom boundary should be -2048");
+    assert!((terrain.grid_to_world(Vec2::new(0.0, 63.0)).y - 2048.0).abs() < 0.001,
+    "Top boundary should be +2048");
+    }
+
+    // CRITICAL FIX #4: Oracle's enhanced testing requirements
+    #[test]
+    fn test_high_slope_normals() {
+        // Create a terrain with analytical height function: sin(x) + cos(z)
+        let mut terrain = TerrainHeightfield::new_flat(8, 8, Vec3::new(10.0, 5.0, 10.0));
         
-        // Check that terrain extends from -2048 to +2048 in both X and Z
-        // Based on visual mesh generation: world_x = (x/(width-1) - 0.5) * scale.x
-        
-        // Corner grid positions
-        let corner_positions = [
-            (0, 0),                           // Grid corner -> world corner
-            (63, 0),                         // Other corners
-            (0, 63),
-            (63, 63),
-        ];
-        
-        for (grid_x, grid_z) in corner_positions {
-            // Calculate expected world position from mesh generation formula
-            let expected_world_x = (grid_x as f32 / (64 - 1) as f32 - 0.5) * 4096.0;
-            let expected_world_z = (grid_z as f32 / (64 - 1) as f32 - 0.5) * 4096.0;
-            let expected_world_pos = Vec2::new(expected_world_x, expected_world_z);
-            
-            // Convert back to grid using our conversion function
-            let converted_grid = terrain.world_to_grid(expected_world_pos);
-            
-            let expected_grid = Vec2::new(grid_x as f32, grid_z as f32);
-            let diff = (converted_grid - expected_grid).length();
-            
-            assert!(diff < 0.001,
-                "Grid corner ({},{}) -> world {:?} -> grid {:?}, diff={:.6}",
-                grid_x, grid_z, expected_world_pos, converted_grid, diff);
+        // Generate high-slope height data: heights[x,z] = sin(x) + cos(z)
+        for z in 0..terrain.height {
+            for x in 0..terrain.width {
+                let world_x = (x as f32 / (terrain.width - 1) as f32 - 0.5) * terrain.scale.x;
+                let world_z = (z as f32 / (terrain.height - 1) as f32 - 0.5) * terrain.scale.z;
+                
+                let height_val = world_x.sin() + world_z.cos();
+                let index = z * terrain.width + x;
+                terrain.heights[index] = height_val;
+            }
         }
+
+        // Test all normals are unit length and point roughly outward
+        for z in 0..terrain.height {
+            for x in 0..terrain.width {
+                let normal = terrain.vertex_normal(x, z);
+                let length = (normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]).sqrt();
+                
+                assert!((length - 1.0).abs() < 0.001, 
+                    "Normal at ({},{}) has length {:.6}, expected ~1.0", x, z, length);
+                
+                // Y component should be positive (pointing up)
+                assert!(normal[1] > 0.0, 
+                    "Normal at ({},{}) has negative Y component: {:.6}", x, z, normal[1]);
+            }
+        }
+    }
+
+    #[test]
+    fn test_all_normals_unit_length() {
+        // Generate mesh with various terrain configurations and verify every normal has length ≈ 1.0
+        let test_configs = [
+            (4, 4, Vec3::new(100.0, 1.0, 100.0)),    // Low height scale
+            (6, 6, Vec3::new(50.0, 10.0, 50.0)),     // High height scale  
+            (8, 8, Vec3::new(200.0, 0.1, 200.0)),    // Very low height scale
+            (3, 3, Vec3::new(1000.0, 100.0, 1000.0)), // Large terrain
+        ];
+
+        for (width, height, scale) in test_configs {
+            let terrain = TerrainHeightfield::new_flat(width, height, scale);
+            let mesh = terrain.create_visual_mesh();
+            
+            // Extract normals from mesh
+            if let Some(normals_attr) = mesh.attribute(Mesh::ATTRIBUTE_NORMAL) {
+                let normals: Vec<[f32; 3]> = match normals_attr {
+                    bevy::render::mesh::VertexAttributeValues::Float32x3(data) => data.clone(),
+                    _ => panic!("Unexpected normal attribute format"),
+                };
+                
+                for (i, normal) in normals.iter().enumerate() {
+                    let length = (normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]).sqrt();
+                    assert!((length - 1.0).abs() < 0.001,
+                        "Normal {} in {}x{} terrain has length {:.6}, expected ~1.0 (normal: {:?})",
+                        i, width, height, length, normal);
+                }
+            } else {
+                panic!("Mesh has no normal attribute");
+            }
+        }
+    }
+
+    #[test]
+    fn test_normal_world_space_gradients() {
+        // Test that normals use world units, not grid units
+        // Different scale values should produce different normal angles
+        let mut terrain1 = TerrainHeightfield::new_flat(5, 5, Vec3::new(100.0, 10.0, 100.0));
+        let mut terrain2 = TerrainHeightfield::new_flat(5, 5, Vec3::new(200.0, 10.0, 200.0)); // Double X,Z scale
         
-        // Validate exact boundaries
-        assert!((terrain.grid_to_world(Vec2::new(0.0, 0.0)).x - (-2048.0)).abs() < 0.001,
-            "Left boundary should be -2048");
-        assert!((terrain.grid_to_world(Vec2::new(63.0, 0.0)).x - 2048.0).abs() < 0.001,
-            "Right boundary should be +2048");
-        assert!((terrain.grid_to_world(Vec2::new(0.0, 0.0)).y - (-2048.0)).abs() < 0.001,
-            "Bottom boundary should be -2048");
-        assert!((terrain.grid_to_world(Vec2::new(0.0, 63.0)).y - 2048.0).abs() < 0.001,
-            "Top boundary should be +2048");
+        // Create a simple slope: height increases linearly with X
+        for z in 0..5 {
+            for x in 0..5 {
+                let slope_height = x as f32 * 0.5; // Linear slope in grid space
+                let index = z * 5 + x;
+                terrain1.heights[index] = slope_height;
+                terrain2.heights[index] = slope_height;
+            }
+        }
+
+        // Get normals from center of both terrains
+        let normal1 = terrain1.vertex_normal(2, 2);  
+        let normal2 = terrain2.vertex_normal(2, 2);
+
+        // Different world scales should produce different normal angles
+        // Larger X scale should result in smaller X component of normal (less steep in world space)
+        assert!(normal1[0].abs() > normal2[0].abs(),
+            "Terrain with larger X scale should have smaller normal X component: {:.6} vs {:.6}",
+            normal1[0], normal2[0]);
+        
+        // Both should be unit length
+        let len1 = (normal1[0] * normal1[0] + normal1[1] * normal1[1] + normal1[2] * normal1[2]).sqrt();
+        let len2 = (normal2[0] * normal2[0] + normal2[1] * normal2[1] + normal2[2] * normal2[2]).sqrt();
+        assert!((len1 - 1.0).abs() < 0.001 && (len2 - 1.0).abs() < 0.001,
+            "Both normals should be unit length: {:.6}, {:.6}", len1, len2);
+    }
+
+    #[test]
+    fn test_degenerate_normal_handling() {
+        // Test edge cases and degenerate terrain configurations
+        let terrain = TerrainHeightfield::new_flat(3, 3, Vec3::new(1.0, 1.0, 1.0));
+        
+        // All corner vertices (edges of heightfield)
+        let corner_positions = [(0, 0), (0, 2), (2, 0), (2, 2)];
+        
+        for (x, z) in corner_positions {
+            let normal = terrain.vertex_normal(x, z);
+            let length = (normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]).sqrt();
+            
+            assert!((length - 1.0).abs() < 0.001,
+                "Corner normal at ({},{}) should be unit length: {:.6}", x, z, length);
+            assert!(normal[1] > 0.0,
+                "Corner normal at ({},{}) should point upward: Y={:.6}", x, z, normal[1]);
+        }
     }
 }
