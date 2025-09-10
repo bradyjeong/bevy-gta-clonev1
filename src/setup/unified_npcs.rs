@@ -4,6 +4,7 @@ use rand::prelude::*;
 use crate::GameConfig;
 use crate::factories::NPCFactory;
 use crate::services::ground_detection::GroundDetectionService;
+use crate::systems::terrain_heightfield::GlobalTerrainHeights;
 
 /// UNIFIED NPC SETUP SYSTEM
 /// Consolidates setup_new_npcs (good patterns) and setup_npcs (bad patterns)
@@ -18,6 +19,7 @@ pub fn setup_initial_npcs_unified(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     ground_service: Res<GroundDetectionService>,
+    terrain_heights: Option<Res<GlobalTerrainHeights>>,
     _game_config: Res<GameConfig>,
 ) {
     // Initialize focused NPCFactory for consistent spawning following AGENT.md principles
@@ -40,7 +42,7 @@ pub fn setup_initial_npcs_unified(
 
         // Use ground detection service for spawn validation (from good implementation)
         if ground_service.is_spawn_position_valid(position) {
-            let ground_height = ground_service.get_ground_height_simple(position);
+            let ground_height = ground_service.get_ground_height(position, terrain_heights.as_deref());
             let spawn_position = Vec3::new(x, ground_height + 0.1, z);
 
             // Use focused NPCFactory for consistent spawning

@@ -12,7 +12,11 @@ use crate::systems::{
     service_example_timing_check, // setup_unified_entity_factory // Function doesn't exist
     service_example_vehicle_creation,
     // validate_vehicle_consistency, // TEMPORARILY DISABLED
+    terrain_heightfield::{spawn_heightfield_terrain, validate_single_source_of_truth},
 };
+
+#[cfg(feature = "debug-ui")]
+use crate::systems::physics_visual_alignment_test::test_physics_visual_alignment_system;
 
 /// Plugin for organizing all startup and runtime systems with proper ordering
 pub struct GameSetupPlugin;
@@ -51,9 +55,11 @@ impl Plugin for GameSetupPlugin {
             .add_systems(
                 Startup,
                 (
+                    spawn_heightfield_terrain, // Create terrain entity from shared resource
                     setup_palm_trees,
                     setup_initial_npcs_unified,
                     setup_initial_vehicles_unified,
+                    validate_single_source_of_truth.after(spawn_heightfield_terrain), // Critical validation - must run after terrain is spawned
                 )
                     .in_set(GameSystemSets::SecondarySetup),
             )

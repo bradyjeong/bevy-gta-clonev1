@@ -70,6 +70,7 @@ pub mod safety;
 pub mod swimming;
 pub mod terrain_water_manager;
 pub mod terrain_heightfield;
+pub mod physics_visual_alignment_test;
 pub mod spawn_validation;
 pub mod validation;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier

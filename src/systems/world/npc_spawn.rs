@@ -19,6 +19,7 @@ pub fn spawn_new_npc_system(
     timing_service: Res<TimingService>,
     npc_query: Query<Entity, With<NPCState>>,
     ground_service: Res<GroundDetectionService>,
+    terrain_heights: Option<Res<GlobalTerrainHeights>>,
     mut world_rng: ResMut<WorldRng>,
     _config: Res<GameConfig>,
 ) {
@@ -44,6 +45,7 @@ pub fn spawn_new_npc_system(
                     position,
                     &ground_service,
                     &mut world_rng,
+                    terrain_heights.as_deref(),
                 );
                 break; // Found valid position, spawn and exit
             }
@@ -57,9 +59,10 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
     position: Vec2,
     ground_service: &GroundDetectionService,
     world_rng: &mut WorldRng,
+    terrain_heights: Option<&GlobalTerrainHeights>,
 ) -> Entity {
-    // Use simplified ground detection
-    let ground_height = ground_service.get_ground_height_simple(position);
+    // Use unified ground detection system
+    let ground_height = ground_service.get_ground_height(position, terrain_heights);
     let ground_clearance = 0.02; // Very small clearance to avoid clipping
     let spawn_height = ground_height + ground_clearance; // Place NPC feet on ground
 

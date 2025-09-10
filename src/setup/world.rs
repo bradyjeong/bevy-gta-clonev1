@@ -1,6 +1,6 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::{
-    ActiveEntity, BodyPart, ControlState, ControlsDisplay, ControlsText, DynamicTerrain,
+    ActiveEntity, BodyPart, ControlState, ControlsDisplay, ControlsText,
     HumanAnimation, HumanMovement, MainCamera, Player, PlayerBody, PlayerControlled, PlayerHead,
     PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg, PlayerTorso, VehicleControlType,
 };
@@ -8,7 +8,7 @@ use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
 use crate::services::distance_cache::MovementTracker;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::audio::FootstepTimer;
-use crate::systems::terrain_heightfield::{TerrainHeightfield, HeightfieldTerrain, GlobalTerrainHeights};
+use crate::systems::terrain_heightfield::{TerrainHeightfield, GlobalTerrainHeights};
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
 use bevy::prelude::*;
@@ -20,6 +20,7 @@ pub fn setup_basic_world(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
+    terrain_heights: Option<Res<GlobalTerrainHeights>>,
 ) {
     // No longer need WorldRoot - spawn entities directly in world space
 
@@ -66,35 +67,26 @@ pub fn setup_basic_world(
             ));
         });
 
-    // HEIGHTFIELD TERRAIN - Single source of truth for visual and physics (4km x 4km)
+    // HEIGHTFIELD TERRAIN - Create SINGLE INSTANCE and use it everywhere (4km x 4km)
     let terrain = TerrainHeightfield::new_flat(
         64,  // Grid resolution 64x64
         64,
         Vec3::new(4096.0, 10.0, 4096.0), // 4km x 4km, 10m max height
     );
 
-    // Add terrain heights as global resource
+    // Add terrain heights as global resource - SINGLE SOURCE OF TRUTH
     commands.insert_resource(GlobalTerrainHeights {
-        heightfield: TerrainHeightfield::new_flat(64, 64, Vec3::new(4096.0, 10.0, 4096.0)),
+        heightfield: terrain,
     });
 
-    // Spawn unified heightfield terrain entity
-    commands.spawn((
-        DynamicTerrain,
-        HeightfieldTerrain,
-        Mesh3d(meshes.add(terrain.create_visual_mesh())),
-        MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))), // Same color as original
-        Transform::from_xyz(0.0, -0.15, 0.0), // Same position as original
-        RigidBody::Fixed,
-        terrain.create_physics_collider(), // Heightfield collider
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
-    ));
+    // NOTE: Terrain entity creation moved to spawn_heightfield_terrain() system
+    // which will use the shared instance from GlobalTerrainHeights resource
 
     // OCEAN BOUNDARY - Removed for procedural terrain implementation
 
     // Calculate proper ground position for player spawn
     let player_spawn_pos = Vec2::new(0.0, 0.0);
-    let ground_height = ground_service.get_ground_height_simple(player_spawn_pos);
+    let ground_height = ground_service.get_ground_height(player_spawn_pos, terrain_heights.as_deref());
     // Distance from transform origin to collider bottom: -(-0.45) = 0.45
     let player_y = ground_height + 0.45; // Position so collider bottom touches ground
 

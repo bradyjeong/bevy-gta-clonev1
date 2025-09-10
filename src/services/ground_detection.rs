@@ -105,22 +105,14 @@ impl GroundDetectionService {
             .is_some()
     }
 
-    /// Get ground height without requiring RapierContext access
-    /// Uses simple terrain estimation until physics integration is fixed
-    pub fn get_ground_height_simple(&self, position: Vec2) -> f32 {
-        // Match the actual terrain height from setup_basic_world
-        // Terrain is at y=-0.15, so ground surface is at -0.1
-
-        // Keep spawn area (within 10 units of origin) perfectly flat to prevent sliding
-        let spawn_area_radius = 10.0;
-        let distance_from_spawn = (position.x.powi(2) + position.y.powi(2)).sqrt();
-
-        if distance_from_spawn < spawn_area_radius {
-            -0.1 // Perfectly flat ground around spawn
-        } else {
-            let noise_height = (position.x * 0.01).sin() * (position.y * 0.01).cos() * 0.1;
-            -0.1 + noise_height // Terrain surface with small variation
-        }
+    /// DEPRECATED: Legacy method for backward compatibility only
+    /// WARNING: This method violates single source of truth!
+    /// Use get_ground_height() with GlobalTerrainHeights instead!
+    pub fn get_ground_height_simple(&self, _position: Vec2) -> f32 {
+        // CRITICAL: Match heightfield exactly to prevent system divergence
+        // Flat terrain height from GlobalTerrainHeights (all heights are 0.0)
+        // Account for terrain Y offset of -0.15 (from spawn_heightfield_terrain)
+        -0.15
     }
 
     /// Check if a position is suitable for NPC spawning (avoiding roads, buildings, etc.)

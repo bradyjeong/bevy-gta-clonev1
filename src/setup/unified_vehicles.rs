@@ -4,6 +4,7 @@ use crate::factories::VehicleFactory;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::road_network::RoadNetwork;
+use crate::systems::terrain_heightfield::GlobalTerrainHeights;
 use bevy::prelude::*;
 
 use crate::GameConfig;
@@ -25,6 +26,7 @@ pub fn setup_initial_vehicles_unified(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     ground_service: Res<GroundDetectionService>,
+    terrain_heights: Option<Res<GlobalTerrainHeights>>,
     _road_network: Option<Res<RoadNetwork>>,
     _config: Res<GameConfig>,
 ) {
@@ -42,6 +44,7 @@ pub fn setup_initial_vehicles_unified(
         &mut materials,
         &mut spawn_registry,
         &ground_service,
+        terrain_heights.as_deref(),
         &vehicle_factory,
         &mut existing_content,
         current_time,
@@ -54,6 +57,7 @@ pub fn setup_initial_vehicles_unified(
         &mut materials,
         &mut spawn_registry,
         &ground_service,
+        terrain_heights.as_deref(),
         &vehicle_factory,
         &mut existing_content,
         current_time,
@@ -73,6 +77,7 @@ fn setup_starter_vehicles_unified(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
     ground_service: &Res<GroundDetectionService>,
+    terrain_heights: Option<&GlobalTerrainHeights>,
     vehicle_factory: &VehicleFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
@@ -97,7 +102,7 @@ fn setup_starter_vehicles_unified(
 
         // Use ground detection service for proper positioning
         let vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
-        let ground_height = ground_service.get_ground_height_simple(vehicle_spawn_pos);
+        let ground_height = ground_service.get_ground_height(vehicle_spawn_pos, terrain_heights);
         let vehicle_y = ground_height + 0.5; // Vehicle collider half-height above ground
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
 
@@ -164,6 +169,7 @@ fn setup_luxury_cars_unified(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
     ground_service: &Res<GroundDetectionService>,
+    terrain_heights: Option<&GlobalTerrainHeights>,
     vehicle_factory: &VehicleFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
@@ -199,7 +205,7 @@ fn setup_luxury_cars_unified(
 
         // Use ground detection service for proper positioning
         let vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
-        let ground_height = ground_service.get_ground_height_simple(vehicle_spawn_pos);
+        let ground_height = ground_service.get_ground_height(vehicle_spawn_pos, terrain_heights);
         let vehicle_y = ground_height + 0.5;
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
 

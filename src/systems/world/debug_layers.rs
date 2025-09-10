@@ -29,10 +29,10 @@ pub fn add_debug_visualization(
     _materials: ResMut<Assets<StandardMaterial>>,
     _entity_query: Query<(Entity, &Transform), (With<VisibilityRange>, Without<Camera>)>,
 ) {
-    // TEMPORARILY DISABLED
+    // TEMPORARILY DISABLED - debug code causes compilation issues
     #[cfg(feature = "debug-ui")] 
     {
-        let debug_material = materials.add(StandardMaterial {
+        let _debug_material = _materials.add(StandardMaterial {
             base_color: Color::srgba(1.0, 0.0, 0.0, 0.3),
             alpha_mode: AlphaMode::Blend,
             unlit: true,
