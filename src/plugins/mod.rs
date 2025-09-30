@@ -80,7 +80,8 @@ pub use water_plugin::WaterPlugin;
 
 // Specialized world plugins
 pub use timing_plugin::TimingPlugin;
-pub use world_content_plugin::WorldContentPlugin;
+#[allow(deprecated)]
+pub use world_content_plugin::WorldContentPlugin; // Deprecated - kept for backwards compatibility
 pub use world_debug_plugin::WorldDebugPlugin;
 pub use world_lod_plugin::WorldLodPlugin;
 pub use world_npc_plugin::WorldNpcPlugin;

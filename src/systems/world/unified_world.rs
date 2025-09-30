@@ -161,6 +161,7 @@ pub struct ChunkData {
     pub distance_to_player: f32,
     pub entities: Vec<Entity>,
     pub last_update: f32,
+    pub generation_id: u32,
 
     // Layer generation flags
     pub roads_generated: bool,
@@ -177,6 +178,7 @@ impl ChunkData {
             distance_to_player: f32::INFINITY,
             entities: Vec::new(),
             last_update: 0.0,
+            generation_id: 0,
             roads_generated: false,
             buildings_generated: false,
             vehicles_generated: false,
@@ -447,6 +449,7 @@ impl UnifiedWorldManager {
                         if matches!(chunk.state, ChunkState::Unloaded) {
                             chunk.state = ChunkState::Loading;
                             chunk.distance_to_player = distance_squared.sqrt();
+                            chunk.generation_id = chunk.generation_id.wrapping_add(1);
                             to_load.push(coord);
                         }
                     }

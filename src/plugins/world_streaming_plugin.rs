@@ -1,14 +1,13 @@
 use crate::config::GameConfig;
 use crate::resources::MaterialRegistry;
 use crate::systems::world::{
-    // TEMP: Disabled to test if chunk generation causes jolting
-    // layered_generation::layered_generation_coordinator,
-    unified_world::UnifiedWorldManager,
+    async_chunk_generation::StreamingSet, unified_world::UnifiedWorldManager,
     unified_world::unified_world_streaming_system,
 };
 use bevy::prelude::*;
 
 /// Plugin responsible for world streaming and chunk management
+/// Now uses async generation system for smooth 60+ FPS
 pub struct WorldStreamingPlugin;
 
 impl Plugin for WorldStreamingPlugin {
@@ -19,12 +18,7 @@ impl Plugin for WorldStreamingPlugin {
         )
         .add_systems(
             Update,
-            (
-                unified_world_streaming_system,
-                // TODO: Replace with async chunk instantiation system
-                // layered_generation_coordinator,
-            )
-                .chain(),
+            unified_world_streaming_system.in_set(StreamingSet::Scan),
         );
     }
 }

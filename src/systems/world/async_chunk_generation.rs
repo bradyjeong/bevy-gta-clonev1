@@ -1,10 +1,28 @@
 use bevy::prelude::*;
 use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures_lite::future;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use crate::components::world::ContentType;
 use crate::systems::world::unified_world::{ChunkCoord, ChunkState, UnifiedWorldManager};
+
+/// System sets for deterministic streaming order
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub enum StreamingSet {
+    Scan,     // Streaming decisions (unified_world_streaming_system)
+    GenQueue, // Queue async generation jobs
+    GenApply, // Apply completed jobs to ECS
+}
+
+/// Shared asset cache for chunk generation
+/// Reuses meshes and materials to avoid memory bloat and FPS drops
+#[derive(Resource)]
+pub struct AsyncChunkAssets {
+    pub cube_mesh: Handle<Mesh>,
+    pub cylinder_mesh: Handle<Mesh>,
+    pub building_material: Handle<StandardMaterial>,
+    pub tree_material: Handle<StandardMaterial>,
+}
 
 /// Async chunk generation system following Oracle recommendations
 /// Moves heavy chunk generation work off main thread for smooth 60+ FPS
@@ -12,27 +30,77 @@ pub struct AsyncChunkGenerationPlugin;
 
 impl Plugin for AsyncChunkGenerationPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<AsyncChunkQueue>().add_systems(
-            Update,
-            (queue_async_chunk_generation, process_completed_chunks).chain(),
-        );
+        app.insert_resource(AsyncChunkQueue::new())
+            .configure_sets(
+                Update,
+                (
+                    StreamingSet::Scan,
+                    StreamingSet::GenQueue,
+                    StreamingSet::GenApply,
+                )
+                    .chain(),
+            )
+            .add_systems(Startup, setup_async_chunk_assets)
+            .add_systems(
+                Update,
+                queue_async_chunk_generation.in_set(StreamingSet::GenQueue),
+            )
+            .add_systems(
+                Update,
+                process_completed_chunks.in_set(StreamingSet::GenApply),
+            );
     }
 }
 
+/// Setup shared assets for chunk generation (prevents asset duplication)
+fn setup_async_chunk_assets(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let assets = AsyncChunkAssets {
+        cube_mesh: meshes.add(Mesh::from(Cuboid::new(1.0, 1.0, 1.0))),
+        cylinder_mesh: meshes.add(Mesh::from(Cylinder::new(0.1, 1.0))),
+        building_material: materials.add(StandardMaterial {
+            base_color: Color::srgb(0.7, 0.7, 0.8),
+            ..default()
+        }),
+        tree_material: materials.add(StandardMaterial {
+            base_color: Color::srgb(0.2, 0.6, 0.2),
+            ..default()
+        }),
+    };
+
+    commands.insert_resource(assets);
+    info!("Async chunk assets initialized (shared meshes/materials)");
+}
+
 /// Resource to track async chunk generation tasks
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct AsyncChunkQueue {
     /// Tasks currently being processed
     pub active_tasks: HashMap<ChunkCoord, Task<ChunkGenerationResult>>,
+    /// Completed results waiting to be applied (persisted across frames)
+    pub completed_results: VecDeque<ChunkGenerationResult>,
     /// Maximum concurrent tasks to prevent resource exhaustion
     pub max_concurrent_tasks: usize,
+    /// Maximum completed chunks to apply per frame (frame budget)
+    pub max_completed_per_frame: usize,
+}
+
+impl Default for AsyncChunkQueue {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AsyncChunkQueue {
     pub fn new() -> Self {
         Self {
             active_tasks: HashMap::new(),
-            max_concurrent_tasks: 4, // Limit concurrent generation for stability
+            completed_results: VecDeque::new(),
+            max_concurrent_tasks: 3,    // Conservative limit for stability
+            max_completed_per_frame: 2, // Apply at most 2 chunks per frame
         }
     }
 
@@ -49,6 +117,7 @@ impl AsyncChunkQueue {
 #[derive(Debug)]
 pub struct ChunkGenerationResult {
     pub coord: ChunkCoord,
+    pub generation_id: u32,
     pub entities_data: Vec<EntityGenerationData>,
     pub success: bool,
     pub generation_time: f32,
@@ -65,104 +134,190 @@ pub struct EntityGenerationData {
 }
 
 /// System to queue chunks for async generation
+/// Only consumes chunks already marked as Loading by unified_world_streaming_system
 pub fn queue_async_chunk_generation(
     mut async_queue: ResMut<AsyncChunkQueue>,
-    mut world_manager: ResMut<UnifiedWorldManager>,
-    active_query: Query<&Transform, With<crate::components::player::ActiveEntity>>,
+    world_manager: Res<UnifiedWorldManager>,
 ) {
     // Only queue new tasks if we have capacity
     if !async_queue.has_capacity() {
         return;
     }
 
-    let Ok(active_transform) = active_query.single() else {
-        return;
-    };
-    let active_pos = active_transform.translation;
+    // No ActiveEntity gate - rely on upstream streaming system to mark chunks Loading
+    // If no ActiveEntity, streamer won't mark chunks, so we naturally do nothing
 
-    // Find chunks that need loading and aren't already being generated
-    let chunks_to_load = world_manager.get_chunks_to_load(active_pos);
+    // Find chunks already marked as Loading by the streamer
+    // Sort by distance to prioritize closest chunks
+    let mut loading_chunks: Vec<(ChunkCoord, f32)> = world_manager
+        .chunks
+        .iter()
+        .flatten()
+        .filter(|chunk| {
+            matches!(chunk.state, ChunkState::Loading)
+                && !async_queue.is_chunk_generating(chunk.coord)
+        })
+        .map(|chunk| (chunk.coord, chunk.distance_to_player))
+        .collect();
+
+    // Sort by distance (closest first)
+    loading_chunks.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
     let task_pool = AsyncComputeTaskPool::get();
+    let chunk_size = world_manager.chunk_size;
 
-    for coord in chunks_to_load {
-        // Skip if already generating
-        if async_queue.is_chunk_generating(coord) {
-            continue;
-        }
-
+    for (coord, _distance) in loading_chunks {
         // Skip if no capacity
         if !async_queue.has_capacity() {
             break;
         }
 
-        // Mark chunk as generating
-        if let Some(chunk) = world_manager.get_chunk_mut(coord) {
-            chunk.state = ChunkState::Loading;
-        }
+        // Get generation_id from chunk
+        let generation_id = world_manager
+            .get_chunk(coord)
+            .map(|chunk| chunk.generation_id)
+            .unwrap_or(0);
 
-        // Spawn async task for chunk generation
-        let generation_task = task_pool.spawn(async move { generate_chunk_async(coord).await });
+        // Spawn async task for chunk generation with panic safety
+        let generation_task = task_pool.spawn(async move {
+            // CRITICAL: Wrap generation in panic guard to prevent main thread crashes
+            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                futures_lite::future::block_on(async {
+                    generate_chunk_async(coord, chunk_size, generation_id).await
+                })
+            })) {
+                Ok(result) => result,
+                Err(_panic_info) => {
+                    error!(
+                        "PANIC caught during chunk generation for {:?} (gen_id: {})",
+                        coord, generation_id
+                    );
+                    ChunkGenerationResult {
+                        coord,
+                        generation_id,
+                        entities_data: Vec::new(),
+                        success: false,
+                        generation_time: 0.0,
+                    }
+                }
+            }
+        });
 
         async_queue.active_tasks.insert(coord, generation_task);
 
-        info!("Queued async generation for chunk {:?}", coord);
+        debug!(
+            "Queued async generation for chunk {:?} (gen_id: {})",
+            coord, generation_id
+        );
     }
 }
 
 /// System to process completed async chunk generation tasks
+/// Applies strict per-frame budget and stale result protection with generation versioning
 pub fn process_completed_chunks(
     mut commands: Commands,
     mut async_queue: ResMut<AsyncChunkQueue>,
     mut world_manager: ResMut<UnifiedWorldManager>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    async_assets: Res<AsyncChunkAssets>,
     time: Res<Time>,
 ) {
-    let mut completed_coords = Vec::new();
+    // Poll active tasks and push completed results into queue
+    // CRITICAL: Remove tasks before polling to avoid "Task polled after completion" panic
+    let coords_to_check: Vec<ChunkCoord> = async_queue.active_tasks.keys().copied().collect();
 
-    // Check for completed tasks
-    for (coord, task) in &mut async_queue.active_tasks {
-        if let Some(result) = future::block_on(future::poll_once(task)) {
-            completed_coords.push((*coord, result));
+    for coord in coords_to_check {
+        if let Some(mut task) = async_queue.active_tasks.remove(&coord) {
+            if let Some(result) = future::block_on(future::poll_once(&mut task)) {
+                // Task completed - push to queue for processing (may be deferred to future frames)
+                async_queue.completed_results.push_back(result);
+            } else {
+                // Task not ready yet - put it back
+                async_queue.active_tasks.insert(coord, task);
+            }
         }
     }
 
-    // Process completed chunks
-    for (coord, result) in completed_coords {
-        // Remove from active tasks
-        async_queue.active_tasks.remove(&coord);
+    // Apply strict per-frame budget from completed results queue
+    let max_to_process = async_queue
+        .max_completed_per_frame
+        .min(async_queue.completed_results.len());
+    let mut processed_count = 0;
+    let total_pending = async_queue.completed_results.len();
+
+    // Process up to budget, leave remainder in queue for next frame
+    for _ in 0..max_to_process {
+        let Some(result) = async_queue.completed_results.pop_front() else {
+            break;
+        };
+
+        // STALE RESULT GUARD: Check chunk exists, is Loading, AND generation_id matches
+        let chunk_valid = world_manager
+            .get_chunk(result.coord)
+            .is_some_and(|chunk| {
+                matches!(chunk.state, ChunkState::Loading)
+                    && chunk.generation_id == result.generation_id
+            });
+
+        if !chunk_valid {
+            debug!(
+                "Discarding stale result for {:?} (gen_id: {}) - chunk unloaded, state changed, or regenerated",
+                result.coord, result.generation_id
+            );
+            continue;
+        }
 
         if result.success {
-            // Spawn entities on main thread using generated data
+            // Spawn entities on main thread using generated data and shared assets
             let spawned_entities =
-                spawn_entities_from_async_data(&mut commands, &mut meshes, &mut materials, &result);
+                spawn_entities_from_async_data(&mut commands, &result, &async_assets);
 
             // Mark chunk as loaded and track spawned entities
-            if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+            if let Some(chunk) = world_manager.get_chunk_mut(result.coord) {
                 chunk.state = ChunkState::Loaded { lod_level: 0 };
                 chunk.last_update = time.elapsed_secs();
-                chunk.entities.extend(spawned_entities); // Track entities for cleanup
+                chunk.entities.extend(spawned_entities);
             }
 
             info!(
-                "Async chunk generation completed for {:?} in {:.2}ms",
-                coord,
-                result.generation_time * 1000.0
+                "Async generation completed for {:?} (gen_id: {}) in {:.2}ms ({} entities)",
+                result.coord,
+                result.generation_id,
+                result.generation_time * 1000.0,
+                result.entities_data.len()
             );
+
+            processed_count += 1;
         } else {
             // Mark as failed, will retry on next streaming update
-            if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+            if let Some(chunk) = world_manager.get_chunk_mut(result.coord) {
                 chunk.state = ChunkState::Unloaded;
             }
 
-            warn!("Async chunk generation failed for {:?}", coord);
+            warn!(
+                "Async generation failed for {:?} (gen_id: {})",
+                result.coord, result.generation_id
+            );
         }
+    }
+
+    if processed_count > 0 {
+        debug!(
+            "Applied {}/{} pending results this frame ({} active tasks, {} still queued)",
+            processed_count,
+            total_pending,
+            async_queue.active_tasks.len(),
+            async_queue.completed_results.len()
+        );
     }
 }
 
 /// Async chunk generation function - runs off main thread
-async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
+/// Only computes blueprint data, no ECS/Assets access
+async fn generate_chunk_async(
+    coord: ChunkCoord,
+    chunk_size: f32,
+    generation_id: u32,
+) -> ChunkGenerationResult {
     let start_time = std::time::Instant::now();
 
     // Simulate chunk generation work (roads, buildings, vegetation, etc.)
@@ -170,7 +325,7 @@ async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
     let mut entities_data = Vec::new();
 
     // Generate sample content (replace with actual generation logic)
-    let chunk_center = coord.to_world_pos_with_size(128.0); // Use finite world chunk size
+    let chunk_center = coord.to_world_pos_with_size(chunk_size);
 
     // Generate some sample buildings
     for i in 0..5 {
@@ -179,7 +334,7 @@ async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
         entities_data.push(EntityGenerationData {
             position: chunk_center + offset,
             content_type: ContentType::Building,
-            scale: Vec3::new(8.0, 12.0, 8.0),
+            scale: Vec3::new(1.0, 1.0, 1.0), // Unit scale, will scale in Transform
             rotation: Quat::IDENTITY,
             color: Color::srgb(0.7, 0.7, 0.8),
         });
@@ -206,6 +361,7 @@ async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
 
     ChunkGenerationResult {
         coord,
+        generation_id,
         entities_data,
         success: true,
         generation_time,
@@ -214,21 +370,21 @@ async fn generate_chunk_async(coord: ChunkCoord) -> ChunkGenerationResult {
 
 /// Spawn entities on main thread from async generation data
 /// Returns list of spawned entities for chunk tracking
+/// Uses shared assets to prevent memory bloat
 fn spawn_entities_from_async_data(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
     result: &ChunkGenerationResult,
+    assets: &AsyncChunkAssets,
 ) -> Vec<Entity> {
-    let mut spawned_entities = Vec::new();
+    let mut spawned_entities = Vec::with_capacity(result.entities_data.len());
 
     for entity_data in &result.entities_data {
         let entity = match entity_data.content_type {
-            ContentType::Building => spawn_async_building(commands, meshes, materials, entity_data),
-            ContentType::Tree => spawn_async_vegetation(commands, meshes, materials, entity_data),
-            ContentType::Vehicle => spawn_async_vehicle(commands, meshes, materials, entity_data),
-            ContentType::NPC => spawn_async_npc(commands, meshes, materials, entity_data),
-            ContentType::Road => spawn_async_road(commands, meshes, materials, entity_data),
+            ContentType::Building => spawn_async_building(commands, assets, entity_data),
+            ContentType::Tree => spawn_async_vegetation(commands, assets, entity_data),
+            ContentType::Vehicle => spawn_async_vehicle(commands, assets, entity_data),
+            ContentType::NPC => spawn_async_npc(commands, assets, entity_data),
+            ContentType::Road => spawn_async_road(commands, assets, entity_data),
         };
 
         if let Some(entity) = entity {
@@ -240,19 +396,20 @@ fn spawn_entities_from_async_data(
 }
 
 /// Spawn building from async data
+/// Uses shared unit cube mesh and material (no duplication)
 fn spawn_async_building(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    assets: &AsyncChunkAssets,
     data: &EntityGenerationData,
 ) -> Option<Entity> {
     use bevy::render::view::VisibilityRange;
 
-    let mesh = meshes.add(Mesh::from(Cuboid::from_size(data.scale)));
-    let material = materials.add(StandardMaterial {
-        base_color: data.color,
-        ..default()
-    });
+    // Use shared assets - no per-entity allocation!
+    let mesh = assets.cube_mesh.clone();
+    let material = assets.building_material.clone();
+
+    // Building scale for visual appearance
+    let building_scale = Vec3::new(8.0, 12.0, 8.0);
 
     let entity = commands
         .spawn((
@@ -260,16 +417,16 @@ fn spawn_async_building(
             MeshMaterial3d(material),
             Transform::from_translation(data.position)
                 .with_rotation(data.rotation)
-                .with_scale(data.scale),
+                .with_scale(building_scale),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 350.0..400.0, // Buildings visible from 350-400m
+                end_margin: 350.0..400.0,
                 use_aabb: false,
             },
             crate::components::world::Building {
                 building_type: crate::components::world::BuildingType::Generic,
-                height: data.scale.y,
-                scale: data.scale,
+                height: building_scale.y,
+                scale: building_scale,
             },
             crate::components::world::DynamicContent {
                 content_type: ContentType::Building,
@@ -281,28 +438,31 @@ fn spawn_async_building(
 }
 
 /// Spawn vegetation from async data
+/// Uses shared cylinder mesh and material (no duplication)
 fn spawn_async_vegetation(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    assets: &AsyncChunkAssets,
     data: &EntityGenerationData,
 ) -> Option<Entity> {
     use bevy::render::view::VisibilityRange;
 
-    let mesh = meshes.add(Mesh::from(Cylinder::new(data.scale.x * 0.1, data.scale.y)));
-    let material = materials.add(StandardMaterial {
-        base_color: data.color,
-        ..default()
-    });
+    // Use shared assets - no per-entity allocation!
+    let mesh = assets.cylinder_mesh.clone();
+    let material = assets.tree_material.clone();
+
+    // Tree scale for visual appearance
+    let tree_scale = Vec3::new(2.0, 8.0, 2.0);
 
     let entity = commands
         .spawn((
             Mesh3d(mesh),
             MeshMaterial3d(material),
-            Transform::from_translation(data.position).with_rotation(data.rotation),
+            Transform::from_translation(data.position)
+                .with_rotation(data.rotation)
+                .with_scale(tree_scale),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 250.0..300.0, // Trees visible from 250-300m
+                end_margin: 250.0..300.0,
                 use_aabb: false,
             },
             crate::components::world::DynamicContent {
@@ -317,8 +477,7 @@ fn spawn_async_vegetation(
 /// Placeholder functions for other content types
 fn spawn_async_vehicle(
     _commands: &mut Commands,
-    _meshes: &mut ResMut<Assets<Mesh>>,
-    _materials: &mut ResMut<Assets<StandardMaterial>>,
+    _assets: &AsyncChunkAssets,
     _data: &EntityGenerationData,
 ) -> Option<Entity> {
     // TODO: Implement async vehicle spawning
@@ -327,8 +486,7 @@ fn spawn_async_vehicle(
 
 fn spawn_async_npc(
     _commands: &mut Commands,
-    _meshes: &mut ResMut<Assets<Mesh>>,
-    _materials: &mut ResMut<Assets<StandardMaterial>>,
+    _assets: &AsyncChunkAssets,
     _data: &EntityGenerationData,
 ) -> Option<Entity> {
     // TODO: Implement async NPC spawning
@@ -337,8 +495,7 @@ fn spawn_async_npc(
 
 fn spawn_async_road(
     _commands: &mut Commands,
-    _meshes: &mut ResMut<Assets<Mesh>>,
-    _materials: &mut ResMut<Assets<StandardMaterial>>,
+    _assets: &AsyncChunkAssets,
     _data: &EntityGenerationData,
 ) -> Option<Entity> {
     // TODO: Implement async road spawning
