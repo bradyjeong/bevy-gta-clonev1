@@ -1,4 +1,4 @@
-use crate::components::safety::WorldBounds;
+use crate::components::world::WorldBounds;
 use crate::config::GameConfig;
 use bevy::prelude::*;
 
@@ -12,13 +12,13 @@ pub fn validate_physics_config(
 ) {
     // Critical: max_velocity must be reasonable to prevent coordinate explosion
     let max_vel = config.physics.max_velocity;
-    let max_coord = bounds.max_coordinate;
+    let world_size = (bounds.max_x - bounds.min_x).max(bounds.max_z - bounds.min_z);
 
-    if max_vel > max_coord / 5.0 {
+    if max_vel > world_size / 5.0 {
         panic!(
             "Physics config error: max_velocity ({}) exceeds one-fifth of world bounds ({}). This can cause coordinate explosion.",
             max_vel,
-            max_coord / 5.0
+            world_size / 5.0
         );
     }
 
@@ -92,8 +92,9 @@ pub fn validate_physics_config(
         }
     }
 
+    let world_size = (bounds.max_x - bounds.min_x).max(bounds.max_z - bounds.min_z);
     info!(
-        "Physics config validated: max_velocity={}, max_angular_velocity={}, world_bounds={}",
-        max_vel, max_ang_vel, max_coord
+        "Physics config validated: max_velocity={}, max_angular_velocity={}, world_size={:.1}",
+        max_vel, max_ang_vel, world_size
     );
 }

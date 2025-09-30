@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::GameState;
-use crate::components::world::{EntityLimits, MeshCache};
+use crate::components::world::{EntityLimits, MeshCache, WorldBounds};
 use crate::components::{CullingSettings, DirtyFlagsMetrics, PerformanceStats};
 use crate::config::GameConfig;
 use crate::plugins::{
@@ -24,12 +24,9 @@ use crate::systems::{
     TransformSyncPlugin,
     UnifiedDistanceCalculatorPlugin,
     UnifiedPerformancePlugin,
-
-    // World boundary systems
-    WorldBounds,
     active_entity_integrity_check,
-
     active_transfer_executor_system,
+    // World boundary systems
     aircraft_boundary_system,
     world_boundary_system,
 };
@@ -76,8 +73,11 @@ impl Plugin for GameCorePlugin {
             .init_resource::<EntityLimits>()
             .init_resource::<WorldRng>()
             // Coordinate safety resources
-            // World boundary system
-            .init_resource::<WorldBounds>()
+            // World boundary system - initialize from config (runs before validation)
+            .add_systems(PreStartup, |mut commands: Commands, config: Res<GameConfig>| {
+                let bounds = WorldBounds::from_config(&config.world);
+                commands.insert_resource(bounds);
+            })
             .add_event::<ActiveEntityTransferred>()
             // No world origin shift events needed
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
@@ -112,25 +112,27 @@ impl Plugin for GameCorePlugin {
             .add_plugins(UIPlugin)
             // Setup world root entity at startup
             // No longer need WorldRoot setup
-            // Coordinate safety systems with seamless world shifting
-            // Seamless world rebase runs BEFORE physics simulation
-            // No floating origin system needed
+            // Movement systems run BEFORE Rapier physics step (explicit per-system ordering)
             .add_systems(
                 FixedUpdate,
                 (
-                    // Move movement systems to fixed timestep BEFORE Rapier
-                    (
-                        crate::systems::movement::car_movement,
-                        crate::systems::movement::simple_helicopter_movement,
-                        crate::systems::movement::simple_f16_movement,
-                    ),
-                    // Universal physics safeguards run AFTER Rapier physics step
+                    crate::systems::movement::car_movement.before(PhysicsSet::SyncBackend),
+                    crate::systems::movement::simple_helicopter_movement
+                        .before(PhysicsSet::SyncBackend),
+                    crate::systems::movement::simple_f16_movement
+                        .before(PhysicsSet::SyncBackend),
+                ),
+            )
+            // Safeguards and boundaries run AFTER Rapier physics completes (explicit ordering + chained)
+            .add_systems(
+                FixedUpdate,
+                (
                     apply_universal_physics_safeguards,
-                    // World boundary enforcement
                     world_boundary_system,
                     aircraft_boundary_system,
                 )
-                    .chain(),
+                    .chain()
+                    .after(PhysicsSet::Writeback),
             )
             .add_systems(
                 Update,
@@ -149,8 +151,6 @@ impl Plugin for GameCorePlugin {
                     .chain(),
             );
 
-        info!(
-            "✅ Game Core Plugin loaded with complete coordinate safety and infinite world support"
-        );
+        info!("✅ Game Core Plugin loaded with physics ordering and coordinate safety");
     }
 }

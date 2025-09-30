@@ -352,7 +352,7 @@ impl Default for EntityLimits {
 }
 
 /// WorldBounds Resource - Finite world with context-aware boundaries
-#[derive(Resource, Debug, Clone)]
+#[derive(Resource, Debug, Clone, Default)]
 pub struct WorldBounds {
     // Core finite world bounds
     pub min_x: f32,
@@ -366,11 +366,12 @@ pub struct WorldBounds {
     pub boundary_enforcement: BoundaryEnforcement,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum BoundaryEnforcement {
     /// Natural barriers - mountains, water, terrain that blocks movement
     Natural,
     /// Progressive deterrent - increasing hostility/danger near edges
+    #[default]
     Progressive,
     /// Hard teleport - instant return to safe zone (fallback only)
     Teleport,
@@ -442,6 +443,44 @@ impl WorldBounds {
             && position.x <= self.max_x
             && position.z >= self.min_z
             && position.z <= self.max_z
+    }
+
+    /// Get pushback force for position near boundaries (for gentle boundary enforcement)
+    pub fn get_pushback_force(&self, position: Vec3, pushback_strength: f32) -> Vec3 {
+        let mut force = Vec3::ZERO;
+        let pushback_zone = self.critical_zone_size; // Use critical zone for pushback
+
+        // X-axis pushback
+        if position.x < self.min_x + pushback_zone {
+            let distance = position.x - self.min_x;
+            if distance < pushback_zone {
+                let strength = (1.0 - distance / pushback_zone).max(0.0);
+                force.x = strength * pushback_strength;
+            }
+        } else if position.x > self.max_x - pushback_zone {
+            let distance = self.max_x - position.x;
+            if distance < pushback_zone {
+                let strength = (1.0 - distance / pushback_zone).max(0.0);
+                force.x = -strength * pushback_strength;
+            }
+        }
+
+        // Z-axis pushback
+        if position.z < self.min_z + pushback_zone {
+            let distance = position.z - self.min_z;
+            if distance < pushback_zone {
+                let strength = (1.0 - distance / pushback_zone).max(0.0);
+                force.z = strength * pushback_strength;
+            }
+        } else if position.z > self.max_z - pushback_zone {
+            let distance = self.max_z - position.z;
+            if distance < pushback_zone {
+                let strength = (1.0 - distance / pushback_zone).max(0.0);
+                force.z = -strength * pushback_strength;
+            }
+        }
+
+        force
     }
 
     /// Clamp position to world bounds

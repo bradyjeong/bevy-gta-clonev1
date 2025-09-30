@@ -4,7 +4,6 @@ use crate::systems::movement::{
 use crate::systems::setup::on_f16_spawned;
 use bevy::prelude::*;
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
-use crate::components::safety::WorldBounds;
 use crate::systems::effects::{exhaust_effects_system, update_jet_flames_unified};
 use crate::systems::safety::validate_physics_config;
 // LOD system replaced with Bevy's VisibilityRange + simulation_lod
@@ -16,8 +15,6 @@ pub struct VehiclePlugin;
 impl Plugin for VehiclePlugin {
     fn build(&self, app: &mut App) {
         app
-            // Initialize safety resources
-            .init_resource::<WorldBounds>()
             // CRITICAL SAFEGUARDS: Run configuration validation at startup
             .add_systems(Startup, validate_physics_config)
             // Observer for F16 setup when specs are added

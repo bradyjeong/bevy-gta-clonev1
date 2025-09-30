@@ -1,4 +1,4 @@
-use crate::components::safety::HighSpeed;
+// HighSpeed component removed - no longer needed for finite world
 use crate::components::{
     AircraftFlight, F16, Helicopter, MainRotor, SimpleF16Specs, SimpleHelicopterSpecs, TailRotor,
     VehicleState, VehicleType,
@@ -265,11 +265,7 @@ fn spawn_f16_unified(
             AircraftFlight::default(),
             SimpleF16Specs::default(),
             VehicleState::new(VehicleType::F16),
-            // Safety components - critical for high-speed aircraft
-            HighSpeed {
-                max_safe_speed: 500.0,
-                bounds_check_interval: 0.5,
-            },
+            // Safety components removed - HighSpeed not needed for finite world
             // Physics components - Simple capsule collider (following AGENT.md simplicity principles)
             RigidBody::Dynamic,
             Collider::cuboid(1.6, 1.0, 6.4), // 0.8x visual mesh (4x2.5x16) for better ground contact

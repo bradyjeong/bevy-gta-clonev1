@@ -1,6 +1,5 @@
 use crate::systems::audio::{cleanup_footstep_sounds, footstep_system};
 use crate::systems::camera::camera_follow_system;
-use crate::systems::input::asset_based_input_mapping_system;
 use crate::systems::interaction::interaction_system;
 use crate::systems::movement::{
     PlayerInputData, animation_flag_system, human_player_animation, read_input_system,
@@ -21,7 +20,7 @@ impl Plugin for PlayerPlugin {
         app.init_resource::<PlayerInputData>().add_systems(
             Update,
             (
-                asset_based_input_mapping_system.before(read_input_system),
+                // Input mapping now handled by InputPlugin
                 read_input_system.run_if(in_state(GameState::Walking)),
                 velocity_apply_system
                     .after(read_input_system)

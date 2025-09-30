@@ -67,7 +67,6 @@ pub mod control_state;
 pub mod dirty_flags;
 
 pub mod instanced_vegetation;
-pub mod safety;
 pub mod unified_vehicle;
 
 // Core entity components
