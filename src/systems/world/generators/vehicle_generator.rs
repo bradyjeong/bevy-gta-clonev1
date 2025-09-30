@@ -31,25 +31,25 @@ impl VehicleGenerator {
             let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
 
             // Only spawn on roads with sufficient spacing
-            if self.is_on_road(position, world) {
-                if world.placement_grid.can_place(
+            if self.is_on_road(position, world)
+                && world.placement_grid.can_place(
                     position,
                     ContentType::Vehicle,
                     4.0,  // Vehicle radius
                     25.0, // Minimum distance between vehicles
-                ) {
-                    if let Ok(vehicle_entity) =
-                        self.spawn_vehicle(commands, coord, position, meshes, materials, world_rng)
-                    {
-                        // Add to placement grid
-                        world
-                            .placement_grid
-                            .add_entity(position, ContentType::Vehicle, 4.0);
+                )
+            {
+                if let Ok(vehicle_entity) =
+                    self.spawn_vehicle(commands, coord, position, meshes, materials, world_rng)
+                {
+                    // Add to placement grid
+                    world
+                        .placement_grid
+                        .add_entity(position, ContentType::Vehicle, 4.0);
 
-                        // Add entity to chunk
-                        if let Some(chunk) = world.get_chunk_mut(coord) {
-                            chunk.entities.push(vehicle_entity);
-                        }
+                    // Add entity to chunk
+                    if let Some(chunk) = world.get_chunk_mut(coord) {
+                        chunk.entities.push(vehicle_entity);
                     }
                 }
             }
@@ -95,7 +95,7 @@ impl VehicleGenerator {
                 });
                 Ok(entity)
             }
-            Err(e) => Err(format!("Failed to spawn vehicle: {}", e)),
+            Err(e) => Err(format!("Failed to spawn vehicle: {e}")),
         }
     }
 

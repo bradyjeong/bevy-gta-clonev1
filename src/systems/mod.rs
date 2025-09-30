@@ -67,9 +67,9 @@ pub mod water;
 // pub mod timing_service; // Moved to services/
 pub mod input;
 pub mod safety;
+pub mod spawn_validation;
 pub mod swimming;
 pub mod terrain_water_manager;
-pub mod spawn_validation;
 pub mod validation;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
 // pub mod distance_cache; // Moved to services/

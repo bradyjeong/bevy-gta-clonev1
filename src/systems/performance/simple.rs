@@ -82,9 +82,8 @@ pub fn update_debug_text(
 
         text.0 = format!(
             "Debug Info (F3)\n\
-            FPS: {:.1}\n\
-            Entities: {}",
-            fps, entity_count
+            FPS: {fps:.1}\n\
+            Entities: {entity_count}"
         );
     }
 }

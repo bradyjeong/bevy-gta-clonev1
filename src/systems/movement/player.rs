@@ -3,14 +3,14 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::components::ControlState;
-use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, Player};
 use crate::components::player::{PlayerLeftFoot, PlayerRightFoot};
+use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, Player};
 
 #[derive(Resource)]
 pub struct PlayerInputData {
     pub input_direction: Vec3,
     pub rotation_input: f32,
-    pub vertical_input: f32,  // NEW: W = +1, S = -1
+    pub vertical_input: f32, // NEW: W = +1, S = -1
     pub is_running: bool,
 }
 
@@ -19,7 +19,7 @@ impl Default for PlayerInputData {
         Self {
             input_direction: Vec3::ZERO,
             rotation_input: 0.0,
-            vertical_input: 0.0,  // NEW
+            vertical_input: 0.0, // NEW
             is_running: false,
         }
     }
@@ -43,14 +43,18 @@ pub fn read_input_system(
 
     input_data.rotation_input = control_state.steering;
     input_data.is_running = control_state.run;
-    input_data.vertical_input = control_state.vertical;  // NEW: Consume W/S for diving
+    input_data.vertical_input = control_state.vertical; // NEW: Consume W/S for diving
 }
 
 pub fn velocity_apply_system(
     input_data: Res<PlayerInputData>,
     mut player_query: Query<
         (&mut Velocity, &mut HumanMovement),
-        (With<Player>, With<ActiveEntity>, Without<crate::systems::swimming::Swimming>),  // NEW FILTER
+        (
+            With<Player>,
+            With<ActiveEntity>,
+            Without<crate::systems::swimming::Swimming>,
+        ), // NEW FILTER
     >,
 ) {
     let Ok((mut velocity, mut movement)) = player_query.single_mut() else {
@@ -194,8 +198,10 @@ pub fn human_player_animation(
 
     // Debug animation system running
     if (time.elapsed_secs() % 3.0) < 0.016 {
-        info!("🎭 ANIMATION DEBUG: is_swimming={}, is_walking={}, speed={:.2}", 
-              animation.is_swimming, animation.is_walking, movement.current_speed);
+        info!(
+            "🎭 ANIMATION DEBUG: is_swimming={}, is_walking={}, speed={:.2}",
+            animation.is_swimming, animation.is_walking, movement.current_speed
+        );
     }
 
     let _dt = time.delta_secs();
@@ -237,7 +243,7 @@ pub fn human_player_animation(
             let breath_phase = (time_elapsed * animation.swim_stroke_frequency * 0.5).sin();
             let head_turn = breath_phase * 0.3; // Side-to-side breathing motion
             let head_bob = breath_phase * 0.05; // Slight vertical bob
-            
+
             head_transform.translation.y = 1.2 + head_bob;
             head_transform.translation.x = head_turn * 0.1;
             head_transform.rotation = Quat::from_rotation_y(head_turn);
@@ -268,10 +274,11 @@ pub fn human_player_animation(
             let stroke_phase = (time_elapsed * animation.swim_stroke_frequency).sin();
             let body_roll = stroke_phase * 0.2; // Roll left/right with arm strokes
             let streamline_lean = -0.15; // Slight forward lean for streamlined position
-            
+
             torso_transform.translation.y = 0.6;
             torso_transform.translation.x = body_roll * 0.1;
-            torso_transform.rotation = Quat::from_rotation_x(streamline_lean) * Quat::from_rotation_z(body_roll);
+            torso_transform.rotation =
+                Quat::from_rotation_x(streamline_lean) * Quat::from_rotation_z(body_roll);
         } else {
             // Walking/idle: normal torso movement
             let body_sway = if animation.is_walking {
@@ -305,13 +312,15 @@ pub fn human_player_animation(
             let stroke_phase = (time_elapsed * animation.swim_stroke_frequency).sin();
             let arm_forward = stroke_phase * 1.2; // Forward/back stroke motion
             let arm_down = (stroke_phase * 0.5).max(0.0) * 0.3; // Downward catch phase
-            
+
             // Debug animation values occasionally
             if (time_elapsed % 2.0) < 0.016 {
-                info!("🏊 SWIM ANIM DEBUG: stroke_freq={:.2}, stroke_phase={:.2}, arm_forward={:.2}", 
-                      animation.swim_stroke_frequency, stroke_phase, arm_forward);
+                info!(
+                    "🏊 SWIM ANIM DEBUG: stroke_freq={:.2}, stroke_phase={:.2}, arm_forward={:.2}",
+                    animation.swim_stroke_frequency, stroke_phase, arm_forward
+                );
             }
-            
+
             left_arm_transform.translation.x = -0.4;
             left_arm_transform.translation.y = 0.7 - arm_down;
             left_arm_transform.translation.z = arm_forward * 0.6;
@@ -334,10 +343,11 @@ pub fn human_player_animation(
     if let Ok(mut right_arm_transform) = right_arm_query.single_mut() {
         if animation.is_swimming {
             // Swimming: Freestyle stroke - right arm offset by π (alternating)
-            let stroke_phase = (time_elapsed * animation.swim_stroke_frequency + std::f32::consts::PI).sin();
+            let stroke_phase =
+                (time_elapsed * animation.swim_stroke_frequency + std::f32::consts::PI).sin();
             let arm_forward = stroke_phase * 1.2;
             let arm_down = (stroke_phase * 0.5).max(0.0) * 0.3;
-            
+
             right_arm_transform.translation.x = 0.4;
             right_arm_transform.translation.y = 0.7 - arm_down;
             right_arm_transform.translation.z = arm_forward * 0.6;
@@ -364,7 +374,7 @@ pub fn human_player_animation(
             let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0).sin(); // 3x faster than arms
             let leg_kick = kick_phase * 0.4; // Up/down kicking motion
             let leg_bend = (kick_phase * 0.5).abs() * 0.8; // Knee bending
-            
+
             left_leg_transform.translation.x = -0.15;
             left_leg_transform.translation.y = 0.0 + leg_kick * 0.2;
             left_leg_transform.translation.z = -leg_bend * 0.3; // Bend backward
@@ -393,10 +403,12 @@ pub fn human_player_animation(
     if let Ok(mut right_leg_transform) = right_leg_query.single_mut() {
         if animation.is_swimming {
             // Swimming: Flutter kick - alternating with left leg
-            let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0 + std::f32::consts::PI * 0.5).sin();
+            let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0
+                + std::f32::consts::PI * 0.5)
+                .sin();
             let leg_kick = kick_phase * 0.4;
             let leg_bend = (kick_phase * 0.5).abs() * 0.8;
-            
+
             right_leg_transform.translation.x = 0.15;
             right_leg_transform.translation.y = 0.0 + leg_kick * 0.2;
             right_leg_transform.translation.z = -leg_bend * 0.3;
@@ -429,7 +441,7 @@ pub fn human_player_animation(
             let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0).sin();
             let leg_kick = kick_phase * 0.4;
             let leg_bend = (kick_phase * 0.5).abs() * 0.8;
-            
+
             left_foot_transform.translation.x = -0.15;
             left_foot_transform.translation.y = -0.4 + leg_kick * 0.2; // Follow leg Y movement
             left_foot_transform.translation.z = -leg_bend * 0.3; // Match leg bending exactly
@@ -458,10 +470,12 @@ pub fn human_player_animation(
     if let Ok(mut right_foot_transform) = right_foot_query.single_mut() {
         if animation.is_swimming {
             // Swimming: feet follow leg kick motion (alternating)
-            let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0 + std::f32::consts::PI * 0.5).sin();
+            let kick_phase = (time_elapsed * animation.swim_stroke_frequency * 3.0
+                + std::f32::consts::PI * 0.5)
+                .sin();
             let leg_kick = kick_phase * 0.4;
             let leg_bend = (kick_phase * 0.5).abs() * 0.8;
-            
+
             right_foot_transform.translation.x = 0.15;
             right_foot_transform.translation.y = -0.4 + leg_kick * 0.2; // Follow leg Y movement
             right_foot_transform.translation.z = -leg_bend * 0.3; // Match leg bending exactly

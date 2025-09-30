@@ -4,7 +4,7 @@ use bevy::prelude::*;
 pub enum GameState {
     #[default]
     Walking,
-    Swimming,  // NEW: Swimming state
+    Swimming, // NEW: Swimming state
     Driving,
     Flying,
     Jetting, // New state for F16 flying

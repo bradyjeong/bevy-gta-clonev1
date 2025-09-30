@@ -1,6 +1,4 @@
-use crate::systems::movement::{
-    rotate_helicopter_rotors,
-};
+use crate::systems::movement::rotate_helicopter_rotors;
 use crate::systems::setup::on_f16_spawned;
 use bevy::prelude::*;
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
@@ -8,7 +6,6 @@ use crate::systems::effects::{exhaust_effects_system, update_jet_flames_unified}
 use crate::systems::safety::validate_physics_config;
 // LOD system replaced with Bevy's VisibilityRange + simulation_lod
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
-
 
 pub struct VehiclePlugin;
 

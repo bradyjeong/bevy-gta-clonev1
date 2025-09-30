@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
+use crate::bundles::PlayerPhysicsBundle;
 use crate::components::{ActiveEntity, MainCamera, Player};
 use crate::game_state::GameState;
-use crate::bundles::PlayerPhysicsBundle;
 use bevy::prelude::*;
 // Legacy input removed - use raw F1 for debug toggle
 

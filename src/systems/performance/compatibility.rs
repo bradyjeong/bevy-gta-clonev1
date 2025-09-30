@@ -22,15 +22,9 @@ pub enum PerformanceCategory {
 
 /// Stub resource to replace UnifiedPerformanceTracker
 /// This is a minimal implementation that does nothing
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct UnifiedPerformanceTracker {
     pub enabled: bool,
-}
-
-impl Default for UnifiedPerformanceTracker {
-    fn default() -> Self {
-        Self { enabled: false }
-    }
 }
 
 impl UnifiedPerformanceTracker {

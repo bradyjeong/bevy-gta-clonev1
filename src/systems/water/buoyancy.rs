@@ -5,10 +5,7 @@ use bevy_rapier3d::prelude::*;
 /// GTA-style buoyancy system - applies upward force based on submersion
 pub fn buoyancy_system(
     time: Res<Time>,
-    mut query: Query<
-        (Entity, &GlobalTransform, &mut ExternalForce, &Collider),
-        With<WaterBodyId>
-    >,
+    mut query: Query<(Entity, &GlobalTransform, &mut ExternalForce, &Collider), With<WaterBodyId>>,
     water_regions: Query<&UnifiedWaterBody>,
 ) {
     let current_time = time.elapsed_secs();
@@ -24,12 +21,16 @@ pub fn buoyancy_system(
         if let Some(region) = water_region {
             // Get collider dimensions (assuming cuboid for simplicity)
             if let Some(cuboid) = collider.as_cuboid() {
-                let half_extents = Vec3::new(cuboid.half_extents().x, cuboid.half_extents().y, cuboid.half_extents().z);
-                
+                let half_extents = Vec3::new(
+                    cuboid.half_extents().x,
+                    cuboid.half_extents().y,
+                    cuboid.half_extents().z,
+                );
+
                 let submersion_ratio = region.calculate_submersion_ratio(
                     &Transform::from_translation(position),
                     half_extents,
-                    current_time
+                    current_time,
                 );
 
                 if submersion_ratio > 0.0 {
@@ -41,9 +42,7 @@ pub fn buoyancy_system(
                     if submersion_ratio > 0.1 {
                         debug!(
                             "Entity {:?} submersion: {:.2}, buoyancy force: {:.2}",
-                            entity,
-                            submersion_ratio,
-                            buoyancy_force
+                            entity, submersion_ratio, buoyancy_force
                         );
                     }
                 }

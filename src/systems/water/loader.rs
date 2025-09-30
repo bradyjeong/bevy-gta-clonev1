@@ -2,10 +2,7 @@ use crate::components::water_new::{WaterRegion, WaterRegionAsset};
 use bevy::prelude::*;
 
 /// Asset loader system for water regions
-pub fn load_water_regions_system(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+pub fn load_water_regions_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load water region assets
     let ocean_handle: Handle<WaterRegionAsset> = asset_server.load("config/water/ocean.ron");
     let lake_handle: Handle<WaterRegionAsset> = asset_server.load("config/water/lake.ron");

@@ -33,7 +33,7 @@ impl Plugin for GameSetupPlugin {
             // Service initialization
             .add_systems(
                 Startup,
-                (initialize_simple_services, ) // validate_vehicle_consistency) // TEMPORARILY DISABLED
+                (initialize_simple_services,) // validate_vehicle_consistency) // TEMPORARILY DISABLED
                     .in_set(GameSystemSets::ServiceInit),
             )
             // Core world setup

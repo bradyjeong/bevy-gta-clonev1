@@ -57,10 +57,10 @@
 pub mod effects;
 pub mod lod;
 pub mod player;
+pub mod unified_water;
 pub mod vehicles;
 pub mod water;
 pub mod water_new;
-pub mod unified_water;
 pub mod world;
 
 pub mod control_state;
@@ -91,7 +91,7 @@ pub use world::{
 };
 
 pub use water::{Boat, Lake, WaterBody, WaterWave, Yacht};
-pub use water_new::{WaterRegion, WaterBodyId, WaterRegionAsset, TideConfig, WaveParams};
+pub use water_new::{TideConfig, WaterBodyId, WaterRegion, WaterRegionAsset, WaveParams};
 
 // Visual and rendering components
 pub use effects::{

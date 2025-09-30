@@ -74,10 +74,13 @@ impl Plugin for GameCorePlugin {
             .init_resource::<WorldRng>()
             // Coordinate safety resources
             // World boundary system - initialize from config (runs before validation)
-            .add_systems(PreStartup, |mut commands: Commands, config: Res<GameConfig>| {
-                let bounds = WorldBounds::from_config(&config.world);
-                commands.insert_resource(bounds);
-            })
+            .add_systems(
+                PreStartup,
+                |mut commands: Commands, config: Res<GameConfig>| {
+                    let bounds = WorldBounds::from_config(&config.world);
+                    commands.insert_resource(bounds);
+                },
+            )
             .add_event::<ActiveEntityTransferred>()
             // No world origin shift events needed
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
@@ -119,8 +122,7 @@ impl Plugin for GameCorePlugin {
                     crate::systems::movement::car_movement.before(PhysicsSet::SyncBackend),
                     crate::systems::movement::simple_helicopter_movement
                         .before(PhysicsSet::SyncBackend),
-                    crate::systems::movement::simple_f16_movement
-                        .before(PhysicsSet::SyncBackend),
+                    crate::systems::movement::simple_f16_movement.before(PhysicsSet::SyncBackend),
                 ),
             )
             // Safeguards and boundaries run AFTER Rapier physics completes (explicit ordering + chained)

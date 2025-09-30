@@ -1,6 +1,6 @@
 use crate::systems::input::{
-    asset_based_input_mapping_system, load_vehicle_controls_system,
-    process_loaded_controls_system, LoadedVehicleControls, VehicleControlsConfig,
+    LoadedVehicleControls, VehicleControlsConfig, asset_based_input_mapping_system,
+    load_vehicle_controls_system, process_loaded_controls_system,
 };
 use bevy::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
@@ -19,14 +19,15 @@ impl Plugin for InputPlugin {
         app.init_resource::<LoadedVehicleControls>();
 
         // Asset-based input systems - process assets then map input to ControlState
-        app.add_systems(Startup, load_vehicle_controls_system).add_systems(
-            Update,
-            (
-                process_loaded_controls_system,
-                asset_based_input_mapping_system,
-            )
-                .chain(),
-        );
+        app.add_systems(Startup, load_vehicle_controls_system)
+            .add_systems(
+                Update,
+                (
+                    process_loaded_controls_system,
+                    asset_based_input_mapping_system,
+                )
+                    .chain(),
+            );
 
         info!("Input Plugin initialized with asset-based control system");
     }

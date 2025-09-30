@@ -170,7 +170,10 @@ impl VehicleControlType {
 
     /// Check if this vehicle type uses ground vehicle controls
     pub fn uses_ground_controls(&self) -> bool {
-        matches!(self, Self::Walking | Self::Swimming | Self::Car | Self::Yacht)
+        matches!(
+            self,
+            Self::Walking | Self::Swimming | Self::Car | Self::Yacht
+        )
     }
 }
 

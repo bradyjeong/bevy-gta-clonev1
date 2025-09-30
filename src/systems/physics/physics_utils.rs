@@ -78,11 +78,18 @@ impl CollisionGroupHelper {
     }
 }
 
+type PhysicsEntityQuery<'w, 's> = Query<
+    'w,
+    's,
+    (Entity, &'static mut Velocity, &'static mut Transform),
+    (With<RigidBody>, Without<RigidBodyDisabled>),
+>;
+
 /// Enhanced comprehensive physics safety system
 /// Runs AFTER physics step to catch any corruption before other systems see it
 pub fn apply_universal_physics_safeguards(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut Velocity, &mut Transform), (With<RigidBody>, Without<RigidBodyDisabled>)>,
+    mut query: PhysicsEntityQuery,
     config: Res<GameConfig>,
 ) {
     for (entity, mut velocity, mut transform) in query.iter_mut() {

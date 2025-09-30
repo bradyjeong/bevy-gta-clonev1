@@ -31,15 +31,17 @@ pub fn world_boundary_system(
                 "Vehicle exceeded world bounds at ({:.1}, {:.1}) - clamping back",
                 transform.translation.x, transform.translation.z
             );
-            
+
             // TODO: Clamp Transform via Commands (need mutable access)
             // let _clamped_pos = bounds.clamp_to_bounds(transform.translation);
-            
+
             // For now, zero velocity perpendicular to boundary
             // For now, zero velocity perpendicular to boundary to prevent re-escape
-            let out_x = transform.translation.x < bounds.min_x || transform.translation.x > bounds.max_x;
-            let out_z = transform.translation.z < bounds.min_z || transform.translation.z > bounds.max_z;
-            
+            let out_x =
+                transform.translation.x < bounds.min_x || transform.translation.x > bounds.max_x;
+            let out_z =
+                transform.translation.z < bounds.min_z || transform.translation.z > bounds.max_z;
+
             if out_x {
                 velocity.linvel.x = 0.0;
             }

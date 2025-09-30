@@ -30,7 +30,7 @@ pub fn add_debug_visualization(
     _entity_query: Query<(Entity, &Transform), (With<VisibilityRange>, Without<Camera>)>,
 ) {
     // TEMPORARILY DISABLED
-    #[cfg(feature = "debug-ui")] 
+    #[cfg(feature = "debug-ui")]
     {
         let debug_material = materials.add(StandardMaterial {
             base_color: Color::srgba(1.0, 0.0, 0.0, 0.3),

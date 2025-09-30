@@ -209,11 +209,11 @@ pub struct CameraConfig {
     pub lerp_speed: f32,          // 0.05 - Camera smoothing speed
     pub look_ahead_distance: f32, // 10.0 - Look ahead distance
     pub look_ahead_height: f32,   // 2.0 - Look ahead height
-    
+
     // Swimming camera parameters
-    pub swim_distance: f32,       // 2.5 - Distance behind swimmer
-    pub swim_height: f32,         // 0.6 - Height above swimmer's back
-    pub swim_look_ahead: f32,     // 0.5 - Look ahead distance for targeting
+    pub swim_distance: f32,   // 2.5 - Distance behind swimmer
+    pub swim_height: f32,     // 0.6 - Height above swimmer's back
+    pub swim_look_ahead: f32, // 0.5 - Look ahead distance for targeting
 }
 
 #[derive(Debug, Clone)]
@@ -401,16 +401,16 @@ impl Default for FootstepConfig {
 impl Default for CameraConfig {
     fn default() -> Self {
         Self {
-            distance: 8.0,    // Much closer to player
-            height: 1.5,      // Lower for more parallel to ground
+            distance: 8.0,   // Much closer to player
+            height: 1.5,     // Lower for more parallel to ground
             lerp_speed: 2.5, // Near-instant camera response
             look_ahead_distance: 10.0,
             look_ahead_height: 2.0,
-            
+
             // Swimming camera parameters
-            swim_distance: 2.5,     // Behind swimmer
-            swim_height: 0.6,       // Above swimmer's back
-            swim_look_ahead: 0.5,   // Look ahead targeting
+            swim_distance: 2.5,   // Behind swimmer
+            swim_height: 0.6,     // Above swimmer's back
+            swim_look_ahead: 0.5, // Look ahead targeting
         }
     }
 }

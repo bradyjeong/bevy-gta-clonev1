@@ -92,7 +92,7 @@ pub fn setup_basic_world(
     const CAPSULE_RADIUS: f32 = 0.25; // Slimmer for better door navigation
     const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS; // -0.20
     const UPPER_SPHERE_Y: f32 = 1.45; // ~1.70m total height
-    
+
     let player_entity = commands
         .spawn((
             Player,

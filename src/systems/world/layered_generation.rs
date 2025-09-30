@@ -19,19 +19,18 @@ pub fn layered_generation_coordinator(
     let current_time = time.elapsed_secs();
 
     // Find chunks that need loading
-    let mut chunks_to_load = Vec::new();
-    for chunk_opt in &world_manager.chunks {
-        if let Some(chunk) = chunk_opt {
-            if matches!(chunk.state, ChunkState::Loading) && current_time - chunk.last_update > 0.1
-            {
-                chunks_to_load.push(chunk.coord);
-            }
-        }
-    }
+    let chunks_to_load: Vec<ChunkCoord> = world_manager
+        .chunks
+        .iter()
+        .flatten()
+        .filter(|chunk| {
+            matches!(chunk.state, ChunkState::Loading) && current_time - chunk.last_update > 0.1
+        })
+        .map(|chunk| chunk.coord)
+        .collect();
 
     // Load chunks completely (up to budget)
-    let mut loaded_this_frame = 0;
-    for coord in chunks_to_load {
+    for (loaded_this_frame, coord) in chunks_to_load.into_iter().enumerate() {
         if loaded_this_frame >= world_manager.max_chunks_per_frame {
             break;
         }
@@ -47,12 +46,12 @@ pub fn layered_generation_coordinator(
             &mut world_rng,
             current_time,
         );
-        loaded_this_frame += 1;
     }
 }
 
 /// Simple coordinator that uses focused generators instead of complex state machine
 /// Each generator has single responsibility and can work independently
+#[allow(clippy::too_many_arguments)]
 fn generate_complete_chunk(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
@@ -117,42 +116,17 @@ fn generate_complete_chunk(
 }
 
 /// Legacy systems for compatibility - can be removed once migration is complete
+#[allow(clippy::too_many_arguments)]
 pub fn road_layer_system(
-    mut commands: Commands,
-    mut world_manager: ResMut<UnifiedWorldManager>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut material_registry: ResMut<MaterialRegistry>,
-    mut world_rng: ResMut<WorldRng>,
+    _commands: Commands,
+    _world_manager: ResMut<UnifiedWorldManager>,
+    _meshes: ResMut<Assets<Mesh>>,
+    _materials: ResMut<Assets<StandardMaterial>>,
+    _material_registry: ResMut<MaterialRegistry>,
+    _world_rng: ResMut<WorldRng>,
 ) {
-    let chunks_to_process: Vec<ChunkCoord> = world_manager
-        .chunks
-        .iter()
-        .filter_map(|chunk_opt| {
-            if let Some(chunk) = chunk_opt {
-                if matches!(chunk.state, ChunkState::Loading) && !chunk.roads_generated {
-                    Some(chunk.coord)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    let road_generator = RoadGenerator;
-    for coord in chunks_to_process {
-        road_generator.generate_roads(
-            &mut commands,
-            &mut world_manager,
-            coord,
-            &mut meshes,
-            &mut materials,
-            &mut material_registry,
-            &mut world_rng,
-        );
-    }
+    // This system is deprecated and should be removed
+    // All road generation now happens in layered_generation_coordinator
 }
 
 pub fn building_layer_system(

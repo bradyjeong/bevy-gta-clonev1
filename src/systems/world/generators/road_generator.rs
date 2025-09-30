@@ -11,6 +11,7 @@ use bevy::prelude::*;
 pub struct RoadGenerator;
 
 impl RoadGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub fn generate_roads(
         &self,
         commands: &mut Commands,
@@ -69,6 +70,7 @@ impl RoadGenerator {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn spawn_road_entity(
         &self,
         commands: &mut Commands,

@@ -1,18 +1,13 @@
-use bevy::prelude::*;
 use crate::components::unified_water::*;
+use bevy::prelude::*;
 
 /// Asset loader system for unified water regions  
-pub fn load_unified_water_assets(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+pub fn load_unified_water_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load unified water region assets
     let lake_handle: Handle<UnifiedWaterAsset> = asset_server.load("config/water/lake.ron");
 
     // Store handles for processing when loaded
-    commands.insert_resource(UnifiedWaterAssetHandles {
-        lake: lake_handle,
-    });
+    commands.insert_resource(UnifiedWaterAssetHandles { lake: lake_handle });
 
     info!("Started loading unified water region assets");
 }
@@ -46,8 +41,10 @@ pub fn process_loaded_unified_water_assets(
                         Name::new(asset.name.clone()),
                     ));
 
-                    info!("Spawned unified water region: {} at surface level {:.2}", 
-                          asset.name, asset.surface_level);
+                    info!(
+                        "Spawned unified water region: {} at surface level {:.2}",
+                        asset.name, asset.surface_level
+                    );
                 }
             }
             AssetEvent::Modified { id } => {

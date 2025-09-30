@@ -11,14 +11,14 @@ pub fn surface_render_system(
 ) {
     for (entity, region) in water_regions.iter() {
         // Calculate water plane dimensions
-        let width = region.bounds.2 - region.bounds.0;  // max_x - min_x
-        let depth = region.bounds.3 - region.bounds.1;  // max_z - min_z
+        let width = region.bounds.2 - region.bounds.0; // max_x - min_x
+        let depth = region.bounds.3 - region.bounds.1; // max_z - min_z
         let center_x = (region.bounds.0 + region.bounds.2) / 2.0;
         let center_z = (region.bounds.1 + region.bounds.3) / 2.0;
 
         // Create water surface mesh
         let water_mesh = meshes.add(Plane3d::default().mesh().size(width, depth));
-        
+
         // Create semi-transparent water material
         let water_material = materials.add(StandardMaterial {
             base_color: Color::srgba(
@@ -35,24 +35,22 @@ pub fn surface_render_system(
         });
 
         // Spawn water surface entity as child of water region
-        let surface_entity = commands.spawn((
-            Mesh3d(water_mesh),
-            MeshMaterial3d(water_material),
-            Transform::from_xyz(center_x, region.get_water_surface_level(0.0), center_z),
-            VisibilityRange::abrupt(0.0, 2000.0), // Visible up to 2km
-            Name::new(format!("{} Surface", region.name)),
-        )).id();
+        let surface_entity = commands
+            .spawn((
+                Mesh3d(water_mesh),
+                MeshMaterial3d(water_material),
+                Transform::from_xyz(center_x, region.get_water_surface_level(0.0), center_z),
+                VisibilityRange::abrupt(0.0, 2000.0), // Visible up to 2km
+                Name::new(format!("{} Surface", region.name)),
+            ))
+            .id();
 
         // Attach surface as child of water region
         commands.entity(entity).add_children(&[surface_entity]);
 
         info!(
             "Created water surface for {} at ({:.1}, {:.1}) size {:.1}x{:.1}",
-            region.name,
-            center_x,
-            center_z,
-            width,
-            depth
+            region.name, center_x, center_z, width, depth
         );
     }
 }

@@ -1,9 +1,9 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
-use crate::components::{
-    ActiveEntity, Car, ControlState, F16, Helicopter, InCar, Player,
-    PlayerControlled, VehicleControlType,
-};
 use crate::bundles::PlayerPhysicsBundle;
+use crate::components::{
+    ActiveEntity, Car, ControlState, F16, Helicopter, InCar, Player, PlayerControlled,
+    VehicleControlType,
+};
 use crate::game_state::GameState;
 use crate::systems::queue_active_transfer;
 use bevy::prelude::*;
@@ -18,13 +18,15 @@ fn transfer_player_from_vehicle_with_physics(
     exit_rotation: Quat,
 ) {
     // Remove control from vehicle
-    commands.entity(vehicle)
+    commands
+        .entity(vehicle)
         .remove::<ControlState>()
         .remove::<PlayerControlled>()
         .remove::<VehicleControlType>();
 
     // Restore player control, physics, and visibility
-    commands.entity(player)
+    commands
+        .entity(player)
         .remove::<InCar>()
         .remove::<ChildOf>()
         .insert(PlayerControlled)
@@ -271,8 +273,6 @@ pub fn interaction_system(
             if let Ok(active_car) = active_query.single() {
                 // Get the specific active car's transform and control components
                 if let Ok((_, car_transform)) = car_query.get(active_car) {
-
-
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
                         // Calculate exit position next to the car
@@ -306,8 +306,6 @@ pub fn interaction_system(
             if let Ok(active_helicopter) = active_query.single() {
                 // Get the specific active helicopter's transform
                 if let Ok((_, helicopter_transform)) = helicopter_query.get(active_helicopter) {
-
-
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
@@ -341,8 +339,6 @@ pub fn interaction_system(
             if let Ok(active_f16) = active_query.single() {
                 // Get the specific active F16's transform
                 if let Ok((_, f16_transform)) = f16_query.get(active_f16) {
-
-
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player

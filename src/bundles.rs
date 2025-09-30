@@ -1,6 +1,6 @@
 use crate::components::{
-    Building, Car, DynamicContent, HumanMovement, MovementController, NPCAppearance, NPCBehaviorComponent,
-    NPCState, VehicleState, VehicleType,
+    Building, Car, DynamicContent, HumanMovement, MovementController, NPCAppearance,
+    NPCBehaviorComponent, NPCState, VehicleState, VehicleType,
 };
 use crate::services::distance_cache::MovementTracker;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
@@ -216,7 +216,7 @@ impl Default for PlayerPhysicsBundle {
         const CAPSULE_RADIUS: f32 = 0.25; // Slimmer for better door navigation
         const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS; // -0.20
         const UPPER_SPHERE_Y: f32 = 1.45; // ~1.70m total height
-        
+
         Self {
             rigid_body: RigidBody::Dynamic,
             collider: Collider::capsule(

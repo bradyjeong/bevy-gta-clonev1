@@ -79,7 +79,12 @@ impl WaterRegion {
     }
 
     /// Calculate submerged ratio for a box collider
-    pub fn calculate_submersion_ratio(&self, transform: &Transform, half_extents: Vec3, time: f32) -> f32 {
+    pub fn calculate_submersion_ratio(
+        &self,
+        transform: &Transform,
+        half_extents: Vec3,
+        time: f32,
+    ) -> f32 {
         let water_level = self.get_water_level(time);
         let entity_bottom = transform.translation.y - half_extents.y;
         let entity_top = transform.translation.y + half_extents.y;

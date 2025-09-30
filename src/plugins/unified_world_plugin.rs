@@ -1,9 +1,11 @@
 use crate::factories::material_factory::initialize_material_factory;
 use crate::plugins::{
-    TimingPlugin, 
+    TimingPlugin,
     // TODO: Replace real-time chunk generation with asset streaming like GTA
-    // WorldContentPlugin, 
-    WorldDebugPlugin, WorldLodPlugin, WorldNpcPlugin,
+    // WorldContentPlugin,
+    WorldDebugPlugin,
+    WorldLodPlugin,
+    WorldNpcPlugin,
     WorldStreamingPlugin,
 };
 use bevy::prelude::*;

@@ -31,25 +31,25 @@ impl VegetationGenerator {
             let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
 
             // Only spawn vegetation away from roads and buildings
-            if !self.is_on_road(position, world) {
-                if world.placement_grid.can_place(
+            if !self.is_on_road(position, world)
+                && world.placement_grid.can_place(
                     position,
                     ContentType::Tree,
                     2.0, // Tree radius
                     8.0, // Minimum distance between trees
-                ) {
-                    if let Ok(tree_entity) =
-                        self.spawn_tree(commands, coord, position, meshes, materials)
-                    {
-                        // Add to placement grid
-                        world
-                            .placement_grid
-                            .add_entity(position, ContentType::Tree, 2.0);
+                )
+            {
+                if let Ok(tree_entity) =
+                    self.spawn_tree(commands, coord, position, meshes, materials)
+                {
+                    // Add to placement grid
+                    world
+                        .placement_grid
+                        .add_entity(position, ContentType::Tree, 2.0);
 
-                        // Add entity to chunk
-                        if let Some(chunk) = world.get_chunk_mut(coord) {
-                            chunk.entities.push(tree_entity);
-                        }
+                    // Add entity to chunk
+                    if let Some(chunk) = world.get_chunk_mut(coord) {
+                        chunk.entities.push(tree_entity);
                     }
                 }
             }
@@ -81,7 +81,7 @@ impl VegetationGenerator {
                 });
                 Ok(entity)
             }
-            Err(e) => Err(format!("Failed to spawn tree: {}", e)),
+            Err(e) => Err(format!("Failed to spawn tree: {e}")),
         }
     }
 

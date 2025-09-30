@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::unified_water::UnifiedWaterBody;
+use bevy::prelude::*;
 
 pub enum SurfaceType {
     Ground(f32),
@@ -22,7 +22,7 @@ pub fn get_surface_type_at(
             };
         }
     }
-    
+
     // Default to ground level (you may want to integrate with actual terrain)
     SurfaceType::Ground(0.0)
 }

@@ -21,16 +21,21 @@ impl UnifiedWaterBody {
         };
         self.surface_level + tide_offset
     }
-    
+
     pub fn get_bed_level(&self) -> f32 {
         self.surface_level - self.depth
     }
-    
+
     pub fn contains_point(&self, x: f32, z: f32) -> bool {
         x >= self.bounds.0 && x <= self.bounds.2 && z >= self.bounds.1 && z <= self.bounds.3
     }
-    
-    pub fn calculate_submersion_ratio(&self, transform: &Transform, half_extents: Vec3, time: f32) -> f32 {
+
+    pub fn calculate_submersion_ratio(
+        &self,
+        transform: &Transform,
+        half_extents: Vec3,
+        time: f32,
+    ) -> f32 {
         let water_level = self.get_water_surface_level(time);
         let entity_bottom = transform.translation.y - half_extents.y;
         let entity_top = transform.translation.y + half_extents.y;
@@ -50,8 +55,8 @@ impl UnifiedWaterBody {
 pub struct UnifiedWaterAsset {
     pub name: String,
     pub bounds: (f32, f32, f32, f32),
-    pub surface_level: f32,  // NEW: explicit surface height
-    pub depth: f32,          // NEW: water depth
+    pub surface_level: f32, // NEW: explicit surface height
+    pub depth: f32,         // NEW: water depth
     pub tide: TideConfig,
     pub wave_params: Option<WaveParams>,
     pub surface_color: (f32, f32, f32, f32),
