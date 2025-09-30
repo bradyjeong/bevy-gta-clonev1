@@ -92,7 +92,7 @@ pub use world::{
 };
 
 pub use water::{Boat, Lake, WaterBody, WaterWave, Yacht};
-pub use water_new::{WaterRegion, WaterBodyId, GlobalOcean, WaterRegionAsset, TideConfig, WaveParams};
+pub use water_new::{WaterRegion, WaterBodyId, WaterRegionAsset, TideConfig, WaveParams};
 
 // Visual and rendering components
 pub use effects::{

@@ -1,13 +1,14 @@
 #![allow(clippy::type_complexity)]
 use crate::components::{ActiveEntity, Player};
+use crate::bundles::PlayerPhysicsBundle;
 use bevy::prelude::*;
 
 /// Basic safety system - only handles extreme cases, avoids velocity manipulation
 pub fn player_collision_resolution_system(
     mut player_query: Query<(Entity, &mut Transform), (With<Player>, With<ActiveEntity>)>,
-    _commands: Commands,
+    mut commands: Commands,
 ) {
-    let Ok((_player_entity, mut player_transform)) = player_query.single_mut() else {
+    let Ok((player_entity, mut player_transform)) = player_query.single_mut() else {
         return;
     };
 
@@ -20,6 +21,7 @@ pub fn player_collision_resolution_system(
             player_position.y
         );
         player_transform.translation = Vec3::new(player_position.x, 0.5, player_position.z);
+        commands.entity(player_entity).insert(PlayerPhysicsBundle::default()); // Restore clean physics after teleport
     }
 
     // Only handle extreme world boundaries
@@ -30,6 +32,7 @@ pub fn player_collision_resolution_system(
             player_position
         );
         player_transform.translation = Vec3::new(0.0, 0.5, 0.0);
+        commands.entity(player_entity).insert(PlayerPhysicsBundle::default()); // Restore clean physics after teleport
     }
 }
 

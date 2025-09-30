@@ -7,12 +7,10 @@ pub fn load_unified_water_assets(
     asset_server: Res<AssetServer>,
 ) {
     // Load unified water region assets
-    let ocean_handle: Handle<UnifiedWaterAsset> = asset_server.load("config/water/ocean.ron");
     let lake_handle: Handle<UnifiedWaterAsset> = asset_server.load("config/water/lake.ron");
 
     // Store handles for processing when loaded
     commands.insert_resource(UnifiedWaterAssetHandles {
-        ocean: ocean_handle,
         lake: lake_handle,
     });
 
@@ -67,6 +65,5 @@ pub fn process_loaded_unified_water_assets(
 /// Resource to track unified water asset handles
 #[derive(Resource)]
 pub struct UnifiedWaterAssetHandles {
-    pub ocean: Handle<UnifiedWaterAsset>,
     pub lake: Handle<UnifiedWaterAsset>,
 }

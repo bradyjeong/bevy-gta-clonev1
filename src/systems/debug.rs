@@ -1,6 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 use crate::components::{ActiveEntity, MainCamera, Player};
 use crate::game_state::GameState;
+use crate::bundles::PlayerPhysicsBundle;
 use bevy::prelude::*;
 // Legacy input removed - use raw F1 for debug toggle
 
@@ -56,7 +57,8 @@ pub fn debug_game_state(
                 .entity(player_entity)
                 .insert(ActiveEntity)
                 .insert(Visibility::Visible)
-                .remove::<ChildOf>();
+                .remove::<ChildOf>()
+                .insert(PlayerPhysicsBundle::default()); // Restore clean physics state
             state.set(GameState::Walking);
             info!("Restored player ActiveEntity and set to Walking state");
         } else {
