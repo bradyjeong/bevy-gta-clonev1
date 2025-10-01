@@ -1,6 +1,20 @@
 use crate::util::safe_math::safe_lerp;
 use bevy::prelude::*;
+use rand::Rng;
 use std::collections::HashMap;
+
+pub const ROAD_CELL_SIZE: f32 = 400.0;
+
+fn zigzag32(n: i32) -> u32 {
+    ((n << 1) ^ (n >> 31)) as u32
+}
+
+pub fn generate_unique_road_id(cell_coord: IVec2, local_index: u16) -> u64 {
+    let zx = zigzag32(cell_coord.x) as u64;
+    let zy = zigzag32(cell_coord.y) as u64;
+    let cell_key = (zx << 32) | zy;
+    (cell_key << 16) | (local_index as u64)
+}
 
 // NEW GTA-STYLE ROAD NETWORK SYSTEM
 
@@ -38,14 +52,14 @@ impl RoadType {
 
 #[derive(Debug, Clone)]
 pub struct RoadSpline {
-    pub id: u32,
+    pub id: u64,
     pub control_points: Vec<Vec3>,
     pub road_type: RoadType,
-    pub connections: Vec<u32>, // Connected road IDs
+    pub connections: Vec<u64>,
 }
 
 impl RoadSpline {
-    pub fn new(id: u32, start: Vec3, end: Vec3, road_type: RoadType) -> Self {
+    pub fn new(id: u64, start: Vec3, end: Vec3, road_type: RoadType) -> Self {
         Self {
             id,
             control_points: vec![start, end],
@@ -131,38 +145,72 @@ pub enum IntersectionType {
 #[derive(Debug, Clone)]
 pub struct RoadIntersection {
     pub position: Vec3,
-    pub connected_roads: Vec<u32>,
+    pub connected_roads: Vec<u64>,
     pub intersection_type: IntersectionType,
     pub radius: f32,
 }
 
 #[derive(Resource, Default)]
 pub struct RoadNetwork {
-    pub roads: HashMap<u32, RoadSpline>,
+    pub roads: HashMap<u64, RoadSpline>,
     pub intersections: HashMap<u32, RoadIntersection>,
-    pub next_road_id: u32,
+    pub next_road_id: u64,
     pub next_intersection_id: u32,
-    pub generated_chunks: std::collections::HashSet<(i32, i32)>, // Track generated areas
+    pub generated_cells: std::collections::HashSet<IVec2>,
+}
+
+#[derive(Resource, Default)]
+pub struct RoadOwnership {
+    pub road_to_chunk: HashMap<u64, (crate::systems::world::unified_world::ChunkCoord, Entity)>,
+}
+
+impl RoadOwnership {
+    pub fn register_road(
+        &mut self,
+        road_id: u64,
+        chunk: crate::systems::world::unified_world::ChunkCoord,
+        entity: Entity,
+    ) {
+        self.road_to_chunk.insert(road_id, (chunk, entity));
+    }
+
+    pub fn remove_road(
+        &mut self,
+        road_id: u64,
+    ) -> Option<(crate::systems::world::unified_world::ChunkCoord, Entity)> {
+        self.road_to_chunk.remove(&road_id)
+    }
+
+    pub fn get_roads_for_chunk(
+        &self,
+        chunk: crate::systems::world::unified_world::ChunkCoord,
+    ) -> Vec<u64> {
+        self.road_to_chunk
+            .iter()
+            .filter(|(_, (c, _))| *c == chunk)
+            .map(|(id, _)| *id)
+            .collect()
+    }
 }
 
 impl RoadNetwork {
     pub fn clear_cache(&mut self) {
-        self.generated_chunks.clear();
-        println!("DEBUG: Road network cache cleared!");
+        self.generated_cells.clear();
+        debug!("Road network cache cleared");
     }
 
     pub fn reset(&mut self) {
         self.roads.clear();
         self.intersections.clear();
-        self.generated_chunks.clear();
+        self.generated_cells.clear();
         self.next_road_id = 0;
         self.next_intersection_id = 0;
-        println!("DEBUG: Road network completely reset!");
+        debug!("Road network completely reset");
     }
 }
 
 impl RoadNetwork {
-    pub fn add_road(&mut self, start: Vec3, end: Vec3, road_type: RoadType) -> u32 {
+    pub fn add_road(&mut self, start: Vec3, end: Vec3, road_type: RoadType) -> u64 {
         let id = self.next_road_id;
         self.next_road_id += 1;
 
@@ -177,7 +225,7 @@ impl RoadNetwork {
         control: Vec3,
         end: Vec3,
         road_type: RoadType,
-    ) -> u32 {
+    ) -> u64 {
         let id = self.next_road_id;
         self.next_road_id += 1;
 
@@ -187,7 +235,7 @@ impl RoadNetwork {
         id
     }
 
-    pub fn connect_roads(&mut self, road1_id: u32, road2_id: u32) {
+    pub fn connect_roads(&mut self, road1_id: u64, road2_id: u64) {
         if let Some(road1) = self.roads.get_mut(&road1_id) {
             road1.connections.push(road2_id);
         }
@@ -199,7 +247,7 @@ impl RoadNetwork {
     pub fn add_intersection(
         &mut self,
         position: Vec3,
-        connected_roads: Vec<u32>,
+        connected_roads: Vec<u64>,
         intersection_type: IntersectionType,
     ) -> u32 {
         let id = self.next_intersection_id;
@@ -223,106 +271,128 @@ impl RoadNetwork {
         id
     }
 
-    // Generate road network for a chunk
-    pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u32> {
-        if self.generated_chunks.contains(&(chunk_x, chunk_z)) {
-            // println!("DEBUG: Chunk ({}, {}) already generated, skipping", chunk_x, chunk_z);
+    pub fn generate_roads_for_cell(
+        &mut self,
+        cell_coord: IVec2,
+        cell_size: f32,
+        _rng: &mut impl rand::Rng,
+    ) -> Vec<u64> {
+        use rand::SeedableRng;
+        let cell_seed = ((cell_coord.x as u64) << 32) | ((cell_coord.y as u64) & 0xFFFFFFFF);
+        let mut rng = rand::rngs::StdRng::seed_from_u64(cell_seed ^ 0x524F414453);
+        if self.generated_cells.contains(&cell_coord) {
             return Vec::new();
         }
-        // println!("DEBUG: Generating roads for NEW chunk ({}, {})", chunk_x, chunk_z);
-        self.generated_chunks.insert((chunk_x, chunk_z));
+        self.generated_cells.insert(cell_coord);
 
-        let chunk_size = 400.0; // Much larger chunks for better performance
-        let base_x = chunk_x as f32 * chunk_size;
-        let base_z = chunk_z as f32 * chunk_size;
+        let base_x = cell_coord.x as f32 * cell_size;
+        let base_z = cell_coord.y as f32 * cell_size;
 
         let mut new_roads = Vec::new();
+        let mut local_index: u16 = 0;
 
-        // UNIFIED GENERATION: Handle spawn chunk (0,0) with premium roads
-        if chunk_x == 0 && chunk_z == 0 {
-            return self.generate_premium_spawn_roads(base_x, base_z, chunk_size);
+        if cell_coord == IVec2::ZERO {
+            return self.generate_premium_spawn_roads(
+                base_x,
+                base_z,
+                cell_size,
+                cell_coord,
+                &mut rng,
+                &mut local_index,
+            );
         }
 
-        // Generate non-overlapping road grid to prevent z-fighting
-        // Use alternating pattern to ensure roads don't overlap
         let mut roads_added = Vec::new();
 
-        if chunk_x % 2 == 0 && chunk_z % 2 != 0 {
-            // Vertical roads only on even X, odd Z chunks
+        if cell_coord.x % 2 == 0 && cell_coord.y % 2 != 0 {
             let road_type = RoadType::MainStreet;
             let height = road_type.height();
-            let start = Vec3::new(base_x, height, base_z - chunk_size * 0.5);
+            let start = Vec3::new(base_x, height, base_z - cell_size * 0.5);
             let control = Vec3::new(
-                base_x + rand::random::<f32>() * 20.0 - 10.0,
+                base_x + rng.gen_range(-10.0..10.0),
                 height,
-                base_z + chunk_size * 0.2,
+                base_z + cell_size * 0.2,
             );
-            let end = Vec3::new(base_x, height, base_z + chunk_size * 1.5);
+            let end = Vec3::new(base_x, height, base_z + cell_size * 1.5);
 
-            let road_id = self.add_curved_road(start, control, end, road_type);
+            let road_id = generate_unique_road_id(cell_coord, local_index);
+            local_index += 1;
+            let mut road = RoadSpline::new(road_id, start, end, road_type);
+            road.add_curve(control);
+            self.roads.insert(road_id, road);
             new_roads.push(road_id);
             roads_added.push("vertical");
-            println!("DEBUG: Generated VERTICAL MainStreet in chunk ({chunk_x}, {chunk_z})",);
+            debug!("Generated VERTICAL MainStreet in cell {:?}", cell_coord);
         }
 
-        if chunk_z % 2 == 0 && chunk_x % 2 != 0 {
-            // Horizontal roads only on odd X, even Z chunks
+        if cell_coord.y % 2 == 0 && cell_coord.x % 2 != 0 {
             let road_type = RoadType::MainStreet;
             let height = road_type.height();
-            let start = Vec3::new(base_x - chunk_size * 0.5, height, base_z);
+            let start = Vec3::new(base_x - cell_size * 0.5, height, base_z);
             let control = Vec3::new(
-                base_x + chunk_size * 0.2,
+                base_x + cell_size * 0.2,
                 height,
-                base_z + rand::random::<f32>() * 20.0 - 10.0,
+                base_z + rng.gen_range(-10.0..10.0),
             );
-            let end = Vec3::new(base_x + chunk_size * 1.5, height, base_z);
+            let end = Vec3::new(base_x + cell_size * 1.5, height, base_z);
 
-            let road_id = self.add_curved_road(start, control, end, road_type);
+            let road_id = generate_unique_road_id(cell_coord, local_index);
+            local_index += 1;
+            let mut road = RoadSpline::new(road_id, start, end, road_type);
+            road.add_curve(control);
+            self.roads.insert(road_id, road);
             new_roads.push(road_id);
             roads_added.push("horizontal");
-            println!("DEBUG: Generated HORIZONTAL MainStreet in chunk ({chunk_x}, {chunk_z})",);
+            debug!("Generated HORIZONTAL MainStreet in cell {:?}", cell_coord);
         }
 
-        // Add side streets only where no main roads exist
         if roads_added.is_empty() {
             let road_type = RoadType::SideStreet;
             let height = road_type.height();
-            let start = Vec3::new(base_x + chunk_size * 0.2, height, base_z + chunk_size * 0.2);
-            let end = Vec3::new(base_x + chunk_size * 0.8, height, base_z + chunk_size * 0.8);
-            let road_id = self.add_road(start, end, road_type);
+            let start = Vec3::new(base_x + cell_size * 0.2, height, base_z + cell_size * 0.2);
+            let end = Vec3::new(base_x + cell_size * 0.8, height, base_z + cell_size * 0.8);
+            let road_id = generate_unique_road_id(cell_coord, local_index);
+            local_index += 1;
+            let road = RoadSpline::new(road_id, start, end, road_type);
+            self.roads.insert(road_id, road);
             new_roads.push(road_id);
-            println!("DEBUG: Generated SideStreet in chunk ({chunk_x}, {chunk_z}) - no main roads",);
+            debug!(
+                "Generated SideStreet in cell {:?} - no main roads",
+                cell_coord
+            );
         }
 
-        // Generate side streets (much fewer)
         for i in 0..2 {
             for j in 0..2 {
-                let sub_x = base_x + (i as f32 + 0.5) * chunk_size / 3.0;
-                let sub_z = base_z + (j as f32 + 0.5) * chunk_size / 3.0;
+                let sub_x = base_x + (i as f32 + 0.5) * cell_size / 3.0;
+                let sub_z = base_z + (j as f32 + 0.5) * cell_size / 3.0;
 
-                // Add some randomness to break the grid
-                let offset_x = (rand::random::<f32>() - 0.5) * 30.0;
-                let offset_z = (rand::random::<f32>() - 0.5) * 30.0;
+                let offset_x = rng.gen_range(-15.0..15.0);
+                let offset_z = rng.gen_range(-15.0..15.0);
 
-                if rand::random::<f32>() < 0.8 {
-                    // 80% chance for side street
+                if rng.gen_bool(0.8) {
                     let road_type = RoadType::SideStreet;
                     let height = road_type.height();
                     let start = Vec3::new(sub_x + offset_x, height, sub_z - 40.0);
                     let end = Vec3::new(sub_x + offset_x, height, sub_z + 40.0);
 
-                    let road_id = self.add_road(start, end, road_type);
+                    let road_id = generate_unique_road_id(cell_coord, local_index);
+                    local_index += 1;
+                    let road = RoadSpline::new(road_id, start, end, road_type);
+                    self.roads.insert(road_id, road);
                     new_roads.push(road_id);
                 }
 
-                if rand::random::<f32>() < 0.8 {
-                    // 80% chance for side street
+                if rng.gen_bool(0.8) {
                     let road_type = RoadType::SideStreet;
                     let height = road_type.height();
                     let start = Vec3::new(sub_x - 40.0, height, sub_z + offset_z);
                     let end = Vec3::new(sub_x + 40.0, height, sub_z + offset_z);
 
-                    let road_id = self.add_road(start, end, road_type);
+                    let road_id = generate_unique_road_id(cell_coord, local_index);
+                    local_index += 1;
+                    let road = RoadSpline::new(road_id, start, end, road_type);
+                    self.roads.insert(road_id, road);
                     new_roads.push(road_id);
                 }
             }
@@ -331,92 +401,102 @@ impl RoadNetwork {
         new_roads
     }
 
-    // Generate premium roads for spawn chunk (0,0) - respects chunk boundaries
+    #[deprecated(note = "Use generate_roads_for_cell")]
+    pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u64> {
+        use rand::SeedableRng;
+        let cell = IVec2::new(chunk_x, chunk_z);
+        let seed = ((chunk_x as u64) << 32) | ((chunk_z as u64) & 0xFFFFFFFF);
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        self.generate_roads_for_cell(cell, ROAD_CELL_SIZE, &mut rng)
+    }
+
     fn generate_premium_spawn_roads(
         &mut self,
         base_x: f32,
         base_z: f32,
-        chunk_size: f32,
-    ) -> Vec<u32> {
+        cell_size: f32,
+        cell_coord: IVec2,
+        _rng: &mut impl rand::Rng,
+        local_index: &mut u16,
+    ) -> Vec<u64> {
         let mut spawn_roads = Vec::new();
-        let height = 0.0; // Unified ground level for all roads
+        let height = 0.0;
 
-        // Calculate chunk boundaries to prevent overlap
-        let chunk_min_x = base_x;
-        let chunk_max_x = base_x + chunk_size;
-        let chunk_min_z = base_z;
-        let chunk_max_z = base_z + chunk_size;
+        let cell_min_x = base_x;
+        let cell_max_x = base_x + cell_size;
+        let cell_min_z = base_z;
+        let cell_max_z = base_z + cell_size;
 
-        // Premium highways within chunk boundaries only
         let highway_configs = [
-            // Main highway (horizontal through center)
             (
-                Vec3::new(chunk_min_x, height, base_z + chunk_size * 0.5),
-                Vec3::new(base_x + chunk_size * 0.3, height, base_z + chunk_size * 0.6),
-                Vec3::new(chunk_max_x, height, base_z + chunk_size * 0.5),
+                Vec3::new(cell_min_x, height, base_z + cell_size * 0.5),
+                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.6),
+                Vec3::new(cell_max_x, height, base_z + cell_size * 0.5),
                 RoadType::Highway,
             ),
-            // Cross highway (vertical through center)
             (
-                Vec3::new(base_x + chunk_size * 0.5, height, chunk_min_z),
-                Vec3::new(base_x + chunk_size * 0.6, height, base_z + chunk_size * 0.3),
-                Vec3::new(base_x + chunk_size * 0.5, height, chunk_max_z),
+                Vec3::new(base_x + cell_size * 0.5, height, cell_min_z),
+                Vec3::new(base_x + cell_size * 0.6, height, base_z + cell_size * 0.3),
+                Vec3::new(base_x + cell_size * 0.5, height, cell_max_z),
                 RoadType::Highway,
             ),
         ];
 
-        // Premium main streets within chunk boundaries
         let main_street_configs = [
-            // Main street parallel to highway
             (
-                Vec3::new(chunk_min_x, height, base_z + chunk_size * 0.25),
-                Vec3::new(base_x + chunk_size * 0.3, height, base_z + chunk_size * 0.3),
-                Vec3::new(chunk_max_x, height, base_z + chunk_size * 0.25),
+                Vec3::new(cell_min_x, height, base_z + cell_size * 0.25),
+                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.3),
+                Vec3::new(cell_max_x, height, base_z + cell_size * 0.25),
                 RoadType::MainStreet,
             ),
-            // Cross main street
             (
-                Vec3::new(base_x + chunk_size * 0.25, height, chunk_min_z),
-                Vec3::new(base_x + chunk_size * 0.3, height, base_z + chunk_size * 0.3),
-                Vec3::new(base_x + chunk_size * 0.25, height, chunk_max_z),
+                Vec3::new(base_x + cell_size * 0.25, height, cell_min_z),
+                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.3),
+                Vec3::new(base_x + cell_size * 0.25, height, cell_max_z),
                 RoadType::MainStreet,
             ),
         ];
 
-        // Generate roads within chunk boundaries
         for (start, control, end, road_type) in
             highway_configs.iter().chain(main_street_configs.iter())
         {
-            let road_id = self.add_curved_road(*start, *control, *end, *road_type);
+            let road_id = generate_unique_road_id(cell_coord, *local_index);
+            *local_index += 1;
+            let mut road = RoadSpline::new(road_id, *start, *end, *road_type);
+            road.add_curve(*control);
+            self.roads.insert(road_id, road);
             spawn_roads.push(road_id);
         }
 
-        // Add some side streets for density
         for i in 0..3 {
             for j in 0..3 {
                 if i == 1 && j == 1 {
                     continue;
-                } // Skip center where highways cross
+                }
 
-                let sub_x = base_x + (i as f32 + 0.5) * chunk_size / 4.0;
-                let sub_z = base_z + (j as f32 + 0.5) * chunk_size / 4.0;
+                let sub_x = base_x + (i as f32 + 0.5) * cell_size / 4.0;
+                let sub_z = base_z + (j as f32 + 0.5) * cell_size / 4.0;
 
-                // Horizontal side street
                 let start = Vec3::new(sub_x - 30.0, height, sub_z);
                 let end = Vec3::new(sub_x + 30.0, height, sub_z);
-                let road_id = self.add_road(start, end, RoadType::SideStreet);
+                let road_id = generate_unique_road_id(cell_coord, *local_index);
+                *local_index += 1;
+                let road = RoadSpline::new(road_id, start, end, RoadType::SideStreet);
+                self.roads.insert(road_id, road);
                 spawn_roads.push(road_id);
 
-                // Vertical side street
                 let start = Vec3::new(sub_x, height, sub_z - 30.0);
                 let end = Vec3::new(sub_x, height, sub_z + 30.0);
-                let road_id = self.add_road(start, end, RoadType::SideStreet);
+                let road_id = generate_unique_road_id(cell_coord, *local_index);
+                *local_index += 1;
+                let road = RoadSpline::new(road_id, start, end, RoadType::SideStreet);
+                self.roads.insert(road_id, road);
                 spawn_roads.push(road_id);
             }
         }
 
-        println!(
-            "Generated {} premium roads within chunk (0,0) boundaries",
+        debug!(
+            "Generated {} premium roads in cell (0,0)",
             spawn_roads.len()
         );
         spawn_roads

@@ -232,7 +232,7 @@ pub fn cullable_to_visibility_range(
 // Road system components
 #[derive(Component)]
 pub struct RoadEntity {
-    pub road_id: u32,
+    pub road_id: u64,
 }
 
 #[derive(Component)]

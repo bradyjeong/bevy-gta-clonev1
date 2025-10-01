@@ -4,7 +4,9 @@ use futures_lite::future;
 use std::collections::{HashMap, VecDeque};
 
 use crate::components::world::ContentType;
+use crate::systems::world::road_network::{ROAD_CELL_SIZE, RoadType, generate_unique_road_id};
 use crate::systems::world::unified_world::{ChunkCoord, ChunkState, UnifiedWorldManager};
+use rand::{Rng, SeedableRng};
 
 /// System sets for deterministic streaming order
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
@@ -31,6 +33,7 @@ pub struct AsyncChunkGenerationPlugin;
 impl Plugin for AsyncChunkGenerationPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(AsyncChunkQueue::new())
+            .insert_resource(crate::systems::world::road_network::RoadOwnership::default())
             .configure_sets(
                 Update,
                 (
@@ -119,6 +122,7 @@ pub struct ChunkGenerationResult {
     pub coord: ChunkCoord,
     pub generation_id: u32,
     pub entities_data: Vec<EntityGenerationData>,
+    pub road_blueprints: Vec<RoadBlueprint>,
     pub success: bool,
     pub generation_time: f32,
 }
@@ -131,6 +135,14 @@ pub struct EntityGenerationData {
     pub scale: Vec3,
     pub rotation: Quat,
     pub color: Color,
+}
+
+#[derive(Clone, Debug)]
+pub struct RoadBlueprint {
+    pub road_id: u64,
+    pub road_type: RoadType,
+    pub control_points: Vec<Vec3>,
+    pub center_pos: Vec3,
 }
 
 /// System to queue chunks for async generation
@@ -196,6 +208,7 @@ pub fn queue_async_chunk_generation(
                         coord,
                         generation_id,
                         entities_data: Vec::new(),
+                        road_blueprints: Vec::new(),
                         success: false,
                         generation_time: 0.0,
                     }
@@ -214,11 +227,17 @@ pub fn queue_async_chunk_generation(
 
 /// System to process completed async chunk generation tasks
 /// Applies strict per-frame budget and stale result protection with generation versioning
+#[allow(clippy::too_many_arguments)]
 pub fn process_completed_chunks(
     mut commands: Commands,
     mut async_queue: ResMut<AsyncChunkQueue>,
     mut world_manager: ResMut<UnifiedWorldManager>,
     async_assets: Res<AsyncChunkAssets>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut material_registry: ResMut<crate::resources::MaterialRegistry>,
+    mut road_ownership: ResMut<crate::systems::world::road_network::RoadOwnership>,
+    player_query: Query<&Transform, With<crate::components::ActiveEntity>>,
     time: Res<Time>,
 ) {
     // Poll active tasks and push completed results into queue
@@ -251,12 +270,10 @@ pub fn process_completed_chunks(
         };
 
         // STALE RESULT GUARD: Check chunk exists, is Loading, AND generation_id matches
-        let chunk_valid = world_manager
-            .get_chunk(result.coord)
-            .is_some_and(|chunk| {
-                matches!(chunk.state, ChunkState::Loading)
-                    && chunk.generation_id == result.generation_id
-            });
+        let chunk_valid = world_manager.get_chunk(result.coord).is_some_and(|chunk| {
+            matches!(chunk.state, ChunkState::Loading)
+                && chunk.generation_id == result.generation_id
+        });
 
         if !chunk_valid {
             debug!(
@@ -267,15 +284,43 @@ pub fn process_completed_chunks(
         }
 
         if result.success {
-            // Spawn entities on main thread using generated data and shared assets
-            let spawned_entities =
+            let mut spawned_entities =
                 spawn_entities_from_async_data(&mut commands, &result, &async_assets);
 
-            // Mark chunk as loaded and track spawned entities
+            let player_pos = player_query
+                .iter()
+                .next()
+                .map(|t| t.translation)
+                .unwrap_or(Vec3::ZERO);
+
+            let roads_spawned = apply_road_blueprints(
+                &mut commands,
+                &mut world_manager,
+                &result.road_blueprints,
+                result.coord,
+                player_pos,
+                &mut meshes,
+                &mut materials,
+                &mut material_registry,
+                &mut road_ownership,
+            );
+
+            if !result.road_blueprints.is_empty() {
+                debug!(
+                    "Spawned {} roads from {} blueprints for chunk {:?}",
+                    roads_spawned.len(),
+                    result.road_blueprints.len(),
+                    result.coord
+                );
+            }
+
+            spawned_entities.extend(roads_spawned);
+
             if let Some(chunk) = world_manager.get_chunk_mut(result.coord) {
                 chunk.state = ChunkState::Loaded { lod_level: 0 };
                 chunk.last_update = time.elapsed_secs();
                 chunk.entities.extend(spawned_entities);
+                chunk.roads_generated = true;
             }
 
             info!(
@@ -357,12 +402,47 @@ async fn generate_chunk_async(
         });
     }
 
+    let mut road_blueprints = Vec::new();
+
+    let chunk_center_x = coord.x as f32 * chunk_size + chunk_size / 2.0;
+    let chunk_center_z = coord.z as f32 * chunk_size + chunk_size / 2.0;
+    let half = chunk_size / 2.0;
+
+    let min_cell_x = ((chunk_center_x - half) / ROAD_CELL_SIZE).floor() as i32;
+    let max_cell_x = ((chunk_center_x + half) / ROAD_CELL_SIZE).floor() as i32;
+    let min_cell_z = ((chunk_center_z - half) / ROAD_CELL_SIZE).floor() as i32;
+    let max_cell_z = ((chunk_center_z + half) / ROAD_CELL_SIZE).floor() as i32;
+
+    for cx in min_cell_x..=max_cell_x {
+        for cz in min_cell_z..=max_cell_z {
+            let cell_coord = IVec2::new(cx, cz);
+            let seed = ((cx as u64) << 32) | ((cz as u64) & 0xFFFFFFFF);
+            let mut cell_rng = rand::rngs::StdRng::seed_from_u64(seed ^ 0xDEADBEEF);
+
+            let before = road_blueprints.len();
+            generate_road_cell_blueprints(
+                cell_coord,
+                ROAD_CELL_SIZE,
+                &mut cell_rng,
+                &mut road_blueprints,
+            );
+            let added = road_blueprints.len() - before;
+            if added > 0 {
+                debug!(
+                    "Cell {:?} generated {} road blueprints for chunk {:?}",
+                    cell_coord, added, coord
+                );
+            }
+        }
+    }
+
     let generation_time = start_time.elapsed().as_secs_f32();
 
     ChunkGenerationResult {
         coord,
         generation_id,
         entities_data,
+        road_blueprints,
         success: true,
         generation_time,
     }
@@ -498,6 +578,343 @@ fn spawn_async_road(
     _assets: &AsyncChunkAssets,
     _data: &EntityGenerationData,
 ) -> Option<Entity> {
-    // TODO: Implement async road spawning
     None
+}
+
+#[allow(clippy::too_many_arguments)]
+fn apply_road_blueprints(
+    commands: &mut Commands,
+    world: &mut UnifiedWorldManager,
+    blueprints: &[RoadBlueprint],
+    _chunk_coord: ChunkCoord,
+    player_pos: Vec3,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<StandardMaterial>,
+    material_registry: &mut crate::resources::MaterialRegistry,
+    road_ownership: &mut crate::systems::world::road_network::RoadOwnership,
+) -> Vec<Entity> {
+    use crate::bundles::VisibleChildBundle;
+    use crate::components::{ContentType, DynamicContent, RoadEntity};
+    use crate::resources::MaterialKey;
+    use crate::systems::world::road_mesh::{generate_road_markings_mesh, generate_road_mesh};
+    use crate::systems::world::road_network::RoadSpline;
+    use crate::systems::world::unified_world::{
+        ContentLayer, UNIFIED_CHUNK_SIZE, UnifiedChunkEntity,
+    };
+
+    let mut spawned = Vec::new();
+
+    for blueprint in blueprints {
+        if world.road_network.roads.contains_key(&blueprint.road_id) {
+            debug!("Skipping duplicate road_id: {}", blueprint.road_id);
+            continue;
+        }
+
+        let distance = blueprint.center_pos.distance(player_pos);
+
+        let owner_coord = ChunkCoord::from_world_pos(blueprint.center_pos, UNIFIED_CHUNK_SIZE);
+
+        let road_spline = RoadSpline {
+            id: blueprint.road_id,
+            control_points: blueprint.control_points.clone(),
+            road_type: blueprint.road_type,
+            connections: Vec::new(),
+        };
+
+        world
+            .road_network
+            .roads
+            .insert(blueprint.road_id, road_spline.clone());
+
+        let (base_color, roughness) = match blueprint.road_type {
+            RoadType::Highway => (Color::srgb(0.4, 0.4, 0.45), 0.8),
+            RoadType::MainStreet => (Color::srgb(0.35, 0.35, 0.4), 0.8),
+            RoadType::SideStreet => (Color::srgb(0.45, 0.45, 0.5), 0.7),
+            RoadType::Alley => (Color::srgb(0.5, 0.5, 0.45), 0.6),
+        };
+
+        let road_material_key = MaterialKey::road(base_color).with_roughness(roughness);
+        let road_material = material_registry.get_or_create(materials, road_material_key);
+
+        let road_entity = commands
+            .spawn((
+                UnifiedChunkEntity {
+                    coord: owner_coord,
+                    layer: ContentLayer::Roads,
+                },
+                RoadEntity {
+                    road_id: blueprint.road_id,
+                },
+                Transform::from_translation(blueprint.center_pos),
+                GlobalTransform::default(),
+                Visibility::default(),
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
+                DynamicContent {
+                    content_type: ContentType::Road,
+                },
+            ))
+            .id();
+
+        let road_mesh = generate_road_mesh(&road_spline);
+        commands.spawn((
+            Mesh3d(meshes.add(road_mesh)),
+            MeshMaterial3d(road_material),
+            Transform::from_translation(-blueprint.center_pos + Vec3::new(0.0, 0.0, 0.0)),
+            ChildOf(road_entity),
+            VisibleChildBundle::default(),
+        ));
+
+        if distance < 100.0 {
+            let marking_material_key =
+                MaterialKey::road_marking(Color::srgb(0.95, 0.95, 0.95)).with_roughness(0.6);
+            let marking_material = material_registry.get_or_create(materials, marking_material_key);
+
+            let marking_meshes = generate_road_markings_mesh(&road_spline);
+            for marking_mesh in marking_meshes {
+                commands.spawn((
+                    Mesh3d(meshes.add(marking_mesh)),
+                    MeshMaterial3d(marking_material.clone()),
+                    Transform::from_translation(-blueprint.center_pos + Vec3::new(0.0, 0.01, 0.0)),
+                    ChildOf(road_entity),
+                    VisibleChildBundle::default(),
+                ));
+            }
+        }
+
+        let samples = 20;
+        for i in 0..samples {
+            let t = i as f32 / (samples - 1) as f32;
+            let road_point = road_spline.evaluate(t);
+            world.placement_grid.add_entity(
+                road_point,
+                ContentType::Road,
+                blueprint.road_type.width() * 0.5,
+            );
+        }
+
+        road_ownership.register_road(blueprint.road_id, owner_coord, road_entity);
+
+        spawned.push(road_entity);
+    }
+
+    spawned
+}
+
+fn generate_road_cell_blueprints(
+    cell_coord: IVec2,
+    cell_size: f32,
+    _rng: &mut impl rand::Rng,
+    blueprints: &mut Vec<RoadBlueprint>,
+) {
+    let cell_seed = ((cell_coord.x as u64) << 32) | ((cell_coord.y as u64) & 0xFFFFFFFF);
+    let mut rng = rand::rngs::StdRng::seed_from_u64(cell_seed ^ 0x524F414453);
+
+    let base_x = cell_coord.x as f32 * cell_size;
+    let base_z = cell_coord.y as f32 * cell_size;
+
+    let mut local_index: u16 = 0;
+
+    if cell_coord == IVec2::ZERO {
+        generate_premium_spawn_cell_blueprints(
+            base_x,
+            base_z,
+            cell_size,
+            cell_coord,
+            &mut local_index,
+            blueprints,
+        );
+        return;
+    }
+
+    if cell_coord.x % 2 == 0 && cell_coord.y % 2 != 0 {
+        let road_type = RoadType::MainStreet;
+        let height = road_type.height();
+        let start = Vec3::new(base_x, height, base_z - cell_size * 0.5);
+        let control = Vec3::new(
+            base_x + rng.gen_range(-10.0..10.0),
+            height,
+            base_z + cell_size * 0.2,
+        );
+        let end = Vec3::new(base_x, height, base_z + cell_size * 1.5);
+
+        let center_pos = (start + end) * 0.5;
+        blueprints.push(RoadBlueprint {
+            road_id: generate_unique_road_id(cell_coord, local_index),
+            road_type,
+            control_points: vec![start, control, end],
+            center_pos,
+        });
+        local_index += 1;
+    }
+
+    if cell_coord.y % 2 == 0 && cell_coord.x % 2 != 0 {
+        let road_type = RoadType::MainStreet;
+        let height = road_type.height();
+        let start = Vec3::new(base_x - cell_size * 0.5, height, base_z);
+        let control = Vec3::new(
+            base_x + cell_size * 0.2,
+            height,
+            base_z + rng.gen_range(-10.0..10.0),
+        );
+        let end = Vec3::new(base_x + cell_size * 1.5, height, base_z);
+
+        let center_pos = (start + end) * 0.5;
+        blueprints.push(RoadBlueprint {
+            road_id: generate_unique_road_id(cell_coord, local_index),
+            road_type,
+            control_points: vec![start, control, end],
+            center_pos,
+        });
+        local_index += 1;
+    }
+
+    let roads_before = blueprints.len();
+    if cell_coord.x % 2 != 0 || cell_coord.y % 2 != 0 {
+        for i in 0..2 {
+            for j in 0..2 {
+                let sub_x = base_x + (i as f32 + 0.5) * cell_size / 3.0;
+                let sub_z = base_z + (j as f32 + 0.5) * cell_size / 3.0;
+
+                let offset_x = rng.gen_range(-15.0..15.0);
+                let offset_z = rng.gen_range(-15.0..15.0);
+
+                if rng.gen_bool(0.8) {
+                    let road_type = RoadType::SideStreet;
+                    let height = road_type.height();
+                    let start = Vec3::new(sub_x + offset_x, height, sub_z - 40.0);
+                    let end = Vec3::new(sub_x + offset_x, height, sub_z + 40.0);
+
+                    let center_pos = (start + end) * 0.5;
+                    blueprints.push(RoadBlueprint {
+                        road_id: generate_unique_road_id(cell_coord, local_index),
+                        road_type,
+                        control_points: vec![start, end],
+                        center_pos,
+                    });
+                    local_index += 1;
+                }
+
+                if rng.gen_bool(0.8) {
+                    let road_type = RoadType::SideStreet;
+                    let height = road_type.height();
+                    let start = Vec3::new(sub_x - 40.0, height, sub_z + offset_z);
+                    let end = Vec3::new(sub_x + 40.0, height, sub_z + offset_z);
+
+                    let center_pos = (start + end) * 0.5;
+                    blueprints.push(RoadBlueprint {
+                        road_id: generate_unique_road_id(cell_coord, local_index),
+                        road_type,
+                        control_points: vec![start, end],
+                        center_pos,
+                    });
+                    local_index += 1;
+                }
+            }
+        }
+    }
+
+    if blueprints.len() > roads_before {
+        debug!(
+            "Generated {} side streets for cell {:?}",
+            blueprints.len() - roads_before,
+            cell_coord
+        );
+    }
+}
+
+fn generate_premium_spawn_cell_blueprints(
+    base_x: f32,
+    base_z: f32,
+    cell_size: f32,
+    cell_coord: IVec2,
+    local_index: &mut u16,
+    blueprints: &mut Vec<RoadBlueprint>,
+) {
+    let height = 0.0;
+
+    let cell_min_x = base_x;
+    let cell_max_x = base_x + cell_size;
+    let cell_min_z = base_z;
+    let cell_max_z = base_z + cell_size;
+
+    let highway_configs = [
+        (
+            Vec3::new(cell_min_x, height, base_z + cell_size * 0.5),
+            Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.6),
+            Vec3::new(cell_max_x, height, base_z + cell_size * 0.5),
+            RoadType::Highway,
+        ),
+        (
+            Vec3::new(base_x + cell_size * 0.5, height, cell_min_z),
+            Vec3::new(base_x + cell_size * 0.6, height, base_z + cell_size * 0.3),
+            Vec3::new(base_x + cell_size * 0.5, height, cell_max_z),
+            RoadType::Highway,
+        ),
+    ];
+
+    let main_street_configs = [
+        (
+            Vec3::new(cell_min_x, height, base_z + cell_size * 0.25),
+            Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.3),
+            Vec3::new(cell_max_x, height, base_z + cell_size * 0.25),
+            RoadType::MainStreet,
+        ),
+        (
+            Vec3::new(base_x + cell_size * 0.25, height, cell_min_z),
+            Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.3),
+            Vec3::new(base_x + cell_size * 0.25, height, cell_max_z),
+            RoadType::MainStreet,
+        ),
+    ];
+
+    for (start, control, end, road_type) in highway_configs.iter().chain(main_street_configs.iter())
+    {
+        let center_pos = (*start + *end) * 0.5;
+        blueprints.push(RoadBlueprint {
+            road_id: generate_unique_road_id(cell_coord, *local_index),
+            road_type: *road_type,
+            control_points: vec![*start, *control, *end],
+            center_pos,
+        });
+        *local_index += 1;
+    }
+
+    for i in 0..3 {
+        for j in 0..3 {
+            if i == 1 && j == 1 {
+                continue;
+            }
+
+            let sub_x = base_x + (i as f32 + 0.5) * cell_size / 4.0;
+            let sub_z = base_z + (j as f32 + 0.5) * cell_size / 4.0;
+
+            let start = Vec3::new(sub_x - 30.0, height, sub_z);
+            let end = Vec3::new(sub_x + 30.0, height, sub_z);
+            let center_pos = (start + end) * 0.5;
+            blueprints.push(RoadBlueprint {
+                road_id: generate_unique_road_id(cell_coord, *local_index),
+                road_type: RoadType::SideStreet,
+                control_points: vec![start, end],
+                center_pos,
+            });
+            *local_index += 1;
+
+            let start = Vec3::new(sub_x, height, sub_z - 30.0);
+            let end = Vec3::new(sub_x, height, sub_z + 30.0);
+            let center_pos = (start + end) * 0.5;
+            blueprints.push(RoadBlueprint {
+                road_id: generate_unique_road_id(cell_coord, *local_index),
+                road_type: RoadType::SideStreet,
+                control_points: vec![start, end],
+                center_pos,
+            });
+            *local_index += 1;
+        }
+    }
+
+    debug!(
+        "Generated {} premium roads for spawn cell (0,0)",
+        blueprints.len()
+    );
 }

@@ -11,7 +11,7 @@ use bevy::prelude::*;
 pub struct RoadGenerator;
 
 impl RoadGenerator {
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, deprecated)]
     pub fn generate_roads(
         &self,
         commands: &mut Commands,
@@ -22,7 +22,6 @@ impl RoadGenerator {
         material_registry: &mut MaterialRegistry,
         _world_rng: &mut WorldRng,
     ) {
-        // Generate road network for this chunk
         let new_road_ids = world.road_network.generate_chunk_roads(coord.x, coord.z);
 
         // Create road entities and add to placement grid
@@ -75,7 +74,7 @@ impl RoadGenerator {
         &self,
         commands: &mut Commands,
         chunk_coord: ChunkCoord,
-        road_id: u32,
+        road_id: u64,
         road: &RoadSpline,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,

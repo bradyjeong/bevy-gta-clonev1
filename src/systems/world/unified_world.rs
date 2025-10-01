@@ -502,6 +502,7 @@ pub enum ContentLayer {
 pub fn unified_world_streaming_system(
     mut commands: Commands,
     mut world_manager: ResMut<UnifiedWorldManager>,
+    mut road_ownership: ResMut<crate::systems::world::road_network::RoadOwnership>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     time: Res<Time>,
 ) {
@@ -534,7 +535,12 @@ pub fn unified_world_streaming_system(
         if world_manager.chunks_unloaded_this_frame >= world_manager.max_chunks_per_frame {
             break;
         }
-        unload_chunk(&mut commands, &mut world_manager, coord);
+        unload_chunk(
+            &mut commands,
+            &mut world_manager,
+            &mut road_ownership,
+            coord,
+        );
         world_manager.chunks_unloaded_this_frame += 1;
     }
 
@@ -589,20 +595,26 @@ fn initiate_chunk_loading(
 fn unload_chunk(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
+    road_ownership: &mut crate::systems::world::road_network::RoadOwnership,
     coord: ChunkCoord,
 ) {
     if let Some(index) = world_manager.chunk_coord_to_index(coord) {
         if let Some(chunk) = &world_manager.chunks[index] {
-            // CRITICAL FIX: Use despawn to clean up entire hierarchy (auto-recursive in Bevy 0.16)
             for &entity in &chunk.entities {
                 commands.entity(entity).despawn();
             }
 
-            // Clear from placement grid
             world_manager.clear_placement_grid_for_chunk(coord);
         }
 
-        // Remove chunk data by setting to None (finite world - preserve Vec capacity)
+        let road_ids = road_ownership.get_roads_for_chunk(coord);
+        for road_id in road_ids {
+            if let Some((_, entity)) = road_ownership.remove_road(road_id) {
+                commands.entity(entity).despawn();
+            }
+            world_manager.road_network.roads.remove(&road_id);
+        }
+
         world_manager.chunks[index] = None;
     }
 }
