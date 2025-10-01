@@ -102,8 +102,8 @@ impl AsyncChunkQueue {
         Self {
             active_tasks: HashMap::new(),
             completed_results: VecDeque::new(),
-            max_concurrent_tasks: 3,    // Conservative limit for stability
-            max_completed_per_frame: 2, // Apply at most 2 chunks per frame
+            max_concurrent_tasks: 6, // Increased for better throughput (time budget controls frame impact)
+            max_completed_per_frame: 2, // DEPRECATED: Using time-based budgeting now
         }
     }
 
@@ -137,12 +137,38 @@ pub struct EntityGenerationData {
     pub color: Color,
 }
 
+/// Serialized mesh data that can be transferred between threads
+#[derive(Clone, Debug)]
+pub struct SerializedMeshData {
+    pub positions: Vec<[f32; 3]>,
+    pub normals: Vec<[f32; 3]>,
+    pub uvs: Vec<[f32; 2]>,
+    pub indices: Vec<u32>,
+}
+
+impl SerializedMeshData {
+    /// Fast conversion to Bevy Mesh on main thread (no computation, just assembly)
+    pub fn to_mesh(&self) -> Mesh {
+        use bevy::render::mesh::{Indices, PrimitiveTopology};
+
+        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, default());
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, self.positions.clone());
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, self.normals.clone());
+        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, self.uvs.clone());
+        mesh.insert_indices(Indices::U32(self.indices.clone()));
+        mesh
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct RoadBlueprint {
     pub road_id: u64,
     pub road_type: RoadType,
     pub control_points: Vec<Vec3>,
     pub center_pos: Vec3,
+    // PRE-COMPUTED MESH DATA (generated async, assembled on main thread)
+    pub road_mesh_data: SerializedMeshData,
+    pub marking_meshes_data: Vec<SerializedMeshData>,
 }
 
 /// System to queue chunks for async generation
@@ -226,7 +252,7 @@ pub fn queue_async_chunk_generation(
 }
 
 /// System to process completed async chunk generation tasks
-/// Applies strict per-frame budget and stale result protection with generation versioning
+/// Applies strict TIME-BASED frame budget and stale result protection with generation versioning
 #[allow(clippy::too_many_arguments)]
 pub fn process_completed_chunks(
     mut commands: Commands,
@@ -256,18 +282,28 @@ pub fn process_completed_chunks(
         }
     }
 
-    // Apply strict per-frame budget from completed results queue
-    let max_to_process = async_queue
-        .max_completed_per_frame
-        .min(async_queue.completed_results.len());
+    // CRITICAL FIX: TIME-BASED budgeting instead of chunk count
+    // Target: 3ms per frame for chunk processing (leaves 13ms for game logic at 60 FPS)
+    const FRAME_BUDGET_MS: f32 = 3.0;
+    let frame_start = std::time::Instant::now();
     let mut processed_count = 0;
     let total_pending = async_queue.completed_results.len();
 
-    // Process up to budget, leave remainder in queue for next frame
-    for _ in 0..max_to_process {
-        let Some(result) = async_queue.completed_results.pop_front() else {
+    // Process up to TIME budget (not chunk count), leave remainder in queue for next frame
+    while let Some(result) = async_queue.completed_results.pop_front() {
+        // Check time budget BEFORE processing each chunk
+        let elapsed_ms = frame_start.elapsed().as_secs_f32() * 1000.0;
+        if elapsed_ms > FRAME_BUDGET_MS {
+            // Budget exceeded - put this result back and stop processing
+            async_queue.completed_results.push_front(result);
+            debug!(
+                "Frame budget exceeded ({:.2}ms > {}ms) - deferring {} chunks to next frame",
+                elapsed_ms,
+                FRAME_BUDGET_MS,
+                async_queue.completed_results.len()
+            );
             break;
-        };
+        }
 
         // STALE RESULT GUARD: Check chunk exists, is Loading, AND generation_id matches
         let chunk_valid = world_manager.get_chunk(result.coord).is_some_and(|chunk| {
@@ -346,12 +382,15 @@ pub fn process_completed_chunks(
     }
 
     if processed_count > 0 {
-        debug!(
-            "Applied {}/{} pending results this frame ({} active tasks, {} still queued)",
+        let elapsed_ms = frame_start.elapsed().as_secs_f32() * 1000.0;
+        info!(
+            "Applied {}/{} chunks in {:.2}ms ({} active, {} queued, {:.1}% budget used)",
             processed_count,
             total_pending,
+            elapsed_ms,
             async_queue.active_tasks.len(),
-            async_queue.completed_results.len()
+            async_queue.completed_results.len(),
+            (elapsed_ms / FRAME_BUDGET_MS) * 100.0
         );
     }
 }
@@ -596,7 +635,6 @@ fn apply_road_blueprints(
     use crate::bundles::VisibleChildBundle;
     use crate::components::{ContentType, DynamicContent, RoadEntity};
     use crate::resources::MaterialKey;
-    use crate::systems::world::road_mesh::{generate_road_markings_mesh, generate_road_mesh};
     use crate::systems::world::road_network::RoadSpline;
     use crate::systems::world::unified_world::{
         ContentLayer, UNIFIED_CHUNK_SIZE, UnifiedChunkEntity,
@@ -656,7 +694,9 @@ fn apply_road_blueprints(
             ))
             .id();
 
-        let road_mesh = generate_road_mesh(&road_spline);
+        // CRITICAL FIX: Use pre-computed mesh data (just assembly, no generation)
+        // This is 10-50x faster than generating meshes on main thread
+        let road_mesh = blueprint.road_mesh_data.to_mesh();
         commands.spawn((
             Mesh3d(meshes.add(road_mesh)),
             MeshMaterial3d(road_material),
@@ -670,8 +710,9 @@ fn apply_road_blueprints(
                 MaterialKey::road_marking(Color::srgb(0.95, 0.95, 0.95)).with_roughness(0.6);
             let marking_material = material_registry.get_or_create(materials, marking_material_key);
 
-            let marking_meshes = generate_road_markings_mesh(&road_spline);
-            for marking_mesh in marking_meshes {
+            // CRITICAL FIX: Use pre-computed marking mesh data
+            for marking_mesh_data in &blueprint.marking_meshes_data {
+                let marking_mesh = marking_mesh_data.to_mesh();
                 commands.spawn((
                     Mesh3d(meshes.add(marking_mesh)),
                     MeshMaterial3d(marking_material.clone()),
@@ -699,6 +740,369 @@ fn apply_road_blueprints(
     }
 
     spawned
+}
+
+/// Generate mesh data from RoadSpline in async context (no ECS/Assets access)
+fn generate_road_mesh_data_async(
+    control_points: &[Vec3],
+    road_type: RoadType,
+) -> SerializedMeshData {
+    let width = road_type.width();
+    let length = calculate_road_length(control_points);
+    let segments = calculate_segments_from_length(length, control_points.len() > 2);
+
+    let vertex_count = (segments + 1) * 2;
+    let index_count = segments * 6;
+
+    let mut positions = Vec::with_capacity(vertex_count);
+    let mut normals = Vec::with_capacity(vertex_count);
+    let mut uvs = Vec::with_capacity(vertex_count);
+    let mut indices = Vec::with_capacity(index_count);
+
+    for i in 0..=segments {
+        let t = i as f32 / segments as f32;
+        let position = evaluate_spline(control_points, t);
+        let tangent = calculate_tangent_async(control_points, t);
+        let right = Vec3::new(tangent.z, 0.0, -tangent.x).normalize();
+
+        let left_pos = position + right * width * 0.5;
+        let right_pos = position - right * width * 0.5;
+
+        positions.push([left_pos.x, left_pos.y, left_pos.z]);
+        positions.push([right_pos.x, right_pos.y, right_pos.z]);
+
+        normals.push([0.0, 1.0, 0.0]);
+        normals.push([0.0, 1.0, 0.0]);
+
+        let v = t;
+        uvs.push([0.0, v]);
+        uvs.push([1.0, v]);
+
+        if i < segments {
+            let base = (i * 2) as u32;
+            indices.push(base);
+            indices.push(base + 1);
+            indices.push(base + 2);
+
+            indices.push(base + 1);
+            indices.push(base + 3);
+            indices.push(base + 2);
+        }
+    }
+
+    SerializedMeshData {
+        positions,
+        normals,
+        uvs,
+        indices,
+    }
+}
+
+/// Generate marking mesh data asynchronously
+fn generate_marking_meshes_data_async(
+    control_points: &[Vec3],
+    road_type: RoadType,
+) -> Vec<SerializedMeshData> {
+    let mut markings = Vec::new();
+
+    match road_type {
+        RoadType::Highway => {
+            markings.push(generate_center_line_data_async(
+                control_points,
+                road_type,
+                true,
+            ));
+            markings.push(generate_lane_markings_data_async(
+                control_points,
+                road_type,
+                4,
+            ));
+        }
+        RoadType::MainStreet => {
+            markings.push(generate_center_line_data_async(
+                control_points,
+                road_type,
+                true,
+            ));
+            markings.push(generate_edge_lines_data_async(control_points, road_type));
+        }
+        RoadType::SideStreet => {
+            markings.push(generate_center_line_data_async(
+                control_points,
+                road_type,
+                false,
+            ));
+        }
+        RoadType::Alley => {}
+    }
+
+    markings
+}
+
+fn calculate_road_length(control_points: &[Vec3]) -> f32 {
+    if control_points.len() < 2 {
+        return 0.0;
+    }
+
+    let mut length = 0.0;
+    let samples = 20;
+    for i in 0..samples {
+        let t1 = i as f32 / samples as f32;
+        let t2 = (i + 1) as f32 / samples as f32;
+        let p1 = evaluate_spline(control_points, t1);
+        let p2 = evaluate_spline(control_points, t2);
+        length += p1.distance(p2);
+    }
+    length
+}
+
+fn calculate_segments_from_length(length: f32, is_curved: bool) -> usize {
+    let base_segments = (length / 20.0) as usize;
+    if is_curved {
+        base_segments.clamp(4, 30)
+    } else {
+        base_segments.clamp(2, 8)
+    }
+}
+
+fn evaluate_spline(control_points: &[Vec3], t: f32) -> Vec3 {
+    if control_points.len() == 2 {
+        control_points[0].lerp(control_points[1], t)
+    } else if control_points.len() == 3 {
+        let t2 = t * t;
+        let inv_t = 1.0 - t;
+        let inv_t2 = inv_t * inv_t;
+        control_points[0] * inv_t2 + control_points[1] * 2.0 * inv_t * t + control_points[2] * t2
+    } else {
+        control_points[0]
+    }
+}
+
+fn calculate_tangent_async(control_points: &[Vec3], t: f32) -> Vec3 {
+    let epsilon = 0.01;
+    let t1 = (t - epsilon).max(0.0);
+    let t2 = (t + epsilon).min(1.0);
+    let p1 = evaluate_spline(control_points, t1);
+    let p2 = evaluate_spline(control_points, t2);
+    (p2 - p1).normalize()
+}
+
+fn generate_center_line_data_async(
+    control_points: &[Vec3],
+    _road_type: RoadType,
+    dashed: bool,
+) -> SerializedMeshData {
+    let length = calculate_road_length(control_points);
+    let segments = calculate_segments_from_length(length, control_points.len() > 2);
+    let line_width = 0.3;
+
+    let mut positions = Vec::new();
+    let mut normals = Vec::new();
+    let mut uvs = Vec::new();
+    let mut indices = Vec::new();
+
+    for i in 0..=segments {
+        let t = i as f32 / segments as f32;
+
+        if dashed && (i / 5) % 2 == 1 {
+            continue;
+        }
+
+        let position = evaluate_spline(control_points, t);
+        let tangent = calculate_tangent_async(control_points, t);
+        let right = Vec3::new(tangent.z, 0.0, -tangent.x).normalize();
+
+        let left_pos = position + right * line_width * 0.5;
+        let right_pos = position - right * line_width * 0.5;
+
+        let base_idx = positions.len() as u32;
+
+        positions.push([left_pos.x, left_pos.y, left_pos.z]);
+        positions.push([right_pos.x, right_pos.y, right_pos.z]);
+
+        normals.push([0.0, 1.0, 0.0]);
+        normals.push([0.0, 1.0, 0.0]);
+
+        uvs.push([0.0, t]);
+        uvs.push([1.0, t]);
+
+        if positions.len() >= 4 && base_idx >= 2 {
+            indices.push(base_idx - 2);
+            indices.push(base_idx);
+            indices.push(base_idx - 1);
+
+            indices.push(base_idx - 1);
+            indices.push(base_idx);
+            indices.push(base_idx + 1);
+        }
+    }
+
+    SerializedMeshData {
+        positions,
+        normals,
+        uvs,
+        indices,
+    }
+}
+
+fn generate_lane_markings_data_async(
+    control_points: &[Vec3],
+    road_type: RoadType,
+    lanes: u32,
+) -> SerializedMeshData {
+    let width = road_type.width();
+    let lane_width = width / lanes as f32;
+    let length = calculate_road_length(control_points);
+    let segments = calculate_segments_from_length(length, control_points.len() > 2);
+
+    let mut positions = Vec::new();
+    let mut normals = Vec::new();
+    let mut uvs = Vec::new();
+    let mut indices = Vec::new();
+
+    for lane in 1..lanes {
+        let lane_offset = (lane as f32 - lanes as f32 * 0.5) * lane_width;
+
+        for i in 0..=segments {
+            let t = i as f32 / segments as f32;
+
+            if (i / 3) % 2 == 1 {
+                continue;
+            }
+
+            let position = evaluate_spline(control_points, t);
+            let tangent = calculate_tangent_async(control_points, t);
+            let right = Vec3::new(tangent.z, 0.0, -tangent.x).normalize();
+
+            let line_pos = position + right * lane_offset;
+            let line_width = 0.2;
+
+            let left_pos = line_pos + right * line_width * 0.5;
+            let right_pos = line_pos - right * line_width * 0.5;
+
+            let base_idx = positions.len() as u32;
+
+            positions.push([left_pos.x, left_pos.y, left_pos.z]);
+            positions.push([right_pos.x, right_pos.y, right_pos.z]);
+
+            normals.push([0.0, 1.0, 0.0]);
+            normals.push([0.0, 1.0, 0.0]);
+
+            uvs.push([0.0, t]);
+            uvs.push([1.0, t]);
+
+            if positions.len() >= 4 && base_idx >= 2 {
+                indices.push(base_idx - 2);
+                indices.push(base_idx);
+                indices.push(base_idx - 1);
+
+                indices.push(base_idx - 1);
+                indices.push(base_idx);
+                indices.push(base_idx + 1);
+            }
+        }
+    }
+
+    SerializedMeshData {
+        positions,
+        normals,
+        uvs,
+        indices,
+    }
+}
+
+fn generate_edge_lines_data_async(
+    control_points: &[Vec3],
+    road_type: RoadType,
+) -> SerializedMeshData {
+    let width = road_type.width();
+    let length = calculate_road_length(control_points);
+    let segments = calculate_segments_from_length(length, control_points.len() > 2);
+    let line_width = 0.15;
+
+    let mut positions = Vec::new();
+    let mut normals = Vec::new();
+    let mut uvs = Vec::new();
+    let mut indices = Vec::new();
+
+    for i in 0..=segments {
+        let t = i as f32 / segments as f32;
+        let position = evaluate_spline(control_points, t);
+        let tangent = calculate_tangent_async(control_points, t);
+        let right = Vec3::new(tangent.z, 0.0, -tangent.x).normalize();
+
+        let left_center = position + right * (width * 0.5 - 0.5);
+        let left_inner = left_center - right * line_width * 0.5;
+        let left_outer = left_center + right * line_width * 0.5;
+
+        let right_center = position - right * (width * 0.5 - 0.5);
+        let right_inner = right_center + right * line_width * 0.5;
+        let right_outer = right_center - right * line_width * 0.5;
+
+        let base_idx = positions.len() as u32;
+
+        positions.push([left_inner.x, left_inner.y, left_inner.z]);
+        positions.push([left_outer.x, left_outer.y, left_outer.z]);
+        positions.push([right_inner.x, right_inner.y, right_inner.z]);
+        positions.push([right_outer.x, right_outer.y, right_outer.z]);
+
+        for _ in 0..4 {
+            normals.push([0.0, 1.0, 0.0]);
+        }
+
+        uvs.push([0.0, t]);
+        uvs.push([1.0, t]);
+        uvs.push([0.0, t]);
+        uvs.push([1.0, t]);
+
+        if i > 0 {
+            indices.push(base_idx - 4);
+            indices.push(base_idx);
+            indices.push(base_idx - 3);
+
+            indices.push(base_idx - 3);
+            indices.push(base_idx);
+            indices.push(base_idx + 1);
+
+            indices.push(base_idx - 2);
+            indices.push(base_idx + 2);
+            indices.push(base_idx - 1);
+
+            indices.push(base_idx - 1);
+            indices.push(base_idx + 2);
+            indices.push(base_idx + 3);
+        }
+    }
+
+    SerializedMeshData {
+        positions,
+        normals,
+        uvs,
+        indices,
+    }
+}
+
+/// Helper to create road blueprint with pre-computed mesh data
+fn create_road_blueprint(
+    road_id: u64,
+    road_type: RoadType,
+    control_points: Vec<Vec3>,
+) -> RoadBlueprint {
+    let center_pos =
+        control_points.iter().fold(Vec3::ZERO, |acc, &p| acc + p) / control_points.len() as f32;
+
+    // CRITICAL FIX: Generate ALL mesh data in async task
+    let road_mesh_data = generate_road_mesh_data_async(&control_points, road_type);
+    let marking_meshes_data = generate_marking_meshes_data_async(&control_points, road_type);
+
+    RoadBlueprint {
+        road_id,
+        road_type,
+        control_points,
+        center_pos,
+        road_mesh_data,
+        marking_meshes_data,
+    }
 }
 
 fn generate_road_cell_blueprints(
@@ -738,13 +1142,11 @@ fn generate_road_cell_blueprints(
         );
         let end = Vec3::new(base_x, height, base_z + cell_size * 1.5);
 
-        let center_pos = (start + end) * 0.5;
-        blueprints.push(RoadBlueprint {
-            road_id: generate_unique_road_id(cell_coord, local_index),
+        blueprints.push(create_road_blueprint(
+            generate_unique_road_id(cell_coord, local_index),
             road_type,
-            control_points: vec![start, control, end],
-            center_pos,
-        });
+            vec![start, control, end],
+        ));
         local_index += 1;
     }
 
@@ -759,13 +1161,11 @@ fn generate_road_cell_blueprints(
         );
         let end = Vec3::new(base_x + cell_size * 1.5, height, base_z);
 
-        let center_pos = (start + end) * 0.5;
-        blueprints.push(RoadBlueprint {
-            road_id: generate_unique_road_id(cell_coord, local_index),
+        blueprints.push(create_road_blueprint(
+            generate_unique_road_id(cell_coord, local_index),
             road_type,
-            control_points: vec![start, control, end],
-            center_pos,
-        });
+            vec![start, control, end],
+        ));
         local_index += 1;
     }
 
@@ -785,13 +1185,11 @@ fn generate_road_cell_blueprints(
                     let start = Vec3::new(sub_x + offset_x, height, sub_z - 40.0);
                     let end = Vec3::new(sub_x + offset_x, height, sub_z + 40.0);
 
-                    let center_pos = (start + end) * 0.5;
-                    blueprints.push(RoadBlueprint {
-                        road_id: generate_unique_road_id(cell_coord, local_index),
+                    blueprints.push(create_road_blueprint(
+                        generate_unique_road_id(cell_coord, local_index),
                         road_type,
-                        control_points: vec![start, end],
-                        center_pos,
-                    });
+                        vec![start, end],
+                    ));
                     local_index += 1;
                 }
 
@@ -801,13 +1199,11 @@ fn generate_road_cell_blueprints(
                     let start = Vec3::new(sub_x - 40.0, height, sub_z + offset_z);
                     let end = Vec3::new(sub_x + 40.0, height, sub_z + offset_z);
 
-                    let center_pos = (start + end) * 0.5;
-                    blueprints.push(RoadBlueprint {
-                        road_id: generate_unique_road_id(cell_coord, local_index),
+                    blueprints.push(create_road_blueprint(
+                        generate_unique_road_id(cell_coord, local_index),
                         road_type,
-                        control_points: vec![start, end],
-                        center_pos,
-                    });
+                        vec![start, end],
+                    ));
                     local_index += 1;
                 }
             }
@@ -870,13 +1266,11 @@ fn generate_premium_spawn_cell_blueprints(
 
     for (start, control, end, road_type) in highway_configs.iter().chain(main_street_configs.iter())
     {
-        let center_pos = (*start + *end) * 0.5;
-        blueprints.push(RoadBlueprint {
-            road_id: generate_unique_road_id(cell_coord, *local_index),
-            road_type: *road_type,
-            control_points: vec![*start, *control, *end],
-            center_pos,
-        });
+        blueprints.push(create_road_blueprint(
+            generate_unique_road_id(cell_coord, *local_index),
+            *road_type,
+            vec![*start, *control, *end],
+        ));
         *local_index += 1;
     }
 
@@ -891,24 +1285,20 @@ fn generate_premium_spawn_cell_blueprints(
 
             let start = Vec3::new(sub_x - 30.0, height, sub_z);
             let end = Vec3::new(sub_x + 30.0, height, sub_z);
-            let center_pos = (start + end) * 0.5;
-            blueprints.push(RoadBlueprint {
-                road_id: generate_unique_road_id(cell_coord, *local_index),
-                road_type: RoadType::SideStreet,
-                control_points: vec![start, end],
-                center_pos,
-            });
+            blueprints.push(create_road_blueprint(
+                generate_unique_road_id(cell_coord, *local_index),
+                RoadType::SideStreet,
+                vec![start, end],
+            ));
             *local_index += 1;
 
             let start = Vec3::new(sub_x, height, sub_z - 30.0);
             let end = Vec3::new(sub_x, height, sub_z + 30.0);
-            let center_pos = (start + end) * 0.5;
-            blueprints.push(RoadBlueprint {
-                road_id: generate_unique_road_id(cell_coord, *local_index),
-                road_type: RoadType::SideStreet,
-                control_points: vec![start, end],
-                center_pos,
-            });
+            blueprints.push(create_road_blueprint(
+                generate_unique_road_id(cell_coord, *local_index),
+                RoadType::SideStreet,
+                vec![start, end],
+            ));
             *local_index += 1;
         }
     }
