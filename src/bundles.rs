@@ -163,17 +163,6 @@ pub struct DynamicVehicleBundle {
     pub visibility_range: VisibilityRange,
 }
 
-/// Bundle for trees and vegetation
-#[derive(Bundle)]
-pub struct VegetationBundle {
-    pub dynamic_content: DynamicContent,
-    pub transform: Transform,
-    pub visibility: Visibility,
-    pub inherited_visibility: InheritedVisibility,
-    pub view_visibility: ViewVisibility,
-    pub visibility_range: VisibilityRange,
-}
-
 /// Bundle for simple static physics objects
 #[derive(Bundle)]
 pub struct StaticPhysicsBundle {

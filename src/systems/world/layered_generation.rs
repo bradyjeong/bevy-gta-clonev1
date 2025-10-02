@@ -1,7 +1,5 @@
 use crate::resources::{MaterialRegistry, WorldRng};
-use crate::systems::world::generators::{
-    BuildingGenerator, RoadGenerator, VegetationGenerator, VehicleGenerator,
-};
+use crate::systems::world::generators::{BuildingGenerator, RoadGenerator, VehicleGenerator};
 use crate::systems::world::unified_world::{ChunkCoord, ChunkState, UnifiedWorldManager};
 use bevy::prelude::*;
 
@@ -66,7 +64,6 @@ fn generate_complete_chunk(
     let road_generator = RoadGenerator;
     let building_generator = BuildingGenerator;
     let vehicle_generator = VehicleGenerator;
-    let vegetation_generator = VegetationGenerator;
 
     // Generate all content layers in sequence
     road_generator.generate_roads(
@@ -87,14 +84,6 @@ fn generate_complete_chunk(
         world_rng,
     );
     vehicle_generator.generate_vehicles(
-        commands,
-        world_manager,
-        coord,
-        meshes,
-        materials,
-        world_rng,
-    );
-    vegetation_generator.generate_vegetation(
         commands,
         world_manager,
         coord,
@@ -208,11 +197,11 @@ pub fn vehicle_layer_system(
 }
 
 pub fn vegetation_layer_system(
-    mut commands: Commands,
+    _commands: Commands,
     mut world_manager: ResMut<UnifiedWorldManager>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut world_rng: ResMut<WorldRng>,
+    _meshes: ResMut<Assets<Mesh>>,
+    _materials: ResMut<Assets<StandardMaterial>>,
+    _world_rng: ResMut<WorldRng>,
 ) {
     let chunks_to_process: Vec<ChunkCoord> = world_manager
         .chunks
@@ -233,15 +222,10 @@ pub fn vegetation_layer_system(
         })
         .collect();
 
-    let vegetation_generator = VegetationGenerator;
+    // Vegetation generation removed - palm trees use static setup only
     for coord in chunks_to_process {
-        vegetation_generator.generate_vegetation(
-            &mut commands,
-            &mut world_manager,
-            coord,
-            &mut meshes,
-            &mut materials,
-            &mut world_rng,
-        );
+        if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+            chunk.vegetation_generated = true;
+        }
     }
 }

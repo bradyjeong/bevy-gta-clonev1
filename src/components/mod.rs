@@ -55,7 +55,7 @@
 //! 5. Export from this mod.rs file
 
 pub mod effects;
-pub mod lod;
+
 pub mod player;
 pub mod unified_water;
 pub mod vehicles;
@@ -66,7 +66,6 @@ pub mod world;
 pub mod control_state;
 pub mod dirty_flags;
 
-pub mod instanced_vegetation;
 pub mod unified_vehicle;
 
 // Core entity components
@@ -98,18 +97,9 @@ pub use effects::{
     ControlsDisplay, ControlsText, ExhaustFlame, FlameEffect, JetFlame, VehicleBeacon, WaypointText,
 };
 
-pub use lod::{VegetationBillboard, VegetationDetailLevel, VegetationLOD, VegetationMeshLOD};
-
-pub use instanced_vegetation::{
-    InstanceData, InstancedBush, InstancedLeafCluster, InstancedPalmFrond, InstancedTreeTrunk,
-    InstancedVegetationBundle, VegetationBatchable, VegetationInstancingConfig, VegetationType,
-};
-
 // Control and optimization components
 pub use control_state::{
     AIControlled, ControlState, PendingPhysicsEnable, PlayerControlled, VehicleControlType,
 };
-pub use dirty_flags::{
-    DirtyFlagsMetrics, DirtyLOD, DirtyVegetationInstancing, DirtyVisibility, FrameCounter,
-};
+pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility, FrameCounter};
 pub use unified_vehicle::UnifiedVehicleSpecs;

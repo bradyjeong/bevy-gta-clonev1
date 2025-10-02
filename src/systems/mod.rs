@@ -83,7 +83,6 @@ pub mod player_collision_resolution;
 pub mod player_physics_enable;
 pub mod rendering;
 pub mod simple_service_example;
-pub mod vegetation_instancing_integration;
 
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin

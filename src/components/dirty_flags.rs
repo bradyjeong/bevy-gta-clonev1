@@ -67,12 +67,3 @@ impl DirtyVisibility {
         }
     }
 }
-
-impl DirtyVegetationInstancing {
-    pub fn new(priority: DirtyPriority, frame: u64) -> Self {
-        Self {
-            priority,
-            frame_marked: frame,
-        }
-    }
-}

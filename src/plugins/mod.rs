@@ -53,7 +53,6 @@ pub mod input_plugin;
 pub mod player_plugin;
 pub mod ui_plugin;
 pub mod unified_world_plugin;
-pub mod vegetation_lod_plugin;
 pub mod vehicle_plugin;
 pub mod water_plugin;
 
@@ -74,7 +73,7 @@ pub use ui_plugin::UIPlugin;
 
 // World and rendering plugins
 pub use unified_world_plugin::UnifiedWorldPlugin;
-pub use vegetation_lod_plugin::VegetationLODPlugin;
+
 pub use vehicle_plugin::VehiclePlugin;
 pub use water_plugin::WaterPlugin;
 

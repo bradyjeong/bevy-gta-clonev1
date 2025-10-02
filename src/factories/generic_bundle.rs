@@ -1,6 +1,6 @@
 use crate::bundles::{
     BuildingBundle, DynamicContentBundle, DynamicPhysicsBundle, DynamicVehicleBundle, NPCBundle,
-    PhysicsBundle, StaticPhysicsBundle, UnifiedChunkBundle, VegetationBundle, VehicleBundle,
+    PhysicsBundle, StaticPhysicsBundle, UnifiedChunkBundle, VehicleBundle,
 };
 use crate::components::{
     Building, BuildingType, Car, ContentType, DynamicContent, MovementController, NPCAppearance,
@@ -784,24 +784,6 @@ impl GenericBundleFactory {
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
                 end_margin: 450.0..500.0,
-                use_aabb: false,
-            },
-        }
-    }
-
-    /// Create vegetation bundle for trees
-    pub fn vegetation(position: Vec3, _max_distance: f32) -> VegetationBundle {
-        VegetationBundle {
-            dynamic_content: DynamicContent {
-                content_type: ContentType::Tree,
-            },
-            transform: Transform::from_translation(position),
-            visibility: Visibility::Inherited,
-            inherited_visibility: InheritedVisibility::VISIBLE,
-            view_visibility: ViewVisibility::default(),
-            visibility_range: VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 250.0..300.0,
                 use_aabb: false,
             },
         }

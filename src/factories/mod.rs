@@ -70,7 +70,7 @@ pub mod building_factory;
 pub mod effect_factory;
 pub mod entity_limit;
 pub mod npc_factory;
-pub mod vegetation_factory;
+
 pub mod vehicle_factory;
 
 // Specialized utility factories
@@ -89,7 +89,6 @@ pub use building_factory::{BuildingFactory, BuildingType};
 pub use effect_factory::{EffectFactory, ParticleEffect};
 pub use entity_limit::{EntityLimit, EntityLimitManager, EntityType};
 pub use npc_factory::{NPCFactory, NPCType};
-pub use vegetation_factory::{VegetationFactory, VegetationType};
 pub use vehicle_factory::VehicleFactory;
 
 // Specialized factory exports (selective imports)

@@ -493,7 +493,6 @@ pub enum ContentLayer {
     Roads,
     Buildings,
     Vehicles,
-    Vegetation,
     NPCs,
 }
 

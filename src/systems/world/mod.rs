@@ -15,9 +15,9 @@ pub mod simulation_lod;
 pub mod unified_world;
 // pub mod optimized_lod; // Removed - functionality moved to unified_lod.rs
 pub mod asset_streaming;
-pub mod bevy_vegetation_lod;
+
 pub mod debug_layers;
-pub mod vegetation_lod;
+
 // pub mod unified_distance_culling; - REMOVED: Replaced with Bevy's VisibilityRange
 pub mod boundaries;
 pub mod boundary_effects;

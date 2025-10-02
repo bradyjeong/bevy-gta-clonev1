@@ -1,3 +1,1 @@
-pub mod vegetation_instancing;
-
-pub use vegetation_instancing::*;
+// Vegetation rendering systems removed - palm trees use simple static setup
