@@ -80,6 +80,7 @@ pub mod unified_distance_calculator;
 // pub mod batching_test; // Missing file
 
 pub mod player_collision_resolution;
+pub mod player_physics_enable;
 pub mod rendering;
 pub mod simple_service_example;
 pub mod vegetation_instancing_integration;

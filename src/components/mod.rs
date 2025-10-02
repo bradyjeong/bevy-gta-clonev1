@@ -106,7 +106,9 @@ pub use instanced_vegetation::{
 };
 
 // Control and optimization components
-pub use control_state::{AIControlled, ControlState, PlayerControlled, VehicleControlType};
+pub use control_state::{
+    AIControlled, ControlState, PendingPhysicsEnable, PlayerControlled, VehicleControlType,
+};
 pub use dirty_flags::{
     DirtyFlagsMetrics, DirtyLOD, DirtyVegetationInstancing, DirtyVisibility, FrameCounter,
 };

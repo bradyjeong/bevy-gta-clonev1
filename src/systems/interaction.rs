@@ -1,41 +1,12 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
-use crate::bundles::PlayerPhysicsBundle;
 use crate::components::{
-    ActiveEntity, Car, ControlState, F16, Helicopter, InCar, Player, PlayerControlled,
-    VehicleControlType,
+    ActiveEntity, Car, ControlState, F16, Helicopter, InCar, PendingPhysicsEnable, Player,
+    PlayerControlled, VehicleControlType,
 };
 use crate::game_state::GameState;
 use crate::systems::queue_active_transfer;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-
-/// Enhanced vehicle exit helper with physics restoration
-fn transfer_player_from_vehicle_with_physics(
-    commands: &mut Commands,
-    player: Entity,
-    vehicle: Entity,
-    exit_position: Vec3,
-    exit_rotation: Quat,
-) {
-    // Remove control from vehicle
-    commands
-        .entity(vehicle)
-        .remove::<ControlState>()
-        .remove::<PlayerControlled>()
-        .remove::<VehicleControlType>();
-
-    // Restore player control, physics, and visibility
-    commands
-        .entity(player)
-        .remove::<InCar>()
-        .remove::<ChildOf>()
-        .insert(PlayerControlled)
-        .insert(ControlState::default())
-        .insert(VehicleControlType::Walking)
-        .insert(Visibility::Visible)
-        .insert(Transform::from_translation(exit_position).with_rotation(exit_rotation))
-        .insert(PlayerPhysicsBundle::default());
-}
 
 pub fn interaction_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -58,9 +29,12 @@ pub fn interaction_system(
             Without<F16>,
         ),
     >,
-    car_query: Query<(Entity, &Transform), (With<Car>, Without<Player>)>,
-    helicopter_query: Query<(Entity, &Transform), (With<Helicopter>, Without<Player>)>,
-    f16_query: Query<(Entity, &Transform), (With<F16>, Without<Player>)>,
+    car_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<Car>, Without<Player>)>,
+    helicopter_query: Query<
+        (Entity, &GlobalTransform, Option<&Velocity>),
+        (With<Helicopter>, Without<Player>),
+    >,
+    f16_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<F16>, Without<Player>)>,
     _vehicle_control_query: Query<
         (
             Option<&ControlState>,
@@ -98,10 +72,8 @@ pub fn interaction_system(
             };
 
             // Check for cars first
-            for (car_entity, car_transform) in car_query.iter() {
-                let distance = player_transform
-                    .translation
-                    .distance(car_transform.translation);
+            for (car_entity, car_gt, _) in car_query.iter() {
+                let distance = player_transform.translation.distance(car_gt.translation());
                 if distance < 3.0 {
                     // Disable vehicle physics temporarily to prevent explosions
                     commands.entity(car_entity).insert(RigidBodyDisabled);
@@ -153,10 +125,10 @@ pub fn interaction_system(
             }
 
             // Check for helicopters
-            for (helicopter_entity, helicopter_transform) in helicopter_query.iter() {
+            for (helicopter_entity, helicopter_gt, _) in helicopter_query.iter() {
                 let distance = player_transform
                     .translation
-                    .distance(helicopter_transform.translation);
+                    .distance(helicopter_gt.translation());
                 if distance < 5.0 {
                     // Larger range for helicopters
                     // Disable helicopter physics temporarily to prevent explosions
@@ -212,10 +184,8 @@ pub fn interaction_system(
             }
 
             // Check for F16s
-            for (f16_entity, f16_transform) in f16_query.iter() {
-                let distance = player_transform
-                    .translation
-                    .distance(f16_transform.translation);
+            for (f16_entity, f16_gt, _) in f16_query.iter() {
+                let distance = player_transform.translation.distance(f16_gt.translation());
                 if distance < 8.0 {
                     // Larger range for F16s
                     // Disable F16 physics temporarily to prevent explosions
@@ -271,24 +241,33 @@ pub fn interaction_system(
         GameState::Driving => {
             // Exit car
             if let Ok(active_car) = active_query.single() {
-                // Get the specific active car's transform and control components
-                if let Ok((_, car_transform)) = car_query.get(active_car) {
+                // Get the specific active car's global transform and velocity
+                if let Ok((_, car_gt, car_vel)) = car_query.get(active_car) {
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
-                        // Calculate exit position next to the car
-                        let exit_position = car_transform.translation + car_transform.right() * 3.0;
-
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_car, player_entity);
 
-                        // Use centralized physics restoration helper
-                        transfer_player_from_vehicle_with_physics(
-                            &mut commands,
-                            player_entity,
-                            active_car,
-                            exit_position,
-                            car_transform.rotation,
-                        );
+                        // Calculate exit position in WORLD SPACE using GlobalTransform
+                        let exit_position = car_gt.translation() + car_gt.right() * 3.0;
+                        let inherited_vel = car_vel.cloned().unwrap_or(Velocity::zero());
+
+                        // Phase A: Set pose and keep physics disabled this frame
+                        commands
+                            .entity(player_entity)
+                            .remove::<InCar>()
+                            .remove::<ChildOf>()
+                            .insert(
+                                Transform::from_translation(exit_position)
+                                    .with_rotation(Quat::IDENTITY),
+                            )
+                            .insert(inherited_vel)
+                            .insert(PlayerControlled)
+                            .insert(ControlState::default())
+                            .insert(VehicleControlType::Walking)
+                            .insert(Visibility::Visible)
+                            .insert(PendingPhysicsEnable);
+                        // DO NOT remove RigidBodyDisabled here; will be done next frame
 
                         info!(
                             "ActiveEntity transferred from Car({:?}) back to Player({:?})",
@@ -304,26 +283,37 @@ pub fn interaction_system(
         GameState::Flying => {
             // Exit helicopter
             if let Ok(active_helicopter) = active_query.single() {
-                // Get the specific active helicopter's transform
-                if let Ok((_, helicopter_transform)) = helicopter_query.get(active_helicopter) {
+                // Get the specific active helicopter's global transform and velocity
+                if let Ok((_, helicopter_gt, helicopter_vel)) =
+                    helicopter_query.get(active_helicopter)
+                {
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_helicopter, player_entity);
 
-                        // Calculate exit position next to the helicopter (a bit further away)
-                        let exit_position = helicopter_transform.translation
-                            + helicopter_transform.right() * 4.0
+                        // Calculate exit position in WORLD SPACE using GlobalTransform
+                        let exit_position = helicopter_gt.translation()
+                            + helicopter_gt.right() * 4.0
                             + Vec3::new(0.0, -1.0, 0.0); // Drop to ground level
+                        let inherited_vel = helicopter_vel.cloned().unwrap_or(Velocity::zero());
 
-                        // Use centralized physics restoration helper
-                        transfer_player_from_vehicle_with_physics(
-                            &mut commands,
-                            player_entity,
-                            active_helicopter,
-                            exit_position,
-                            Quat::IDENTITY,
-                        );
+                        // Phase A: Set pose and keep physics disabled this frame
+                        commands
+                            .entity(player_entity)
+                            .remove::<InCar>()
+                            .remove::<ChildOf>()
+                            .insert(
+                                Transform::from_translation(exit_position)
+                                    .with_rotation(Quat::IDENTITY),
+                            )
+                            .insert(inherited_vel)
+                            .insert(PlayerControlled)
+                            .insert(ControlState::default())
+                            .insert(VehicleControlType::Walking)
+                            .insert(Visibility::Visible)
+                            .insert(PendingPhysicsEnable);
+                        // DO NOT remove RigidBodyDisabled here; will be done next frame
 
                         info!("Exited helicopter at position: {:?}", exit_position);
                     }
@@ -337,26 +327,33 @@ pub fn interaction_system(
         GameState::Jetting => {
             // Exit F16
             if let Ok(active_f16) = active_query.single() {
-                // Get the specific active F16's transform
-                if let Ok((_, f16_transform)) = f16_query.get(active_f16) {
+                // Get the specific active F16's global transform and velocity
+                if let Ok((_, f16_gt, f16_vel)) = f16_query.get(active_f16) {
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_f16, player_entity);
 
-                        // Calculate exit position next to the F16 (further away)
-                        let exit_position = f16_transform.translation
-                            + f16_transform.right() * 6.0
-                            + Vec3::new(0.0, -2.0, 0.0); // Drop to ground level
+                        // Calculate exit position in WORLD SPACE using GlobalTransform
+                        let exit_position = f16_gt.translation() + f16_gt.right() * 6.0;
+                        let inherited_vel = f16_vel.cloned().unwrap_or(Velocity::zero());
 
-                        // Use centralized physics restoration helper
-                        transfer_player_from_vehicle_with_physics(
-                            &mut commands,
-                            player_entity,
-                            active_f16,
-                            exit_position,
-                            Quat::IDENTITY,
-                        );
+                        // Phase A: Set pose and keep physics disabled this frame
+                        commands
+                            .entity(player_entity)
+                            .remove::<InCar>()
+                            .remove::<ChildOf>()
+                            .insert(
+                                Transform::from_translation(exit_position)
+                                    .with_rotation(Quat::IDENTITY),
+                            )
+                            .insert(inherited_vel)
+                            .insert(PlayerControlled)
+                            .insert(ControlState::default())
+                            .insert(VehicleControlType::Walking)
+                            .insert(Visibility::Visible)
+                            .insert(PendingPhysicsEnable);
+                        // DO NOT remove RigidBodyDisabled here; will be done next frame
 
                         info!("Exited F16 at position: {:?}", exit_position);
                     }

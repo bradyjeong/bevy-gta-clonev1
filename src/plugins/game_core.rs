@@ -13,6 +13,7 @@ use crate::plugins::{
 use crate::resources::WorldRng;
 use crate::services::GroundDetectionPlugin;
 use crate::systems::physics::apply_universal_physics_safeguards;
+use crate::systems::player_physics_enable::enable_player_physics_next_frame;
 use crate::systems::{
     // Coordinate safety systems (simplified for finite world)
     ActiveEntityTransferred,
@@ -115,6 +116,11 @@ impl Plugin for GameCorePlugin {
             .add_plugins(UIPlugin)
             // Setup world root entity at startup
             // No longer need WorldRoot setup
+            // Re-enable player physics before Rapier reads poses (safe vehicle exit)
+            .add_systems(
+                FixedUpdate,
+                enable_player_physics_next_frame.before(PhysicsSet::SyncBackend),
+            )
             // Movement systems run BEFORE Rapier physics step (explicit per-system ordering)
             .add_systems(
                 FixedUpdate,

@@ -125,6 +125,10 @@ pub struct PlayerControlled;
 #[derive(Component, Default, Debug)]
 pub struct AIControlled;
 
+/// Marker for player that needs physics re-enabled next frame (safe vehicle exit)
+#[derive(Component)]
+pub struct PendingPhysicsEnable;
+
 /// Component that tracks which vehicle type this entity represents
 /// Used for determining control mappings and physics parameters
 #[derive(
