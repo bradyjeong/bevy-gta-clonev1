@@ -253,6 +253,7 @@ pub fn queue_async_chunk_generation(
 
 /// System to process completed async chunk generation tasks
 /// Applies strict TIME-BASED frame budget and stale result protection with generation versioning
+/// UNIFIED: Now integrates with SpawnRegistry for collision-free world generation
 #[allow(clippy::too_many_arguments)]
 pub fn process_completed_chunks(
     mut commands: Commands,
@@ -263,6 +264,7 @@ pub fn process_completed_chunks(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut material_registry: ResMut<crate::resources::MaterialRegistry>,
     mut road_ownership: ResMut<crate::systems::world::road_network::RoadOwnership>,
+    mut spawn_registry: ResMut<crate::systems::spawn_validation::SpawnRegistry>,
     player_query: Query<&Transform, With<crate::components::ActiveEntity>>,
     time: Res<Time>,
 ) {
@@ -320,8 +322,13 @@ pub fn process_completed_chunks(
         }
 
         if result.success {
-            let mut spawned_entities =
-                spawn_entities_from_async_data(&mut commands, &result, &async_assets);
+            // UNIFIED: Spawn entities with validation and registration
+            let mut spawned_entities = spawn_entities_from_async_data_validated(
+                &mut commands,
+                &result,
+                &async_assets,
+                &mut spawn_registry,
+            );
 
             let player_pos = player_query
                 .iter()
@@ -329,7 +336,8 @@ pub fn process_completed_chunks(
                 .map(|t| t.translation)
                 .unwrap_or(Vec3::ZERO);
 
-            let roads_spawned = apply_road_blueprints(
+            // UNIFIED: Apply road blueprints with registration
+            let roads_spawned = apply_road_blueprints_validated(
                 &mut commands,
                 &mut world_manager,
                 &result.road_blueprints,
@@ -339,6 +347,7 @@ pub fn process_completed_chunks(
                 &mut materials,
                 &mut material_registry,
                 &mut road_ownership,
+                &mut spawn_registry,
             );
 
             if !result.road_blueprints.is_empty() {
@@ -487,28 +496,65 @@ async fn generate_chunk_async(
     }
 }
 
-/// Spawn entities on main thread from async generation data
+/// UNIFIED: Spawn entities with spawn validation and registration
 /// Returns list of spawned entities for chunk tracking
 /// Uses shared assets to prevent memory bloat
-fn spawn_entities_from_async_data(
+fn spawn_entities_from_async_data_validated(
     commands: &mut Commands,
     result: &ChunkGenerationResult,
     assets: &AsyncChunkAssets,
+    spawn_registry: &mut crate::systems::spawn_validation::SpawnRegistry,
 ) -> Vec<Entity> {
+    use crate::systems::spawn_validation::SpawnableType;
+
     let mut spawned_entities = Vec::with_capacity(result.entities_data.len());
+    let mut skipped_count = 0;
 
     for entity_data in &result.entities_data {
+        // Convert ContentType to SpawnableType
+        let spawnable_type = SpawnableType::from_content_type(entity_data.content_type);
+
+        // Validate position using SpawnRegistry
+        let validated_position = spawn_registry.find_safe_spawn_position(
+            entity_data.position,
+            spawnable_type,
+            10.0, // Max search radius for adjustment
+            5,    // Max attempts (reduced for performance)
+        );
+
+        let Some(safe_position) = validated_position else {
+            skipped_count += 1;
+            debug!(
+                "Skipped {:?} at {:?} - no safe position found",
+                entity_data.content_type, entity_data.position
+            );
+            continue;
+        };
+
+        // Spawn with validated position
+        let mut entity_data_adjusted = entity_data.clone();
+        entity_data_adjusted.position = safe_position;
+
         let entity = match entity_data.content_type {
-            ContentType::Building => spawn_async_building(commands, assets, entity_data),
-            ContentType::Tree => spawn_async_vegetation(commands, assets, entity_data),
-            ContentType::Vehicle => spawn_async_vehicle(commands, assets, entity_data),
-            ContentType::NPC => spawn_async_npc(commands, assets, entity_data),
-            ContentType::Road => spawn_async_road(commands, assets, entity_data),
+            ContentType::Building => spawn_async_building(commands, assets, &entity_data_adjusted),
+            ContentType::Tree => spawn_async_vegetation(commands, assets, &entity_data_adjusted),
+            ContentType::Vehicle => spawn_async_vehicle(commands, assets, &entity_data_adjusted),
+            ContentType::NPC => spawn_async_npc(commands, assets, &entity_data_adjusted),
+            ContentType::Road => spawn_async_road(commands, assets, &entity_data_adjusted),
         };
 
         if let Some(entity) = entity {
+            // Register entity in SpawnRegistry
+            spawn_registry.register_entity(entity, safe_position, spawnable_type);
             spawned_entities.push(entity);
         }
+    }
+
+    if skipped_count > 0 {
+        debug!(
+            "Chunk {:?} skipped {} entities due to collisions",
+            result.coord, skipped_count
+        );
     }
 
     spawned_entities
@@ -621,7 +667,8 @@ fn spawn_async_road(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn apply_road_blueprints(
+/// UNIFIED: Apply road blueprints with SpawnRegistry registration
+fn apply_road_blueprints_validated(
     commands: &mut Commands,
     world: &mut UnifiedWorldManager,
     blueprints: &[RoadBlueprint],
@@ -631,6 +678,7 @@ fn apply_road_blueprints(
     materials: &mut Assets<StandardMaterial>,
     material_registry: &mut crate::resources::MaterialRegistry,
     road_ownership: &mut crate::systems::world::road_network::RoadOwnership,
+    spawn_registry: &mut crate::systems::spawn_validation::SpawnRegistry,
 ) -> Vec<Entity> {
     use crate::bundles::VisibleChildBundle;
     use crate::components::{ContentType, DynamicContent, RoadEntity};
@@ -723,10 +771,24 @@ fn apply_road_blueprints(
             }
         }
 
-        let samples = 20;
+        // UNIFIED: Register road in SpawnRegistry with sparse sampling (10m spacing)
+        // Balance between collision fidelity and performance (avoid thousands of registrations)
+        let road_length = calculate_road_length(&blueprint.control_points);
+        let sample_spacing = 10.0; // 10m spacing - enough fidelity, much better performance
+        let samples = ((road_length / sample_spacing).ceil() as usize + 1).max(3); // At least 3 samples (start, mid, end)
+
         for i in 0..samples {
             let t = i as f32 / (samples - 1) as f32;
             let road_point = road_spline.evaluate(t);
+
+            // Register in SpawnRegistry (single source of truth)
+            spawn_registry.register_entity(
+                road_entity, // Use same entity for all samples
+                road_point,
+                crate::systems::spawn_validation::SpawnableType::Road,
+            );
+
+            // DEPRECATED: Also add to PlacementGrid for backwards compatibility during transition
             world.placement_grid.add_entity(
                 road_point,
                 ContentType::Road,

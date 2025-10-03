@@ -498,10 +498,12 @@ pub enum ContentLayer {
 
 /// Main unified world streaming system with fixed update intervals
 /// Runs at 0.2s intervals instead of every frame for optimal performance
+/// UNIFIED: Now integrates with SpawnRegistry for collision-free world generation
 pub fn unified_world_streaming_system(
     mut commands: Commands,
     mut world_manager: ResMut<UnifiedWorldManager>,
     mut road_ownership: ResMut<crate::systems::world::road_network::RoadOwnership>,
+    mut spawn_registry: ResMut<crate::systems::spawn_validation::SpawnRegistry>,
     active_query: Query<&Transform, With<ActiveEntity>>,
     time: Res<Time>,
 ) {
@@ -538,6 +540,7 @@ pub fn unified_world_streaming_system(
             &mut commands,
             &mut world_manager,
             &mut road_ownership,
+            &mut spawn_registry,
             coord,
         );
         world_manager.chunks_unloaded_this_frame += 1;
@@ -591,16 +594,20 @@ fn initiate_chunk_loading(
     }
 }
 
+/// UNIFIED: Unload chunk and unregister all entities from SpawnRegistry
 fn unload_chunk(
     commands: &mut Commands,
     world_manager: &mut UnifiedWorldManager,
     road_ownership: &mut crate::systems::world::road_network::RoadOwnership,
+    spawn_registry: &mut crate::systems::spawn_validation::SpawnRegistry,
     coord: ChunkCoord,
 ) {
     if let Some(index) = world_manager.chunk_coord_to_index(coord) {
         if let Some(chunk) = &world_manager.chunks[index] {
+            // Unregister and despawn all chunk entities (despawn() is recursive in Bevy 0.16)
             for &entity in &chunk.entities {
-                commands.entity(entity).despawn();
+                spawn_registry.unregister_entity(entity);
+                commands.entity(entity).despawn(); // Automatically despawns children
             }
 
             world_manager.clear_placement_grid_for_chunk(coord);
@@ -609,7 +616,8 @@ fn unload_chunk(
         let road_ids = road_ownership.get_roads_for_chunk(coord);
         for road_id in road_ids {
             if let Some((_, entity)) = road_ownership.remove_road(road_id) {
-                commands.entity(entity).despawn();
+                spawn_registry.unregister_entity(entity);
+                commands.entity(entity).despawn(); // Automatically despawns children
             }
             world_manager.road_network.roads.remove(&road_id);
         }

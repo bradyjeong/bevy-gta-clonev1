@@ -13,6 +13,7 @@ pub enum SpawnableType {
     Tree,
     EnvironmentObject,
     Player,
+    Road, // Roads are line features that vehicles can spawn on but buildings cannot
 }
 
 impl SpawnableType {
@@ -23,7 +24,7 @@ impl SpawnableType {
             ContentType::NPC => SpawnableType::NPC,
             ContentType::Building => SpawnableType::Building,
             ContentType::Tree => SpawnableType::Tree,
-            ContentType::Road => SpawnableType::EnvironmentObject,
+            ContentType::Road => SpawnableType::Road, // CRITICAL FIX: Map to Road, not EnvironmentObject
         }
     }
 
@@ -37,6 +38,7 @@ impl SpawnableType {
             SpawnableType::Tree => 6.0,      // Tree canopy (increased from 3.0)
             SpawnableType::EnvironmentObject => 4.0, // (increased from 2.0)
             SpawnableType::Player => 3.0,    // Player character (increased from 1.5)
+            SpawnableType::Road => 1.0,      // Minimal radius for road sample points
         }
     }
 
@@ -44,6 +46,23 @@ impl SpawnableType {
     pub fn minimum_spacing(&self, other: &SpawnableType) -> f32 {
         // Calculate safe distance as sum of clearance radii plus buffer
         let buffer = match (self, other) {
+            // Roads allow vehicles and NPCs (no spacing required)
+            (SpawnableType::Road, SpawnableType::Vehicle) => -999.0, // Allow overlap
+            (SpawnableType::Vehicle, SpawnableType::Road) => -999.0,
+            (SpawnableType::Road, SpawnableType::NPC) => -999.0,
+            (SpawnableType::NPC, SpawnableType::Road) => -999.0,
+            (SpawnableType::Road, SpawnableType::Player) => -999.0,
+            (SpawnableType::Player, SpawnableType::Road) => -999.0,
+
+            // Roads repel buildings and trees (enforce setback)
+            (SpawnableType::Road, SpawnableType::Building) => 15.0,
+            (SpawnableType::Building, SpawnableType::Road) => 15.0,
+            (SpawnableType::Road, SpawnableType::Tree) => 8.0,
+            (SpawnableType::Tree, SpawnableType::Road) => 8.0,
+
+            // Roads can overlap other roads (for intersections)
+            (SpawnableType::Road, SpawnableType::Road) => -999.0,
+
             // Special cases for important spacing
             (SpawnableType::Player, SpawnableType::Aircraft) => 10.0,
             (SpawnableType::Aircraft, SpawnableType::Player) => 10.0,
@@ -113,14 +132,8 @@ impl SpatialGrid {
         let center_coord = self.get_cell_coord(position);
         let cell_range = ((radius / self.grid_size).ceil() as i32).max(1);
 
-        // Early exit for single cell case
-        if cell_range == 1 {
-            if let Some(entities) = self.cells.get(&center_coord) {
-                result.extend(entities);
-            }
-            return result;
-        }
-
+        // CRITICAL FIX: Always check neighbors, even when cell_range == 1
+        // Entities near cell boundaries can be in adjacent cells
         for dx in -cell_range..=cell_range {
             for dz in -cell_range..=cell_range {
                 let coord = (center_coord.0 + dx, center_coord.1 + dz);
@@ -181,7 +194,9 @@ impl SpawnRegistry {
 
     /// Check if a position is safe for spawning the given entity type
     pub fn is_position_safe(&self, position: Vec3, entity_type: SpawnableType) -> bool {
-        let search_radius = entity_type.clearance_radius() + 15.0; // Extended search
+        // CRITICAL FIX: Use worst-case search radius to catch all potential collisions
+        // Building vs Building = 20 + 20 + 8 = 48m, so use 64m to be safe
+        let search_radius = 64.0;
         let nearby_entities = self
             .spatial_grid
             .get_nearby_entities(position, search_radius);
@@ -196,6 +211,12 @@ impl SpawnRegistry {
         for &nearby_entity in &nearby_entities {
             if let Some(spawned_entity) = self.entities.get(&nearby_entity) {
                 let required_distance = entity_type.minimum_spacing(&spawned_entity.entity_type);
+
+                // CRITICAL FIX: Skip check if negative (overlap allowed)
+                if required_distance <= 0.0 {
+                    continue;
+                }
+
                 // Use distance_squared for more efficient comparison when possible
                 let actual_distance_sq = position.distance_squared(spawned_entity.position);
                 let required_distance_sq = required_distance * required_distance;
@@ -285,6 +306,7 @@ fn cleanup_despawned_entities(
     query: Query<Entity>,
     time: Res<Time>,
     mut cleanup_timer: Local<f32>,
+    mut cleanup_cursor: Local<usize>, // CRITICAL FIX: Track progress across invocations
 ) {
     // Only run cleanup every 2 seconds to reduce overhead
     *cleanup_timer += time.delta_secs();
@@ -295,7 +317,16 @@ fn cleanup_despawned_entities(
 
     // Only check a batch of entities per frame to spread the work
     const BATCH_SIZE: usize = 50;
-    let start_index = (registry.entities.len() / BATCH_SIZE) % registry.entities.len().max(1);
+    let total_entities = registry.entities.len();
+
+    if total_entities == 0 {
+        *cleanup_cursor = 0;
+        return;
+    }
+
+    // CRITICAL FIX: Advance cursor to sweep through entire registry over time
+    let start_index = *cleanup_cursor % total_entities;
+    *cleanup_cursor = (start_index + BATCH_SIZE) % total_entities;
 
     let valid_entities: HashSet<Entity> = query.iter().collect();
 
