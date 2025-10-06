@@ -13,5 +13,17 @@ Thumbs.db
 *.swp
 *.swo
 
+# Performance and logs
+performance_metrics.csv
+*.log
+logs/
+core
+*.dmp
+crash-*.log
+
+# Environment files
+.env
+.env.*
+
 # Cargo lock for binaries (optional)
 # Cargo.lock

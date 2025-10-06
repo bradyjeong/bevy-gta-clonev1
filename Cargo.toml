@@ -33,7 +33,7 @@ futures-lite = "2.0"
 
 [package.metadata.bundle]
 name = "GTA Game"
-identifier = "com.bradyjeong.gta_game"
+identifier = "io.github.bevy-gta-clone"
 version = "1.0.0"
 resources = ["assets"]
 category = "public.app-category.games"
