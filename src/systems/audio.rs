@@ -52,12 +52,10 @@ pub fn footstep_system(
     };
 
     // Add timer component if it doesn't exist
-    if timer.is_none() {
+    let Some(timer) = timer.as_mut() else {
         commands.entity(entity).insert(FootstepTimer::default());
         return;
-    }
-
-    let timer = timer.as_mut().unwrap();
+    };
 
     // Only process footsteps if walking
     if animation.is_walking && movement.current_speed > 0.5 {

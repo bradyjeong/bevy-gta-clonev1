@@ -483,7 +483,10 @@ impl WorldConfig {
         self.total_chunks_z = chunks_per_axis.clamp(50, 200);
 
         // Validate LOD distances are in ascending order
-        self.lod_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        self.lod_distances.sort_by(|a, b| {
+            a.partial_cmp(b)
+                .expect("LOD distance comparison failed (NaN detected)")
+        });
         for distance in &mut self.lod_distances {
             *distance = distance.clamp(50.0, 5000.0);
         }
