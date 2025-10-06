@@ -27,3 +27,4 @@ crash-*.log
 
 # Cargo lock for binaries (optional)
 # Cargo.lock
+node_modules/

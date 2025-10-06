@@ -1,0 +1,13 @@
+{
+  "name": "bevy-gta-clone-bots",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "health-check": "tsx .amp/health-check.ts"
+  },
+  "devDependencies": {
+    "@sourcegraph/amp-sdk": "*",
+    "tsx": "*"
+  }
+}
