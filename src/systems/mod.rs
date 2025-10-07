@@ -81,7 +81,6 @@ pub mod unified_distance_calculator;
 
 pub mod player_collision_resolution;
 pub mod player_physics_enable;
-pub mod rendering;
 pub mod simple_service_example;
 
 pub mod safe_active_entity;
