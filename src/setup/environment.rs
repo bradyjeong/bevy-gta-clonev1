@@ -73,6 +73,7 @@ pub fn setup_palm_trees(
                 Visibility::Visible,
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
+                VisibilityRange::abrupt(0.0, 500.0), // Standardized 500m culling
             ))
             .id();
 
@@ -100,14 +101,13 @@ pub fn setup_palm_trees(
             ));
         }
 
-        // Simple physics collider for trunk
+        // Simple physics collider for trunk - inherits visibility from parent
         commands.spawn((
             RigidBody::Fixed,
             Collider::cylinder(4.0, 0.3),
             CollisionGroups::new(STATIC_GROUP, Group::ALL),
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(palm_entity),
-            VisibilityRange::abrupt(0.0, 200.0),
         ));
     }
 }

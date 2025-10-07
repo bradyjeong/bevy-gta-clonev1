@@ -1,5 +1,7 @@
 use crate::resources::{MaterialRegistry, WorldRng};
-use crate::systems::world::generators::{BuildingGenerator, RoadGenerator, VehicleGenerator};
+use crate::systems::world::generators::{
+    BuildingGenerator, RoadGenerator, VegetationGenerator, VehicleGenerator,
+};
 use crate::systems::world::unified_world::{ChunkCoord, ChunkState, UnifiedWorldManager};
 use bevy::prelude::*;
 
@@ -64,6 +66,7 @@ fn generate_complete_chunk(
     let road_generator = RoadGenerator;
     let building_generator = BuildingGenerator;
     let vehicle_generator = VehicleGenerator;
+    let vegetation_generator = VegetationGenerator;
 
     // Generate all content layers in sequence
     road_generator.generate_roads(
@@ -84,6 +87,14 @@ fn generate_complete_chunk(
         world_rng,
     );
     vehicle_generator.generate_vehicles(
+        commands,
+        world_manager,
+        coord,
+        meshes,
+        materials,
+        world_rng,
+    );
+    vegetation_generator.generate_vegetation(
         commands,
         world_manager,
         coord,
@@ -196,36 +207,4 @@ pub fn vehicle_layer_system(
     }
 }
 
-pub fn vegetation_layer_system(
-    _commands: Commands,
-    mut world_manager: ResMut<UnifiedWorldManager>,
-    _meshes: ResMut<Assets<Mesh>>,
-    _materials: ResMut<Assets<StandardMaterial>>,
-    _world_rng: ResMut<WorldRng>,
-) {
-    let chunks_to_process: Vec<ChunkCoord> = world_manager
-        .chunks
-        .iter()
-        .filter_map(|chunk_opt| {
-            if let Some(chunk) = chunk_opt {
-                if matches!(chunk.state, ChunkState::Loading)
-                    && chunk.vehicles_generated
-                    && !chunk.vegetation_generated
-                {
-                    Some(chunk.coord)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    // Vegetation generation removed - palm trees use static setup only
-    for coord in chunks_to_process {
-        if let Some(chunk) = world_manager.get_chunk_mut(coord) {
-            chunk.vegetation_generated = true;
-        }
-    }
-}
+// Vegetation now generated dynamically via VegetationGenerator in chunk generation

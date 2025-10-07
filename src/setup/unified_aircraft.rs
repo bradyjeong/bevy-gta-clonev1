@@ -143,6 +143,10 @@ fn spawn_helicopter_unified(
                 linear_damping: 3.0,
                 angular_damping: 10.0,
             },
+            // Visibility components (required for child inheritance)
+            Visibility::default(),
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
             // Collision and culling
             CollisionGroups::new(
                 VEHICLE_GROUP,
@@ -150,7 +154,7 @@ fn spawn_helicopter_unified(
             ),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 450.0..500.0, // Aircraft visible from far
+                end_margin: 450.0..550.0,
                 use_aabb: false,
             },
             // Movement tracking
@@ -170,6 +174,11 @@ fn spawn_helicopter_unified(
         })),
         Transform::from_xyz(0.0, 0.0, 0.0),
         ChildOf(helicopter_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     // Cockpit bubble - rounded cockpit
@@ -184,6 +193,11 @@ fn spawn_helicopter_unified(
         })),
         Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
         ChildOf(helicopter_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     // Tail boom - tapered cylinder
@@ -198,6 +212,11 @@ fn spawn_helicopter_unified(
         })),
         Transform::from_xyz(0.0, 0.0, 4.5),
         ChildOf(helicopter_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     // Main rotor blades - thin and aerodynamic
@@ -214,6 +233,11 @@ fn spawn_helicopter_unified(
             Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
             ChildOf(helicopter_entity),
             MainRotor,
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
     }
 
@@ -230,6 +254,11 @@ fn spawn_helicopter_unified(
             Transform::from_xyz(x, -1.0, 0.0)
                 .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
             ChildOf(helicopter_entity),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
     }
 
@@ -245,6 +274,11 @@ fn spawn_helicopter_unified(
         Transform::from_xyz(0.0, 1.0, 6.2),
         ChildOf(helicopter_entity),
         TailRotor,
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     helicopter_entity
@@ -260,31 +294,30 @@ fn spawn_f16_unified(
     // Create F16 entity with unified bundle pattern
     let f16_entity = commands
         .spawn((
-            // Core aircraft components
             F16,
             AircraftFlight::default(),
             SimpleF16Specs::default(),
             VehicleState::new(VehicleType::F16),
-            // Safety components removed - HighSpeed not needed for finite world
-            // Physics components - Simple capsule collider (following AGENT.md simplicity principles)
             RigidBody::Dynamic,
-            Collider::cuboid(1.6, 1.0, 6.4), // 0.8x visual mesh (4x2.5x16) for better ground contact
+            Collider::cuboid(1.6, 1.0, 6.4),
             LockedAxes::empty(),
             Velocity::zero(),
-            ExternalForce::default(), // For proper force-based physics
-            // Let Rapier compute mass properties from collider (following simplicity principles)
+            ExternalForce::default(),
             Transform::from_translation(position),
-            // Collision and culling
+            Visibility::default(),
+            InheritedVisibility::VISIBLE,
+            ViewVisibility::default(),
+        ))
+        .insert((
             CollisionGroups::new(
                 VEHICLE_GROUP,
                 STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,
             ),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 450.0..500.0, // Aircraft visible from far
+                end_margin: 450.0..550.0,
                 use_aabb: false,
             },
-            // Movement tracking
             MovementTracker::new(position, 50.0),
         ))
         .id();
@@ -298,6 +331,11 @@ fn spawn_f16_unified(
         MeshMaterial3d(fuselage_material),
         Transform::from_xyz(0.0, 0.0, 0.0),
         ChildOf(f16_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     // F16 wings (left and right)
@@ -310,6 +348,11 @@ fn spawn_f16_unified(
         MeshMaterial3d(wing_material.clone()),
         Transform::from_xyz(-5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(0.2)), // Swept wing
         ChildOf(f16_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     // Right wing (positioned relative to new Z-axis fuselage)
@@ -318,6 +361,11 @@ fn spawn_f16_unified(
         MeshMaterial3d(wing_material),
         Transform::from_xyz(5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(-0.2)), // Swept wing
         ChildOf(f16_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     // F16 canopy (bubble cockpit)
@@ -329,6 +377,11 @@ fn spawn_f16_unified(
         MeshMaterial3d(canopy_material),
         Transform::from_xyz(0.0, 0.8, 3.0), // Forward position along +Z, raised
         ChildOf(f16_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     // F16 vertical tail
@@ -340,6 +393,11 @@ fn spawn_f16_unified(
         MeshMaterial3d(tail_material),
         Transform::from_xyz(0.0, 1.0, -5.0), // Rear position along -Z, raised
         ChildOf(f16_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     // Engine nozzle for visual effect
@@ -351,6 +409,11 @@ fn spawn_f16_unified(
         MeshMaterial3d(engine_material),
         Transform::from_xyz(0.0, 0.0, -8.0), // Rear nozzle along -Z
         ChildOf(f16_entity),
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: 450.0..550.0,
+            use_aabb: false,
+        },
     ));
 
     f16_entity

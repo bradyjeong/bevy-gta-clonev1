@@ -21,7 +21,13 @@ pub fn disable_distant_dynamic_physics(
     dynamic_entities: Query<
         (Entity, &GlobalTransform),
         (
-            Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>, With<NPC>)>,
+            Or<(
+                With<Car>,
+                With<Helicopter>,
+                With<F16>,
+                With<Yacht>,
+                With<NPC>,
+            )>,
             With<RigidBody>,
             Without<RigidBodyDisabled>,
             Without<ActiveEntity>,
@@ -64,7 +70,13 @@ pub fn enable_nearby_dynamic_physics(
     disabled_entities: Query<
         (Entity, &GlobalTransform),
         (
-            Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>, With<NPC>)>,
+            Or<(
+                With<Car>,
+                With<Helicopter>,
+                With<F16>,
+                With<Yacht>,
+                With<NPC>,
+            )>,
             With<RigidBodyDisabled>,
             Without<ActiveEntity>,
         ),
@@ -105,7 +117,13 @@ pub fn debug_dynamic_physics_stats(
     active_physics: Query<
         Entity,
         (
-            Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>, With<NPC>)>,
+            Or<(
+                With<Car>,
+                With<Helicopter>,
+                With<F16>,
+                With<Yacht>,
+                With<NPC>,
+            )>,
             With<RigidBody>,
             Without<RigidBodyDisabled>,
         ),
@@ -113,7 +131,13 @@ pub fn debug_dynamic_physics_stats(
     disabled_physics: Query<
         Entity,
         (
-            Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>, With<NPC>)>,
+            Or<(
+                With<Car>,
+                With<Helicopter>,
+                With<F16>,
+                With<Yacht>,
+                With<NPC>,
+            )>,
             With<RigidBodyDisabled>,
         ),
     >,

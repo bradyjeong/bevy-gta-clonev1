@@ -70,7 +70,7 @@ impl BuildingFactory {
                     view_visibility: ViewVisibility::default(),
                     visibility_range: VisibilityRange {
                         start_margin: 0.0..0.0,
-                        end_margin: 350.0..400.0,
+                        end_margin: 450.0..550.0,
                         use_aabb: false,
                     },
                 },
@@ -121,7 +121,7 @@ impl BuildingFactory {
                     view_visibility: ViewVisibility::default(),
                     visibility_range: VisibilityRange {
                         start_margin: 0.0..0.0,
-                        end_margin: 350.0..400.0,
+                        end_margin: 450.0..550.0,
                         use_aabb: false,
                     },
                 },

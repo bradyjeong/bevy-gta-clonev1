@@ -86,13 +86,18 @@ impl VehicleFactory {
             .id();
 
         // Add car body as child entity with proper mesh size
-        // Inherits VisibilityRange from parent
+        // VisibilityRange required on each mesh entity (doesn't inherit per Bevy docs)
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(1.9, 1.3, 4.7))), // Full visual size
             MeshMaterial3d(materials.add(color)),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
 
         Ok(vehicle_entity)
@@ -155,6 +160,11 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
 
         // Cockpit bubble - rounded cockpit
@@ -169,6 +179,11 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
             ChildOf(vehicle_entity),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
 
         // Tail boom - tapered cylinder
@@ -183,6 +198,11 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 0.0, 4.5),
             ChildOf(vehicle_entity),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
 
         // Main rotor blades - thin and aerodynamic
@@ -199,6 +219,11 @@ impl VehicleFactory {
                 Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
                 ChildOf(vehicle_entity),
                 MainRotor,
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 450.0..550.0,
+                    use_aabb: false,
+                },
             ));
         }
 
@@ -215,6 +240,11 @@ impl VehicleFactory {
                 Transform::from_xyz(x, -1.0, 0.0)
                     .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
                 ChildOf(vehicle_entity),
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 450.0..550.0,
+                    use_aabb: false,
+                },
             ));
         }
 
@@ -230,6 +260,11 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 1.0, 6.2),
             ChildOf(vehicle_entity),
             TailRotor,
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
 
         Ok(vehicle_entity)
@@ -284,13 +319,17 @@ impl VehicleFactory {
             .id();
 
         // Add F16 body as child entity
-        // Inherits VisibilityRange from parent
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(15.0, 5.0, 10.0))), // Full visual size
             MeshMaterial3d(materials.add(color)),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
 
         Ok(vehicle_entity)
@@ -350,6 +389,11 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
 
         Ok(vehicle_entity)

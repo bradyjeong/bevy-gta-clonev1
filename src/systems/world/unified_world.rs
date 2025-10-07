@@ -494,6 +494,7 @@ pub enum ContentLayer {
     Buildings,
     Vehicles,
     NPCs,
+    Vegetation,
 }
 
 /// Main unified world streaming system with fixed update intervals

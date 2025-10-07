@@ -4,7 +4,7 @@ use crate::services::{initialize_simple_services, update_timing_service_system};
 use crate::setup::world::setup_dubai_noon_lighting;
 use crate::setup::{
     setup_basic_world, setup_initial_aircraft_unified, setup_initial_npcs_unified,
-    setup_initial_vehicles_unified, setup_palm_trees,
+    setup_initial_vehicles_unified,
 };
 use crate::system_sets::GameSystemSets;
 use crate::systems::{
@@ -50,11 +50,7 @@ impl Plugin for GameSetupPlugin {
             // Secondary setup
             .add_systems(
                 Startup,
-                (
-                    setup_palm_trees,
-                    setup_initial_npcs_unified,
-                    setup_initial_vehicles_unified,
-                )
+                (setup_initial_npcs_unified, setup_initial_vehicles_unified)
                     .in_set(GameSystemSets::SecondarySetup),
             )
             // Runtime service systems

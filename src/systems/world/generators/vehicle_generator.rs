@@ -21,20 +21,21 @@ impl VehicleGenerator {
     ) {
         let chunk_center = coord.to_world_pos();
         let half_size = UNIFIED_CHUNK_SIZE * 0.5;
-        
+
         // Skip vehicle generation for chunks near world edge (±2000m)
         const WORLD_HALF_SIZE: f32 = 2000.0;
         const EDGE_BUFFER: f32 = 200.0;
-        if chunk_center.x.abs() > WORLD_HALF_SIZE - EDGE_BUFFER 
-            || chunk_center.z.abs() > WORLD_HALF_SIZE - EDGE_BUFFER {
+        if chunk_center.x.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
+            || chunk_center.z.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
+        {
             if let Some(chunk) = world.get_chunk_mut(coord) {
                 chunk.vehicles_generated = true;
             }
             return;
         }
 
-        // Generate vehicles only on roads - conservative number to prevent overcrowding
-        let vehicle_attempts = 2;
+        // Generate vehicles only on roads - increased for more traffic
+        let vehicle_attempts = 8;
 
         for _ in 0..vehicle_attempts {
             let local_x = world_rng.global().gen_range(-half_size..half_size);
@@ -47,7 +48,7 @@ impl VehicleGenerator {
                     position,
                     ContentType::Vehicle,
                     4.0,  // Vehicle radius
-                    25.0, // Minimum distance between vehicles
+                    15.0, // Minimum distance between vehicles (reduced for more traffic)
                 )
             {
                 if let Ok(vehicle_entity) =

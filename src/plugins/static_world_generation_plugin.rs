@@ -8,7 +8,9 @@ use crate::systems::spawn_validation::SpawnRegistry;
 use crate::systems::ui::loading_screen::{
     cleanup_loading_screen, setup_loading_screen, update_loading_progress,
 };
-use crate::systems::world::generators::{BuildingGenerator, RoadGenerator, VehicleGenerator};
+use crate::systems::world::generators::{
+    BuildingGenerator, RoadGenerator, VegetationGenerator, VehicleGenerator,
+};
 use crate::systems::world::road_network::RoadOwnership;
 use crate::systems::world::unified_world::{ChunkCoord, ChunkState, UnifiedWorldManager};
 
@@ -141,6 +143,7 @@ fn apply_generated_chunks(
     let road_generator = RoadGenerator;
     let building_generator = BuildingGenerator;
     let vehicle_generator = VehicleGenerator;
+    let vegetation_generator = VegetationGenerator;
 
     for coord in chunks_to_process {
         // Generate all content layers
@@ -164,6 +167,15 @@ fn apply_generated_chunks(
         );
 
         vehicle_generator.generate_vehicles(
+            &mut commands,
+            &mut world_manager,
+            coord,
+            &mut meshes,
+            &mut materials,
+            &mut world_rng,
+        );
+
+        vegetation_generator.generate_vegetation(
             &mut commands,
             &mut world_manager,
             coord,

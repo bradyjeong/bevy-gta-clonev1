@@ -26,6 +26,8 @@ impl Plugin for PhysicsActivationPlugin {
                 .run_if(in_state(AppState::InGame)), // Only run during gameplay, not Loading
         );
 
-        info!("Physics Activation Plugin initialized - GTA-style dynamic physics for buildings and vehicles");
+        info!(
+            "Physics Activation Plugin initialized - GTA-style dynamic physics for buildings and vehicles"
+        );
     }
 }

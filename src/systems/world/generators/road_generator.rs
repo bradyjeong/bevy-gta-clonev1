@@ -7,6 +7,7 @@ use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UNIFIED_CHUNK_SIZE, UnifiedChunkEntity, UnifiedWorldManager,
 };
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 
 pub struct RoadGenerator;
 
@@ -98,13 +99,18 @@ impl RoadGenerator {
                 Visibility::default(),
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 450.0..550.0,
+                    use_aabb: false,
+                },
                 DynamicContent {
                     content_type: ContentType::Road,
                 },
             ))
             .id();
 
-        // Road surface mesh - 5cm above ground (standard game dev practice)
+        // Road surface mesh - needs own VisibilityRange (doesn't inherit in 0.16)
         let road_mesh = generate_road_mesh(road);
         commands.spawn((
             Mesh3d(meshes.add(road_mesh)),
@@ -112,9 +118,14 @@ impl RoadGenerator {
             Transform::from_translation(-center_pos + Vec3::new(0.0, 0.05, 0.0)),
             ChildOf(road_entity),
             VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
         ));
 
-        // Road markings - 1cm above road surface (6cm total above ground)
+        // Road markings - need own VisibilityRange (doesn't inherit in 0.16)
         let marking_meshes = generate_road_markings_mesh(road);
         for marking_mesh in marking_meshes {
             commands.spawn((
@@ -123,6 +134,11 @@ impl RoadGenerator {
                 Transform::from_translation(-center_pos + Vec3::new(0.0, 0.06, 0.0)),
                 ChildOf(road_entity),
                 VisibleChildBundle::default(),
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 450.0..550.0,
+                    use_aabb: false,
+                },
             ));
         }
 
