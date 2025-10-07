@@ -6,6 +6,27 @@ use crate::util::transform_utils::horizontal_forward;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+/// Disable 3D camera during Loading state to eliminate rendering overhead
+/// Resilient to camera not existing yet
+pub fn disable_camera_during_loading(mut camera_query: Query<&mut Camera, With<MainCamera>>) {
+    for mut camera in &mut camera_query {
+        camera.is_active = false;
+    }
+    if !camera_query.is_empty() {
+        info!("3D camera disabled during loading for performance");
+    }
+}
+
+/// Re-enable 3D camera when entering InGame state
+pub fn enable_camera_for_gameplay(mut camera_query: Query<&mut Camera, With<MainCamera>>) {
+    for mut camera in &mut camera_query {
+        camera.is_active = true;
+    }
+    if !camera_query.is_empty() {
+        info!("3D camera enabled for gameplay");
+    }
+}
+
 type ActiveEntityQuery<'w, 's> = Query<
     'w,
     's,

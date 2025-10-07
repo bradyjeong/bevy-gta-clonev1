@@ -5,7 +5,6 @@ use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
-use bevy_rapier3d::prelude::*;
 use rand::Rng;
 
 /// Building Factory - Focused factory for building spawning only
@@ -45,7 +44,7 @@ impl BuildingFactory {
         let height = rng.gen_range(8.0..30.0);
         let width = rng.gen_range(8.0..15.0);
 
-        // Adjust position to place building base on ground
+        // Adjust _position to place building base on ground
         let final_position = Vec3::new(position.x, position.y + height / 2.0, position.z);
 
         // Random building color
@@ -58,6 +57,7 @@ impl BuildingFactory {
             ..default()
         });
 
+        // NO PHYSICS AT SPAWN - added dynamically by physics activation system
         let building_entity = commands
             .spawn((
                 DynamicContentBundle {
@@ -79,9 +79,7 @@ impl BuildingFactory {
                     height,
                     scale: Vec3::new(width, height, width),
                 },
-                RigidBody::Fixed,
-                Collider::cuboid(width / 2.0, height / 2.0, width / 2.0),
-                CollisionGroups::new(self.config.physics.static_group, Group::ALL),
+                // Physics components removed - added by physics_activation system
                 Mesh3d(meshes.add(Cuboid::new(width, height, width))),
                 MeshMaterial3d(building_material),
                 Name::new(format!("Building_{}", building_type.name())),
@@ -98,18 +96,19 @@ impl BuildingFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
-        position: Vec3,
+        _position: Vec3,
         size: Vec3,
         building_type: BuildingType,
         color: Color,
     ) -> Result<Entity, BundleError> {
-        let final_position = Vec3::new(position.x, position.y + size.y / 2.0, position.z);
+        let final_position = Vec3::new(_position.x, _position.y + size.y / 2.0, _position.z);
 
         let building_material = materials.add(StandardMaterial {
             base_color: color,
             ..default()
         });
 
+        // NO PHYSICS AT SPAWN - added dynamically by physics activation system
         let building_entity = commands
             .spawn((
                 DynamicContentBundle {
@@ -131,9 +130,7 @@ impl BuildingFactory {
                     height: size.y,
                     scale: size,
                 },
-                RigidBody::Fixed,
-                Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0),
-                CollisionGroups::new(self.config.physics.static_group, Group::ALL),
+                // Physics components removed - added by physics_activation system
                 Mesh3d(meshes.add(Cuboid::new(size.x, size.y, size.z))),
                 MeshMaterial3d(building_material),
                 Name::new(format!("Building_{}", building_type.name())),

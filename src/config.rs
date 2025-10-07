@@ -65,10 +65,10 @@ pub struct PhysicsConfig {
 #[derive(Debug, Clone)]
 pub struct WorldConfig {
     // Finite world parameters (12km x 12km like GTA V)
-    pub chunk_size: f32,       // 128.0 - Optimized chunk size for 12km world
-    pub map_size: f32,         // 12000.0 - Finite world size (12km x 12km)
-    pub total_chunks_x: usize, // 94 - Total chunks along X axis (12000/128)
-    pub total_chunks_z: usize, // 94 - Total chunks along Z axis (12000/128)
+    pub chunk_size: f32,       // 128.0 - Optimized chunk size for 4km world
+    pub map_size: f32,         // 4000.0 - Finite world size (4km x 4km)
+    pub total_chunks_x: usize, // 31 - Total chunks along X axis (4000/128)
+    pub total_chunks_z: usize, // 31 - Total chunks along Z axis (4000/128)
     pub streaming_radius: f32, // 800.0 - Object streaming radius
 
     // LOD distances with performance optimization
@@ -258,7 +258,7 @@ impl Default for PhysicsConfig {
 impl Default for WorldConfig {
     fn default() -> Self {
         let chunk_size = 128.0;
-        let map_size = 12000.0;
+        let map_size = 4000.0; // Reduced from 12km to 4km for faster loading
         let total_chunks = (map_size / chunk_size) as usize;
 
         Self {
@@ -266,7 +266,7 @@ impl Default for WorldConfig {
             map_size,
             total_chunks_x: total_chunks,
             total_chunks_z: total_chunks,
-            streaming_radius: 1200.0,
+            streaming_radius: 800.0, // Reduced from 1200 for 4km world
             lod_distances: [150.0, 300.0, 500.0],
             building_density: 0.5,
             tree_density: 2.0,
@@ -474,7 +474,7 @@ impl WorldConfig {
     pub fn validate_and_clamp(&mut self) {
         // Clamp chunk parameters for finite world
         self.chunk_size = self.chunk_size.clamp(64.0, 256.0);
-        self.map_size = self.map_size.clamp(8000.0, 16000.0);
+        self.map_size = self.map_size.clamp(2000.0, 8000.0); // Min 2km, max 8km
         self.streaming_radius = self.streaming_radius.clamp(200.0, 2000.0);
 
         // Recalculate chunk counts after validation
