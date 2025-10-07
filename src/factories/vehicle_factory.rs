@@ -7,6 +7,7 @@ use crate::components::{
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
+use crate::factories::MeshFactory;
 use crate::systems::MovementTracker;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
@@ -67,7 +68,7 @@ impl VehicleFactory {
                     velocity: Velocity::default(),
                     visibility_range: VisibilityRange {
                         start_margin: 0.0..0.0,
-                        end_margin: 450.0..500.0,
+                        end_margin: 450.0..550.0,
                         use_aabb: false,
                     },
                 },
@@ -85,6 +86,7 @@ impl VehicleFactory {
             .id();
 
         // Add car body as child entity with proper mesh size
+        // Inherits VisibilityRange from parent
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(1.9, 1.3, 4.7))), // Full visual size
             MeshMaterial3d(materials.add(color)),
@@ -104,10 +106,8 @@ impl VehicleFactory {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         position: Vec3,
-        color: Option<Color>,
+        _color: Option<Color>,
     ) -> Result<Entity, BundleError> {
-        let color = color.unwrap_or(Color::srgb(0.2, 0.2, 0.8));
-
         let vehicle_entity = commands
             .spawn((
                 DynamicPhysicsBundle {
@@ -127,7 +127,7 @@ impl VehicleFactory {
                     velocity: Velocity::default(),
                     visibility_range: VisibilityRange {
                         start_margin: 0.0..0.0,
-                        end_margin: 600.0..700.0,
+                        end_margin: 450.0..550.0,
                         use_aabb: false,
                     },
                 },
@@ -143,29 +143,91 @@ impl VehicleFactory {
             ))
             .id();
 
-        // Add helicopter body as child entity
+        // Helicopter body - Realistic shape using capsule
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(3.0, 3.0, 12.0))), // Full visual size
-            MeshMaterial3d(materials.add(color)),
+            Mesh3d(meshes.add(Capsule3d::new(0.8, 4.0))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.25, 0.28, 0.3), // Military gunmetal
+                metallic: 0.8,
+                perceptual_roughness: 0.4,
+                reflectance: 0.3,
+                ..default()
+            })),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
-            VisibleChildBundle::default(),
         ));
 
-        // Add main rotor
+        // Cockpit bubble - rounded cockpit
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(8.0, 0.02, 0.3))),
-            MeshMaterial3d(materials.add(color)),
-            Transform::from_xyz(0.0, 1.5, 0.0),
+            Mesh3d(meshes.add(Sphere::new(0.8))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgba(0.05, 0.05, 0.08, 0.15),
+                metallic: 0.1,
+                perceptual_roughness: 0.1,
+                alpha_mode: AlphaMode::Blend,
+                ..default()
+            })),
+            Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
             ChildOf(vehicle_entity),
-            MainRotor,
         ));
 
-        // Add tail rotor
+        // Tail boom - tapered cylinder
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.0, 0.02, 0.2))),
-            MeshMaterial3d(materials.add(color)),
-            Transform::from_xyz(0.0, 1.0, 6.0),
+            Mesh3d(meshes.add(Cylinder::new(0.25, 3.5))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.25, 0.28, 0.3),
+                metallic: 0.8,
+                perceptual_roughness: 0.4,
+                reflectance: 0.3,
+                ..default()
+            })),
+            Transform::from_xyz(0.0, 0.0, 4.5),
+            ChildOf(vehicle_entity),
+        ));
+
+        // Main rotor blades - thin and aerodynamic
+        for i in 0..4 {
+            let angle = i as f32 * std::f32::consts::PI / 2.0;
+            commands.spawn((
+                Mesh3d(meshes.add(Cuboid::new(8.0, 0.02, 0.3))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.08, 0.08, 0.08),
+                    metallic: 0.2,
+                    perceptual_roughness: 0.9,
+                    ..default()
+                })),
+                Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
+                ChildOf(vehicle_entity),
+                MainRotor,
+            ));
+        }
+
+        // Landing skids - long narrow cylinders
+        for x in [-0.8, 0.8] {
+            commands.spawn((
+                Mesh3d(meshes.add(Cylinder::new(0.04, 3.0))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.35, 0.35, 0.35),
+                    metallic: 0.7,
+                    perceptual_roughness: 0.6,
+                    ..default()
+                })),
+                Transform::from_xyz(x, -1.0, 0.0)
+                    .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+                ChildOf(vehicle_entity),
+            ));
+        }
+
+        // Tail rotor at end of tail boom
+        commands.spawn((
+            Mesh3d(MeshFactory::create_tail_rotor(meshes)),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.08, 0.08, 0.08),
+                metallic: 0.2,
+                perceptual_roughness: 0.9,
+                ..default()
+            })),
+            Transform::from_xyz(0.0, 1.0, 6.2),
             ChildOf(vehicle_entity),
             TailRotor,
         ));
@@ -204,7 +266,7 @@ impl VehicleFactory {
                     velocity: Velocity::default(),
                     visibility_range: VisibilityRange {
                         start_margin: 0.0..0.0,
-                        end_margin: 800.0..1000.0,
+                        end_margin: 450.0..550.0,
                         use_aabb: false,
                     },
                 },
@@ -222,6 +284,7 @@ impl VehicleFactory {
             .id();
 
         // Add F16 body as child entity
+        // Inherits VisibilityRange from parent
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(15.0, 5.0, 10.0))), // Full visual size
             MeshMaterial3d(materials.add(color)),
