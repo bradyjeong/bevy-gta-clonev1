@@ -70,7 +70,7 @@ pub fn setup_basic_world(
         DynamicTerrain,
         Mesh3d(meshes.add(Plane3d::default().mesh().size(4096.0, 4096.0))), // 4km x 4km
         MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))),
-        Transform::from_xyz(0.0, -0.15, 0.0), // 15cm below road surface at y=0.0
+        Transform::from_xyz(0.0, 0.0, 0.0), // Ground at origin
         RigidBody::Fixed,
         Collider::cuboid(2048.0, 0.05, 2048.0), // 2km radius terrain collider
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain

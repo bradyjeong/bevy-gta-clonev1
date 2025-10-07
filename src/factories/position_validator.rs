@@ -64,7 +64,7 @@ impl PositionValidator {
         }
 
         // Simple ground detection - would be enhanced with actual terrain data
-        let ground_height = -0.15; // Match terrain level at y = -0.15
+        let ground_height = 0.05; // Match terrain collider top surface at y = 0.05
 
         // Cache for future use (following AGENT.md performance guidelines)
         self.position_cache.insert((grid_x, grid_z), ground_height);
