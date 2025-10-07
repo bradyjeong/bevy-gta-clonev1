@@ -104,23 +104,23 @@ impl RoadGenerator {
             ))
             .id();
 
-        // Road surface mesh - positioned at ground level (y = 0.0)
+        // Road surface mesh - 5cm above ground (standard game dev practice)
         let road_mesh = generate_road_mesh(road);
         commands.spawn((
             Mesh3d(meshes.add(road_mesh)),
             MeshMaterial3d(road_material),
-            Transform::from_translation(-center_pos + Vec3::new(0.0, 0.0, 0.0)),
+            Transform::from_translation(-center_pos + Vec3::new(0.0, 0.05, 0.0)),
             ChildOf(road_entity),
             VisibleChildBundle::default(),
         ));
 
-        // Road markings - positioned exactly 1cm above road surface (y = 0.01)
+        // Road markings - 1cm above road surface (6cm total above ground)
         let marking_meshes = generate_road_markings_mesh(road);
         for marking_mesh in marking_meshes {
             commands.spawn((
                 Mesh3d(meshes.add(marking_mesh)),
                 MeshMaterial3d(marking_material.clone()),
-                Transform::from_translation(-center_pos + Vec3::new(0.0, 0.01, 0.0)),
+                Transform::from_translation(-center_pos + Vec3::new(0.0, 0.06, 0.0)),
                 ChildOf(road_entity),
                 VisibleChildBundle::default(),
             ));
@@ -273,6 +273,7 @@ impl RoadGenerator {
             RoadType::Alley => (Color::srgb(0.5, 0.5, 0.45), 0.6),
         };
 
+        // Use registry for performance (no depth_bias needed with physical offset)
         let key = MaterialKey::road(base_color).with_roughness(roughness);
         material_registry.get_or_create(materials, key)
     }
@@ -283,6 +284,8 @@ impl RoadGenerator {
         material_registry: &mut MaterialRegistry,
     ) -> Handle<StandardMaterial> {
         let color = Color::srgb(0.95, 0.95, 0.95);
+
+        // Use registry for performance (no depth_bias needed with physical offset)
         let key = MaterialKey::road_marking(color).with_roughness(0.6);
         material_registry.get_or_create(materials, key)
     }
