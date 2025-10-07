@@ -15,6 +15,7 @@ pub mod simulation_lod;
 pub mod unified_world;
 // pub mod optimized_lod; // Removed - functionality moved to unified_lod.rs
 pub mod asset_streaming;
+pub mod dynamic_physics_culling;
 pub mod physics_activation;
 
 pub mod debug_layers;
