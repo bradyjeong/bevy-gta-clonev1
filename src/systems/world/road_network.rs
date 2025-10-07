@@ -288,9 +288,11 @@ impl RoadNetwork {
         let base_x = cell_coord.x as f32 * cell_size;
         let base_z = cell_coord.y as f32 * cell_size;
         
-        // CRITICAL: Skip cells outside 4km world bounds (±2000m)
+        // CRITICAL: Skip cells outside 4km world bounds (±2000m) with buffer
+        // Buffer prevents roads from extending beyond terrain boundaries
         const WORLD_HALF_SIZE: f32 = 2000.0;
-        if base_x.abs() > WORLD_HALF_SIZE || base_z.abs() > WORLD_HALF_SIZE {
+        let buffer = cell_size; // Roads extend up to 1.5x cell_size beyond base
+        if base_x.abs() > (WORLD_HALF_SIZE - buffer) || base_z.abs() > (WORLD_HALF_SIZE - buffer) {
             return Vec::new();
         }
 
