@@ -176,10 +176,10 @@ impl MaterialFactory {
         materials: &mut ResMut<Assets<StandardMaterial>>,
     ) -> Handle<StandardMaterial> {
         materials.add(StandardMaterial {
-            base_color: Color::srgb(0.35, 0.37, 0.40), // F16 Falcon Gray
-            metallic: 0.7,
-            perceptual_roughness: 0.3, // Semi-matte military finish
-            reflectance: 0.4,
+            base_color: Color::srgb(0.45, 0.50, 0.55), // Lighter tactical gray
+            metallic: 0.85,
+            perceptual_roughness: 0.25, // Shinier finish
+            reflectance: 0.6,
             ..default()
         })
     }

@@ -291,7 +291,7 @@ impl VehicleFactory {
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::capsule_z(6.0, 4.0), // GTA-style capsule for aircraft
+                    collider: Collider::capsule_z(10.0, 0.9), // half_height=10.0, radius=0.9 along Z-axis
                     collision_groups: CollisionGroups::new(
                         self.config.physics.vehicle_group,
                         self.config.physics.static_group | self.config.physics.vehicle_group,
@@ -316,14 +316,15 @@ impl VehicleFactory {
             ))
             .id();
 
-        // Part 1: Fuselage - using dedicated F16 mesh factory
+        // Part 1: Fuselage - using dedicated F16 mesh factory, rotated horizontal
         let fuselage_mesh = MeshFactory::create_f16_body(meshes);
         let fuselage_material = MaterialFactory::create_f16_fuselage_material(materials);
 
         commands.spawn((
             Mesh3d(fuselage_mesh),
             MeshMaterial3d(fuselage_material),
-            Transform::from_xyz(0.0, 0.0, 0.0),
+            Transform::from_xyz(0.0, 0.0, 0.0)
+                .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             VisibilityRange {
@@ -333,14 +334,20 @@ impl VehicleFactory {
             },
         ));
 
-        // Part 2: Left Wing - swept back
+        // Part 2: Left Wing - Large delta wing with aggressive sweep
         let wing_mesh = MeshFactory::create_f16_wing(meshes);
-        let wing_material = MaterialFactory::create_f16_fuselage_material(materials);
+        let wing_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.25, 0.27, 0.30), // Darker gray for wings
+            metallic: 0.8,
+            perceptual_roughness: 0.3,
+            ..default()
+        });
 
         commands.spawn((
             Mesh3d(wing_mesh.clone()),
             MeshMaterial3d(wing_material.clone()),
-            Transform::from_xyz(-5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(0.2)),
+            Transform::from_xyz(-4.0, -0.2, 1.0)
+                .with_rotation(Quat::from_rotation_y(-0.25) * Quat::from_rotation_z(-0.05)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             VisibilityRange {
@@ -350,11 +357,12 @@ impl VehicleFactory {
             },
         ));
 
-        // Part 3: Right Wing - swept back (mirror)
+        // Part 3: Right Wing - Large delta wing with aggressive sweep (mirror)
         commands.spawn((
             Mesh3d(wing_mesh),
             MeshMaterial3d(wing_material),
-            Transform::from_xyz(5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(-0.2)),
+            Transform::from_xyz(4.0, -0.2, 1.0)
+                .with_rotation(Quat::from_rotation_y(0.25) * Quat::from_rotation_z(0.05)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             VisibilityRange {
@@ -364,14 +372,21 @@ impl VehicleFactory {
             },
         ));
 
-        // Part 4: Canopy (transparent cockpit bubble)
+        // Part 4: Canopy (transparent cockpit bubble) - Forward position for sleek look
         let canopy_mesh = MeshFactory::create_f16_canopy(meshes);
-        let canopy_material = MaterialFactory::create_f16_canopy_material(materials);
+        let canopy_material = materials.add(StandardMaterial {
+            base_color: Color::srgba(0.1, 0.15, 0.2, 0.6), // Dark tinted blue
+            alpha_mode: AlphaMode::Blend,
+            metallic: 0.9,
+            perceptual_roughness: 0.1,
+            reflectance: 0.8,
+            ..default()
+        });
 
         commands.spawn((
             Mesh3d(canopy_mesh),
             MeshMaterial3d(canopy_material),
-            Transform::from_xyz(0.0, 0.8, 3.0),
+            Transform::from_xyz(0.0, 1.5, -5.0).with_scale(Vec3::new(1.2, 1.0, 1.5)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             VisibilityRange {
@@ -381,14 +396,19 @@ impl VehicleFactory {
             },
         ));
 
-        // Part 5: Vertical Tail (tail fin)
+        // Part 5: Vertical Tail (tail fin) - Taller and swept with accent color
         let tail_mesh = MeshFactory::create_f16_vertical_tail(meshes);
-        let tail_material = MaterialFactory::create_f16_fuselage_material(materials);
+        let tail_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.55, 0.60, 0.65), // Lighter accent for tail
+            metallic: 0.85,
+            perceptual_roughness: 0.25,
+            ..default()
+        });
 
         commands.spawn((
             Mesh3d(tail_mesh),
             MeshMaterial3d(tail_material),
-            Transform::from_xyz(0.0, 1.0, -5.0),
+            Transform::from_xyz(0.0, 2.2, 7.5).with_rotation(Quat::from_rotation_x(0.1)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             VisibilityRange {
@@ -398,14 +418,45 @@ impl VehicleFactory {
             },
         ));
 
-        // Part 6: Engine Nozzle (rear thrust visual)
-        let engine_mesh = meshes.add(Cylinder::new(0.8, 2.0));
+        // Part 6: Left Air Intake - Signature F16 side intake
+        let intake_mesh = MeshFactory::create_f16_air_intake(meshes);
+        let intake_material = MaterialFactory::create_f16_intake_material(materials);
+
+        commands.spawn((
+            Mesh3d(intake_mesh.clone()),
+            MeshMaterial3d(intake_material.clone()),
+            Transform::from_xyz(-1.5, -0.5, -2.0).with_rotation(Quat::from_rotation_y(1.57)),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
+        ));
+
+        // Part 7: Right Air Intake - Signature F16 side intake (mirror)
+        commands.spawn((
+            Mesh3d(intake_mesh),
+            MeshMaterial3d(intake_material),
+            Transform::from_xyz(1.5, -0.5, -2.0).with_rotation(Quat::from_rotation_y(-1.57)),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
+        ));
+
+        // Part 8: Engine Nozzle (rear thrust visual)
+        let engine_mesh = meshes.add(Cylinder::new(0.9, 2.5));
         let engine_material = MaterialFactory::create_f16_engine_material(materials);
 
         commands.spawn((
             Mesh3d(engine_mesh),
             MeshMaterial3d(engine_material),
-            Transform::from_xyz(0.0, 0.0, -8.0),
+            Transform::from_xyz(0.0, 0.0, 9.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             VisibilityRange {
@@ -415,7 +466,7 @@ impl VehicleFactory {
             },
         ));
 
-        // Part 7: Jet Flames (afterburner exhaust effects)
+        // Part 9: Jet Flames (afterburner exhaust effects)
         let flame_mesh = meshes.add(Cone {
             radius: 0.6,
             height: 2.5,
@@ -430,7 +481,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(flame_mesh),
             MeshMaterial3d(flame_material),
-            Transform::from_xyz(0.0, 0.0, -9.0)
+            Transform::from_xyz(0.0, 0.0, 10.5)
                 .with_rotation(Quat::from_rotation_x(std::f32::consts::PI)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),

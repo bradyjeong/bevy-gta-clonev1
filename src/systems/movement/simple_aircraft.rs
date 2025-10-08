@@ -68,9 +68,9 @@ pub fn simple_f16_movement(
 
         // Read controls directly (no state duplication)
         let local_target_ang = Vec3::new(
-            control_state.pitch * specs.pitch_rate_max, // +X pitch
-            control_state.yaw * specs.yaw_rate_max,     // +Y yaw
-            -control_state.roll * specs.roll_rate_max,  // -Z roll
+            control_state.pitch * specs.pitch_rate_max,  // +X pitch (up arrow = pitch up)
+            -control_state.yaw * specs.yaw_rate_max,     // -Y yaw (A = left, D = right)
+            -control_state.roll * specs.roll_rate_max,   // -Z roll (left arrow = roll left)
         );
         let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
 

@@ -35,6 +35,16 @@ pub fn setup_initial_aircraft_unified(
     let aircraft_spawns = [
         (Vec3::new(15.0, 0.0, 15.0), AircraftType::Helicopter),
         (Vec3::new(80.0, 0.0, 120.0), AircraftType::F16),
+        (Vec3::new(-150.0, 0.0, 200.0), AircraftType::F16),
+        (Vec3::new(250.0, 0.0, -180.0), AircraftType::F16),
+        (Vec3::new(-300.0, 0.0, -250.0), AircraftType::F16),
+        (Vec3::new(400.0, 0.0, 350.0), AircraftType::F16),
+        (Vec3::new(-450.0, 0.0, 100.0), AircraftType::Helicopter),
+        (Vec3::new(500.0, 0.0, -450.0), AircraftType::F16),
+        (Vec3::new(-200.0, 0.0, -500.0), AircraftType::F16),
+        (Vec3::new(600.0, 0.0, 200.0), AircraftType::F16),
+        (Vec3::new(-550.0, 0.0, 550.0), AircraftType::Helicopter),
+        (Vec3::new(700.0, 0.0, -100.0), AircraftType::F16),
     ];
 
     let mut spawned_aircraft = Vec::new();
@@ -76,7 +86,7 @@ fn spawn_aircraft_unified(
     // Calculate spawn position (aircraft spawn at appropriate height above ground)
     let spawn_height = match aircraft_type {
         AircraftType::Helicopter => 1.2, // Helicopter collider half-height (1.2) + small margin
-        AircraftType::F16 => 1.0, // F16 cuboid half-height (1.0) to ensure bottom touches ground
+        AircraftType::F16 => 0.9, // F16 capsule_z(0.9, 10.0) - radius 0.9 = ground clearance
     };
 
     let spawn_position = Vec3::new(

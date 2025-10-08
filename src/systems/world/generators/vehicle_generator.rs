@@ -34,9 +34,8 @@ impl VehicleGenerator {
             return;
         }
 
-        // Generate vehicles only on roads - increased for more traffic
+        // Generate road vehicles
         let vehicle_attempts = 8;
-
         for _ in 0..vehicle_attempts {
             let local_x = world_rng.global().gen_range(-half_size..half_size);
             let local_z = world_rng.global().gen_range(-half_size..half_size);
@@ -47,21 +46,58 @@ impl VehicleGenerator {
                 && world.placement_grid.can_place(
                     position,
                     ContentType::Vehicle,
-                    4.0,  // Vehicle radius
-                    15.0, // Minimum distance between vehicles (reduced for more traffic)
+                    4.0,
+                    15.0,
                 )
             {
-                if let Ok(vehicle_entity) =
-                    self.spawn_vehicle(commands, coord, position, meshes, materials, world_rng)
-                {
-                    // Add to placement grid
+                if let Ok(vehicle_entity) = self.spawn_ground_vehicle(
+                    commands,
+                    coord,
+                    position,
+                    meshes,
+                    materials,
+                    world_rng,
+                ) {
                     world
                         .placement_grid
                         .add_entity(position, ContentType::Vehicle, 4.0);
 
-                    // Add entity to chunk
                     if let Some(chunk) = world.get_chunk_mut(coord) {
                         chunk.entities.push(vehicle_entity);
+                    }
+                }
+            }
+        }
+
+        // Generate aircraft in open areas (2% chance per chunk)
+        if world_rng.global().gen_bool(0.02) {
+            let local_x = world_rng.global().gen_range(-half_size..half_size);
+            let local_z = world_rng.global().gen_range(-half_size..half_size);
+            let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
+
+            // Spawn in open areas away from roads
+            if !self.is_on_road(position, world)
+                && world.placement_grid.can_place(
+                    position,
+                    ContentType::Vehicle,
+                    10.0, // Larger radius for aircraft
+                    50.0, // More spacing
+                )
+            {
+                if let Ok(aircraft_entity) = self.spawn_aircraft(
+                    commands,
+                    coord,
+                    position,
+                    meshes,
+                    materials,
+                    world_rng,
+                ) {
+                    world
+                        .placement_grid
+                        .add_entity(position, ContentType::Vehicle, 10.0);
+
+                    if let Some(chunk) = world.get_chunk_mut(coord) {
+                        chunk.entities.push(aircraft_entity);
                     }
                 }
             }
@@ -73,7 +109,7 @@ impl VehicleGenerator {
         }
     }
 
-    fn spawn_vehicle(
+    fn spawn_ground_vehicle(
         &self,
         commands: &mut Commands,
         chunk_coord: ChunkCoord,
@@ -82,13 +118,9 @@ impl VehicleGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         world_rng: &mut WorldRng,
     ) -> Result<Entity, String> {
-        // Use focused VehicleFactory for clean, single-responsibility design
         let factory = VehicleFactory::new();
-        let vehicle_types = [
-            VehicleType::SuperCar,
-            VehicleType::Helicopter,
-            VehicleType::F16,
-        ];
+        // Only ground vehicles on roads
+        let vehicle_types = [VehicleType::SuperCar];
         let vehicle_type = vehicle_types[world_rng.global().gen_range(0..vehicle_types.len())];
 
         match factory.spawn_vehicle_by_type(
@@ -100,14 +132,46 @@ impl VehicleGenerator {
             None,
         ) {
             Ok(entity) => {
-                // Add chunk-specific components to maintain compatibility
                 commands.entity(entity).insert(UnifiedChunkEntity {
                     coord: chunk_coord,
                     layer: ContentLayer::Vehicles,
                 });
                 Ok(entity)
             }
-            Err(e) => Err(format!("Failed to spawn vehicle: {e}")),
+            Err(e) => Err(format!("Failed to spawn ground vehicle: {e}")),
+        }
+    }
+
+    fn spawn_aircraft(
+        &self,
+        commands: &mut Commands,
+        chunk_coord: ChunkCoord,
+        position: Vec3,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        world_rng: &mut WorldRng,
+    ) -> Result<Entity, String> {
+        let factory = VehicleFactory::new();
+        // Mix of helicopters and F16s
+        let aircraft_types = [VehicleType::Helicopter, VehicleType::F16];
+        let vehicle_type = aircraft_types[world_rng.global().gen_range(0..aircraft_types.len())];
+
+        match factory.spawn_vehicle_by_type(
+            commands,
+            meshes,
+            materials,
+            vehicle_type,
+            position,
+            None,
+        ) {
+            Ok(entity) => {
+                commands.entity(entity).insert(UnifiedChunkEntity {
+                    coord: chunk_coord,
+                    layer: ContentLayer::Vehicles,
+                });
+                Ok(entity)
+            }
+            Err(e) => Err(format!("Failed to spawn aircraft: {e}")),
         }
     }
 

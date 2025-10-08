@@ -277,32 +277,29 @@ impl MeshFactory {
         meshes.add(Capsule3d::new(safe_radius, safe_length))
     }
 
-    /// Create F16 fighter jet body (main fuselage) - GTA-style collision
+    /// Create F16 fighter jet body (main fuselage) - Sexy curved capsule
     pub fn create_f16_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // F16 proportions: Keep fighter jet look - long and narrow
-        let width = 4.0_f32.clamp(0.1, 10.0); // X-axis - narrow fighter jet
-        let height = 2.5_f32.clamp(0.1, 5.0); // Y-axis - low profile  
-        let depth = 16.0_f32.clamp(0.1, 20.0); // Z-axis - long fuselage
-        meshes.add(Cuboid::new(width, height, depth))
+        // F16 proportions: Long, sleek aerodynamic capsule
+        let radius = 0.9_f32.clamp(0.1, 3.0); // Slimmer cross-section
+        let half_length = 10.0_f32.clamp(0.1, 20.0); // Longer fuselage
+        meshes.add(Capsule3d::new(radius, half_length))
     }
 
-    /// Create F16 wing (swept delta wing)
+    /// Create F16 wing (swept delta wing) - Curved leading edge
     pub fn create_f16_wing(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // F16 wing dimensions: 32.8ft span, average chord ~6ft
-        // Reoriented: span along X-axis, chord along Z-axis, thickness along Y-axis
-        let span = 10.0_f32.clamp(0.1, 30.0); // X-axis (span)
-        let thickness = 0.15_f32.clamp(0.01, 1.0); // Y-axis (thickness)
-        let chord = 1.8_f32.clamp(0.1, 10.0); // Z-axis (chord)
+        // F16 wing dimensions: Large, thin delta wings
+        let span = 6.5_f32.clamp(0.1, 20.0); // X-axis (half-span) - LARGER
+        let thickness = 0.15_f32.clamp(0.01, 1.0); // Y-axis (airfoil thickness)
+        let chord = 4.0_f32.clamp(0.1, 15.0); // Z-axis (chord length) - LONGER
         meshes.add(Cuboid::new(span, thickness, chord))
     }
 
-    /// Create F16 air intake (side-mounted)
+    /// Create F16 air intake (side-mounted) - Curved scoop
     pub fn create_f16_air_intake(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // F16 has distinctive side air intakes
-        let width = 2.0_f32.clamp(0.1, 5.0);
-        let height = 1.2_f32.clamp(0.1, 3.0);
-        let depth = 1.0_f32.clamp(0.1, 3.0);
-        meshes.add(Cuboid::new(width, height, depth))
+        // F16 has distinctive curved side air intakes
+        let radius = 0.8_f32.clamp(0.1, 2.0);
+        let half_length = 1.2_f32.clamp(0.1, 3.0);
+        meshes.add(Capsule3d::new(radius, half_length))
     }
 
     /// Create F16 canopy (bubble canopy)
@@ -313,21 +310,21 @@ impl MeshFactory {
         meshes.add(Capsule3d::new(radius, height))
     }
 
-    /// Create F16 vertical tail
+    /// Create F16 vertical tail - Swept leading edge
     pub fn create_f16_vertical_tail(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // Large vertical stabilizer characteristic of F16
-        let width = 0.3_f32.clamp(0.1, 2.0);
-        let height = 3.5_f32.clamp(0.1, 10.0);
-        let chord = 2.5_f32.clamp(0.1, 8.0);
+        // Large vertical stabilizer characteristic of F16 with smooth profile
+        let width = 0.2_f32.clamp(0.1, 1.0);
+        let height = 3.8_f32.clamp(0.1, 10.0);
+        let chord = 2.8_f32.clamp(0.1, 8.0);
         meshes.add(Cuboid::new(width, height, chord))
     }
 
-    /// Create F16 horizontal stabilizer
+    /// Create F16 horizontal stabilizer - Aerodynamic swept design
     pub fn create_f16_horizontal_stabilizer(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // Horizontal tail surfaces
-        let span = 4.0_f32.clamp(0.1, 15.0);
-        let thickness = 0.1_f32.clamp(0.01, 1.0);
-        let chord = 1.5_f32.clamp(0.1, 5.0);
+        // Horizontal tail surfaces with smooth curves
+        let span = 2.5_f32.clamp(0.1, 8.0);
+        let thickness = 0.08_f32.clamp(0.01, 0.5);
+        let chord = 1.8_f32.clamp(0.1, 5.0);
         meshes.add(Cuboid::new(span, thickness, chord))
     }
 
