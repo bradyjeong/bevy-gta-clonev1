@@ -72,17 +72,12 @@ pub mod swimming;
 pub mod terrain_water_manager;
 pub mod validation;
 // pub mod realistic_physics_safeguards; // DISABLED - conflicts with Rapier
-// pub mod distance_cache; // Moved to services/
-pub mod distance_cache_debug;
 pub mod transform_sync;
-pub mod unified_distance_calculator;
 // pub mod batching; // Missing file
 // pub mod batching_test; // Missing file
 
 pub mod player_collision_resolution;
 pub mod player_physics_enable;
-pub mod simple_service_example;
-
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
@@ -90,13 +85,8 @@ pub mod batching;
 pub mod performance; // Simplified performance system (replaces performance_monitor)
 // Explicit exports following simplicity guidelines - only export what's needed
 // Core systems that are commonly used across plugins
-pub use crate::services::{
-    DistanceCache, DistanceCachePlugin, MovementTracker, get_cached_distance,
-    get_cached_distance_squared,
-};
 pub use crate::services::{EntityTimerType, ManagedTiming, SystemType, TimingService, TimingStats};
 pub use batching::frame_counter_system;
-pub use distance_cache_debug::DistanceCacheDebugPlugin;
 // Simplified performance system
 pub use performance::{
     DebugUIPlugin, PerformanceCategory, PerformancePlugin, UnifiedPerformancePlugin,
@@ -105,7 +95,6 @@ pub use performance::{
 pub use safety::validate_physics_config;
 pub use spawn_validation::{SpawnRegistry, SpawnValidationPlugin, SpawnValidator, SpawnableType};
 pub use transform_sync::TransformSyncPlugin;
-pub use unified_distance_calculator::UnifiedDistanceCalculatorPlugin;
 
 // World systems (frequently used together)
 pub use world::{
@@ -124,8 +113,8 @@ pub use physics::PhysicsUtilities;
 
 // Safe ActiveEntity system
 pub use safe_active_entity::{
-    ActiveEntityTransferred, ActiveTransferRequest, active_entity_integrity_check,
-    active_transfer_executor_system, queue_active_transfer,
+    ActiveTransferRequest, active_entity_integrity_check, active_transfer_executor_system,
+    queue_active_transfer,
 };
 
 // Validation systems - TEMPORARILY DISABLED
@@ -135,9 +124,3 @@ pub use safe_active_entity::{
 
 // World boundary systems
 pub use world::boundaries::{aircraft_boundary_system, world_boundary_system};
-
-// Simple service examples
-pub use simple_service_example::{
-    service_example_config_validation, service_example_timing_check,
-    service_example_vehicle_creation,
-};

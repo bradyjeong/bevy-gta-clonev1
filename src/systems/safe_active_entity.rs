@@ -14,20 +14,12 @@ pub struct ActiveTransferRequest {
     pub target_entity: Entity,
 }
 
-/// Event fired when ActiveEntity transfer completes
-#[derive(Event)]
-pub struct ActiveEntityTransferred {
-    pub from: Entity,
-    pub to: Entity,
-}
-
 /// System that processes ActiveEntity transfer requests atomically
 /// Guarantees exactly one entity has ActiveEntity at any time
 pub fn active_transfer_executor_system(
     mut commands: Commands,
     transfer_requests: Query<(Entity, &ActiveTransferRequest)>,
     current_active: Query<Entity, With<ActiveEntity>>,
-    mut transfer_events: EventWriter<ActiveEntityTransferred>,
 ) {
     // Process all transfer requests this frame
     for (requester_entity, request) in transfer_requests.iter() {
@@ -36,12 +28,6 @@ pub fn active_transfer_executor_system(
             // Perform atomic transfer
             commands.entity(current).remove::<ActiveEntity>();
             commands.entity(request.target_entity).insert(ActiveEntity);
-
-            // Fire event for other systems that need to know
-            transfer_events.write(ActiveEntityTransferred {
-                from: current,
-                to: request.target_entity,
-            });
 
             // Remove the request
             commands

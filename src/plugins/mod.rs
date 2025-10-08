@@ -6,9 +6,9 @@
 //! ## Plugin Design Principles
 //!
 //! - **Single Responsibility**: Each plugin handles one clear domain
-//! - **Event-Based Communication**: Plugins communicate via Bevy events only
+//! - **Resource & Direct Communication**: Plugins communicate primarily via resources and direct system APIs; events only when decoupling is necessary
 //! - **Resource Sharing**: Shared state uses Bevy resources, not globals
-//! - **Clear Boundaries**: No direct plugin-to-plugin dependencies
+//! - **Clear Boundaries**: Minimal cross-plugin dependencies
 //!
 //! ## Plugin Categories
 //!

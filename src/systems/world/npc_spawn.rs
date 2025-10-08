@@ -105,48 +105,6 @@ pub fn spawn_simple_npc_with_ground_detection_simple(
     entity
 }
 
-/// Spawn a single NPC with ground detection (full physics version)
-pub fn spawn_simple_npc_with_ground_detection(
-    commands: &mut Commands,
-    position: Vec2,
-    ground_service: &GroundDetectionService,
-    rapier_context: &RapierContext,
-    world_rng: &mut WorldRng,
-) -> Entity {
-    // Create NPC with new state-based architecture
-    let npc_type = match world_rng.global().gen_range(0..4) {
-        0 => NPCType::Civilian,
-        1 => NPCType::Worker,
-        2 => NPCType::Police,
-        _ => NPCType::Emergency,
-    };
-
-    let npc_state = NPCState::new(npc_type);
-    let height = npc_state.appearance.height;
-
-    // Get ground height at spawn position
-    let ground_y = ground_service.get_spawn_height(position, height, rapier_context);
-    let spawn_position = Vec3::new(position.x, ground_y, position.y);
-
-    // Use simplified entity creation
-    commands
-        .spawn((
-            npc_state,
-            RigidBody::Dynamic,
-            Collider::capsule(
-                Vec3::new(0.0, -height / 2.0, 0.0),
-                Vec3::new(0.0, height / 2.0, 0.0),
-                0.3,
-            ),
-            Velocity::zero(),
-            Transform::from_translation(spawn_position),
-            Visibility::Visible,
-            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
-        ))
-        .id()
-}
-
 /// Legacy spawn a single NPC using the simplified system
 pub fn spawn_simple_npc(
     commands: &mut Commands,

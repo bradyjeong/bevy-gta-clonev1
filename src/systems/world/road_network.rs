@@ -159,39 +159,8 @@ pub struct RoadNetwork {
     pub generated_cells: std::collections::HashSet<IVec2>,
 }
 
-#[derive(Resource, Default)]
-pub struct RoadOwnership {
-    pub road_to_chunk: HashMap<u64, (crate::systems::world::unified_world::ChunkCoord, Entity)>,
-}
-
-impl RoadOwnership {
-    pub fn register_road(
-        &mut self,
-        road_id: u64,
-        chunk: crate::systems::world::unified_world::ChunkCoord,
-        entity: Entity,
-    ) {
-        self.road_to_chunk.insert(road_id, (chunk, entity));
-    }
-
-    pub fn remove_road(
-        &mut self,
-        road_id: u64,
-    ) -> Option<(crate::systems::world::unified_world::ChunkCoord, Entity)> {
-        self.road_to_chunk.remove(&road_id)
-    }
-
-    pub fn get_roads_for_chunk(
-        &self,
-        chunk: crate::systems::world::unified_world::ChunkCoord,
-    ) -> Vec<u64> {
-        self.road_to_chunk
-            .iter()
-            .filter(|(_, (c, _))| *c == chunk)
-            .map(|(id, _)| *id)
-            .collect()
-    }
-}
+// NOTE: RoadOwnership removed - it was only used for streaming, which is no longer active.
+// If streaming is reintroduced, add this back under a "streaming" feature flag.
 
 impl RoadNetwork {
     pub fn clear_cache(&mut self) {

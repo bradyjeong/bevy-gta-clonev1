@@ -11,7 +11,7 @@ use bevy::{prelude::*, render::view::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 
 use crate::GameConfig;
-use crate::systems::MovementTracker;
+use crate::components::MovementTracker;
 
 /// Aircraft types supported by the unified system
 #[derive(Debug, Clone, Copy, PartialEq)]

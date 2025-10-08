@@ -1,4 +1,5 @@
 use crate::bundles::{DynamicPhysicsBundle, VisibleChildBundle};
+use crate::components::MovementTracker;
 use crate::components::water::Yacht;
 use crate::components::water_new::WaterBodyId;
 use crate::components::{
@@ -6,9 +7,8 @@ use crate::components::{
     SimpleF16Specs, SimpleHelicopterSpecs, TailRotor, VehicleState, VehicleType,
 };
 use crate::config::GameConfig;
-use crate::factories::generic_bundle::BundleError;
 use crate::factories::MeshFactory;
-use crate::systems::MovementTracker;
+use crate::factories::generic_bundle::BundleError;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;

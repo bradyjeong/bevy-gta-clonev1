@@ -1,12 +1,7 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
 
-const GROUND_DETECTION_HEIGHT: f32 = 100.0; // Cast ray from this height
-const DEFAULT_GROUND_HEIGHT: f32 = 0.0; // Fallback if no ground found
-const MIN_GROUND_HEIGHT: f32 = -10.0; // Minimum valid ground height
-const MAX_GROUND_HEIGHT: f32 = 50.0; // Maximum valid ground height
-
-/// Service for detecting ground height using physics raycasting
+/// Service for ground height detection
+/// Uses simple terrain estimation for spawning entities at correct height
 #[derive(Resource)]
 pub struct GroundDetectionService {
     pub enabled: bool,
@@ -17,94 +12,30 @@ impl Default for GroundDetectionService {
     fn default() -> Self {
         Self {
             enabled: true,
-            fallback_height: DEFAULT_GROUND_HEIGHT,
+            fallback_height: 0.05, // Match terrain collider top surface
         }
     }
 }
 
 impl GroundDetectionService {
-    /// Get ground height at a given XZ position using raycasting
-    pub fn get_ground_height(&self, position: Vec2, rapier_context: &RapierContext) -> f32 {
+    /// Get ground height without physics raycasting
+    /// Uses simple terrain estimation matching the actual terrain from setup_basic_world
+    /// Terrain is at y=0.0, collider top surface is at 0.05
+    pub fn get_ground_height_simple(&self, _position: Vec2) -> f32 {
         if !self.enabled {
             return self.fallback_height;
         }
-
-        // Cast ray downward from high altitude
-        let ray_origin = Vec3::new(position.x, GROUND_DETECTION_HEIGHT, position.y);
-        let ray_direction = Vec3::NEG_Y;
-        let max_distance = GROUND_DETECTION_HEIGHT + 20.0; // Extra margin
-
-        // Create raycast filter to only hit static geometry (terrain, buildings)
-        let filter = QueryFilter::new().groups(CollisionGroups::new(
-            Group::ALL,
-            Group::GROUP_1, // STATIC_GROUP
-        ));
-
-        // Perform raycast
-        if let Some((_entity, intersection)) =
-            rapier_context.cast_ray(ray_origin, ray_direction, max_distance, true, filter)
-        {
-            let ground_height = ray_origin.y - intersection;
-
-            // Validate ground height is reasonable
-            if (MIN_GROUND_HEIGHT..=MAX_GROUND_HEIGHT).contains(&ground_height) {
-                return ground_height;
-            }
-        }
-
-        // Return fallback if no valid ground found
-        self.fallback_height
+        0.05 // Flat ground at collider top surface
     }
 
-    /// Get ground height with offset for entity spawning
-    pub fn get_spawn_height(
-        &self,
-        position: Vec2,
-        entity_height: f32,
-        rapier_context: &RapierContext,
-    ) -> f32 {
-        let ground_height = self.get_ground_height(position, rapier_context);
-        // Place entity with its bottom at ground level
-        ground_height + entity_height * 0.5
-    }
-
-    /// Validate if a position has valid ground
-    pub fn has_valid_ground(&self, position: Vec2, rapier_context: &RapierContext) -> bool {
+    /// Check if a position is suitable for NPC spawning
+    /// Avoids spawning too close to origin where roads are
+    pub fn is_spawn_position_valid(&self, position: Vec2) -> bool {
         if !self.enabled {
             return true;
         }
 
-        let ray_origin = Vec3::new(position.x, GROUND_DETECTION_HEIGHT, position.y);
-        let ray_direction = Vec3::NEG_Y;
-        let max_distance = GROUND_DETECTION_HEIGHT + 20.0;
-
-        let filter = QueryFilter::new().groups(CollisionGroups::new(
-            Group::ALL,
-            Group::GROUP_1, // STATIC_GROUP
-        ));
-
-        rapier_context
-            .cast_ray(ray_origin, ray_direction, max_distance, true, filter)
-            .is_some()
-    }
-
-    /// Get ground height without requiring RapierContext access
-    /// Uses simple terrain estimation until physics integration is fixed
-    pub fn get_ground_height_simple(&self, _position: Vec2) -> f32 {
-        // Match the actual terrain height from setup_basic_world
-        // Terrain is at y=0.0, collider top surface is at 0.05
-        0.05 // Flat ground at collider top surface
-    }
-
-    /// Check if a position is suitable for NPC spawning (avoiding roads, buildings, etc.)
-    pub fn is_spawn_position_valid(&self, position: Vec2) -> bool {
-        // Simple validation - in practice this would check for:
-        // - Not on roads
-        // - Not inside buildings
-        // - Not too steep terrain
-        // - Not in water
-
-        // For now, just avoid positions too close to origin (where roads typically are)
+        // Simple validation - avoid positions too close to origin (where roads typically are)
         let distance_from_origin = position.length();
         distance_from_origin > 10.0 // Stay away from central road network
     }

@@ -1,8 +1,8 @@
+use crate::components::MovementTracker;
 use crate::components::{
     Building, Car, DynamicContent, HumanMovement, MovementController, NPCAppearance,
     NPCBehaviorComponent, NPCState, VehicleState, VehicleType,
 };
-use crate::services::distance_cache::MovementTracker;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
 use bevy::prelude::*;
 use bevy::render::view::VisibilityRange;

@@ -11,7 +11,6 @@ use crate::systems::ui::loading_screen::{
 use crate::systems::world::generators::{
     BuildingGenerator, RoadGenerator, VegetationGenerator, VehicleGenerator,
 };
-use crate::systems::world::road_network::RoadOwnership;
 use crate::systems::world::unified_world::{ChunkCoord, ChunkState, UnifiedWorldManager};
 
 /// Static world generation plugin - generates all chunks at startup
@@ -21,9 +20,7 @@ pub struct StaticWorldGenerationPlugin;
 impl Plugin for StaticWorldGenerationPlugin {
     fn build(&self, app: &mut App) {
         app
-            // Insert required resources immediately
-            .insert_resource(RoadOwnership::default())
-            .insert_resource(SpawnRegistry::default())
+            // Note: SpawnRegistry is already initialized by SpawnValidationPlugin
             // Loading screen UI and camera control
             .add_systems(
                 OnEnter(AppState::Loading),

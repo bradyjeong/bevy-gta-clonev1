@@ -15,14 +15,10 @@ use crate::systems::physics::apply_universal_physics_safeguards;
 use crate::systems::player_physics_enable::enable_player_physics_next_frame;
 use crate::systems::{
     // Coordinate safety systems (simplified for finite world)
-    ActiveEntityTransferred,
     DebugUIPlugin,
-    DistanceCacheDebugPlugin,
-    DistanceCachePlugin,
     PerformancePlugin,
     SpawnValidationPlugin,
     TransformSyncPlugin,
-    UnifiedDistanceCalculatorPlugin,
     UnifiedPerformancePlugin,
     active_entity_integrity_check,
     active_transfer_executor_system,
@@ -81,7 +77,6 @@ impl Plugin for GameCorePlugin {
                     commands.insert_resource(bounds);
                 },
             )
-            .add_event::<ActiveEntityTransferred>()
             // No world origin shift events needed
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
             .insert_resource(AmbientLight {
@@ -95,12 +90,9 @@ impl Plugin for GameCorePlugin {
             .add_plugins(VehiclePlugin)
             // World and Environment Systems
             .add_plugins((WaterPlugin, GroundDetectionPlugin, UnifiedWorldPlugin))
-            // Distance and Performance Systems
+            // Performance and Validation Systems
             .add_plugins((
                 SpawnValidationPlugin,
-                DistanceCachePlugin,
-                UnifiedDistanceCalculatorPlugin,
-                DistanceCacheDebugPlugin,
                 TransformSyncPlugin,
                 PerformancePlugin,
                 UnifiedPerformancePlugin,

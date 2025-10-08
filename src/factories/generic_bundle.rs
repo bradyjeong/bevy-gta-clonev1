@@ -2,13 +2,13 @@ use crate::bundles::{
     BuildingBundle, DynamicContentBundle, DynamicPhysicsBundle, DynamicVehicleBundle, NPCBundle,
     PhysicsBundle, StaticPhysicsBundle, UnifiedChunkBundle, VehicleBundle,
 };
+use crate::components::MovementTracker;
 use crate::components::{
     Building, BuildingType, Car, ContentType, DynamicContent, MovementController, NPCAppearance,
     NPCBehaviorComponent, NPCBehaviorType, NPCLOD, NPCState, NPCType, VehicleLOD, VehicleState,
     VehicleType,
 };
 use crate::config::GameConfig;
-use crate::services::distance_cache::MovementTracker;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
 use bevy::{prelude::*, render::view::VisibilityRange};
 use bevy_rapier3d::prelude::*;
