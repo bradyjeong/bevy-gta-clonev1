@@ -7,17 +7,14 @@ pub mod road_mesh;
 pub mod road_network;
 
 // NEW UNIFIED WORLD SYSTEM
-// pub mod async_chunk_generation; // REMOVED: Dead code for streaming
 pub mod generators; // NEW: Focused chunk generators following AGENT.md simplicity principles
-pub mod layered_generation;
 pub mod npc_spawn;
-pub mod simulation_lod;
 pub mod unified_world;
 // pub mod optimized_lod; // Removed - functionality moved to unified_lod.rs
-pub mod dynamic_physics_culling;
 pub mod physics_activation;
 
 pub mod debug_layers;
+pub mod entity_limit_enforcement;
 
 // pub mod unified_distance_culling; - REMOVED: Replaced with Bevy's VisibilityRange
 pub mod boundaries;

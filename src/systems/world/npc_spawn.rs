@@ -1,13 +1,10 @@
-use crate::components::{
-    NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorType, NPCGender, NPCLOD, NPCState, NPCType,
-};
+use crate::components::{NPC_LOD_CULL_DISTANCE, NPCState, NPCType};
 use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 
 use crate::config::GameConfig;
 use crate::resources::WorldRng;
 use crate::services::ground_detection::GroundDetectionService;
-use crate::services::timing_service::TimingService;
 use rand::prelude::*;
 
 /// Spawn NPCs using the new architecture while maintaining compatibility
@@ -15,12 +12,21 @@ use rand::prelude::*;
 /// CONSOLIDATED: Now uses spawn validation from UnifiedEntityFactory
 pub fn spawn_new_npc_system(
     mut commands: Commands,
-    timing_service: Res<TimingService>,
+    mut spawn_timer: Local<Timer>,
+    time: Res<Time>,
     npc_query: Query<Entity, With<NPCState>>,
     ground_service: Res<GroundDetectionService>,
     mut world_rng: ResMut<WorldRng>,
     _config: Res<GameConfig>,
 ) {
+    // Initialize timer on first run
+    if spawn_timer.duration().as_secs_f32() == 0.0 {
+        *spawn_timer = Timer::from_seconds(10.0, TimerMode::Repeating);
+    }
+
+    // Tick the timer
+    spawn_timer.tick(time.delta());
+
     // Limit NPC spawning to avoid performance issues (unified entity limits)
     if npc_query.iter().count() >= 20 {
         // REDUCED: From 100 to 20 NPCs max
@@ -28,8 +34,7 @@ pub fn spawn_new_npc_system(
     }
 
     // Spawn new NPCs occasionally using unified spawning pipeline
-    if timing_service.current_time % 10.0 < 0.1 {
-        // REDUCED: From 5.0 to 10.0 seconds
+    if spawn_timer.just_finished() {
         // Try to find a valid spawn position using unified validation
         for _ in 0..5 {
             // REDUCED: From 10 to 5 attempts
@@ -38,71 +43,18 @@ pub fn spawn_new_npc_system(
             let position = Vec2::new(x, z);
 
             if ground_service.is_spawn_position_valid(position) {
-                spawn_simple_npc_with_ground_detection_simple(
-                    &mut commands,
-                    position,
-                    &ground_service,
-                    &mut world_rng,
-                );
+                // Calculate spawn position with ground detection
+                let ground_height = ground_service.get_ground_height_simple(Vec2::new(x, z));
+                let spawn_position = Vec3::new(x, ground_height + 0.02, z);
+
+                // Use spawn_simple_npc which adds ALL required components
+                spawn_simple_npc(&mut commands, spawn_position, &mut world_rng);
+
+                println!("DEBUG: Spawned NPC at {spawn_position:?} (ground: {ground_height:.2})");
                 break; // Found valid position, spawn and exit
             }
         }
     }
-}
-
-/// Spawn a single NPC with ground detection (simplified version without RapierContext)
-pub fn spawn_simple_npc_with_ground_detection_simple(
-    commands: &mut Commands,
-    position: Vec2,
-    ground_service: &GroundDetectionService,
-    world_rng: &mut WorldRng,
-) -> Entity {
-    // Use simplified ground detection
-    let ground_height = ground_service.get_ground_height_simple(position);
-    let ground_clearance = 0.02; // Very small clearance to avoid clipping
-    let spawn_height = ground_height + ground_clearance; // Place NPC feet on ground
-
-    let spawn_position = Vec3::new(position.x, spawn_height, position.y);
-
-    // Create NPC with new state-based architecture
-    let entity = commands
-        .spawn((
-            NPCState {
-                npc_type: NPCType::Civilian,
-                appearance: NPCAppearance {
-                    height: 1.8, // Standard NPC height
-                    build: world_rng.global().gen_range(0.8..1.2),
-                    skin_tone: Color::linear_rgb(0.8, 0.7, 0.6),
-                    hair_color: Color::linear_rgb(0.4, 0.3, 0.2),
-                    shirt_color: Color::linear_rgb(
-                        world_rng.global().gen_range(0.2..0.8),
-                        world_rng.global().gen_range(0.2..0.8),
-                        world_rng.global().gen_range(0.2..0.8),
-                    ),
-                    pants_color: Color::linear_rgb(
-                        world_rng.global().gen_range(0.1..0.6),
-                        world_rng.global().gen_range(0.1..0.6),
-                        world_rng.global().gen_range(0.1..0.6),
-                    ),
-                    gender: if world_rng.global().gen_bool(0.5) {
-                        NPCGender::Male
-                    } else {
-                        NPCGender::Female
-                    },
-                },
-                behavior: NPCBehaviorType::Wandering,
-                target_position: spawn_position,
-                speed: world_rng.global().gen_range(2.0..4.0),
-                current_lod: NPCLOD::Full,
-                last_lod_check: 0.0,
-            },
-            Transform::from_translation(spawn_position),
-            GlobalTransform::default(),
-        ))
-        .id();
-
-    println!("DEBUG: Spawned NPC at {spawn_position:?} (ground: {ground_height:.2})",);
-    entity
 }
 
 /// Legacy spawn a single NPC using the simplified system
@@ -126,6 +78,12 @@ pub fn spawn_simple_npc(
     commands
         .spawn((
             npc_state,
+            crate::components::NPC {
+                target_position: position,
+                speed: world_rng.global().gen_range(2.0..4.0),
+                last_update: 0.0,
+                update_interval: 0.05,
+            },
             RigidBody::Dynamic,
             Collider::capsule(
                 Vec3::new(0.0, -height / 2.0, 0.0),

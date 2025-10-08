@@ -11,21 +11,15 @@ use crate::plugins::{
 };
 use crate::resources::WorldRng;
 use crate::services::GroundDetectionPlugin;
+use crate::systems::performance::{DebugUIPlugin, PerformancePlugin, UnifiedPerformancePlugin};
 use crate::systems::physics::apply_universal_physics_safeguards;
 use crate::systems::player_physics_enable::enable_player_physics_next_frame;
-use crate::systems::{
-    // Coordinate safety systems (simplified for finite world)
-    DebugUIPlugin,
-    PerformancePlugin,
-    SpawnValidationPlugin,
-    TransformSyncPlugin,
-    UnifiedPerformancePlugin,
-    active_entity_integrity_check,
-    active_transfer_executor_system,
-    // World boundary systems
-    aircraft_boundary_system,
-    world_boundary_system,
+use crate::systems::safe_active_entity::{
+    active_entity_integrity_check, active_transfer_executor_system,
 };
+use crate::systems::world::boundaries::{aircraft_boundary_system, world_boundary_system};
+use crate::systems::world::entity_limit_enforcement::enforce_entity_limits;
+use crate::systems::{SpawnValidationPlugin, TransformSyncPlugin};
 
 /// Core plugin that groups all essential game plugins and resources
 /// Simplifies main.rs by organizing plugins into logical groups
@@ -141,6 +135,9 @@ impl Plugin for GameCorePlugin {
                     // No floating origin diagnostics needed
 
                     // No sanity check system needed for finite world
+                    
+                    // Entity limit enforcement with FIFO cleanup
+                    enforce_entity_limits,
                 )
                     .chain(),
             );

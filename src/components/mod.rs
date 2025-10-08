@@ -101,6 +101,6 @@ pub use effects::{
 pub use control_state::{
     AIControlled, ControlState, PendingPhysicsEnable, PlayerControlled, VehicleControlType,
 };
-pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility, FrameCounter};
+pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility};
 pub use movement_tracker::MovementTracker;
 pub use unified_vehicle::UnifiedVehicleSpecs;

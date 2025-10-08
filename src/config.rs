@@ -159,10 +159,26 @@ pub struct NPCUpdateIntervals {
 #[derive(Debug, Clone)]
 pub struct PerformanceConfig {
     // Timing intervals
+    #[deprecated(
+        since = "0.1.0",
+        note = "TimingService removed - LOD now handled by VisibilityRange. Use Local<Timer> in individual systems if throttling needed."
+    )]
     pub vehicle_lod_interval: f32, // 0.1 - Vehicle LOD check interval
-    pub npc_lod_interval: f32,     // 0.1 - NPC LOD check interval
+    #[deprecated(
+        since = "0.1.0",
+        note = "TimingService removed - LOD now handled by VisibilityRange. Use Local<Timer> in individual systems if throttling needed."
+    )]
+    pub npc_lod_interval: f32, // 0.1 - NPC LOD check interval
 
+    #[deprecated(
+        since = "0.1.0",
+        note = "TimingService removed - audio cleanup no longer needed. Audio entities self-manage lifecycle."
+    )]
     pub audio_cleanup_interval: f32, // 1.0 - Audio cleanup interval
+    #[deprecated(
+        since = "0.1.0",
+        note = "TimingService removed - effects update every frame. Add Local<Timer> to effect systems if throttling needed."
+    )]
     pub effect_update_interval: f32, // 0.05 - Effect update interval
 
     // Performance targets
@@ -355,6 +371,7 @@ impl Default for NPCUpdateIntervals {
 }
 
 impl Default for PerformanceConfig {
+    #[allow(deprecated)]
     fn default() -> Self {
         Self {
             vehicle_lod_interval: 0.1,
@@ -607,6 +624,7 @@ impl NPCUpdateIntervals {
 }
 
 impl PerformanceConfig {
+    #[allow(deprecated)]
     pub fn validate_and_clamp(&mut self) {
         // Clamp timing intervals to reasonable ranges
         self.vehicle_lod_interval = self.vehicle_lod_interval.clamp(0.01, 1.0);

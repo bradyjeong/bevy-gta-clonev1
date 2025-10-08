@@ -4,7 +4,7 @@ use crate::components::{
     PlayerControlled, VehicleControlType,
 };
 use crate::game_state::GameState;
-use crate::systems::queue_active_transfer;
+use crate::systems::safe_active_entity::queue_active_transfer;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 

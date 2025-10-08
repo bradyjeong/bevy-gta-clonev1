@@ -3,7 +3,7 @@ use crate::components::ContentType;
 use crate::constants::STATIC_GROUP;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
-    ChunkCoord, ContentLayer, UNIFIED_CHUNK_SIZE, UnifiedChunkEntity, UnifiedWorldManager,
+    ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
 };
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
@@ -23,7 +23,7 @@ impl VegetationGenerator {
         world_rng: &mut WorldRng,
     ) {
         let chunk_center = coord.to_world_pos();
-        let half_size = UNIFIED_CHUNK_SIZE * 0.5;
+        let half_size = world.chunk_size * 0.5;
 
         // Skip vegetation generation for chunks near world edge (±2000m)
         const WORLD_HALF_SIZE: f32 = 2000.0;

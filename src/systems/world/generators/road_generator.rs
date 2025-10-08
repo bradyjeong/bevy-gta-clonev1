@@ -4,7 +4,7 @@ use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
 use crate::systems::world::road_mesh::{generate_road_markings_mesh, generate_road_mesh};
 use crate::systems::world::road_network::{IntersectionType, RoadSpline, RoadType};
 use crate::systems::world::unified_world::{
-    ChunkCoord, ContentLayer, UNIFIED_CHUNK_SIZE, UnifiedChunkEntity, UnifiedWorldManager,
+    ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
 };
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
@@ -152,7 +152,7 @@ impl RoadGenerator {
         coord: ChunkCoord,
     ) {
         let chunk_center = coord.to_world_pos();
-        let chunk_size = UNIFIED_CHUNK_SIZE;
+        let chunk_size = world.chunk_size;
         let half_size = chunk_size * 0.5;
 
         // Collect all roads in and around this chunk

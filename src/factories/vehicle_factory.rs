@@ -3,12 +3,12 @@ use crate::components::MovementTracker;
 use crate::components::water::Yacht;
 use crate::components::water_new::WaterBodyId;
 use crate::components::{
-    AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, MainRotor, SimpleCarSpecs,
-    SimpleF16Specs, SimpleHelicopterSpecs, TailRotor, VehicleState, VehicleType,
+    AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, JetFlame, MainRotor,
+    SimpleCarSpecs, SimpleF16Specs, SimpleHelicopterSpecs, TailRotor, VehicleState, VehicleType,
 };
 use crate::config::GameConfig;
-use crate::factories::MeshFactory;
 use crate::factories::generic_bundle::BundleError;
+use crate::factories::{MaterialFactory, MeshFactory};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -278,10 +278,8 @@ impl VehicleFactory {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         position: Vec3,
-        color: Option<Color>,
+        _color: Option<Color>,
     ) -> Result<Entity, BundleError> {
-        let color = color.unwrap_or(Color::srgb(0.5, 0.5, 0.5));
-
         let vehicle_entity = commands
             .spawn((
                 DynamicPhysicsBundle {
@@ -318,13 +316,132 @@ impl VehicleFactory {
             ))
             .id();
 
-        // Add F16 body as child entity
+        // Part 1: Fuselage - using dedicated F16 mesh factory
+        let fuselage_mesh = MeshFactory::create_f16_body(meshes);
+        let fuselage_material = MaterialFactory::create_f16_fuselage_material(materials);
+
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(15.0, 5.0, 10.0))), // Full visual size
-            MeshMaterial3d(materials.add(color)),
+            Mesh3d(fuselage_mesh),
+            MeshMaterial3d(fuselage_material),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
+        ));
+
+        // Part 2: Left Wing - swept back
+        let wing_mesh = MeshFactory::create_f16_wing(meshes);
+        let wing_material = MaterialFactory::create_f16_fuselage_material(materials);
+
+        commands.spawn((
+            Mesh3d(wing_mesh.clone()),
+            MeshMaterial3d(wing_material.clone()),
+            Transform::from_xyz(-5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(0.2)),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
+        ));
+
+        // Part 3: Right Wing - swept back (mirror)
+        commands.spawn((
+            Mesh3d(wing_mesh),
+            MeshMaterial3d(wing_material),
+            Transform::from_xyz(5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(-0.2)),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
+        ));
+
+        // Part 4: Canopy (transparent cockpit bubble)
+        let canopy_mesh = MeshFactory::create_f16_canopy(meshes);
+        let canopy_material = MaterialFactory::create_f16_canopy_material(materials);
+
+        commands.spawn((
+            Mesh3d(canopy_mesh),
+            MeshMaterial3d(canopy_material),
+            Transform::from_xyz(0.0, 0.8, 3.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
+        ));
+
+        // Part 5: Vertical Tail (tail fin)
+        let tail_mesh = MeshFactory::create_f16_vertical_tail(meshes);
+        let tail_material = MaterialFactory::create_f16_fuselage_material(materials);
+
+        commands.spawn((
+            Mesh3d(tail_mesh),
+            MeshMaterial3d(tail_material),
+            Transform::from_xyz(0.0, 1.0, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
+        ));
+
+        // Part 6: Engine Nozzle (rear thrust visual)
+        let engine_mesh = meshes.add(Cylinder::new(0.8, 2.0));
+        let engine_material = MaterialFactory::create_f16_engine_material(materials);
+
+        commands.spawn((
+            Mesh3d(engine_mesh),
+            MeshMaterial3d(engine_material),
+            Transform::from_xyz(0.0, 0.0, -8.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 450.0..550.0,
+                use_aabb: false,
+            },
+        ));
+
+        // Part 7: Jet Flames (afterburner exhaust effects)
+        let flame_mesh = meshes.add(Cone {
+            radius: 0.6,
+            height: 2.5,
+        });
+        let flame_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(1.0, 0.5, 0.2),
+            emissive: LinearRgba::rgb(1.0, 0.3, 0.0),
+            alpha_mode: AlphaMode::Blend,
+            ..default()
+        });
+
+        commands.spawn((
+            Mesh3d(flame_mesh),
+            MeshMaterial3d(flame_material),
+            Transform::from_xyz(0.0, 0.0, -9.0)
+                .with_rotation(Quat::from_rotation_x(std::f32::consts::PI)),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            JetFlame {
+                intensity: 0.0,
+                base_scale: 0.5,
+                max_scale: 2.0,
+                flicker_speed: 15.0,
+                color_intensity: 1.0,
+            },
+            Visibility::Hidden,
             VisibilityRange {
                 start_margin: 0.0..0.0,
                 end_margin: 450.0..550.0,

@@ -59,11 +59,8 @@ pub mod water_plugin;
 // New focused world plugins
 pub mod physics_activation_plugin;
 pub mod static_world_generation_plugin;
-pub mod timing_plugin;
 pub mod world_debug_plugin;
-pub mod world_lod_plugin;
 pub mod world_npc_plugin;
-// pub mod world_streaming_plugin; // DEPRECATED: Replaced by static generation
 
 // Core game plugins
 pub use game_core::GameCorePlugin;
@@ -81,8 +78,5 @@ pub use water_plugin::WaterPlugin;
 // Specialized world plugins
 pub use physics_activation_plugin::PhysicsActivationPlugin;
 pub use static_world_generation_plugin::StaticWorldGenerationPlugin;
-pub use timing_plugin::TimingPlugin;
 pub use world_debug_plugin::WorldDebugPlugin;
-pub use world_lod_plugin::WorldLodPlugin;
 pub use world_npc_plugin::WorldNpcPlugin;
-// pub use world_streaming_plugin::WorldStreamingPlugin; // DEPRECATED

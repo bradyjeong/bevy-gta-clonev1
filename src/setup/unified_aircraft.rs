@@ -1,17 +1,10 @@
 // HighSpeed component removed - no longer needed for finite world
-use crate::components::{
-    AircraftFlight, F16, Helicopter, MainRotor, SimpleF16Specs, SimpleHelicopterSpecs, TailRotor,
-    VehicleState, VehicleType,
-};
-use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
-use crate::factories::{MaterialFactory, MeshFactory};
+use crate::factories::VehicleFactory;
 use crate::services::ground_detection::GroundDetectionService;
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
-use bevy::{prelude::*, render::view::VisibilityRange};
-use bevy_rapier3d::prelude::*;
+use bevy::prelude::*;
 
 use crate::GameConfig;
-use crate::components::MovementTracker;
 
 /// Aircraft types supported by the unified system
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -66,7 +59,7 @@ pub fn setup_initial_aircraft_unified(
     );
 }
 
-/// Spawn a single aircraft with ground detection and validation
+/// Spawn a single aircraft with ground detection and validation using VehicleFactory
 fn spawn_aircraft_unified(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -101,11 +94,16 @@ fn spawn_aircraft_unified(
     );
 
     if let Some(validated_position) = safe_position {
+        // Use VehicleFactory for consistent vehicle spawning
+        let vehicle_factory = VehicleFactory::new();
+
         let aircraft_entity = match aircraft_type {
-            AircraftType::Helicopter => {
-                spawn_helicopter_unified(commands, meshes, materials, validated_position)
-            }
-            AircraftType::F16 => spawn_f16_unified(commands, meshes, materials, validated_position),
+            AircraftType::Helicopter => vehicle_factory
+                .spawn_helicopter(commands, meshes, materials, validated_position, None)
+                .expect("Failed to spawn helicopter"),
+            AircraftType::F16 => vehicle_factory
+                .spawn_f16(commands, meshes, materials, validated_position, None)
+                .expect("Failed to spawn F16"),
         };
 
         // Update spawn registry with actual entity
@@ -119,302 +117,4 @@ fn spawn_aircraft_unified(
         );
         None
     }
-}
-
-/// Spawn helicopter with complex multi-component structure
-fn spawn_helicopter_unified(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    position: Vec3,
-) -> Entity {
-    // Create helicopter entity with unified bundle pattern
-    let helicopter_entity = commands
-        .spawn((
-            // Core aircraft components
-            Helicopter,
-            SimpleHelicopterSpecs::default(),
-            // Physics components
-            RigidBody::Dynamic,
-            Collider::cuboid(1.2, 1.2, 4.8), // 0.8x visual mesh (3x3x12) for GTA-style forgiving collision
-            Velocity::zero(),
-            Transform::from_translation(position),
-            Damping {
-                linear_damping: 3.0,
-                angular_damping: 10.0,
-            },
-            // Visibility components (required for child inheritance)
-            Visibility::default(),
-            InheritedVisibility::VISIBLE,
-            ViewVisibility::default(),
-            // Collision and culling
-            CollisionGroups::new(
-                VEHICLE_GROUP,
-                STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,
-            ),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
-            // Movement tracking
-            MovementTracker::new(position, 50.0),
-        ))
-        .id();
-
-    // Helicopter body - Realistic shape using capsule
-    commands.spawn((
-        Mesh3d(meshes.add(Capsule3d::new(0.8, 4.0))), // Helicopter fuselage shape
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.25, 0.28, 0.3), // Military gunmetal
-            metallic: 0.8,
-            perceptual_roughness: 0.4,
-            reflectance: 0.3,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        ChildOf(helicopter_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    // Cockpit bubble - rounded cockpit
-    commands.spawn((
-        Mesh3d(meshes.add(Sphere::new(0.8))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgba(0.05, 0.05, 0.08, 0.15),
-            metallic: 0.1,
-            perceptual_roughness: 0.1,
-            alpha_mode: AlphaMode::Blend,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
-        ChildOf(helicopter_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    // Tail boom - tapered cylinder
-    commands.spawn((
-        Mesh3d(meshes.add(Cylinder::new(0.25, 3.5))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.25, 0.28, 0.3),
-            metallic: 0.8,
-            perceptual_roughness: 0.4,
-            reflectance: 0.3,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 0.0, 4.5),
-        ChildOf(helicopter_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    // Main rotor blades - thin and aerodynamic
-    for i in 0..4 {
-        let angle = i as f32 * std::f32::consts::PI / 2.0;
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(8.0, 0.02, 0.3))), // Long thin blade
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.08, 0.08, 0.08),
-                metallic: 0.2,
-                perceptual_roughness: 0.9,
-                ..default()
-            })),
-            Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
-            ChildOf(helicopter_entity),
-            MainRotor,
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
-        ));
-    }
-
-    // Landing skids - long narrow cylinders
-    for x in [-0.8, 0.8] {
-        commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(0.04, 3.0))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.35, 0.35, 0.35),
-                metallic: 0.7,
-                perceptual_roughness: 0.6,
-                ..default()
-            })),
-            Transform::from_xyz(x, -1.0, 0.0)
-                .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
-            ChildOf(helicopter_entity),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
-        ));
-    }
-
-    // Tail rotor at end of tail boom
-    commands.spawn((
-        Mesh3d(MeshFactory::create_tail_rotor(meshes)),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.08, 0.08, 0.08),
-            metallic: 0.2,
-            perceptual_roughness: 0.9,
-            ..default()
-        })),
-        Transform::from_xyz(0.0, 1.0, 6.2),
-        ChildOf(helicopter_entity),
-        TailRotor,
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    helicopter_entity
-}
-
-/// Spawn F16 with simple aircraft structure
-fn spawn_f16_unified(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    position: Vec3,
-) -> Entity {
-    // Create F16 entity with unified bundle pattern
-    let f16_entity = commands
-        .spawn((
-            F16,
-            AircraftFlight::default(),
-            SimpleF16Specs::default(),
-            VehicleState::new(VehicleType::F16),
-            RigidBody::Dynamic,
-            Collider::cuboid(1.6, 1.0, 6.4),
-            LockedAxes::empty(),
-            Velocity::zero(),
-            ExternalForce::default(),
-            Transform::from_translation(position),
-            Visibility::default(),
-            InheritedVisibility::VISIBLE,
-            ViewVisibility::default(),
-        ))
-        .insert((
-            CollisionGroups::new(
-                VEHICLE_GROUP,
-                STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,
-            ),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
-            MovementTracker::new(position, 50.0),
-        ))
-        .id();
-
-    // F16 main fuselage - using dedicated F16 mesh factory
-    let fuselage_mesh = MeshFactory::create_f16_body(meshes);
-    let fuselage_material = MaterialFactory::create_f16_fuselage_material(materials);
-
-    commands.spawn((
-        Mesh3d(fuselage_mesh),
-        MeshMaterial3d(fuselage_material),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        ChildOf(f16_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    // F16 wings (left and right)
-    let wing_mesh = MeshFactory::create_f16_wing(meshes);
-    let wing_material = MaterialFactory::create_f16_fuselage_material(materials);
-
-    // Left wing (positioned relative to new Z-axis fuselage)
-    commands.spawn((
-        Mesh3d(wing_mesh.clone()),
-        MeshMaterial3d(wing_material.clone()),
-        Transform::from_xyz(-5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(0.2)), // Swept wing
-        ChildOf(f16_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    // Right wing (positioned relative to new Z-axis fuselage)
-    commands.spawn((
-        Mesh3d(wing_mesh),
-        MeshMaterial3d(wing_material),
-        Transform::from_xyz(5.0, 0.0, -2.0).with_rotation(Quat::from_rotation_y(-0.2)), // Swept wing
-        ChildOf(f16_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    // F16 canopy (bubble cockpit)
-    let canopy_mesh = MeshFactory::create_f16_canopy(meshes);
-    let canopy_material = MaterialFactory::create_f16_canopy_material(materials);
-
-    commands.spawn((
-        Mesh3d(canopy_mesh),
-        MeshMaterial3d(canopy_material),
-        Transform::from_xyz(0.0, 0.8, 3.0), // Forward position along +Z, raised
-        ChildOf(f16_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    // F16 vertical tail
-    let tail_mesh = MeshFactory::create_f16_vertical_tail(meshes);
-    let tail_material = MaterialFactory::create_f16_fuselage_material(materials);
-
-    commands.spawn((
-        Mesh3d(tail_mesh),
-        MeshMaterial3d(tail_material),
-        Transform::from_xyz(0.0, 1.0, -5.0), // Rear position along -Z, raised
-        ChildOf(f16_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    // Engine nozzle for visual effect
-    let engine_mesh = meshes.add(Cylinder::new(0.8, 2.0));
-    let engine_material = MaterialFactory::create_f16_engine_material(materials);
-
-    commands.spawn((
-        Mesh3d(engine_mesh),
-        MeshMaterial3d(engine_material),
-        Transform::from_xyz(0.0, 0.0, -8.0), // Rear nozzle along -Z
-        ChildOf(f16_entity),
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: 450.0..550.0,
-            use_aabb: false,
-        },
-    ));
-
-    f16_entity
 }

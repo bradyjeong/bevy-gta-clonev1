@@ -1,11 +1,9 @@
 use bevy::prelude::*;
 
 use crate::states::AppState;
-use crate::systems::world::dynamic_physics_culling::{
-    disable_distant_dynamic_physics, enable_nearby_dynamic_physics,
-};
 use crate::systems::world::physics_activation::{
     activate_nearby_building_physics, deactivate_distant_building_physics,
+    disable_distant_dynamic_physics, enable_nearby_dynamic_physics,
 };
 
 /// Physics activation plugin - GTA-style dynamic physics

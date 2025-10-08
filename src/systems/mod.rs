@@ -81,46 +81,12 @@ pub mod player_physics_enable;
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
-pub mod batching;
 pub mod performance; // Simplified performance system (replaces performance_monitor)
-// Explicit exports following simplicity guidelines - only export what's needed
-// Core systems that are commonly used across plugins
-pub use crate::services::{EntityTimerType, ManagedTiming, SystemType, TimingService, TimingStats};
-pub use batching::frame_counter_system;
-// Simplified performance system
-pub use performance::{
-    DebugUIPlugin, PerformanceCategory, PerformancePlugin, UnifiedPerformancePlugin,
-    UnifiedPerformanceTracker,
-};
-pub use safety::validate_physics_config;
-pub use spawn_validation::{SpawnRegistry, SpawnValidationPlugin, SpawnValidator, SpawnableType};
+
+// MINIMAL CURATED EXPORTS - Use explicit module paths elsewhere to maintain clear dependencies
+// Only export items that are genuinely shared across multiple plugins and form stable APIs
+
+// Plugins that must be registered in main.rs or other top-level configs
+pub use performance::UnifiedPerformancePlugin;
+pub use spawn_validation::SpawnValidationPlugin;
 pub use transform_sync::TransformSyncPlugin;
-
-// World systems (frequently used together)
-pub use world::{
-    road_generation::is_on_road_spline,
-    road_network::{IntersectionType, RoadNetwork, RoadSpline, RoadType},
-    unified_world::{
-        ChunkCoord, ChunkState, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
-    },
-};
-
-// Asset-based input system types only
-pub use input::{LoadedVehicleControls, VehicleControlsConfig};
-
-// Physics utilities
-pub use physics::PhysicsUtilities;
-
-// Safe ActiveEntity system
-pub use safe_active_entity::{
-    ActiveTransferRequest, active_entity_integrity_check, active_transfer_executor_system,
-    queue_active_transfer,
-};
-
-// Validation systems - TEMPORARILY DISABLED
-// pub use validation::{ColliderType, MeshColliderConfig, validate_vehicle_consistency};
-
-// Floating origin system - REMOVED: Finite world doesn't need coordinate translation
-
-// World boundary systems
-pub use world::boundaries::{aircraft_boundary_system, world_boundary_system};

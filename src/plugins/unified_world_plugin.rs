@@ -1,8 +1,7 @@
 use crate::config::GameConfig;
 use crate::factories::material_factory::initialize_material_factory;
 use crate::plugins::{
-    PhysicsActivationPlugin, StaticWorldGenerationPlugin, TimingPlugin, WorldDebugPlugin,
-    WorldLodPlugin, WorldNpcPlugin,
+    PhysicsActivationPlugin, StaticWorldGenerationPlugin, WorldDebugPlugin, WorldNpcPlugin,
 };
 use crate::resources::MaterialRegistry;
 use crate::systems::world::unified_world::UnifiedWorldManager;
@@ -21,10 +20,8 @@ impl Plugin for UnifiedWorldPlugin {
                 (initialize_world_manager, initialize_material_registry).chain(),
             )
             // Add world generation and gameplay plugins
-            .add_plugins(TimingPlugin)
             .add_plugins(StaticWorldGenerationPlugin) // Static generation in Loading state
             .add_plugins(PhysicsActivationPlugin) // GTA-style dynamic physics activation
-            .add_plugins(WorldLodPlugin)
             .add_plugins(WorldNpcPlugin)
             .add_plugins(WorldDebugPlugin)
             // Initialize material factory

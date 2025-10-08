@@ -11,7 +11,6 @@ pub mod render_primitives;
 pub mod resources;
 mod services; // Private - only used internally
 pub mod setup;
-pub mod shared; // Shared types to break circular dependencies
 pub mod states;
 pub mod system_sets;
 pub mod systems;

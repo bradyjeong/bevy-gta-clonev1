@@ -27,11 +27,6 @@ pub enum DirtyPriority {
 }
 
 #[derive(Resource, Default)]
-pub struct FrameCounter {
-    pub frame: u64,
-}
-
-#[derive(Resource, Default)]
 pub struct DirtyFlagsMetrics {
     pub entities_processed_lod: u32,
     pub entities_marked_lod: u32,

@@ -1,14 +1,28 @@
 use crate::components::world::NPCGender;
-use crate::components::{NPC, NPCAppearance, NPCState};
+use crate::components::{NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCState};
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 
 /// NPC Factory - Focused factory for NPC spawning only
 /// Handles various NPC types with proper physics, AI, and visual components
 /// Follows AGENT.md simplicity principles with single responsibility
+///
+/// ## NPC Component Requirements for Movement
+///
+/// For NPCs to move, they MUST have ALL of:
+/// - NPC component (legacy movement state: target_position, speed, update_interval)
+/// - Transform + GlobalTransform (position/rotation)
+/// - Velocity (for Rapier physics movement)
+/// - VisibilityRange (REQUIRED by movement query filter: With<VisibilityRange>)
+/// - RigidBody::Dynamic + Collider (for physics)
+/// - Mesh + Material (for rendering)
+///
+/// Movement system query: Query<(..., &mut NPC), With<VisibilityRange>>
+/// Missing any component = NPC won't move
 #[derive(Debug, Clone)]
 pub struct NPCFactory {
     pub config: GameConfig,
@@ -84,6 +98,7 @@ impl NPCFactory {
             Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
             MeshMaterial3d(npc_material),
             Name::new(format!("NPC_{}", npc_type.name())),
+            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
         ));
 
         let npc_entity = entity.id();
@@ -144,6 +159,7 @@ impl NPCFactory {
             Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
             MeshMaterial3d(npc_material),
             Name::new(format!("NPC_{}", npc_type.name())),
+            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
         ));
 
         let npc_entity = entity.id();
