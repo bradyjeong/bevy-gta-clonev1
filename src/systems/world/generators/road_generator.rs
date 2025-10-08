@@ -1,7 +1,7 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
 use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
-use crate::systems::world::road_mesh::{generate_road_markings_mesh, generate_road_mesh};
+use crate::systems::world::road_mesh::{generate_road_markings_mesh_local, generate_road_mesh_local};
 use crate::systems::world::road_network::{IntersectionType, RoadSpline, RoadType};
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
@@ -95,7 +95,6 @@ impl RoadGenerator {
                 },
                 RoadEntity { road_id },
                 Transform::from_translation(center_pos),
-                GlobalTransform::default(),
                 Visibility::default(),
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
@@ -110,12 +109,12 @@ impl RoadGenerator {
             ))
             .id();
 
-        // Road surface mesh - needs own VisibilityRange (doesn't inherit in 0.16)
-        let road_mesh = generate_road_mesh(road);
+        // Road surface mesh - local coordinates with proper VisibilityRange
+        let road_mesh = generate_road_mesh_local(road, center_pos);
         commands.spawn((
             Mesh3d(meshes.add(road_mesh)),
             MeshMaterial3d(road_material),
-            Transform::from_translation(-center_pos + Vec3::new(0.0, 0.05, 0.0)),
+            Transform::from_translation(Vec3::new(0.0, 0.05, 0.0)),
             ChildOf(road_entity),
             VisibleChildBundle::default(),
             VisibilityRange {
@@ -125,13 +124,13 @@ impl RoadGenerator {
             },
         ));
 
-        // Road markings - need own VisibilityRange (doesn't inherit in 0.16)
-        let marking_meshes = generate_road_markings_mesh(road);
+        // Road markings - local coordinates with proper VisibilityRange
+        let marking_meshes = generate_road_markings_mesh_local(road, center_pos);
         for marking_mesh in marking_meshes {
             commands.spawn((
                 Mesh3d(meshes.add(marking_mesh)),
                 MeshMaterial3d(marking_material.clone()),
-                Transform::from_translation(-center_pos + Vec3::new(0.0, 0.06, 0.0)),
+                Transform::from_translation(Vec3::new(0.0, 0.06, 0.0)),
                 ChildOf(road_entity),
                 VisibleChildBundle::default(),
                 VisibilityRange {
@@ -211,7 +210,6 @@ impl RoadGenerator {
                         },
                         IntersectionEntity { intersection_id },
                         Transform::from_translation(position),
-                        GlobalTransform::default(),
                         Visibility::default(),
                         InheritedVisibility::VISIBLE,
                         ViewVisibility::default(),

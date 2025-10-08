@@ -31,7 +31,7 @@ pub fn generate_road_mesh_cached(
     }
 
     // Generate new mesh if not in cache
-    let mesh = generate_road_mesh_internal(road);
+    let mesh = generate_road_mesh_internal(road, Vec3::ZERO);
     let handle = meshes.add(mesh);
 
     // Store in cache (with size limit to prevent memory leaks)
@@ -44,10 +44,15 @@ pub fn generate_road_mesh_cached(
 }
 
 pub fn generate_road_mesh(road: &RoadSpline) -> Mesh {
-    generate_road_mesh_internal(road)
+    generate_road_mesh_internal(road, Vec3::ZERO)
 }
 
-fn generate_road_mesh_internal(road: &RoadSpline) -> Mesh {
+/// Generate road mesh in local coordinates relative to center_offset
+pub fn generate_road_mesh_local(road: &RoadSpline, center_offset: Vec3) -> Mesh {
+    generate_road_mesh_internal(road, center_offset)
+}
+
+fn generate_road_mesh_internal(road: &RoadSpline, center_offset: Vec3) -> Mesh {
     let width = road.road_type.width();
     let segments = calculate_segments(road);
 
@@ -60,10 +65,10 @@ fn generate_road_mesh_internal(road: &RoadSpline) -> Mesh {
     let mut uvs = Vec::with_capacity(vertex_count);
     let mut indices = Vec::with_capacity(index_count);
 
-    // Generate vertices along the spline
+    // Generate vertices along the spline (in local space if center_offset provided)
     for i in 0..=segments {
         let t = i as f32 / segments as f32;
-        let position = road.evaluate(t);
+        let position = road.evaluate(t) - center_offset; // Convert to local space
         let tangent = calculate_tangent(road, t);
         let right = Vec3::new(tangent.z, 0.0, -tangent.x).normalize();
 
@@ -110,22 +115,27 @@ fn generate_road_mesh_internal(road: &RoadSpline) -> Mesh {
 }
 
 pub fn generate_road_markings_mesh(road: &RoadSpline) -> Vec<Mesh> {
+    generate_road_markings_mesh_local(road, Vec3::ZERO)
+}
+
+/// Generate road markings in local coordinates relative to center_offset
+pub fn generate_road_markings_mesh_local(road: &RoadSpline, center_offset: Vec3) -> Vec<Mesh> {
     let mut markings = Vec::new();
 
     match road.road_type {
         RoadType::Highway => {
             // Multiple lanes with dashed lines
-            markings.push(generate_center_line_mesh(road, true)); // Dashed
-            markings.push(generate_lane_markings_mesh(road, 4)); // 4 lanes
+            markings.push(generate_center_line_mesh(road, true, center_offset)); // Dashed
+            markings.push(generate_lane_markings_mesh(road, 4, center_offset)); // 4 lanes
         }
         RoadType::MainStreet => {
             // Center line + edge lines
-            markings.push(generate_center_line_mesh(road, true)); // Dashed
-            markings.push(generate_edge_lines_mesh(road));
+            markings.push(generate_center_line_mesh(road, true, center_offset)); // Dashed
+            markings.push(generate_edge_lines_mesh(road, center_offset));
         }
         RoadType::SideStreet => {
             // Simple center line
-            markings.push(generate_center_line_mesh(road, false)); // Solid
+            markings.push(generate_center_line_mesh(road, false, center_offset)); // Solid
         }
         RoadType::Alley => {
             // No markings for alleys
@@ -160,7 +170,7 @@ fn calculate_tangent(road: &RoadSpline, t: f32) -> Vec3 {
     (p2 - p1).normalize()
 }
 
-fn generate_center_line_mesh(road: &RoadSpline, dashed: bool) -> Mesh {
+fn generate_center_line_mesh(road: &RoadSpline, dashed: bool, center_offset: Vec3) -> Mesh {
     let segments = calculate_segments(road);
     let line_width = 0.3;
 
@@ -182,7 +192,7 @@ fn generate_center_line_mesh(road: &RoadSpline, dashed: bool) -> Mesh {
             continue;
         }
 
-        let position = road.evaluate(t);
+        let position = road.evaluate(t) - center_offset;
         let tangent = calculate_tangent(road, t);
         let right = Vec3::new(tangent.z, 0.0, -tangent.x).normalize();
 
@@ -222,7 +232,7 @@ fn generate_center_line_mesh(road: &RoadSpline, dashed: bool) -> Mesh {
     mesh
 }
 
-fn generate_lane_markings_mesh(road: &RoadSpline, lanes: u32) -> Mesh {
+fn generate_lane_markings_mesh(road: &RoadSpline, lanes: u32, center_offset: Vec3) -> Mesh {
     // Generate lane divider lines for multi-lane roads
     let width = road.road_type.width();
     let lane_width = width / lanes as f32;
@@ -251,7 +261,7 @@ fn generate_lane_markings_mesh(road: &RoadSpline, lanes: u32) -> Mesh {
                 continue;
             }
 
-            let position = road.evaluate(t);
+            let position = road.evaluate(t) - center_offset;
             let tangent = calculate_tangent(road, t);
             let right = Vec3::new(tangent.z, 0.0, -tangent.x).normalize();
 
@@ -293,7 +303,7 @@ fn generate_lane_markings_mesh(road: &RoadSpline, lanes: u32) -> Mesh {
     mesh
 }
 
-fn generate_edge_lines_mesh(road: &RoadSpline) -> Mesh {
+fn generate_edge_lines_mesh(road: &RoadSpline, center_offset: Vec3) -> Mesh {
     // Solid white lines at road edges
     let width = road.road_type.width();
     let segments = calculate_segments(road);
@@ -310,7 +320,7 @@ fn generate_edge_lines_mesh(road: &RoadSpline) -> Mesh {
 
     for i in 0..=segments {
         let t = i as f32 / segments as f32;
-        let position = road.evaluate(t);
+        let position = road.evaluate(t) - center_offset;
         let tangent = calculate_tangent(road, t);
         let right = Vec3::new(tangent.z, 0.0, -tangent.x).normalize();
 
