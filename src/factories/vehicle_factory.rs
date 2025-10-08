@@ -143,6 +143,7 @@ impl VehicleFactory {
                     linear_damping: 2.0,
                     angular_damping: 8.0,
                 },
+                Sleeping::default(),
                 MovementTracker::new(position, 15.0),
                 Name::new("Helicopter"),
             ))
@@ -311,6 +312,7 @@ impl VehicleFactory {
                     linear_damping: 0.5,
                     angular_damping: 3.0,
                 },
+                Sleeping::default(),
                 MovementTracker::new(position, 25.0),
                 Name::new("F16"),
             ))

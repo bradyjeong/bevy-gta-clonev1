@@ -160,6 +160,7 @@ pub struct DynamicVehicleBundle {
     pub velocity: Velocity,
     pub damping: Damping,
     pub locked_axes: LockedAxes,
+    pub sleeping: Sleeping,
     pub visibility_range: VisibilityRange,
 }
 

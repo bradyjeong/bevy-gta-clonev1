@@ -249,7 +249,9 @@ pub fn interaction_system(
                         queue_active_transfer(&mut commands, active_car, player_entity);
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
-                        let exit_position = car_gt.translation() + car_gt.right() * 3.0;
+                        // Use horizontal-only right vector to avoid extreme teleportation from vehicle rotation
+                        let right_horizontal = Vec3::new(car_gt.right().x, 0.0, car_gt.right().z).normalize_or_zero();
+                        let exit_position = car_gt.translation() + right_horizontal * 3.0;
                         let inherited_vel = car_vel.cloned().unwrap_or(Velocity::zero());
 
                         // Phase A: Set pose and keep physics disabled this frame
@@ -293,8 +295,10 @@ pub fn interaction_system(
                         queue_active_transfer(&mut commands, active_helicopter, player_entity);
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
+                        // Use horizontal-only right vector to avoid extreme teleportation from aircraft rotation
+                        let right_horizontal = Vec3::new(helicopter_gt.right().x, 0.0, helicopter_gt.right().z).normalize_or_zero();
                         let exit_position = helicopter_gt.translation()
-                            + helicopter_gt.right() * 4.0
+                            + right_horizontal * 4.0  // Horizontal offset only
                             + Vec3::new(0.0, -1.0, 0.0); // Drop to ground level
                         let inherited_vel = helicopter_vel.cloned().unwrap_or(Velocity::zero());
 
@@ -335,7 +339,11 @@ pub fn interaction_system(
                         queue_active_transfer(&mut commands, active_f16, player_entity);
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
-                        let exit_position = f16_gt.translation() + f16_gt.right() * 6.0;
+                        // Use horizontal-only right vector to avoid extreme teleportation from aircraft rotation
+                        let right_horizontal = Vec3::new(f16_gt.right().x, 0.0, f16_gt.right().z).normalize_or_zero();
+                        let exit_position = f16_gt.translation()
+                            + right_horizontal * 6.0  // Horizontal offset only
+                            + Vec3::new(0.0, -2.0, 0.0); // Drop to ground level
                         let inherited_vel = f16_vel.cloned().unwrap_or(Velocity::zero());
 
                         // Phase A: Set pose and keep physics disabled this frame

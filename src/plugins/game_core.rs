@@ -52,6 +52,14 @@ impl Plugin for GameCorePlugin {
                     }),
             )
             .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+            .add_systems(
+                Startup,
+                |mut rapier_config: Query<&mut RapierConfiguration>| {
+                    if let Ok(mut config) = rapier_config.single_mut() {
+                        config.gravity = Vec3::new(0.0, -9.81, 0.0);
+                    }
+                },
+            )
             .add_plugins(FrameTimeDiagnosticsPlugin::default())
             // Game State and Resources
             .init_state::<GameState>()

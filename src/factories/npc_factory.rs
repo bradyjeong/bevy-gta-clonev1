@@ -92,6 +92,7 @@ impl NPCFactory {
                 linear_damping: 2.0,
                 angular_damping: 5.0,
             },
+            Sleeping::disabled(),
         ));
 
         entity.insert((
@@ -153,6 +154,7 @@ impl NPCFactory {
                 linear_damping: 2.0,
                 angular_damping: 5.0,
             },
+            Sleeping::disabled(),
         ));
 
         entity.insert((

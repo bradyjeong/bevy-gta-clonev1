@@ -781,6 +781,7 @@ impl GenericBundleFactory {
             velocity: Velocity::zero(),
             damping,
             locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+            sleeping: Sleeping::default(),
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
                 end_margin: 450.0..500.0,
