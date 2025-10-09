@@ -1,6 +1,5 @@
 use crate::util::safe_math::safe_lerp;
 use bevy::prelude::*;
-use rand::Rng;
 use std::collections::HashMap;
 
 pub const ROAD_CELL_SIZE: f32 = 400.0;
@@ -37,7 +36,12 @@ impl RoadType {
     }
 
     pub fn height(&self) -> f32 {
-        0.0 // All roads at same height - proper intersection handling prevents overlap
+        match self {
+            RoadType::Highway => 0.04,
+            RoadType::MainStreet => 0.03,
+            RoadType::SideStreet => 0.02,
+            RoadType::Alley => 0.01,
+        }
     }
 
     pub fn priority(&self) -> i32 {
@@ -150,6 +154,22 @@ pub struct RoadIntersection {
     pub radius: f32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CellEdge {
+    North,
+    South,
+    East,
+    West,
+}
+
+#[derive(Debug, Clone)]
+pub struct BoundaryPoint {
+    pub position: Vec3,
+    pub road_id: u64,
+    pub is_start: bool,
+    pub edge: CellEdge,
+}
+
 #[derive(Resource, Default)]
 pub struct RoadNetwork {
     pub roads: HashMap<u64, RoadSpline>,
@@ -157,6 +177,7 @@ pub struct RoadNetwork {
     pub next_road_id: u64,
     pub next_intersection_id: u32,
     pub generated_cells: std::collections::HashSet<IVec2>,
+    pub boundary_points: HashMap<IVec2, Vec<BoundaryPoint>>,
 }
 
 // NOTE: RoadOwnership removed - it was only used for streaming, which is no longer active.
@@ -165,6 +186,7 @@ pub struct RoadNetwork {
 impl RoadNetwork {
     pub fn clear_cache(&mut self) {
         self.generated_cells.clear();
+        self.boundary_points.clear();
         debug!("Road network cache cleared");
     }
 
@@ -172,9 +194,120 @@ impl RoadNetwork {
         self.roads.clear();
         self.intersections.clear();
         self.generated_cells.clear();
+        self.boundary_points.clear();
         self.next_road_id = 0;
         self.next_intersection_id = 0;
         debug!("Road network completely reset");
+    }
+
+    fn determine_cell_edge(
+        &self,
+        position: Vec3,
+        cell_coord: IVec2,
+        cell_size: f32,
+    ) -> Option<CellEdge> {
+        let base_x = cell_coord.x as f32 * cell_size;
+        let base_z = cell_coord.y as f32 * cell_size;
+        let tolerance = 5.0;
+
+        if (position.z - base_z).abs() < tolerance {
+            Some(CellEdge::South)
+        } else if (position.z - (base_z + cell_size)).abs() < tolerance {
+            Some(CellEdge::North)
+        } else if (position.x - base_x).abs() < tolerance {
+            Some(CellEdge::West)
+        } else if (position.x - (base_x + cell_size)).abs() < tolerance {
+            Some(CellEdge::East)
+        } else {
+            None
+        }
+    }
+
+    fn track_boundary_points(&mut self, cell_coord: IVec2, cell_size: f32, road_ids: &[u64]) {
+        let mut boundary_points = Vec::new();
+
+        for &road_id in road_ids {
+            if let Some(road) = self.roads.get(&road_id) {
+                if road.control_points.len() < 2 {
+                    continue;
+                }
+
+                let start = road.control_points[0];
+                let end = road.control_points[road.control_points.len() - 1];
+
+                if let Some(edge) = self.determine_cell_edge(start, cell_coord, cell_size) {
+                    boundary_points.push(BoundaryPoint {
+                        position: start,
+                        road_id,
+                        is_start: true,
+                        edge,
+                    });
+                }
+
+                if let Some(edge) = self.determine_cell_edge(end, cell_coord, cell_size) {
+                    boundary_points.push(BoundaryPoint {
+                        position: end,
+                        road_id,
+                        is_start: false,
+                        edge,
+                    });
+                }
+            }
+        }
+
+        if !boundary_points.is_empty() {
+            self.boundary_points.insert(cell_coord, boundary_points);
+        }
+    }
+
+    fn connect_to_neighbors(&mut self, cell_coord: IVec2) {
+        let neighbors = [
+            (IVec2::new(0, 1), CellEdge::North, CellEdge::South),
+            (IVec2::new(0, -1), CellEdge::South, CellEdge::North),
+            (IVec2::new(1, 0), CellEdge::East, CellEdge::West),
+            (IVec2::new(-1, 0), CellEdge::West, CellEdge::East),
+        ];
+
+        let current_boundaries = self
+            .boundary_points
+            .get(&cell_coord)
+            .cloned()
+            .unwrap_or_default();
+        let mut connections_to_make = Vec::new();
+
+        for (offset, our_edge, their_edge) in neighbors {
+            let neighbor_coord = cell_coord + offset;
+            if let Some(neighbor_boundaries) = self.boundary_points.get(&neighbor_coord).cloned() {
+                for our_point in &current_boundaries {
+                    if our_point.edge != our_edge {
+                        continue;
+                    }
+                    for neighbor_point in &neighbor_boundaries {
+                        if neighbor_point.edge != their_edge {
+                            continue;
+                        }
+                        let distance = our_point.position.distance(neighbor_point.position);
+                        if distance < 10.0 {
+                            connections_to_make.push((
+                                our_point.road_id,
+                                neighbor_point.road_id,
+                                distance,
+                                cell_coord,
+                                neighbor_coord,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (road1, road2, distance, coord1, coord2) in connections_to_make {
+            self.connect_roads(road1, road2);
+            debug!(
+                "Connected roads {} and {} at distance {:.2}m (cells {:?} <-> {:?})",
+                road1, road2, distance, coord1, coord2
+            );
+        }
     }
 }
 
@@ -257,10 +390,8 @@ impl RoadNetwork {
         let base_x = cell_coord.x as f32 * cell_size;
         let base_z = cell_coord.y as f32 * cell_size;
 
-        // CRITICAL: Skip cells outside 4km world bounds (±2000m) with buffer
-        // Buffer prevents roads from extending beyond terrain boundaries
         const WORLD_HALF_SIZE: f32 = 2000.0;
-        let buffer = cell_size; // Roads extend up to 1.5x cell_size beyond base
+        let buffer = cell_size;
         if base_x.abs() > (WORLD_HALF_SIZE - buffer) || base_z.abs() > (WORLD_HALF_SIZE - buffer) {
             return Vec::new();
         }
@@ -269,7 +400,7 @@ impl RoadNetwork {
         let mut local_index: u16 = 0;
 
         if cell_coord == IVec2::ZERO {
-            return self.generate_premium_spawn_roads(
+            let roads = self.generate_premium_spawn_roads(
                 base_x,
                 base_z,
                 cell_size,
@@ -277,53 +408,60 @@ impl RoadNetwork {
                 &mut rng,
                 &mut local_index,
             );
+            self.track_boundary_points(cell_coord, cell_size, &roads);
+            self.connect_to_neighbors(cell_coord);
+            return roads;
         }
 
-        let mut roads_added = Vec::new();
+        let arterial_spacing = 3;
+        let is_vertical_arterial = cell_coord.x % arterial_spacing == 0;
+        let is_horizontal_arterial = cell_coord.y % arterial_spacing == 0;
 
-        if cell_coord.x % 2 == 0 && cell_coord.y % 2 != 0 {
-            let road_type = RoadType::MainStreet;
+        if is_vertical_arterial {
+            let road_type = if cell_coord.x % (arterial_spacing * 2) == 0 {
+                RoadType::Highway
+            } else {
+                RoadType::MainStreet
+            };
             let height = road_type.height();
-            let start = Vec3::new(base_x, height, base_z - cell_size * 0.5);
-            let control = Vec3::new(
-                base_x + rng.gen_range(-10.0..10.0),
-                height,
-                base_z + cell_size * 0.2,
-            );
-            let end = Vec3::new(base_x, height, base_z + cell_size * 1.5);
+            let x_pos = base_x + cell_size * 0.5;
+            let start = Vec3::new(x_pos, height, base_z);
+            let end = Vec3::new(x_pos, height, base_z + cell_size);
 
             let road_id = generate_unique_road_id(cell_coord, local_index);
             local_index += 1;
-            let mut road = RoadSpline::new(road_id, start, end, road_type);
-            road.add_curve(control);
+            let road = RoadSpline::new(road_id, start, end, road_type);
             self.roads.insert(road_id, road);
             new_roads.push(road_id);
-            roads_added.push("vertical");
-            debug!("Generated VERTICAL MainStreet in cell {:?}", cell_coord);
+            debug!(
+                "Generated VERTICAL arterial {:?} in cell {:?}",
+                road_type, cell_coord
+            );
         }
 
-        if cell_coord.y % 2 == 0 && cell_coord.x % 2 != 0 {
-            let road_type = RoadType::MainStreet;
+        if is_horizontal_arterial {
+            let road_type = if cell_coord.y % (arterial_spacing * 2) == 0 {
+                RoadType::Highway
+            } else {
+                RoadType::MainStreet
+            };
             let height = road_type.height();
-            let start = Vec3::new(base_x - cell_size * 0.5, height, base_z);
-            let control = Vec3::new(
-                base_x + cell_size * 0.2,
-                height,
-                base_z + rng.gen_range(-10.0..10.0),
-            );
-            let end = Vec3::new(base_x + cell_size * 1.5, height, base_z);
+            let z_pos = base_z + cell_size * 0.5;
+            let start = Vec3::new(base_x, height, z_pos);
+            let end = Vec3::new(base_x + cell_size, height, z_pos);
 
             let road_id = generate_unique_road_id(cell_coord, local_index);
             local_index += 1;
-            let mut road = RoadSpline::new(road_id, start, end, road_type);
-            road.add_curve(control);
+            let road = RoadSpline::new(road_id, start, end, road_type);
             self.roads.insert(road_id, road);
             new_roads.push(road_id);
-            roads_added.push("horizontal");
-            debug!("Generated HORIZONTAL MainStreet in cell {:?}", cell_coord);
+            debug!(
+                "Generated HORIZONTAL arterial {:?} in cell {:?}",
+                road_type, cell_coord
+            );
         }
 
-        if roads_added.is_empty() {
+        if !is_vertical_arterial && !is_horizontal_arterial {
             let road_type = RoadType::SideStreet;
             let height = road_type.height();
             let start = Vec3::new(base_x + cell_size * 0.2, height, base_z + cell_size * 0.2);
@@ -339,41 +477,39 @@ impl RoadNetwork {
             );
         }
 
-        for i in 0..2 {
-            for j in 0..2 {
-                let sub_x = base_x + (i as f32 + 0.5) * cell_size / 3.0;
-                let sub_z = base_z + (j as f32 + 0.5) * cell_size / 3.0;
+        if !is_vertical_arterial && !is_horizontal_arterial {
+            let road_type = RoadType::SideStreet;
+            let height = road_type.height();
 
-                let offset_x = rng.gen_range(-15.0..15.0);
-                let offset_z = rng.gen_range(-15.0..15.0);
+            let nearest_vertical = ((cell_coord.x as f32 / arterial_spacing as f32).round()
+                * arterial_spacing as f32)
+                * cell_size
+                + cell_size * 0.5;
+            let nearest_horizontal = ((cell_coord.y as f32 / arterial_spacing as f32).round()
+                * arterial_spacing as f32)
+                * cell_size
+                + cell_size * 0.5;
 
-                if rng.gen_bool(0.8) {
-                    let road_type = RoadType::SideStreet;
-                    let height = road_type.height();
-                    let start = Vec3::new(sub_x + offset_x, height, sub_z - 40.0);
-                    let end = Vec3::new(sub_x + offset_x, height, sub_z + 40.0);
+            let start = Vec3::new(base_x + cell_size * 0.5, height, base_z + cell_size * 0.5);
+            let end_v = Vec3::new(nearest_vertical, height, base_z + cell_size * 0.5);
+            let end_h = Vec3::new(base_x + cell_size * 0.5, height, nearest_horizontal);
 
-                    let road_id = generate_unique_road_id(cell_coord, local_index);
-                    local_index += 1;
-                    let road = RoadSpline::new(road_id, start, end, road_type);
-                    self.roads.insert(road_id, road);
-                    new_roads.push(road_id);
-                }
+            let road_id_v = generate_unique_road_id(cell_coord, local_index);
+            local_index += 1;
+            let connector_v = RoadSpline::new(road_id_v, start, end_v, road_type);
+            self.roads.insert(road_id_v, connector_v);
+            new_roads.push(road_id_v);
 
-                if rng.gen_bool(0.8) {
-                    let road_type = RoadType::SideStreet;
-                    let height = road_type.height();
-                    let start = Vec3::new(sub_x - 40.0, height, sub_z + offset_z);
-                    let end = Vec3::new(sub_x + 40.0, height, sub_z + offset_z);
+            let road_id_h = generate_unique_road_id(cell_coord, local_index);
+            let connector_h = RoadSpline::new(road_id_h, start, end_h, road_type);
+            self.roads.insert(road_id_h, connector_h);
+            new_roads.push(road_id_h);
 
-                    let road_id = generate_unique_road_id(cell_coord, local_index);
-                    local_index += 1;
-                    let road = RoadSpline::new(road_id, start, end, road_type);
-                    self.roads.insert(road_id, road);
-                    new_roads.push(road_id);
-                }
-            }
+            debug!("Generated connectors to arterials in cell {:?}", cell_coord);
         }
+
+        self.track_boundary_points(cell_coord, cell_size, &new_roads);
+        self.connect_to_neighbors(cell_coord);
 
         new_roads
     }
