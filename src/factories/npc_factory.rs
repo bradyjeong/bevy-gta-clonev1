@@ -1,5 +1,9 @@
+use crate::bundles::VisibleChildBundle;
 use crate::components::world::NPCGender;
-use crate::components::{NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCState};
+use crate::components::{
+    BodyPart, HumanAnimation, HumanMovement, NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCHead,
+    NPCLeftArm, NPCLeftLeg, NPCRightArm, NPCRightLeg, NPCState, NPCTorso,
+};
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use bevy::prelude::*;
@@ -54,12 +58,13 @@ impl NPCFactory {
         let appearance = self.generate_npc_appearance(npc_type);
 
         // Position NPC on ground with proper height
-        let final_position = Vec3::new(position.x, position.y + 1.0, position.z);
+        let final_position = Vec3::new(position.x, position.y + 0.45, position.z);
 
-        let npc_material = materials.add(StandardMaterial {
-            base_color: appearance.skin_tone,
-            ..default()
-        });
+        // Player-like collider setup
+        const FOOT_LEVEL: f32 = -0.45;
+        const CAPSULE_RADIUS: f32 = 0.25;
+        const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS;
+        const UPPER_SPHERE_Y: f32 = 1.45;
 
         let mut entity = commands.spawn((
             Transform::from_translation(final_position),
@@ -79,7 +84,12 @@ impl NPCFactory {
             npc_type,
             appearance,
             RigidBody::Dynamic,
-            Collider::capsule_y(0.3, 0.9),
+            Collider::capsule(
+                Vec3::new(0.0, LOWER_SPHERE_Y, 0.0),
+                Vec3::new(0.0, UPPER_SPHERE_Y, 0.0),
+                CAPSULE_RADIUS,
+            ),
+            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         ));
 
         entity.insert((
@@ -89,20 +99,24 @@ impl NPCFactory {
             ),
             Velocity::default(),
             Damping {
-                linear_damping: 2.0,
-                angular_damping: 5.0,
+                linear_damping: 1.2,
+                angular_damping: 3.5,
             },
             Sleeping::disabled(),
         ));
 
         entity.insert((
-            Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
-            MeshMaterial3d(npc_material),
             Name::new(format!("NPC_{}", npc_type.name())),
             VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
+            HumanMovement::default(),
+            HumanAnimation::default(),
         ));
 
         let npc_entity = entity.id();
+
+        // Spawn player-like body parts with NPC appearance colors
+        self.spawn_npc_body_parts(commands, meshes, materials, npc_entity, &appearance);
+
         Ok(npc_entity)
     }
 
@@ -116,12 +130,13 @@ impl NPCFactory {
         npc_type: NPCType,
         appearance: NPCAppearance,
     ) -> Result<Entity, BundleError> {
-        let final_position = Vec3::new(position.x, position.y + 1.0, position.z);
+        let final_position = Vec3::new(position.x, position.y + 0.45, position.z);
 
-        let npc_material = materials.add(StandardMaterial {
-            base_color: appearance.skin_tone,
-            ..default()
-        });
+        // Player-like collider setup
+        const FOOT_LEVEL: f32 = -0.45;
+        const CAPSULE_RADIUS: f32 = 0.25;
+        const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS;
+        const UPPER_SPHERE_Y: f32 = 1.45;
 
         let mut entity = commands.spawn((
             Transform::from_translation(final_position),
@@ -141,7 +156,12 @@ impl NPCFactory {
             npc_type,
             appearance,
             RigidBody::Dynamic,
-            Collider::capsule_y(0.3, 0.9),
+            Collider::capsule(
+                Vec3::new(0.0, LOWER_SPHERE_Y, 0.0),
+                Vec3::new(0.0, UPPER_SPHERE_Y, 0.0),
+                CAPSULE_RADIUS,
+            ),
+            LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
         ));
 
         entity.insert((
@@ -151,20 +171,24 @@ impl NPCFactory {
             ),
             Velocity::default(),
             Damping {
-                linear_damping: 2.0,
-                angular_damping: 5.0,
+                linear_damping: 1.2,
+                angular_damping: 3.5,
             },
             Sleeping::disabled(),
         ));
 
         entity.insert((
-            Mesh3d(meshes.add(Capsule3d::new(0.3, 1.8))),
-            MeshMaterial3d(npc_material),
             Name::new(format!("NPC_{}", npc_type.name())),
             VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
+            HumanMovement::default(),
+            HumanAnimation::default(),
         ));
 
         let npc_entity = entity.id();
+
+        // Spawn player-like body parts with NPC appearance colors
+        self.spawn_npc_body_parts(commands, meshes, materials, npc_entity, &appearance);
+
         Ok(npc_entity)
     }
 
@@ -250,6 +274,130 @@ impl NPCFactory {
         let mut rng = rand::thread_rng();
         let npc_types = [NPCType::Pedestrian, NPCType::Worker, NPCType::Police];
         npc_types[rng.gen_range(0..npc_types.len())]
+    }
+
+    /// Spawn player-like body parts for NPC
+    fn spawn_npc_body_parts(
+        &self,
+        commands: &mut Commands,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<StandardMaterial>>,
+        parent: Entity,
+        appearance: &NPCAppearance,
+    ) {
+        // Torso
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.6, 0.8, 0.3))),
+            MeshMaterial3d(materials.add(appearance.shirt_color)),
+            Transform::from_xyz(0.0, 0.6, 0.0),
+            ChildOf(parent),
+            NPCTorso,
+            BodyPart {
+                rest_position: Vec3::new(0.0, 0.6, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
+
+        // Head
+        commands.spawn((
+            Mesh3d(meshes.add(Sphere::new(0.2))),
+            MeshMaterial3d(materials.add(appearance.skin_tone)),
+            Transform::from_xyz(0.0, 1.2, 0.0),
+            ChildOf(parent),
+            NPCHead,
+            BodyPart {
+                rest_position: Vec3::new(0.0, 1.2, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
+
+        // Left Arm
+        commands.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
+            MeshMaterial3d(materials.add(appearance.skin_tone)),
+            Transform::from_xyz(-0.4, 0.7, 0.0),
+            ChildOf(parent),
+            NPCLeftArm,
+            BodyPart {
+                rest_position: Vec3::new(-0.4, 0.7, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
+
+        // Right Arm
+        commands.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
+            MeshMaterial3d(materials.add(appearance.skin_tone)),
+            Transform::from_xyz(0.4, 0.7, 0.0),
+            ChildOf(parent),
+            NPCRightArm,
+            BodyPart {
+                rest_position: Vec3::new(0.4, 0.7, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
+
+        // Left Leg
+        commands.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
+            MeshMaterial3d(materials.add(appearance.pants_color)),
+            Transform::from_xyz(-0.15, 0.0, 0.0),
+            ChildOf(parent),
+            NPCLeftLeg,
+            BodyPart {
+                rest_position: Vec3::new(-0.15, 0.0, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
+
+        // Right Leg
+        commands.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
+            MeshMaterial3d(materials.add(appearance.pants_color)),
+            Transform::from_xyz(0.15, 0.0, 0.0),
+            ChildOf(parent),
+            NPCRightLeg,
+            BodyPart {
+                rest_position: Vec3::new(0.15, 0.0, 0.0),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
+            VisibleChildBundle::default(),
+        ));
+
+        // Left Foot
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
+            MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))),
+            Transform::from_xyz(-0.15, -0.4, 0.1),
+            ChildOf(parent),
+            VisibleChildBundle::default(),
+        ));
+
+        // Right Foot
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
+            MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))),
+            Transform::from_xyz(0.15, -0.4, 0.1),
+            ChildOf(parent),
+            VisibleChildBundle::default(),
+        ));
     }
 }
 

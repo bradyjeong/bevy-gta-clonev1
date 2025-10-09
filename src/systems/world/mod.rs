@@ -1,6 +1,7 @@
 // pub mod culling; // DELETED: Using Bevy's built-in VisibilityRange instead
 pub mod debug;
 pub mod npc;
+pub mod npc_animation;
 pub mod performance;
 pub mod road_generation;
 pub mod road_mesh;
