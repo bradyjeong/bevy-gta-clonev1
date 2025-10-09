@@ -1,0 +1,12 @@
+(
+    map_size: 4000.0,
+    map_height: 150.0,
+    ui_position: (20.0, 20.0),
+    ui_size: (250.0, 250.0),
+    background_alpha: 0.8,
+    border_width: 2.0,
+    zoom_level: 1.0,
+    show_player_icon: true,
+    player_icon_size: 30.0,
+    player_icon_color: (0.0, 1.0, 0.0, 1.0),
+)

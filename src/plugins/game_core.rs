@@ -9,7 +9,7 @@ use crate::components::world::{EntityLimits, MeshCache, WorldBounds};
 use crate::components::{CullingSettings, DirtyFlagsMetrics, PerformanceStats};
 use crate::config::GameConfig;
 use crate::plugins::{
-    InputPlugin, PlayerPlugin, UIPlugin, UnifiedWorldPlugin, VehiclePlugin, WaterPlugin,
+    InputPlugin, MapPlugin, PlayerPlugin, UIPlugin, UnifiedWorldPlugin, VehiclePlugin, WaterPlugin,
 };
 use crate::resources::WorldRng;
 use crate::services::GroundDetectionPlugin;
@@ -97,7 +97,7 @@ impl Plugin for GameCorePlugin {
                 DebugUIPlugin,
             ))
             // UI Systems
-            .add_plugins(UIPlugin)
+            .add_plugins((UIPlugin, MapPlugin))
             // Setup world root entity at startup
             // No longer need WorldRoot setup
             // Re-enable player physics before Rapier reads poses (safe vehicle exit)

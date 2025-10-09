@@ -55,6 +55,7 @@
 //! 5. Export from this mod.rs file
 
 pub mod effects;
+pub mod map;
 pub mod movement_tracker;
 pub mod player;
 pub mod unified_water;
@@ -103,5 +104,6 @@ pub use control_state::{
     AIControlled, ControlState, PendingPhysicsEnable, PlayerControlled, VehicleControlType,
 };
 pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility};
+pub use map::{MapCamera, MapConfig, MinimapUI, PlayerMapIcon};
 pub use movement_tracker::MovementTracker;
 pub use unified_vehicle::UnifiedVehicleSpecs;

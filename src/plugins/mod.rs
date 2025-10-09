@@ -50,6 +50,7 @@
 pub mod game_core;
 pub mod game_setup;
 pub mod input_plugin;
+pub mod map_plugin;
 pub mod player_plugin;
 pub mod ui_plugin;
 pub mod unified_world_plugin;
@@ -66,6 +67,7 @@ pub mod world_npc_plugin;
 pub use game_core::GameCorePlugin;
 pub use game_setup::GameSetupPlugin;
 pub use input_plugin::InputPlugin;
+pub use map_plugin::MapPlugin;
 pub use player_plugin::PlayerPlugin;
 pub use ui_plugin::UIPlugin;
 
