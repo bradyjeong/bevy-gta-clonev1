@@ -40,8 +40,8 @@ impl VehicleFactory {
         VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance)
     }
 
-    /// Spawn SuperCar with proper mesh-collider consistency
-    /// Mesh: 1.9×1.3×4.7, Collider: 0.76×0.52×1.88 (0.8x for GTA-style forgiving collision)
+    /// Spawn SuperCar with multi-part realistic geometry
+    /// Visual: 1.8×1.25×4.2, Collider: 0.72×0.5×1.68 (0.8x for GTA-style forgiving collision)
     pub fn spawn_super_car(
         &self,
         commands: &mut Commands,
@@ -58,12 +58,12 @@ impl VehicleFactory {
                     dynamic_content: DynamicContent {
                         content_type: ContentType::Vehicle,
                     },
-                    transform: Transform::from_translation(position),
+                    transform: Transform::from_translation(position + Vec3::new(0.0, 0.125, 0.0)),
                     visibility: Visibility::default(),
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(0.76 / 2.0, 0.52 / 2.0, 1.88 / 2.0), // GTA-style 0.8x
+                    collider: Collider::cuboid(0.72, 0.5, 1.68), // 0.8x of visual bounds: width 0.9, height 0.625, length 2.1
                     collision_groups: CollisionGroups::new(
                         self.config.physics.vehicle_group,
                         self.config.physics.static_group
@@ -77,8 +77,9 @@ impl VehicleFactory {
                 VehicleState::new(VehicleType::SuperCar),
                 SimpleCarSpecs::default(),
                 LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+                Ccd::enabled(), // High-speed cars need continuous collision detection
                 Damping {
-                    linear_damping: 1.0,
+                linear_damping: 1.0,
                     angular_damping: 5.0,
                 },
                 MovementTracker::new(position, 10.0),
@@ -86,16 +87,78 @@ impl VehicleFactory {
             ))
             .id();
 
-        // Add car body as child entity with proper mesh size
-        // VisibilityRange required on each mesh entity (doesn't inherit per Bevy docs)
+        // Build realistic multi-part car
+        let body_color = materials.add(color);
+        let dark_color = materials.add(Color::srgb(0.1, 0.1, 0.12));
+        let glass_color = materials.add(StandardMaterial {
+            base_color: Color::srgba(0.2, 0.3, 0.4, 0.6),
+            alpha_mode: AlphaMode::Blend,
+            perceptual_roughness: 0.1,
+            metallic: 0.0,
+            ..default()
+        });
+        
+        // Lower chassis (wider, longer)
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(1.9, 1.3, 4.7))), // Full visual size
-            MeshMaterial3d(materials.add(color)),
-            Transform::from_xyz(0.0, 0.0, 0.0),
+            Mesh3d(meshes.add(Cuboid::new(1.8, 0.6, 4.2))),
+            MeshMaterial3d(body_color.clone()),
+            Transform::from_xyz(0.0, -0.2, 0.0), // Bottom at collider bottom: -0.5 + 0.3
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
+        
+        // Upper cabin (narrower, sleeker)
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(1.6, 0.7, 2.0))),
+            MeshMaterial3d(body_color.clone()),
+            Transform::from_xyz(0.0, 0.275, -0.3), // Offset from collider center
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            self.visibility_range(),
+        ));
+        
+        // Windshield
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(1.5, 0.5, 0.1))),
+            MeshMaterial3d(glass_color.clone()),
+            Transform::from_xyz(0.0, 0.375, 0.7), // Offset from collider center
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            self.visibility_range(),
+        ));
+        
+        // Hood (front slope)
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(1.7, 0.3, 1.2))),
+            MeshMaterial3d(body_color.clone()),
+            Transform::from_xyz(0.0, -0.125, 1.5), // Front aligns with chassis front at 2.1
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            self.visibility_range(),
+        ));
+        
+        // 4 Wheels (positioned at collider bottom: -0.5 + wheel_radius 0.25)
+        let wheel_mesh = MeshFactory::create_sports_wheel(meshes);
+        let wheel_y = -0.5 + 0.25; // collider_bottom (-half_height) + wheel_radius
+        let wheel_positions = [
+            Vec3::new(-0.9, wheel_y, 1.2),   // Front left
+            Vec3::new(0.9, wheel_y, 1.2),    // Front right
+            Vec3::new(-0.9, wheel_y, -1.2),  // Rear left
+            Vec3::new(0.9, wheel_y, -1.2),   // Rear right
+        ];
+        
+        for pos in wheel_positions {
+            commands.spawn((
+                Mesh3d(wheel_mesh.clone()),
+                MeshMaterial3d(dark_color.clone()),
+                Transform::from_translation(pos)
+                    .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                self.visibility_range(),
+            ));
+        }
 
         Ok(vehicle_entity)
     }

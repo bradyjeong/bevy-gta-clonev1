@@ -226,7 +226,7 @@ impl RenderingFactory {
                 color,
             } => {
                 let mesh = match vehicle_type {
-                    VehicleBodyType::SuperCar => MeshFactory::create_car_body(meshes),
+                    VehicleBodyType::SuperCar => MeshFactory::create_sports_car_body(meshes),
                     VehicleBodyType::SportsCar => MeshFactory::create_sports_car_body(meshes),
                     VehicleBodyType::SUV => MeshFactory::create_suv_body(meshes),
                     VehicleBodyType::Truck => MeshFactory::create_truck_body(meshes),

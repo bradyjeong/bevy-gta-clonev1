@@ -7,12 +7,12 @@ pub struct MeshFactory;
 impl MeshFactory {
     // VEHICLE MESHES - Standard vehicle components (Fixed: heights match colliders)
     pub fn create_car_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        meshes.add(Cuboid::new(1.8, 1.0, 3.6)) // Fixed: height 1.0 matches collider
+        meshes.add(Capsule3d::new(0.5, 3.6)) // Rounded standard car body
     }
 
     pub fn create_sports_car_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {
-        // GTA-style: Visual mesh at full size, collider will be 0.8x for forgiving collision
-        meshes.add(Cuboid::new(1.9, 1.3, 4.7)) // Full visual size from config body_size
+        // Sleek, sexy sports car with rounded capsule body
+        meshes.add(Capsule3d::new(0.65, 4.7)) // Rounded, aerodynamic body
     }
 
     pub fn create_suv_body(meshes: &mut ResMut<Assets<Mesh>>) -> Handle<Mesh> {

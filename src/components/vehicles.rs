@@ -222,7 +222,7 @@ impl Default for SimpleCarSpecs {
             angular_lerp_factor: 6.0_f32.clamp(1.0, 20.0), // Smooth rotation response
             emergency_brake_linear: 0.1_f32.clamp(0.01, 1.0), // Multiplier - keep some movement
             emergency_brake_angular: 0.5_f32.clamp(0.01, 1.0), // Multiplier
-            drag_factor: 0.98_f32.clamp(0.9, 1.0),  // Momentum decay per second when no input
+            drag_factor: 0.92_f32.clamp(0.9, 1.0),  // Momentum decay per second when no input
         }
     }
 }

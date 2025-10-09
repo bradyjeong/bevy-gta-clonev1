@@ -41,10 +41,8 @@ pub fn car_movement(
                 target_linear_velocity -= forward * specs.base_speed * control_state.brake;
             }
 
-            // Steering (only when moving)
-            if (control_state.is_accelerating() || control_state.is_braking())
-                && control_state.steering.abs() > 0.1
-            {
+            // Steering (always when steering input present)
+            if control_state.steering.abs() > 0.1 {
                 target_angular_velocity.y = control_state.steering * specs.rotation_speed;
             }
         }
