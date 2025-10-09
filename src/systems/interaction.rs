@@ -75,18 +75,18 @@ pub fn interaction_system(
             for (car_entity, car_gt, _) in car_query.iter() {
                 let distance = player_transform.translation.distance(car_gt.translation());
                 if distance < 3.0 {
-                    // Disable vehicle physics temporarily to prevent explosions
-                    commands.entity(car_entity).insert(RigidBodyDisabled);
-
                     // Queue atomic ActiveEntity transfer (prevents gaps)
                     queue_active_transfer(&mut commands, player_entity, car_entity);
 
                     // Remove control components from player and hide them
+                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
                     commands
                         .entity(player_entity)
                         .remove::<PlayerControlled>()
                         .remove::<ControlState>()
-                        .insert(Visibility::Hidden);
+                        .remove::<VehicleControlType>()
+                        .insert(Visibility::Hidden)
+                        .insert(RigidBodyDisabled);
 
                     // Make player a child of the car
                     commands.entity(player_entity).insert(ChildOf(car_entity));
@@ -111,9 +111,6 @@ pub fn interaction_system(
                     // Store which car the player is in
                     commands.entity(player_entity).insert(InCar(car_entity));
 
-                    // Re-enable vehicle physics after setup is complete (prevents physics explosions)
-                    commands.entity(car_entity).remove::<RigidBodyDisabled>();
-
                     // Switch to driving state
                     state.set(GameState::Driving);
                     info!(
@@ -131,18 +128,19 @@ pub fn interaction_system(
                     .distance(helicopter_gt.translation());
                 if distance < 5.0 {
                     // Larger range for helicopters
-                    // Disable helicopter physics temporarily to prevent explosions
-                    commands.entity(helicopter_entity).insert(RigidBodyDisabled);
 
                     // Queue atomic ActiveEntity transfer (prevents gaps)
                     queue_active_transfer(&mut commands, player_entity, helicopter_entity);
 
                     // Remove control components from player and hide them
+                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
                     commands
                         .entity(player_entity)
                         .remove::<PlayerControlled>()
                         .remove::<ControlState>()
-                        .insert(Visibility::Hidden);
+                        .remove::<VehicleControlType>()
+                        .insert(Visibility::Hidden)
+                        .insert(RigidBodyDisabled);
 
                     // Make player a child of the helicopter
                     commands
@@ -171,11 +169,6 @@ pub fn interaction_system(
                         .entity(player_entity)
                         .insert(InCar(helicopter_entity)); // Reuse InCar for vehicles
 
-                    // Re-enable helicopter physics after setup is complete (prevents physics explosions)
-                    commands
-                        .entity(helicopter_entity)
-                        .remove::<RigidBodyDisabled>();
-
                     // Switch to flying state
                     state.set(GameState::Flying);
                     info!("Entered helicopter!");
@@ -188,18 +181,19 @@ pub fn interaction_system(
                 let distance = player_transform.translation.distance(f16_gt.translation());
                 if distance < 8.0 {
                     // Larger range for F16s
-                    // Disable F16 physics temporarily to prevent explosions
-                    commands.entity(f16_entity).insert(RigidBodyDisabled);
 
                     // Queue atomic ActiveEntity transfer (prevents gaps)
                     queue_active_transfer(&mut commands, player_entity, f16_entity);
 
                     // Remove control components from player and hide them
+                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
                     commands
                         .entity(player_entity)
                         .remove::<PlayerControlled>()
                         .remove::<ControlState>()
-                        .insert(Visibility::Hidden);
+                        .remove::<VehicleControlType>()
+                        .insert(Visibility::Hidden)
+                        .insert(RigidBodyDisabled);
 
                     // Make player a child of the F16
                     commands.entity(player_entity).insert(ChildOf(f16_entity));
@@ -224,9 +218,6 @@ pub fn interaction_system(
                     // Store which F16 the player is in
                     commands.entity(player_entity).insert(InCar(f16_entity)); // Reuse InCar for vehicles
 
-                    // Re-enable F16 physics after setup is complete (prevents physics explosions)
-                    commands.entity(f16_entity).remove::<RigidBodyDisabled>();
-
                     // Switch to jetting state
                     state.set(GameState::Jetting);
                     info!("Entered F16 Fighter Jet!");
@@ -250,7 +241,8 @@ pub fn interaction_system(
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from vehicle rotation
-                        let right_horizontal = Vec3::new(car_gt.right().x, 0.0, car_gt.right().z).normalize_or_zero();
+                        let right_horizontal =
+                            Vec3::new(car_gt.right().x, 0.0, car_gt.right().z).normalize_or_zero();
                         let exit_position = car_gt.translation() + right_horizontal * 3.0;
                         let inherited_vel = car_vel.cloned().unwrap_or(Velocity::zero());
 
@@ -296,7 +288,9 @@ pub fn interaction_system(
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from aircraft rotation
-                        let right_horizontal = Vec3::new(helicopter_gt.right().x, 0.0, helicopter_gt.right().z).normalize_or_zero();
+                        let right_horizontal =
+                            Vec3::new(helicopter_gt.right().x, 0.0, helicopter_gt.right().z)
+                                .normalize_or_zero();
                         let exit_position = helicopter_gt.translation()
                             + right_horizontal * 4.0  // Horizontal offset only
                             + Vec3::new(0.0, -1.0, 0.0); // Drop to ground level
@@ -340,7 +334,8 @@ pub fn interaction_system(
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from aircraft rotation
-                        let right_horizontal = Vec3::new(f16_gt.right().x, 0.0, f16_gt.right().z).normalize_or_zero();
+                        let right_horizontal =
+                            Vec3::new(f16_gt.right().x, 0.0, f16_gt.right().z).normalize_or_zero();
                         let exit_position = f16_gt.translation()
                             + right_horizontal * 6.0  // Horizontal offset only
                             + Vec3::new(0.0, -2.0, 0.0); // Drop to ground level

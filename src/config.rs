@@ -187,7 +187,7 @@ pub struct PerformanceConfig {
 
     // Culling parameters
     pub culling_check_interval: f32, // 0.5 - Culling check interval
-    pub max_visible_distance: f32,   // 1500.0 - Maximum visibility distance
+    pub max_visible_distance: f32, // 1000.0 - Maximum visibility distance (reduced for performance)
 }
 
 #[derive(Debug, Clone)]
@@ -382,7 +382,7 @@ impl Default for PerformanceConfig {
             target_fps: 60.0,
             frame_time_threshold: 16.67,
             culling_check_interval: 0.5,
-            max_visible_distance: 1500.0,
+            max_visible_distance: 1000.0, // Reduced from 1500 for better performance
         }
     }
 }
@@ -496,8 +496,8 @@ impl WorldConfig {
 
         // Recalculate chunk counts after validation
         let chunks_per_axis = (self.map_size / self.chunk_size) as usize;
-        self.total_chunks_x = chunks_per_axis.clamp(50, 200);
-        self.total_chunks_z = chunks_per_axis.clamp(50, 200);
+        self.total_chunks_x = chunks_per_axis.max(1); // At least 1 chunk, no arbitrary minimum
+        self.total_chunks_z = chunks_per_axis.max(1); // At least 1 chunk, no arbitrary minimum
 
         // Validate LOD distances are in ascending order
         self.lod_distances.sort_by(|a, b| {

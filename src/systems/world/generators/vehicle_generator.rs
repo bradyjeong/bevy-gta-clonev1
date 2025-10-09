@@ -43,21 +43,13 @@ impl VehicleGenerator {
 
             // Only spawn on roads with sufficient spacing
             if self.is_on_road(position, world)
-                && world.placement_grid.can_place(
-                    position,
-                    ContentType::Vehicle,
-                    4.0,
-                    15.0,
-                )
+                && world
+                    .placement_grid
+                    .can_place(position, ContentType::Vehicle, 4.0, 15.0)
             {
-                if let Ok(vehicle_entity) = self.spawn_ground_vehicle(
-                    commands,
-                    coord,
-                    position,
-                    meshes,
-                    materials,
-                    world_rng,
-                ) {
+                if let Ok(vehicle_entity) = self
+                    .spawn_ground_vehicle(commands, coord, position, meshes, materials, world_rng)
+                {
                     world
                         .placement_grid
                         .add_entity(position, ContentType::Vehicle, 4.0);
@@ -84,14 +76,9 @@ impl VehicleGenerator {
                     50.0, // More spacing
                 )
             {
-                if let Ok(aircraft_entity) = self.spawn_aircraft(
-                    commands,
-                    coord,
-                    position,
-                    meshes,
-                    materials,
-                    world_rng,
-                ) {
+                if let Ok(aircraft_entity) =
+                    self.spawn_aircraft(commands, coord, position, meshes, materials, world_rng)
+                {
                     world
                         .placement_grid
                         .add_entity(position, ContentType::Vehicle, 10.0);

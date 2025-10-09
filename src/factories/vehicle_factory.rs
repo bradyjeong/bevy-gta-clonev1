@@ -35,6 +35,17 @@ impl VehicleFactory {
         Self { config }
     }
 
+    /// Get visibility range for vehicles based on config
+    /// Uses config.performance.max_visible_distance with a margin
+    fn visibility_range(&self) -> VisibilityRange {
+        let max = self.config.performance.max_visible_distance;
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: (max - 100.0).max(0.0)..max,
+            use_aabb: false,
+        }
+    }
+
     /// Spawn SuperCar with proper mesh-collider consistency
     /// Mesh: 1.9×1.3×4.7, Collider: 0.76×0.52×1.88 (0.8x for GTA-style forgiving collision)
     pub fn spawn_super_car(
@@ -66,11 +77,7 @@ impl VehicleFactory {
                             | self.config.physics.character_group,
                     ),
                     velocity: Velocity::default(),
-                    visibility_range: VisibilityRange {
-                        start_margin: 0.0..0.0,
-                        end_margin: 450.0..550.0,
-                        use_aabb: false,
-                    },
+                    visibility_range: self.visibility_range(),
                 },
                 Car,
                 VehicleState::new(VehicleType::SuperCar),
@@ -93,11 +100,7 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         Ok(vehicle_entity)
@@ -130,11 +133,7 @@ impl VehicleFactory {
                         self.config.physics.static_group | self.config.physics.vehicle_group,
                     ),
                     velocity: Velocity::default(),
-                    visibility_range: VisibilityRange {
-                        start_margin: 0.0..0.0,
-                        end_margin: 450.0..550.0,
-                        use_aabb: false,
-                    },
+                    visibility_range: self.visibility_range(),
                 },
                 Helicopter,
                 VehicleState::new(VehicleType::Helicopter),
@@ -161,11 +160,7 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Cockpit bubble - rounded cockpit
@@ -180,11 +175,7 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
             ChildOf(vehicle_entity),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Tail boom - tapered cylinder
@@ -199,11 +190,7 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 0.0, 4.5),
             ChildOf(vehicle_entity),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Main rotor blades - thin and aerodynamic
@@ -261,11 +248,7 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 1.0, 6.2),
             ChildOf(vehicle_entity),
             TailRotor,
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         Ok(vehicle_entity)
@@ -298,12 +281,9 @@ impl VehicleFactory {
                         self.config.physics.static_group | self.config.physics.vehicle_group,
                     ),
                     velocity: Velocity::default(),
-                    visibility_range: VisibilityRange {
-                        start_margin: 0.0..0.0,
-                        end_margin: 450.0..550.0,
-                        use_aabb: false,
-                    },
+                    visibility_range: self.visibility_range(),
                 },
+                Ccd::enabled(), // Enable CCD for high-speed F16 to prevent tunneling
                 F16,
                 VehicleState::new(VehicleType::F16),
                 AircraftFlight::default(),
@@ -329,11 +309,7 @@ impl VehicleFactory {
                 .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Part 2: Left Wing - Large delta wing with aggressive sweep
@@ -352,11 +328,7 @@ impl VehicleFactory {
                 .with_rotation(Quat::from_rotation_y(-0.25) * Quat::from_rotation_z(-0.05)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Part 3: Right Wing - Large delta wing with aggressive sweep (mirror)
@@ -367,11 +339,7 @@ impl VehicleFactory {
                 .with_rotation(Quat::from_rotation_y(0.25) * Quat::from_rotation_z(0.05)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Part 4: Canopy (transparent cockpit bubble) - Forward position for sleek look
@@ -391,11 +359,7 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 1.5, -5.0).with_scale(Vec3::new(1.2, 1.0, 1.5)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Part 5: Vertical Tail (tail fin) - Taller and swept with accent color
@@ -413,11 +377,7 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 2.2, 7.5).with_rotation(Quat::from_rotation_x(0.1)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Part 6: Left Air Intake - Signature F16 side intake
@@ -430,11 +390,7 @@ impl VehicleFactory {
             Transform::from_xyz(-1.5, -0.5, -2.0).with_rotation(Quat::from_rotation_y(1.57)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Part 7: Right Air Intake - Signature F16 side intake (mirror)
@@ -444,11 +400,7 @@ impl VehicleFactory {
             Transform::from_xyz(1.5, -0.5, -2.0).with_rotation(Quat::from_rotation_y(-1.57)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Part 8: Engine Nozzle (rear thrust visual)
@@ -461,11 +413,7 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 0.0, 9.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         // Part 9: Jet Flames (afterburner exhaust effects)
@@ -495,11 +443,7 @@ impl VehicleFactory {
                 color_intensity: 1.0,
             },
             Visibility::Hidden,
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         Ok(vehicle_entity)
@@ -559,11 +503,7 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
-                use_aabb: false,
-            },
+            self.visibility_range(),
         ));
 
         Ok(vehicle_entity)

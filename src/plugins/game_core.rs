@@ -1,6 +1,8 @@
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
+use bevy::time::common_conditions::on_timer;
 use bevy_rapier3d::prelude::*;
+use std::time::Duration;
 
 use crate::GameState;
 use crate::components::world::{EntityLimits, MeshCache, WorldBounds};
@@ -51,15 +53,9 @@ impl Plugin for GameCorePlugin {
                         ..default()
                     }),
             )
+            // Performance optimizations: Lock physics to 60Hz fixed timestep
+            .insert_resource(Time::<Fixed>::from_hz(60.0))
             .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
-            .add_systems(
-                Startup,
-                |mut rapier_config: Query<&mut RapierConfiguration>| {
-                    if let Ok(mut config) = rapier_config.single_mut() {
-                        config.gravity = Vec3::new(0.0, -9.81, 0.0);
-                    }
-                },
-            )
             .add_plugins(FrameTimeDiagnosticsPlugin::default())
             // Game State and Resources
             .init_state::<GameState>()
@@ -120,6 +116,7 @@ impl Plugin for GameCorePlugin {
                 ),
             )
             // Safeguards and boundaries run AFTER Rapier physics completes (explicit ordering + chained)
+            // Throttled to 10Hz for performance
             .add_systems(
                 FixedUpdate,
                 (
@@ -128,7 +125,8 @@ impl Plugin for GameCorePlugin {
                     aircraft_boundary_system,
                 )
                     .chain()
-                    .after(PhysicsSet::Writeback),
+                    .after(PhysicsSet::Writeback)
+                    .run_if(on_timer(Duration::from_millis(100))),
             )
             .add_systems(
                 Update,
@@ -143,9 +141,9 @@ impl Plugin for GameCorePlugin {
                     // No floating origin diagnostics needed
 
                     // No sanity check system needed for finite world
-                    
-                    // Entity limit enforcement with FIFO cleanup
-                    enforce_entity_limits,
+
+                    // Entity limit enforcement with FIFO cleanup (throttled to 2Hz)
+                    enforce_entity_limits.run_if(on_timer(Duration::from_millis(500))),
                 )
                     .chain(),
             );

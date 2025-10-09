@@ -28,6 +28,16 @@ impl BuildingFactory {
         Self { config }
     }
 
+    /// Get visibility range for buildings based on config
+    fn visibility_range(&self) -> VisibilityRange {
+        let max = self.config.performance.max_visible_distance;
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: (max - 50.0).max(0.0)..max,
+            use_aabb: false,
+        }
+    }
+
     /// Spawn building with automatic size and color generation
     pub fn spawn_building(
         &self,
@@ -68,11 +78,7 @@ impl BuildingFactory {
                     visibility: Visibility::default(),
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
-                    visibility_range: VisibilityRange {
-                        start_margin: 0.0..0.0,
-                        end_margin: 450.0..550.0,
-                        use_aabb: false,
-                    },
+                    visibility_range: self.visibility_range(),
                 },
                 Building {
                     building_type: building_type.to_world_building_type(),
@@ -119,11 +125,7 @@ impl BuildingFactory {
                     visibility: Visibility::default(),
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
-                    visibility_range: VisibilityRange {
-                        start_margin: 0.0..0.0,
-                        end_margin: 450.0..550.0,
-                        use_aabb: false,
-                    },
+                    visibility_range: self.visibility_range(),
                 },
                 Building {
                     building_type: building_type.to_world_building_type(),

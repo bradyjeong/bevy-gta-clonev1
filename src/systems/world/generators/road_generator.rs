@@ -1,7 +1,9 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
 use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
-use crate::systems::world::road_mesh::{generate_road_markings_mesh_local, generate_road_mesh_local};
+use crate::systems::world::road_mesh::{
+    generate_road_markings_mesh_local, generate_road_mesh_local,
+};
 use crate::systems::world::road_network::{IntersectionType, RoadSpline, RoadType};
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
