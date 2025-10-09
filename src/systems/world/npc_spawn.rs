@@ -28,8 +28,8 @@ pub fn spawn_new_npc_system(
     spawn_timer.tick(time.delta());
 
     // Limit NPC spawning to avoid performance issues (unified entity limits)
-    if npc_query.iter().count() >= 20 {
-        // REDUCED: From 100 to 20 NPCs max
+    if npc_query.iter().count() >= 150 {
+        // GTA-style population density
         return;
     }
 

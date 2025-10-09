@@ -27,12 +27,11 @@ pub fn setup_initial_npcs_unified(
 
     let mut rng = thread_rng();
     let mut spawned_count = 0;
-    let max_attempts = 100; // Prevent infinite loop
+    let max_attempts = 500; // Increased for higher spawn count
     let mut attempts = 0;
 
-    // Spawn fewer NPCs initially - LOD system will handle performance
-    // Using 25 like the good setup_new_npcs function
-    let target_npcs = 25;
+    // Spawn NPCs initially - GTA-style population density
+    let target_npcs = 100;
 
     while spawned_count < target_npcs && attempts < max_attempts {
         attempts += 1;
