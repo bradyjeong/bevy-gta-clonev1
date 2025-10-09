@@ -81,7 +81,7 @@ pub fn simple_npc_movement(
 
                 // Update animation state
                 animation.is_walking = movement.current_speed > 0.3;
-                animation.is_running = false;
+                animation.is_running = movement.current_speed > 5.0 && animation.is_walking;
 
                 // Face movement direction
                 transform.rotation = Quat::from_rotation_y(dir.x.atan2(dir.z));

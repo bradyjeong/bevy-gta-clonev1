@@ -85,8 +85,9 @@ pub use world::{
     BoundaryEffects, Buildable, Building, BuildingType, ContentType, CullingSettings,
     DynamicContent, DynamicTerrain, IntersectionEntity, Landmark, MainCamera, MovementController,
     NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorComponent, NPCBehaviorType, NPCBodyPart,
-    NPCGender, NPCHead, NPCLOD, NPCLeftArm, NPCLeftLeg, NPCRendering, NPCRightArm, NPCRightLeg,
-    NPCState, NPCTorso, NPCType, PerformanceCritical, PerformanceStats, RoadEntity, WorldBounds,
+    NPCGender, NPCHead, NPCLOD, NPCLeftArm, NPCLeftFoot, NPCLeftLeg, NPCRendering, NPCRightArm,
+    NPCRightFoot, NPCRightLeg, NPCState, NPCTorso, NPCType, PerformanceCritical, PerformanceStats,
+    RoadEntity, WorldBounds,
 };
 
 pub use water::{Boat, Lake, WaterBody, WaterWave, Yacht};

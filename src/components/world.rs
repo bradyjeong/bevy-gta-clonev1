@@ -191,6 +191,12 @@ pub struct NPCLeftLeg;
 pub struct NPCRightLeg;
 
 #[derive(Component)]
+pub struct NPCLeftFoot;
+
+#[derive(Component)]
+pub struct NPCRightFoot;
+
+#[derive(Component)]
 pub struct NPCBodyPart {
     pub rest_position: Vec3,
     pub rest_rotation: Quat,

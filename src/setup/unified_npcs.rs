@@ -3,6 +3,7 @@ use rand::prelude::*;
 
 use crate::GameConfig;
 use crate::factories::NPCFactory;
+use crate::resources::NPCAssetCache;
 use crate::services::ground_detection::GroundDetectionService;
 
 /// UNIFIED NPC SETUP SYSTEM
@@ -17,6 +18,7 @@ pub fn setup_initial_npcs_unified(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut cache: ResMut<NPCAssetCache>,
     ground_service: Res<GroundDetectionService>,
     _game_config: Res<GameConfig>,
 ) {
@@ -48,6 +50,7 @@ pub fn setup_initial_npcs_unified(
                 &mut commands,
                 &mut meshes,
                 &mut materials,
+                &mut cache,
                 spawn_position,
                 None, // Auto-select NPC type
             ) {

@@ -2,7 +2,8 @@ use crate::bundles::VisibleChildBundle;
 use crate::components::world::NPCGender;
 use crate::components::{
     BodyPart, HumanAnimation, HumanMovement, NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCHead,
-    NPCLeftArm, NPCLeftLeg, NPCRightArm, NPCRightLeg, NPCState, NPCTorso,
+    NPCLeftArm, NPCLeftFoot, NPCLeftLeg, NPCRightArm, NPCRightFoot, NPCRightLeg, NPCState,
+    NPCTorso,
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
@@ -51,6 +52,7 @@ impl NPCFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        cache: &mut ResMut<crate::resources::NPCAssetCache>,
         position: Vec3,
         npc_type: Option<NPCType>,
     ) -> Result<Entity, BundleError> {
@@ -115,17 +117,19 @@ impl NPCFactory {
         let npc_entity = entity.id();
 
         // Spawn player-like body parts with NPC appearance colors
-        self.spawn_npc_body_parts(commands, meshes, materials, npc_entity, &appearance);
+        self.spawn_npc_body_parts(commands, meshes, materials, cache, npc_entity, &appearance);
 
         Ok(npc_entity)
     }
 
     /// Spawn NPC with specific appearance
+    #[allow(clippy::too_many_arguments)]
     pub fn spawn_npc_with_appearance(
         &self,
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        cache: &mut ResMut<crate::resources::NPCAssetCache>,
         position: Vec3,
         npc_type: NPCType,
         appearance: NPCAppearance,
@@ -187,7 +191,7 @@ impl NPCFactory {
         let npc_entity = entity.id();
 
         // Spawn player-like body parts with NPC appearance colors
-        self.spawn_npc_body_parts(commands, meshes, materials, npc_entity, &appearance);
+        self.spawn_npc_body_parts(commands, meshes, materials, cache, npc_entity, &appearance);
 
         Ok(npc_entity)
     }
@@ -198,13 +202,14 @@ impl NPCFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        cache: &mut ResMut<crate::resources::NPCAssetCache>,
         positions: Vec<Vec3>,
         npc_type: Option<NPCType>,
     ) -> Result<Vec<Entity>, BundleError> {
         let mut entities = Vec::new();
 
         for position in positions {
-            let entity = self.spawn_npc(commands, meshes, materials, position, npc_type)?;
+            let entity = self.spawn_npc(commands, meshes, materials, cache, position, npc_type)?;
             entities.push(entity);
         }
 
@@ -282,13 +287,17 @@ impl NPCFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        cache: &mut ResMut<crate::resources::NPCAssetCache>,
         parent: Entity,
         appearance: &NPCAppearance,
     ) {
         // Torso
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(0.6, 0.8, 0.3))),
-            MeshMaterial3d(materials.add(appearance.shirt_color)),
+            Mesh3d(
+                cache
+                    .get_or_create_mesh(crate::resources::MeshShape::cuboid(0.6, 0.8, 0.3), meshes),
+            ),
+            MeshMaterial3d(cache.get_or_create_material(appearance.shirt_color, materials)),
             Transform::from_xyz(0.0, 0.6, 0.0),
             ChildOf(parent),
             NPCTorso,
@@ -303,8 +312,8 @@ impl NPCFactory {
 
         // Head
         commands.spawn((
-            Mesh3d(meshes.add(Sphere::new(0.2))),
-            MeshMaterial3d(materials.add(appearance.skin_tone)),
+            Mesh3d(cache.get_or_create_mesh(crate::resources::MeshShape::sphere(0.2), meshes)),
+            MeshMaterial3d(cache.get_or_create_material(appearance.skin_tone, materials)),
             Transform::from_xyz(0.0, 1.2, 0.0),
             ChildOf(parent),
             NPCHead,
@@ -319,8 +328,10 @@ impl NPCFactory {
 
         // Left Arm
         commands.spawn((
-            Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
-            MeshMaterial3d(materials.add(appearance.skin_tone)),
+            Mesh3d(
+                cache.get_or_create_mesh(crate::resources::MeshShape::capsule(0.08, 0.5), meshes),
+            ),
+            MeshMaterial3d(cache.get_or_create_material(appearance.skin_tone, materials)),
             Transform::from_xyz(-0.4, 0.7, 0.0),
             ChildOf(parent),
             NPCLeftArm,
@@ -335,8 +346,10 @@ impl NPCFactory {
 
         // Right Arm
         commands.spawn((
-            Mesh3d(meshes.add(Capsule3d::new(0.08, 0.5))),
-            MeshMaterial3d(materials.add(appearance.skin_tone)),
+            Mesh3d(
+                cache.get_or_create_mesh(crate::resources::MeshShape::capsule(0.08, 0.5), meshes),
+            ),
+            MeshMaterial3d(cache.get_or_create_material(appearance.skin_tone, materials)),
             Transform::from_xyz(0.4, 0.7, 0.0),
             ChildOf(parent),
             NPCRightArm,
@@ -351,8 +364,10 @@ impl NPCFactory {
 
         // Left Leg
         commands.spawn((
-            Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
-            MeshMaterial3d(materials.add(appearance.pants_color)),
+            Mesh3d(
+                cache.get_or_create_mesh(crate::resources::MeshShape::capsule(0.12, 0.6), meshes),
+            ),
+            MeshMaterial3d(cache.get_or_create_material(appearance.pants_color, materials)),
             Transform::from_xyz(-0.15, 0.0, 0.0),
             ChildOf(parent),
             NPCLeftLeg,
@@ -367,8 +382,10 @@ impl NPCFactory {
 
         // Right Leg
         commands.spawn((
-            Mesh3d(meshes.add(Capsule3d::new(0.12, 0.6))),
-            MeshMaterial3d(materials.add(appearance.pants_color)),
+            Mesh3d(
+                cache.get_or_create_mesh(crate::resources::MeshShape::capsule(0.12, 0.6), meshes),
+            ),
+            MeshMaterial3d(cache.get_or_create_material(appearance.pants_color, materials)),
             Transform::from_xyz(0.15, 0.0, 0.0),
             ChildOf(parent),
             NPCRightLeg,
@@ -381,21 +398,40 @@ impl NPCFactory {
             VisibleChildBundle::default(),
         ));
 
+        // Reuse foot mesh and material for both feet
+        let foot_mesh =
+            cache.get_or_create_mesh(crate::resources::MeshShape::cuboid(0.2, 0.1, 0.35), meshes);
+        let foot_material = cache.get_or_create_material(Color::srgb(0.1, 0.1, 0.1), materials);
+
         // Left Foot
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
-            MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))),
+            Mesh3d(foot_mesh.clone()),
+            MeshMaterial3d(foot_material.clone()),
             Transform::from_xyz(-0.15, -0.4, 0.1),
             ChildOf(parent),
+            NPCLeftFoot,
+            BodyPart {
+                rest_position: Vec3::new(-0.15, -0.4, 0.1),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
             VisibleChildBundle::default(),
         ));
 
         // Right Foot
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
-            MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))),
+            Mesh3d(foot_mesh),
+            MeshMaterial3d(foot_material),
             Transform::from_xyz(0.15, -0.4, 0.1),
             ChildOf(parent),
+            NPCRightFoot,
+            BodyPart {
+                rest_position: Vec3::new(0.15, -0.4, 0.1),
+                rest_rotation: Quat::IDENTITY,
+                animation_offset: Vec3::ZERO,
+                animation_rotation: Quat::IDENTITY,
+            },
             VisibleChildBundle::default(),
         ));
     }
