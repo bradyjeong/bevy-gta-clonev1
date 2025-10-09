@@ -329,6 +329,75 @@ pub struct MeshCache {
     pub intersection_meshes: std::collections::HashMap<String, Handle<Mesh>>,
 }
 
+#[derive(Resource)]
+pub struct MaterialCache {
+    palette: Vec<Handle<StandardMaterial>>,
+    palette_colors: Vec<[f32; 3]>,
+}
+
+impl MaterialCache {
+    pub fn new(materials: &mut Assets<StandardMaterial>) -> Self {
+        let palette_colors = [
+            Color::srgb(0.7, 0.7, 0.7),
+            Color::srgb(0.2, 0.2, 0.2),
+            Color::srgb(0.8, 0.2, 0.2),
+            Color::srgb(0.2, 0.8, 0.2),
+            Color::srgb(0.2, 0.2, 0.8),
+            Color::srgb(0.8, 0.8, 0.2),
+            Color::srgb(0.8, 0.2, 0.8),
+            Color::srgb(0.2, 0.8, 0.8),
+            Color::srgb(0.5, 0.3, 0.2),
+            Color::srgb(0.3, 0.5, 0.4),
+            Color::srgb(0.6, 0.4, 0.3),
+            Color::srgb(0.4, 0.4, 0.6),
+        ];
+
+        let palette = palette_colors
+            .iter()
+            .map(|&color| {
+                materials.add(StandardMaterial {
+                    base_color: color,
+                    perceptual_roughness: 0.5,
+                    ..default()
+                })
+            })
+            .collect();
+
+        let palette_rgb = palette_colors
+            .iter()
+            .map(|color| color.to_srgba().to_f32_array_no_alpha())
+            .collect();
+
+        Self {
+            palette,
+            palette_colors: palette_rgb,
+        }
+    }
+
+    pub fn get_material(&self, color: Color) -> Handle<StandardMaterial> {
+        let [r, g, b] = color.to_srgba().to_f32_array_no_alpha();
+        let mut closest_idx = 0;
+        let mut closest_dist = f32::MAX;
+
+        for (idx, palette_rgb) in self.palette_colors.iter().enumerate() {
+            let dist = (r - palette_rgb[0]).powi(2)
+                + (g - palette_rgb[1]).powi(2)
+                + (b - palette_rgb[2]).powi(2);
+
+            if dist < 1e-6 {
+                return self.palette[idx].clone();
+            }
+
+            if dist < closest_dist {
+                closest_dist = dist;
+                closest_idx = idx;
+            }
+        }
+
+        self.palette[closest_idx].clone()
+    }
+}
+
 // Entity limit tracking
 #[derive(Resource)]
 pub struct EntityLimits {

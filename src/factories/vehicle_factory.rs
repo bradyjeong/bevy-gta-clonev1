@@ -36,14 +36,8 @@ impl VehicleFactory {
     }
 
     /// Get visibility range for vehicles based on config
-    /// Uses config.performance.max_visible_distance with a margin
     fn visibility_range(&self) -> VisibilityRange {
-        let max = self.config.performance.max_visible_distance;
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: (max - 100.0).max(0.0)..max,
-            use_aabb: false,
-        }
+        VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance)
     }
 
     /// Spawn SuperCar with proper mesh-collider consistency
@@ -207,11 +201,7 @@ impl VehicleFactory {
                 Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
                 ChildOf(vehicle_entity),
                 MainRotor,
-                VisibilityRange {
-                    start_margin: 0.0..0.0,
-                    end_margin: 450.0..550.0,
-                    use_aabb: false,
-                },
+                self.visibility_range(),
             ));
         }
 
@@ -228,11 +218,7 @@ impl VehicleFactory {
                 Transform::from_xyz(x, -1.0, 0.0)
                     .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
                 ChildOf(vehicle_entity),
-                VisibilityRange {
-                    start_margin: 0.0..0.0,
-                    end_margin: 450.0..550.0,
-                    use_aabb: false,
-                },
+                self.visibility_range(),
             ));
         }
 

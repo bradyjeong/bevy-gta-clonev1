@@ -30,12 +30,7 @@ impl BuildingFactory {
 
     /// Get visibility range for buildings based on config
     fn visibility_range(&self) -> VisibilityRange {
-        let max = self.config.performance.max_visible_distance;
-        VisibilityRange {
-            start_margin: 0.0..0.0,
-            end_margin: (max - 50.0).max(0.0)..max,
-            use_aabb: false,
-        }
+        VisibilityRange::abrupt(0.0, self.config.performance.building_visibility_distance)
     }
 
     /// Spawn building with automatic size and color generation

@@ -5,7 +5,7 @@ use bevy_rapier3d::prelude::*;
 use std::time::Duration;
 
 use crate::GameState;
-use crate::components::world::{EntityLimits, MeshCache, WorldBounds};
+use crate::components::world::{EntityLimits, MaterialCache, MeshCache, WorldBounds};
 use crate::components::{CullingSettings, DirtyFlagsMetrics, PerformanceStats};
 use crate::config::GameConfig;
 use crate::plugins::{
@@ -70,10 +70,16 @@ impl Plugin for GameCorePlugin {
             // World boundary system - initialize from config (runs before validation)
             .add_systems(
                 PreStartup,
-                |mut commands: Commands, config: Res<GameConfig>| {
-                    let bounds = WorldBounds::from_config(&config.world);
-                    commands.insert_resource(bounds);
-                },
+                (
+                    |mut commands: Commands, config: Res<GameConfig>| {
+                        let bounds = WorldBounds::from_config(&config.world);
+                        commands.insert_resource(bounds);
+                    },
+                    |mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>| {
+                        let material_cache = MaterialCache::new(&mut materials);
+                        commands.insert_resource(material_cache);
+                    },
+                ),
             )
             // No world origin shift events needed
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
@@ -82,6 +88,7 @@ impl Plugin for GameCorePlugin {
                 brightness: 1800.0,
                 affects_lightmapped_meshes: true,
             })
+
             // Input and Player Systems
             .add_plugins((InputPlugin, PlayerPlugin))
             // Vehicle Systems

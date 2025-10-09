@@ -39,10 +39,10 @@ pub fn disable_distant_dynamic_physics(
     };
 
     let player_pos = player_transform.translation();
-    let disable_radius_sq = PHYSICS_DISABLE_RADIUS.powi(2);
+    let disable_radius_sq = (PHYSICS_DISABLE_RADIUS + HYSTERESIS_BUFFER).powi(2);
 
     let mut disabled_count = 0;
-    const MAX_DISABLES_PER_FRAME: usize = 50;
+    const MAX_DISABLES_PER_FRAME: usize = 25;
 
     for (entity, transform) in &dynamic_entities {
         if disabled_count >= MAX_DISABLES_PER_FRAME {
@@ -90,7 +90,7 @@ pub fn enable_nearby_dynamic_physics(
     let enable_radius_sq = (FULL_PHYSICS_RADIUS + HYSTERESIS_BUFFER).powi(2);
 
     let mut enabled_count = 0;
-    const MAX_ENABLES_PER_FRAME: usize = 50;
+    const MAX_ENABLES_PER_FRAME: usize = 25;
 
     for (entity, transform) in &disabled_entities {
         if enabled_count >= MAX_ENABLES_PER_FRAME {

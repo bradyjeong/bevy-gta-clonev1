@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::time::common_conditions::on_timer;
+use std::time::Duration;
 
 use crate::states::AppState;
 use crate::systems::world::physics_activation::{
@@ -21,11 +23,12 @@ impl Plugin for PhysicsActivationPlugin {
                 disable_distant_dynamic_physics,
             )
                 .chain()
-                .run_if(in_state(AppState::InGame)), // Only run during gameplay, not Loading
+                .run_if(in_state(AppState::InGame))
+                .run_if(on_timer(Duration::from_millis(200))),
         );
 
         info!(
-            "Physics Activation Plugin initialized - GTA-style dynamic physics for buildings and vehicles"
+            "Physics Activation Plugin initialized - GTA-style dynamic physics (throttled to 5Hz)"
         );
     }
 }

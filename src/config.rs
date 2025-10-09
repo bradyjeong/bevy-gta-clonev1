@@ -188,6 +188,13 @@ pub struct PerformanceConfig {
     // Culling parameters
     pub culling_check_interval: f32, // 0.5 - Culling check interval
     pub max_visible_distance: f32, // 1000.0 - Maximum visibility distance (reduced for performance)
+
+    // VisibilityRange distances per entity type
+    pub npc_visibility_distance: f32,      // 125.0 - NPCs visible range
+    pub vehicle_visibility_distance: f32,  // 250.0 - Vehicles visible range
+    pub tree_visibility_distance: f32,     // 300.0 - Trees visible range
+    pub building_visibility_distance: f32, // 500.0 - Buildings visible range
+    pub road_visibility_distance: f32,     // 400.0 - Roads visible range
 }
 
 #[derive(Debug, Clone)]
@@ -382,7 +389,12 @@ impl Default for PerformanceConfig {
             target_fps: 60.0,
             frame_time_threshold: 16.67,
             culling_check_interval: 0.5,
-            max_visible_distance: 1000.0, // Reduced from 1500 for better performance
+            max_visible_distance: 1000.0,
+            npc_visibility_distance: 125.0,
+            vehicle_visibility_distance: 250.0,
+            tree_visibility_distance: 300.0,
+            building_visibility_distance: 500.0,
+            road_visibility_distance: 400.0,
         }
     }
 }
@@ -499,14 +511,17 @@ impl WorldConfig {
         self.total_chunks_x = chunks_per_axis.max(1); // At least 1 chunk, no arbitrary minimum
         self.total_chunks_z = chunks_per_axis.max(1); // At least 1 chunk, no arbitrary minimum
 
-        // Validate LOD distances are in ascending order
-        self.lod_distances.sort_by(|a, b| {
-            a.partial_cmp(b)
-                .expect("LOD distance comparison failed (NaN detected)")
-        });
+        // Sanitize and validate LOD distances
         for distance in &mut self.lod_distances {
+            if !distance.is_finite() {
+                *distance = 50.0;
+            }
             *distance = distance.clamp(50.0, 5000.0);
         }
+        // Sort safely after sanitization
+        self.lod_distances.sort_by(|a, b| {
+            a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Clamp density values to reasonable ranges
         self.building_density = self.building_density.clamp(0.1, 5.0);
@@ -615,6 +630,11 @@ impl NPCUpdateIntervals {
 
         self.close_distance = self.close_distance.clamp(10.0, 200.0);
         self.far_distance = self.far_distance.clamp(50.0, 500.0);
+
+        // Enforce order after clamping
+        if self.close_distance >= self.far_distance {
+            self.far_distance = (self.close_distance + 1.0).min(500.0);
+        }
 
         // Clamp update intervals
         self.close_interval = self.close_interval.clamp(0.01, 0.5);

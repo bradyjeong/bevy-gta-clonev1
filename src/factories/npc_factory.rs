@@ -1,9 +1,8 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::world::NPCGender;
 use crate::components::{
-    BodyPart, HumanAnimation, HumanMovement, NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCHead,
-    NPCLeftArm, NPCLeftFoot, NPCLeftLeg, NPCRightArm, NPCRightFoot, NPCRightLeg, NPCState,
-    NPCTorso,
+    BodyPart, HumanAnimation, HumanMovement, NPC, NPCAppearance, NPCHead, NPCLeftArm, NPCLeftFoot,
+    NPCLeftLeg, NPCRightArm, NPCRightFoot, NPCRightLeg, NPCState, NPCTorso,
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
@@ -44,6 +43,11 @@ impl NPCFactory {
     /// Create NPC factory with custom configuration
     pub fn with_config(config: GameConfig) -> Self {
         Self { config }
+    }
+
+    /// Get visibility range for NPCs based on config
+    fn visibility_range(&self) -> VisibilityRange {
+        VisibilityRange::abrupt(0.0, self.config.performance.npc_visibility_distance)
     }
 
     /// Spawn NPC with automatic appearance generation
@@ -109,7 +113,7 @@ impl NPCFactory {
 
         entity.insert((
             Name::new(format!("NPC_{}", npc_type.name())),
-            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
+            self.visibility_range(),
             HumanMovement::default(),
             HumanAnimation::default(),
         ));
@@ -183,7 +187,7 @@ impl NPCFactory {
 
         entity.insert((
             Name::new(format!("NPC_{}", npc_type.name())),
-            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
+            self.visibility_range(),
             HumanMovement::default(),
             HumanAnimation::default(),
         ));

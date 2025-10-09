@@ -144,7 +144,7 @@ fn update_map_camera(
     config: Res<MapConfig>,
 ) {
     if let (Ok(active_transform), Ok(mut camera_transform)) =
-        (active_query.get_single(), camera_query.get_single_mut())
+        (active_query.single(), camera_query.single_mut())
     {
         let target_pos = active_transform.translation;
         camera_transform.translation.x = target_pos.x;
@@ -158,7 +158,7 @@ fn update_player_icon(
     mut icon_query: Query<&mut Transform, (With<PlayerMapIcon>, Without<ActiveEntity>)>,
 ) {
     if let (Ok(active_transform), Ok(mut icon_transform)) =
-        (active_query.get_single(), icon_query.get_single_mut())
+        (active_query.single(), icon_query.single_mut())
     {
         let (yaw, _pitch, _roll) = active_transform.rotation.to_euler(EulerRot::YXZ);
         icon_transform.rotation = Quat::from_rotation_z(-yaw + std::f32::consts::PI);

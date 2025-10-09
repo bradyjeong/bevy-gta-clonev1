@@ -18,28 +18,40 @@ pub fn simple_npc_movement(
             &mut HumanMovement,
             &mut HumanAnimation,
         ),
-        With<VisibilityRange>,
+        (With<VisibilityRange>, Without<RigidBodyDisabled>),
     >,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
     let current_time = time.elapsed_secs();
 
     // Get player position for distance-based optimization
-    let player_pos = if let Ok(active_transform) = active_query.single() {
-        active_transform.translation
-    } else {
-        Vec3::ZERO
+    let Ok(active_transform) = active_query.single() else {
+        return;
     };
+    let player_pos = active_transform.translation;
 
     for (_entity, mut transform, mut velocity, mut npc, mut movement, mut animation) in
         npc_query.iter_mut()
     {
-        // Note: With VisibilityRange, Bevy handles culling automatically
-        // NPCs continue to update their AI even when not visible
+        // Distance-based update intervals for performance (squared distance to avoid sqrt)
+        let distance_sq = (transform.translation - player_pos).length_squared();
+        let next_interval = if distance_sq < 100.0 * 100.0 {
+            0.05
+        } else if distance_sq < 250.0 * 250.0 {
+            0.2
+        } else {
+            0.5
+        };
 
-        // Only update NPCs at their specific intervals (staggered updates)
-        if current_time - npc.last_update < npc.update_interval {
+        // Only update NPCs at their specific intervals (use min for responsiveness when transitioning near)
+        let gate = npc.update_interval.min(next_interval);
+        if current_time - npc.last_update < gate {
             continue;
+        }
+
+        // Update interval only if it changed (avoid writes every frame)
+        if (npc.update_interval - next_interval).abs() > 1e-6 {
+            npc.update_interval = next_interval;
         }
         npc.last_update = current_time;
 
@@ -48,16 +60,6 @@ pub fn simple_npc_movement(
 
         // Calculate distance to target (XZ plane only to avoid vertical interference)
         let distance = (current_pos.xz() - target_pos.xz()).length();
-
-        // Reduce update frequency for distant NPCs
-        let distance_to_player = current_pos.distance(player_pos);
-        if distance_to_player > 100.0 {
-            npc.update_interval = 0.5; // Very slow updates for distant NPCs
-        } else if distance_to_player > 50.0 {
-            npc.update_interval = 0.2; // Slower updates for far NPCs
-        } else {
-            npc.update_interval = 0.05; // Normal updates for close NPCs
-        }
 
         // If close to target, pick a new random target (preserve current Y)
         if distance < 5.0 {
@@ -90,7 +92,8 @@ pub fn simple_npc_movement(
     }
 }
 
-/// Legacy NPC movement system - kept for backwards compatibility
+/// Legacy NPC movement system - not scheduled, kept for reference only
+#[allow(dead_code)]
 pub fn optimized_npc_movement(
     time: Res<Time>,
     mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC), With<VisibilityRange>>,
