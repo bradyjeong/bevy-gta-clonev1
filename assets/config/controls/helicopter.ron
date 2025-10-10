@@ -5,8 +5,8 @@ VehicleControls(
     name: "Helicopter",
     description: "Rotorcraft flight controls",
     primary_controls: [
-        (action: PitchForward, key: ArrowUp, description: "Pitch forward / Move forward"),
-        (action: PitchBackward, key: ArrowDown, description: "Pitch backward / Move backward"),
+        (action: PitchUp, key: ArrowUp, description: "Pitch forward / Move forward"),
+        (action: PitchDown, key: ArrowDown, description: "Pitch backward / Move backward"),
         (action: YawLeft, key: ArrowLeft, description: "Yaw left / Turn left"),
         (action: YawRight, key: ArrowRight, description: "Yaw right / Turn right"),
     ],

@@ -111,8 +111,8 @@ pub fn setup_basic_world(
             ViewVisibility::default(),
             CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP),
             Damping {
-            linear_damping: 0.1, // Realistic air resistance for free-fall
-            angular_damping: 3.5,
+                linear_damping: 0.1, // Realistic air resistance for free-fall
+                angular_damping: 3.5,
             }, // Balanced damping to prevent overspin
         ))
         .id();

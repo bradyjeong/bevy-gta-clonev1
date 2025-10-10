@@ -80,9 +80,10 @@ impl VehicleFactory {
                 LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
                 Ccd::enabled(), // High-speed cars need continuous collision detection
                 Damping {
-                    linear_damping: 1.0,
-                    angular_damping: 5.0,
+                    linear_damping: 0.2,  // Reduced to avoid double-damping with custom grip
+                    angular_damping: 2.0, // Reduced for better steering responsiveness
                 },
+                Friction::coefficient(0.2), // Low friction to avoid conflicting with custom lateral grip
                 MovementTracker::new(position, 10.0),
                 Name::new("SuperCar"),
             ))

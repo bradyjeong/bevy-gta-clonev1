@@ -3,7 +3,7 @@ use crate::components::ControlState;
 use crate::components::{ActiveEntity, Car, SimpleCarSpecs};
 use crate::config::GameConfig;
 use crate::systems::physics::PhysicsUtilities;
-use crate::util::safe_math::safe_lerp;
+use crate::util::safe_math::{safe_lerp, safe_lerp_f32};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -19,65 +19,76 @@ pub fn car_movement(
     let start_time = std::time::Instant::now();
 
     for (mut velocity, transform, control_state, specs) in car_query.iter_mut() {
-        // Early exit if no meaningful input, but still run safety checks
-        let has_input = control_state.is_accelerating()
-            || control_state.is_braking()
-            || control_state.emergency_brake
-            || control_state.steering.abs() > 0.1;
-
-        let mut target_linear_velocity = Vec3::ZERO;
-        let mut target_angular_velocity = Vec3::ZERO;
-
-        // Only calculate target velocities when there's meaningful input
-        if has_input {
-            // Use clean ControlState for car controls
-            if control_state.is_accelerating() {
-                let forward = transform.forward();
-                target_linear_velocity += forward * specs.base_speed * control_state.throttle;
-            }
-
-            if control_state.is_braking() {
-                let forward = transform.forward();
-                target_linear_velocity -= forward * specs.base_speed * control_state.brake;
-            }
-
-            // Steering (always when steering input present)
-            if control_state.steering.abs() > 0.1 {
-                target_angular_velocity.y = control_state.steering * specs.rotation_speed;
-            }
-        }
-
-        // Apply movement with momentum decay when no input (GTA-style)
         let dt = PhysicsUtilities::stable_dt(&time);
 
-        if has_input {
-            let lerped_velocity = safe_lerp(
-                velocity.linvel,
-                target_linear_velocity,
-                dt * specs.linear_lerp_factor,
-            );
+        // Convert world velocity to local car space for physics calculations
+        let inv_rotation = transform.rotation.inverse();
+        let mut v_local = inv_rotation * velocity.linvel;
 
-            // Apply X/Z movement, let Rapier handle gravity acceleration in Y
-            velocity.linvel.x = lerped_velocity.x;
-            velocity.linvel.z = lerped_velocity.z;
-            // Don't modify Y velocity - let gravity accelerate naturally
+        // Calculate current forward speed (-Z is forward in Bevy)
+        let current_speed = (-v_local.z).abs();
+
+        // Speed-based steering: steering effectiveness decreases with speed
+        let steer_gain = specs.steer_gain / (1.0 + specs.steer_speed_drop * current_speed);
+
+        // Stability term: auto-straighten based on lateral velocity (prevents spin-outs)
+        let stability_term = -v_local.x * specs.stability;
+
+        // Base steering from input
+        let mut target_yaw = control_state.steering * steer_gain + stability_term;
+
+        // Emergency brake handling: reduce grip and add yaw boost for drifting
+        let base_grip = if control_state.emergency_brake {
+            target_yaw += control_state.steering.signum() * specs.ebrake_yaw_boost;
+            specs.drift_grip
         } else {
-            // No input: Apply frame-rate independent momentum decay (car coasts like GTA V)
+            specs.grip
+        };
+
+        // Forward/backward movement with proper brake/reverse separation
+        // Bevy forward is -Z, so negate for correct direction
+        if control_state.is_accelerating() {
+            // Accelerate forward
+            let target_speed = -specs.base_speed * control_state.throttle;
+            v_local.z = safe_lerp_f32(v_local.z, target_speed, dt * specs.accel_lerp);
+        } else if control_state.brake > 0.0 {
+            // Regular brake (Shift): slow down current velocity toward zero
+            v_local.z = safe_lerp_f32(v_local.z, 0.0, dt * specs.brake_lerp * control_state.brake);
+        } else if control_state.is_reversing() {
+            // Reverse (Arrow Down): move backward
+            let target_speed = specs.base_speed * 0.5; // Half speed for reverse
+            v_local.z = safe_lerp_f32(v_local.z, target_speed, dt * specs.accel_lerp);
+        } else {
+            // No input: apply momentum decay (GTA-style coasting)
             let drag_per_second = specs.drag_factor;
             let frame_drag = drag_per_second.powf(dt);
-            velocity.linvel.x *= frame_drag;
-            velocity.linvel.z *= frame_drag;
-            // Don't modify Y velocity - let gravity accelerate naturally
+            v_local.z *= frame_drag;
         }
+
+        // Downforce effect: increase grip at high speeds for stability
+        let speed_factor = (current_speed / specs.base_speed).min(1.0);
+        let effective_grip = base_grip * (1.0 + specs.downforce_scale * speed_factor);
+        v_local.x = safe_lerp_f32(v_local.x, 0.0, dt * effective_grip);
+
+        // Convert back to world space, preserve Y velocity (gravity)
+        let world_velocity = transform.rotation * v_local;
+        velocity.linvel.x = world_velocity.x;
+        velocity.linvel.z = world_velocity.z;
+        // Y velocity handled by Rapier gravity
+
+        // Apply angular velocity with smoothing
+        let target_angvel = Vec3::new(0.0, target_yaw, 0.0);
         velocity.angvel = safe_lerp(
             velocity.angvel,
-            target_angular_velocity,
+            target_angvel,
             dt * specs.angular_lerp_factor,
         );
 
-        // Emergency brake affects current velocity (more effective than target velocity)
+        // Emergency brake multipliers (applied after calculations)
+        // Only affect horizontal velocity, preserve Y for gravity
         if control_state.emergency_brake {
-            velocity.linvel *= specs.emergency_brake_linear;
+            velocity.linvel.x *= specs.emergency_brake_linear;
+            velocity.linvel.z *= specs.emergency_brake_linear;
             velocity.angvel *= specs.emergency_brake_angular;
         }
 

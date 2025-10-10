@@ -15,8 +15,11 @@ pub struct ControlState {
     /// Throttle input: 0.0 = no acceleration, 1.0 = full acceleration
     pub throttle: f32,
 
-    /// Brake input: 0.0 = no braking, 1.0 = full braking
+    /// Brake input: 0.0 = no braking, 1.0 = full braking (slows down)
     pub brake: f32,
+
+    /// Reverse input: 0.0 = no reverse, 1.0 = full reverse
+    pub reverse: f32,
 
     /// Steering input: -1.0 = full left, 0.0 = straight, 1.0 = full right
     pub steering: f32,
@@ -63,7 +66,7 @@ impl ControlState {
 
     /// Check if any movement control is active
     pub fn has_movement_input(&self) -> bool {
-        self.throttle > 0.0 || self.brake > 0.0 || self.steering.abs() > 0.0
+        self.throttle > 0.0 || self.brake > 0.0 || self.reverse > 0.0 || self.steering.abs() > 0.0
     }
 
     /// Check if any flight control is active (pitch/roll/yaw)
@@ -79,9 +82,14 @@ impl ControlState {
         self.boost > 0.0
     }
 
-    /// Check if braking (including emergency brake)
+    /// Check if braking (regular brake or emergency brake)
     pub fn is_braking(&self) -> bool {
         self.brake > 0.0 || self.emergency_brake
+    }
+
+    /// Check if reversing
+    pub fn is_reversing(&self) -> bool {
+        self.reverse > 0.0
     }
 
     /// Check if accelerating
@@ -93,6 +101,7 @@ impl ControlState {
     pub fn validate_and_clamp(&mut self) {
         self.throttle = self.throttle.clamp(0.0, 1.0);
         self.brake = self.brake.clamp(0.0, 1.0);
+        self.reverse = self.reverse.clamp(0.0, 1.0);
         self.steering = self.steering.clamp(-1.0, 1.0);
         self.vertical = self.vertical.clamp(-1.0, 1.0);
         self.yaw = self.yaw.clamp(-1.0, 1.0);
@@ -108,6 +117,7 @@ impl ControlState {
         // Only smooth analog inputs, not digital flags
         self.throttle *= 1.0 - factor;
         self.brake *= 1.0 - factor;
+        self.reverse *= 1.0 - factor;
         self.steering *= 1.0 - factor;
         self.vertical *= 1.0 - factor;
         self.yaw *= 1.0 - factor;

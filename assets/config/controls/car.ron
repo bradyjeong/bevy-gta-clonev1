@@ -11,7 +11,7 @@ VehicleControls(
         (action: TurnRight, key: ArrowRight, description: "Steer right"),
     ],
     secondary_controls: [
-        (action: Turbo, key: Space, description: "Turbo boost"),
+        (action: EmergencyBrake, key: Space, description: "Emergency brake / Drift"),
     ],
     meta_controls: [
         (action: Interact, key: KeyF, description: "Exit vehicle"),

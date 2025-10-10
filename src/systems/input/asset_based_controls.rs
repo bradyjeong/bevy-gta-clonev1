@@ -23,8 +23,6 @@ pub enum AssetControlAction {
     // Flight actions
     PitchUp,
     PitchDown,
-    PitchForward,
-    PitchBackward,
     RollLeft,
     RollRight,
     YawLeft,
@@ -37,7 +35,9 @@ pub enum AssetControlAction {
     // Power actions
     ThrottleUp,
     ThrottleDown,
-    Turbo,
+    EmergencyBrake,
+    Brake, // Regular braking
+    Turbo, // Speed boost for boats/etc
     Afterburner,
 
     // Meta actions
@@ -184,14 +184,12 @@ pub fn asset_based_input_mapping_system(
 fn apply_control_action(action: &AssetControlAction, control_state: &mut ControlState) {
     match action {
         AssetControlAction::Forward => control_state.throttle = 1.0,
-        AssetControlAction::Backward => control_state.brake = 1.0,
+        AssetControlAction::Backward => control_state.reverse = 1.0, // Use reverse, not brake!
         AssetControlAction::TurnLeft => control_state.steering = 1.0, // Turn left = positive rotation
         AssetControlAction::TurnRight => control_state.steering = -1.0, // Turn right = negative rotation
 
-        AssetControlAction::PitchUp | AssetControlAction::PitchForward => control_state.pitch = 1.0,
-        AssetControlAction::PitchDown | AssetControlAction::PitchBackward => {
-            control_state.pitch = -1.0
-        }
+        AssetControlAction::PitchUp => control_state.pitch = 1.0,
+        AssetControlAction::PitchDown => control_state.pitch = -1.0,
         AssetControlAction::RollLeft => control_state.roll = -1.0,
         AssetControlAction::RollRight => control_state.roll = 1.0,
         AssetControlAction::YawLeft => control_state.yaw = -1.0, // Yaw left = negative rotation (follows control_state.rs docs)
@@ -201,8 +199,11 @@ fn apply_control_action(action: &AssetControlAction, control_state: &mut Control
         AssetControlAction::VerticalDown => control_state.vertical = -1.0,
 
         AssetControlAction::ThrottleUp => control_state.throttle = 1.0,
-        AssetControlAction::ThrottleDown => control_state.brake = 1.0,
-        AssetControlAction::Turbo | AssetControlAction::Afterburner => control_state.boost = 1.0,
+        AssetControlAction::ThrottleDown => control_state.throttle = -1.0,
+        AssetControlAction::Brake => control_state.brake = 1.0, // Regular braking
+        AssetControlAction::EmergencyBrake => control_state.emergency_brake = true,
+        AssetControlAction::Turbo => control_state.boost = 1.0, // Turbo boost for boats
+        AssetControlAction::Afterburner => control_state.boost = 1.0, // Afterburner for jets
 
         AssetControlAction::Run => control_state.run = true,
 

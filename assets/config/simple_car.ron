@@ -4,15 +4,26 @@ SimpleCarConfig(
     // Core movement specs
     base_speed: 70.0,           // Base acceleration/movement speed (super car performance)
     rotation_speed: 3.0,        // Steering rotation rate (rad/s) - super cars turn faster
-    
+
     // Physics smoothing
     linear_lerp_factor: 4.0,    // Linear velocity smoothing rate
     angular_lerp_factor: 6.0,   // Angular velocity smoothing rate
-    
+
     // Emergency systems
     emergency_brake_linear: 0.1,  // Linear velocity multiplier during emergency brake
     emergency_brake_angular: 0.5, // Angular velocity multiplier during emergency brake
-    
+
     // Momentum physics (when no input)
     drag_factor: 0.98,            // Momentum decay per second (cars have rolling resistance)
+
+    // Arcade physics tuning (ULTRA AGGRESSIVE)
+    accel_lerp: 5.0,              // Acceleration smoothing rate
+    brake_lerp: 8.0,              // Braking smoothing rate (INCREASED for responsive braking)
+    grip: 8.0,                    // Lateral grip (higher = sticks better)
+    drift_grip: 1.2,              // Grip during emergency brake (VERY LOW for easy drifts)
+    steer_gain: 8.0,              // Base steering responsiveness (VERY AGGRESSIVE!)
+    steer_speed_drop: 0.015,      // How much steering decreases with speed (MINIMAL penalty)
+    stability: 0.3,               // Auto-straightening torque (VERY LOW for sharp response)
+    ebrake_yaw_boost: 2.0,        // Extra yaw when e-braking (MASSIVE boost for sharp drifts)
+    downforce_scale: 0.3,         // Grip increase at high speeds
 )

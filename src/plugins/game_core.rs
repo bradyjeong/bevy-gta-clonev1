@@ -36,7 +36,7 @@ impl Plugin for GameCorePlugin {
                 DefaultPlugins
                     .set(WindowPlugin {
                         primary_window: Some(Window {
-                            present_mode: bevy::window::PresentMode::Fifo,
+                            present_mode: bevy::window::PresentMode::AutoVsync,
                             ..default()
                         }),
                         ..default()

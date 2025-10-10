@@ -226,6 +226,17 @@ pub struct SimpleCarSpecs {
     pub emergency_brake_linear: f32,
     pub emergency_brake_angular: f32,
     pub drag_factor: f32, // Momentum decay when no input
+
+    // New arcade physics fields
+    pub accel_lerp: f32,       // Acceleration smoothing rate
+    pub brake_lerp: f32,       // Braking smoothing rate
+    pub grip: f32,             // Lateral grip (higher = sticks better)
+    pub drift_grip: f32,       // Grip during emergency brake (lower = drifts)
+    pub steer_gain: f32,       // Base steering responsiveness
+    pub steer_speed_drop: f32, // How much steering decreases with speed
+    pub stability: f32,        // Auto-straightening torque (higher = more stable)
+    pub ebrake_yaw_boost: f32, // Extra yaw when e-braking
+    pub downforce_scale: f32,  // Grip increase at high speeds
 }
 
 impl Default for SimpleCarSpecs {
@@ -238,6 +249,17 @@ impl Default for SimpleCarSpecs {
             emergency_brake_linear: 0.1_f32.clamp(0.01, 1.0), // Multiplier - keep some movement
             emergency_brake_angular: 0.5_f32.clamp(0.01, 1.0), // Multiplier
             drag_factor: 0.92_f32.clamp(0.9, 1.0),  // Momentum decay per second when no input
+
+            // New arcade physics defaults (ULTRA AGGRESSIVE!)
+            accel_lerp: 5.0_f32.clamp(1.0, 20.0), // Acceleration smoothing
+            brake_lerp: 8.0_f32.clamp(1.0, 20.0), // Braking smoothing - INCREASED
+            grip: 8.0_f32.clamp(0.1, 50.0),       // Lateral grip
+            drift_grip: 1.2_f32.clamp(0.1, 50.0), // Grip during e-brake - VERY LOW
+            steer_gain: 8.0_f32.clamp(0.1, 20.0), // Steering responsiveness - 8.0 ULTRA AGGRESSIVE!
+            steer_speed_drop: 0.015_f32.clamp(0.0, 1.0), // Speed steering reduction - MINIMAL
+            stability: 0.3_f32.clamp(0.0, 5.0),   // Auto-straightening - VERY LOW
+            ebrake_yaw_boost: 2.0_f32.clamp(0.0, 5.0), // E-brake yaw boost - MASSIVE
+            downforce_scale: 0.3_f32.clamp(0.0, 2.0), // High-speed grip boost
         }
     }
 }

@@ -47,12 +47,13 @@ VehicleControlsConfig(
             description: "Standard vehicle controls",
             primary_controls: [
                 (action: Forward, key: ArrowUp, description: "Accelerate / Drive forward"),
-                (action: Backward, key: ArrowDown, description: "Brake / Reverse"),
+                (action: Backward, key: ArrowDown, description: "Reverse"),
                 (action: TurnLeft, key: ArrowLeft, description: "Steer left"),
                 (action: TurnRight, key: ArrowRight, description: "Steer right"),
             ],
             secondary_controls: [
-                (action: Turbo, key: Space, description: "Turbo boost"),
+                (action: Brake, key: ShiftLeft, description: "Brake (slow down)"),
+                (action: EmergencyBrake, key: Space, description: "Emergency Brake / Drift"),
             ],
             meta_controls: [
                 (action: Interact, key: KeyF, description: "Exit vehicle"),
@@ -67,8 +68,8 @@ VehicleControlsConfig(
             name: "Helicopter",
             description: "Rotorcraft flight controls",
             primary_controls: [
-                (action: PitchForward, key: ArrowUp, description: "Pitch forward / Move forward"),
-                (action: PitchBackward, key: ArrowDown, description: "Pitch backward / Move backward"),
+                (action: PitchUp, key: ArrowUp, description: "Pitch forward / Move forward"),
+                (action: PitchDown, key: ArrowDown, description: "Pitch backward / Move backward"),
                 (action: YawLeft, key: ArrowLeft, description: "Yaw left / Turn left"),
                 (action: YawRight, key: ArrowRight, description: "Yaw right / Turn right"),
             ],

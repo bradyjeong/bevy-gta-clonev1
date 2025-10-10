@@ -64,6 +64,7 @@ pub fn update_debug_overlay_system(
     diagnostics: Res<Diagnostics>,
     debug_state: Res<DebugState>,
     mut overlay_query: Query<&mut Text, With<DebugOverlay>>,
+    car_query: Query<(&crate::components::ControlState, &bevy_rapier3d::prelude::Velocity, &crate::components::SimpleCarSpecs), With<crate::components::Car>>,
 ) {
     if !debug_state.show_debug {
         return;
@@ -92,12 +93,33 @@ pub fn update_debug_overlay_system(
             .and_then(|d| d.value())
             .unwrap_or(0.0) as u32;
 
+        // Get car physics info if player is in a car
+        let car_info = if let Ok((control_state, velocity, specs)) = car_query.get_single() {
+            let speed = velocity.linvel.length();
+            format!(
+                "\n\nVehicle:\n\
+                Speed: {:.1} m/s ({:.0} km/h)\n\
+                Steering: {:.2} | E-Brake: {}\n\
+                Grip: {:.1} | Drift Grip: {:.1}\n\
+                Stability: {:.1}",
+                speed,
+                speed * 3.6,
+                control_state.steering,
+                if control_state.emergency_brake { "ON" } else { "OFF" },
+                specs.grip,
+                specs.drift_grip,
+                specs.stability
+            )
+        } else {
+            String::new()
+        };
+
         text.0 = format!(
             "Performance Debug (F3)\n\
             FPS: {:.1} | Frame: {:.2}ms\n\
             Entities: {}\n\
-            Chunks: {} (Active: {})",
-            fps, frame_time, entities, chunks, active_chunks
+            Chunks: {} (Active: {}){}",
+            fps, frame_time, entities, chunks, active_chunks, car_info
         );
     }
 }
