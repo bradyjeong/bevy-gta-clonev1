@@ -1,5 +1,6 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::ContentType;
+use crate::components::unified_water::UnifiedWaterBody;
 use crate::constants::STATIC_GROUP;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
@@ -21,6 +22,7 @@ impl VegetationGenerator {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         world_rng: &mut WorldRng,
+        water_bodies: &Query<&UnifiedWaterBody>,
     ) {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
@@ -51,7 +53,7 @@ impl VegetationGenerator {
 
             // Check if position is valid (not on road, not overlapping other trees, not in water)
             if !self.is_on_road(position, world)
-                && !self.is_in_water_area(position)
+                && !self.is_in_water_area(position, water_bodies)
                 && world
                     .placement_grid
                     .can_place(position, ContentType::Tree, 3.0, 10.0)
@@ -179,12 +181,32 @@ impl VegetationGenerator {
         false
     }
 
-    fn is_in_water_area(&self, position: Vec3) -> bool {
-        let lake_center = Vec3::new(300.0, 0.0, 300.0);
-        let lake_size = 200.0;
-        let buffer = 20.0;
+    fn is_in_water_area(&self, position: Vec3, water_bodies: &Query<&UnifiedWaterBody>) -> bool {
+        let buffer = 20.0; // Buffer zone around water to avoid palm trees
 
-        let distance = Vec2::new(position.x - lake_center.x, position.z - lake_center.z).length();
-        distance < (lake_size / 2.0 + buffer)
+        // Check if position is in any water body
+        for water_body in water_bodies.iter() {
+            if water_body.contains_point(position.x, position.z) {
+                return true;
+            }
+
+            // Check buffer zone around water body
+            let (min_x, min_z, max_x, max_z) = water_body.bounds;
+            let expanded_bounds = (
+                min_x - buffer,
+                min_z - buffer,
+                max_x + buffer,
+                max_z + buffer,
+            );
+
+            if position.x >= expanded_bounds.0
+                && position.x <= expanded_bounds.2
+                && position.z >= expanded_bounds.1
+                && position.z <= expanded_bounds.3
+            {
+                return true;
+            }
+        }
+        false
     }
 }

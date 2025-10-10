@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
 use crate::resources::{MaterialRegistry, WorldRng};
 use crate::states::AppState;
@@ -109,6 +110,7 @@ fn apply_generated_chunks(
     _spawn_registry: ResMut<SpawnRegistry>,
     mut queue: ResMut<StaticGenerationQueue>,
     mut next_state: ResMut<NextState<AppState>>,
+    water_bodies: Query<&UnifiedWaterBody>,
 ) {
     // Increased from 10 to 200 - no need to maintain 60 FPS during loading
     const CHUNKS_PER_FRAME: usize = 200;
@@ -152,6 +154,7 @@ fn apply_generated_chunks(
             &mut materials,
             &mut material_registry,
             &mut world_rng,
+            &water_bodies,
         );
 
         building_generator.generate_buildings(
@@ -179,6 +182,7 @@ fn apply_generated_chunks(
             &mut meshes,
             &mut materials,
             &mut world_rng,
+            &water_bodies,
         );
 
         // Mark chunk as complete

@@ -1,4 +1,5 @@
 use crate::bundles::VisibleChildBundle;
+use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
 use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
 use crate::systems::world::road_mesh::{
@@ -24,6 +25,7 @@ impl RoadGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         material_registry: &mut MaterialRegistry,
         _world_rng: &mut WorldRng,
+        water_bodies: &Query<&UnifiedWaterBody>,
     ) {
         let new_road_ids = world.road_network.generate_chunk_roads(coord.x, coord.z);
 
@@ -31,7 +33,7 @@ impl RoadGenerator {
         for road_id in new_road_ids {
             if let Some(road) = world.road_network.roads.get(&road_id).cloned() {
                 // Skip roads that pass through water areas
-                if self.road_intersects_water(&road) {
+                if self.road_intersects_water(&road, water_bodies) {
                     continue;
                 }
                 let road_entity = self.spawn_road_entity(
@@ -256,21 +258,41 @@ impl RoadGenerator {
     }
 
     /// Check if road intersects water area
-    fn road_intersects_water(&self, road: &RoadSpline) -> bool {
-        let lake_center = Vec3::new(300.0, 0.0, 300.0);
-        let lake_size = 200.0;
-        let buffer = 10.0; // Smaller buffer for roads
+    fn road_intersects_water(
+        &self,
+        road: &RoadSpline,
+        water_bodies: &Query<&UnifiedWaterBody>,
+    ) -> bool {
+        let buffer = 10.0; // Buffer zone around water to avoid roads
 
         // Sample road spline at multiple points
         let samples = 10;
         for i in 0..samples {
             let t = i as f32 / (samples - 1) as f32;
             let road_point = road.evaluate(t);
-            let distance =
-                Vec2::new(road_point.x - lake_center.x, road_point.z - lake_center.z).length();
 
-            if distance < (lake_size / 2.0 + buffer) {
-                return true;
+            // Check if road point intersects any water body
+            for water_body in water_bodies.iter() {
+                if water_body.contains_point(road_point.x, road_point.z) {
+                    return true;
+                }
+
+                // Check buffer zone around water body
+                let (min_x, min_z, max_x, max_z) = water_body.bounds;
+                let expanded_bounds = (
+                    min_x - buffer,
+                    min_z - buffer,
+                    max_x + buffer,
+                    max_z + buffer,
+                );
+
+                if road_point.x >= expanded_bounds.0
+                    && road_point.x <= expanded_bounds.2
+                    && road_point.z >= expanded_bounds.1
+                    && road_point.z <= expanded_bounds.3
+                {
+                    return true;
+                }
             }
         }
         false
