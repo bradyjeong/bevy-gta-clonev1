@@ -76,7 +76,33 @@ pub fn setup_basic_world(
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
     ));
 
-    // OCEAN BOUNDARY - Removed for procedural terrain implementation
+    // OCEAN FLOOR - Underwater terrain extending beyond main terrain
+    // Eastern ocean floor (X: 2000m to 3000m)
+    commands.spawn((
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(1000.0, 6000.0))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.1, 0.1, 0.15),
+            perceptual_roughness: 0.9,
+            ..default()
+        })),
+        Transform::from_xyz(2500.0, -10.0, 0.0),
+        RigidBody::Fixed,
+        Collider::cuboid(500.0, 0.5, 3000.0),
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Name::new("Ocean Floor East"),
+    ));
+
+    // Beach transition plane (sand at terrain-ocean boundary)
+    commands.spawn((
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 6000.0))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.9, 0.85, 0.7),
+            perceptual_roughness: 0.8,
+            ..default()
+        })),
+        Transform::from_xyz(1975.0, 0.1, 0.0),
+        Name::new("Eastern Beach"),
+    ));
 
     // Calculate proper ground position for player spawn
     let player_spawn_pos = Vec2::new(0.0, 0.0);

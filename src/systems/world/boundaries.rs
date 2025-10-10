@@ -77,7 +77,7 @@ pub fn aircraft_boundary_system(
         }
 
         // Altitude limits for aircraft
-        if transform.translation.y > 2000.0 {
+        if transform.translation.y > 3000.0 {
             velocity.linvel.y -= 50.0; // Push down from max altitude
         }
     }

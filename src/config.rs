@@ -281,7 +281,7 @@ impl Default for PhysicsConfig {
 impl Default for WorldConfig {
     fn default() -> Self {
         let chunk_size = 128.0;
-        let map_size = 4000.0; // Reduced from 12km to 4km for faster loading
+        let map_size = 6000.0; // Expanded from 4km to 6km for ocean zones
         let total_chunks = (map_size / chunk_size) as usize;
 
         Self {
@@ -503,8 +503,8 @@ impl WorldConfig {
     pub fn validate_and_clamp(&mut self) {
         // Clamp chunk parameters for finite world
         self.chunk_size = self.chunk_size.clamp(64.0, 256.0);
-        self.map_size = self.map_size.clamp(2000.0, 8000.0); // Min 2km, max 8km
-        self.streaming_radius = self.streaming_radius.clamp(200.0, 2000.0);
+        self.map_size = self.map_size.clamp(2000.0, 10000.0); // Min 2km, max 10km
+        self.streaming_radius = self.streaming_radius.clamp(200.0, 3000.0);
 
         // Recalculate chunk counts after validation
         let chunks_per_axis = (self.map_size / self.chunk_size) as usize;

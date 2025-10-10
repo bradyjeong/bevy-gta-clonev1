@@ -5,11 +5,15 @@ use bevy::prelude::*;
 pub fn load_unified_water_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load unified water region assets
     let lake_handle: Handle<UnifiedWaterAsset> = asset_server.load("config/water/lake.ron");
+    let ocean_handle: Handle<UnifiedWaterAsset> = asset_server.load("config/water/ocean.ron");
 
     // Store handles for processing when loaded
-    commands.insert_resource(UnifiedWaterAssetHandles { lake: lake_handle });
+    commands.insert_resource(UnifiedWaterAssetHandles {
+        lake: lake_handle,
+        ocean: ocean_handle,
+    });
 
-    info!("Started loading unified water region assets");
+    info!("Started loading unified water region assets (lake + ocean)");
 }
 
 /// Process loaded unified water assets and spawn water region entities
@@ -63,4 +67,5 @@ pub fn process_loaded_unified_water_assets(
 #[derive(Resource)]
 pub struct UnifiedWaterAssetHandles {
     pub lake: Handle<UnifiedWaterAsset>,
+    pub ocean: Handle<UnifiedWaterAsset>,
 }

@@ -7,82 +7,22 @@ impl Plugin for ParticlePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(HanabiPlugin)
             .add_systems(Startup, setup_particle_effects)
-            .add_systems(Update, (update_engine_exhaust, update_rotor_wash));
+            .add_systems(Update, update_rotor_wash);
     }
 }
 
 #[derive(Resource)]
 pub struct ParticleEffects {
-    pub engine_exhaust: Handle<EffectAsset>,
     pub rotor_wash: Handle<EffectAsset>,
 }
-
-#[derive(Component)]
-pub struct EngineExhaust;
 
 #[derive(Component)]
 pub struct RotorWash;
 
 fn setup_particle_effects(mut commands: Commands, mut effects: ResMut<Assets<EffectAsset>>) {
-    let engine_exhaust = create_engine_exhaust_effect(&mut effects);
     let rotor_wash = create_rotor_wash_effect(&mut effects);
 
-    commands.insert_resource(ParticleEffects {
-        engine_exhaust,
-        rotor_wash,
-    });
-}
-
-fn create_engine_exhaust_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAsset> {
-    let mut gradient = Gradient::new();
-    gradient.add_key(0.0, Vec4::new(0.8, 0.5, 0.2, 1.0));
-    gradient.add_key(0.5, Vec4::new(0.4, 0.4, 0.4, 0.5));
-    gradient.add_key(1.0, Vec4::new(0.2, 0.2, 0.2, 0.0));
-
-    let mut module = Module::default();
-
-    let init_pos = SetPositionSphereModifier {
-        center: module.lit(Vec3::ZERO),
-        radius: module.lit(0.1),
-        dimension: ShapeDimension::Volume,
-    };
-
-    let init_vel = SetVelocitySphereModifier {
-        center: module.lit(Vec3::ZERO),
-        speed: module.lit(2.0),
-    };
-
-    let lifetime = module.lit(1.5);
-    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, lifetime);
-
-    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.05));
-
-    let accel = module.lit(Vec3::new(0.0, 1.0, 0.0));
-    let update_accel = AccelModifier::new(accel);
-
-    let effect = EffectAsset::new(2048, SpawnerSettings::rate(50.0.into()), module)
-        .with_name("EngineExhaust")
-        .init(init_pos)
-        .init(init_vel)
-        .init(init_lifetime)
-        .init(init_size)
-        .update(update_accel)
-        .render(ColorOverLifetimeModifier {
-            gradient,
-            blend: ColorBlendMode::Overwrite,
-            mask: ColorBlendMask::RGBA,
-        })
-        .render(SizeOverLifetimeModifier {
-            gradient: {
-                let mut gradient = Gradient::new();
-                gradient.add_key(0.0, Vec3::splat(0.05));
-                gradient.add_key(1.0, Vec3::splat(0.3));
-                gradient
-            },
-            screen_space_size: false,
-        });
-
-    effects.add(effect)
+    commands.insert_resource(ParticleEffects { rotor_wash });
 }
 
 fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAsset> {
@@ -137,35 +77,6 @@ fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
         });
 
     effects.add(effect)
-}
-
-fn update_engine_exhaust(
-    mut commands: Commands,
-    query: Query<(Entity, &Transform), With<crate::components::vehicles::Car>>,
-    exhaust_query: Query<Entity, With<EngineExhaust>>,
-    particle_effects: Option<Res<ParticleEffects>>,
-) {
-    let Some(effects) = particle_effects else {
-        return;
-    };
-
-    for (entity, _transform) in query.iter() {
-        let has_exhaust = exhaust_query
-            .iter()
-            .any(|e| commands.entity(e).id() == entity);
-
-        if !has_exhaust {
-            let exhaust_offset = Vec3::new(0.0, 0.0, -2.0);
-
-            commands.entity(entity).with_children(|parent| {
-                parent.spawn((
-                    ParticleEffect::new(effects.engine_exhaust.clone()),
-                    Transform::from_translation(exhaust_offset),
-                    EngineExhaust,
-                ));
-            });
-        }
-    }
 }
 
 fn update_rotor_wash(

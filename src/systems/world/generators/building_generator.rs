@@ -22,8 +22,8 @@ impl BuildingGenerator {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
 
-        // Skip building generation for chunks near world edge (±2000m)
-        const WORLD_HALF_SIZE: f32 = 2000.0;
+        // Skip building generation for chunks near world edge (±3000m)
+        const WORLD_HALF_SIZE: f32 = 3000.0;
         const EDGE_BUFFER: f32 = 200.0;
         if chunk_center.x.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
             || chunk_center.z.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
@@ -36,7 +36,7 @@ impl BuildingGenerator {
 
         // Determine building density based on distance from center
         let distance_from_center = Vec2::new(chunk_center.x, chunk_center.z).length();
-        let building_density = (1.0 - (distance_from_center / 2000.0).min(0.8)).max(0.1);
+        let building_density = (1.0 - (distance_from_center / 3000.0).min(0.8)).max(0.1);
 
         // Generate building positions - reduced for simplicity
         let building_attempts = (building_density * 8.0) as usize;

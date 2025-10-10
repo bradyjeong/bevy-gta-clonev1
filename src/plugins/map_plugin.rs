@@ -135,6 +135,87 @@ fn setup_minimap(
                     GlobalTransform::default(),
                 ));
             }
+
+            // Cardinal direction labels - match actual minimap orientation
+            // North at top
+            parent.spawn((
+                Text::new("N"),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(5.0),
+                    left: Val::Percent(50.0),
+                    margin: UiRect {
+                        left: Val::Px(-7.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+            ));
+
+            // West on right (camera orientation)
+            parent.spawn((
+                Text::new("W"),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Percent(50.0),
+                    right: Val::Px(5.0),
+                    margin: UiRect {
+                        top: Val::Px(-7.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+            ));
+
+            // South (bottom)
+            parent.spawn((
+                Text::new("S"),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(5.0),
+                    left: Val::Percent(50.0),
+                    margin: UiRect {
+                        left: Val::Px(-7.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+            ));
+
+            // East on left (camera orientation)
+            parent.spawn((
+                Text::new("E"),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Percent(50.0),
+                    left: Val::Px(5.0),
+                    margin: UiRect {
+                        top: Val::Px(-7.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+            ));
         });
 }
 

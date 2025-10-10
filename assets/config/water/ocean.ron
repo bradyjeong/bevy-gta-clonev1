@@ -1,0 +1,16 @@
+(
+    name: "Eastern Ocean",
+    bounds: (2000.0, -3000.0, 3000.0, 3000.0),
+    surface_level: 0.0,
+    depth: 50.0,
+    tide: (
+        amplitude: 0.5,
+        period_sec: 480.0,
+    ),
+    wave_params: Some((
+        amplitude: 0.8,
+        frequency: 0.05,
+        speed: 1.5,
+    )),
+    surface_color: (0.05, 0.2, 0.4, 0.9),
+)

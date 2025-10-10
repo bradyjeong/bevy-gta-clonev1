@@ -479,8 +479,8 @@ impl WorldBounds {
             max_x,
             min_z,
             max_z,
-            warning_zone_size: 500.0,  // 500m warning zone
-            critical_zone_size: 200.0, // 200m critical zone
+            warning_zone_size: 750.0, // 750m warning zone (scaled for 6km world)
+            critical_zone_size: 300.0, // 300m critical zone (scaled for 6km world)
             boundary_enforcement: BoundaryEnforcement::Progressive,
         }
     }

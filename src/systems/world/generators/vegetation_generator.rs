@@ -25,8 +25,8 @@ impl VegetationGenerator {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
 
-        // Skip vegetation generation for chunks near world edge (±2000m)
-        const WORLD_HALF_SIZE: f32 = 2000.0;
+        // Skip vegetation generation for chunks near world edge (±3000m)
+        const WORLD_HALF_SIZE: f32 = 3000.0;
         const EDGE_BUFFER: f32 = 200.0;
         if chunk_center.x.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
             || chunk_center.z.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
@@ -39,7 +39,7 @@ impl VegetationGenerator {
 
         // Determine vegetation density based on distance from center
         let distance_from_center = Vec2::new(chunk_center.x, chunk_center.z).length();
-        let vegetation_density = (1.0 - (distance_from_center / 2000.0).min(0.7)).max(0.2);
+        let vegetation_density = (1.0 - (distance_from_center / 3000.0).min(0.7)).max(0.2);
 
         // Generate palm tree positions - scaled by density
         let tree_attempts = (vegetation_density * 5.0) as usize;

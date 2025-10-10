@@ -390,7 +390,7 @@ impl RoadNetwork {
         let base_x = cell_coord.x as f32 * cell_size;
         let base_z = cell_coord.y as f32 * cell_size;
 
-        const WORLD_HALF_SIZE: f32 = 2000.0;
+        const WORLD_HALF_SIZE: f32 = 3000.0;
         let buffer = cell_size;
         if base_x.abs() > (WORLD_HALF_SIZE - buffer) || base_z.abs() > (WORLD_HALF_SIZE - buffer) {
             return Vec::new();

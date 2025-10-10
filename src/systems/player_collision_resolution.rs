@@ -27,7 +27,7 @@ pub fn player_collision_resolution_system(
     }
 
     // Only handle extreme world boundaries
-    let max_coord = 2000.0;
+    let max_coord = 3000.0;
     if player_position.x.abs() > max_coord || player_position.z.abs() > max_coord {
         warn!(
             "Player at extreme position {:?}, teleporting to spawn",
