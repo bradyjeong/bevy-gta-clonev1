@@ -4,7 +4,7 @@ use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
 use crate::resources::{MaterialRegistry, WorldRng};
 use crate::states::AppState;
-use crate::systems::camera::{disable_camera_during_loading, enable_camera_for_gameplay};
+
 use crate::systems::spawn_validation::SpawnRegistry;
 use crate::systems::ui::loading_screen::{
     cleanup_loading_screen, setup_loading_screen, update_loading_progress,
@@ -22,26 +22,25 @@ impl Plugin for StaticWorldGenerationPlugin {
     fn build(&self, app: &mut App) {
         app
             // Note: SpawnRegistry is already initialized by SpawnValidationPlugin
-            // Loading screen UI and camera control
+            // World generation screen UI (camera stays active for UI rendering)
             .add_systems(
-                OnEnter(AppState::Loading),
-                (setup_loading_screen, disable_camera_during_loading),
+                OnEnter(AppState::WorldGeneration),
+                setup_loading_screen,
             )
             .add_systems(
-                OnExit(AppState::Loading),
+                OnExit(AppState::WorldGeneration),
                 (
                     cleanup_loading_screen,
                     cleanup_generation_resources,
-                    enable_camera_for_gameplay,
                 ),
             )
             // World generation systems
-            .add_systems(Startup, queue_all_chunks_for_generation)
+            .add_systems(OnEnter(AppState::WorldGeneration), queue_all_chunks_for_generation)
             .add_systems(
                 Update,
                 (apply_generated_chunks, update_loading_progress)
                     .chain()
-                    .run_if(in_state(AppState::Loading)),
+                    .run_if(in_state(AppState::WorldGeneration)),
             );
     }
 }

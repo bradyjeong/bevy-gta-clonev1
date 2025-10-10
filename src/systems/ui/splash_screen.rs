@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::asset::RecursiveDependencyLoadState;
 
 #[derive(Component)]
 pub struct SplashScreen;
@@ -6,15 +7,22 @@ pub struct SplashScreen;
 #[derive(Component)]
 pub struct LoadingBar;
 
+#[derive(Component)]
+pub struct LoadingText;
+
 #[derive(Resource)]
-pub struct SplashScreenState {
-    pub timer: Timer,
+pub struct AssetLoadingState {
+    pub handles: Vec<UntypedHandle>,
+    pub total_assets: usize,
+    pub min_display_timer: Timer,
 }
 
-impl Default for SplashScreenState {
+impl Default for AssetLoadingState {
     fn default() -> Self {
         Self {
-            timer: Timer::from_seconds(3.0, TimerMode::Once),
+            handles: Vec::new(),
+            total_assets: 0,
+            min_display_timer: Timer::from_seconds(2.0, TimerMode::Once),
         }
     }
 }
@@ -79,7 +87,8 @@ pub fn setup_splash_screen(mut commands: Commands) {
                 });
 
             parent.spawn((
-                Text::new("Loading world..."),
+                LoadingText,
+                Text::new("Loading assets..."),
                 TextFont {
                     font_size: 18.0,
                     ..default()
@@ -89,26 +98,69 @@ pub fn setup_splash_screen(mut commands: Commands) {
         });
 }
 
-pub fn update_splash_screen(
-    time: Res<Time>,
-    mut splash_state: ResMut<SplashScreenState>,
+pub fn load_initial_assets(
     mut commands: Commands,
-    splash_query: Query<Entity, With<SplashScreen>>,
-    mut loading_bar_query: Query<&mut Node, With<LoadingBar>>,
+    asset_server: Res<AssetServer>,
 ) {
-    splash_state.timer.tick(time.delta());
+    let handles = vec![
+        asset_server.load::<Image>("ui/arrow.png").untyped(),
+    ];
+    
+    let total = handles.len();
+    commands.insert_resource(AssetLoadingState {
+        handles,
+        total_assets: total,
+        min_display_timer: Timer::from_seconds(2.0, TimerMode::Once),
+    });
+}
 
-    // Animate progress bar
-    let progress = splash_state.timer.elapsed_secs() / splash_state.timer.duration().as_secs_f32();
-    let progress = progress.clamp(0.0, 1.0);
-
+pub fn update_asset_loading(
+    time: Res<Time>,
+    asset_server: Res<AssetServer>,
+    mut loading_state: ResMut<AssetLoadingState>,
+    mut loading_bar_query: Query<&mut Node, With<LoadingBar>>,
+    mut loading_text_query: Query<&mut Text, With<LoadingText>>,
+    mut next_state: ResMut<NextState<crate::states::AppState>>,
+) {
+    loading_state.min_display_timer.tick(time.delta());
+    
+    let mut loaded = 0;
+    for handle in &loading_state.handles {
+        match asset_server.get_recursive_dependency_load_state(handle.id()) {
+            Some(RecursiveDependencyLoadState::Loaded) => loaded += 1,
+            Some(RecursiveDependencyLoadState::Failed(_)) => loaded += 1,
+            _ => {}
+        }
+    }
+    
+    let progress = if loading_state.total_assets > 0 {
+        loaded as f32 / loading_state.total_assets as f32
+    } else {
+        0.0
+    };
+    
     for mut node in loading_bar_query.iter_mut() {
         node.width = Val::Px(300.0 * progress);
     }
-
-    if splash_state.timer.finished() {
-        for entity in splash_query.iter() {
-            commands.entity(entity).despawn();
+    
+    for mut text in loading_text_query.iter_mut() {
+        if loaded >= loading_state.total_assets {
+            **text = "Ready!".to_string();
+        } else {
+            **text = format!("Loading assets... {}/{}", loaded, loading_state.total_assets);
         }
+    }
+    
+    if loaded >= loading_state.total_assets && loading_state.min_display_timer.finished() {
+        next_state.set(crate::states::AppState::WorldGeneration);
+    }
+}
+
+pub fn cleanup_splash_screen(
+    mut commands: Commands,
+    splash_query: Query<Entity, With<SplashScreen>>,
+) {
+    for entity in splash_query.iter() {
+        commands.entity(entity).despawn();
     }
 }
