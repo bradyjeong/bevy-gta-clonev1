@@ -1,0 +1,196 @@
+use bevy::prelude::*;
+use bevy_hanabi::prelude::*;
+
+use crate::components::{Car, EngineExhaust, Helicopter, RotorWash};
+
+pub struct ParticleEffectsPlugin;
+
+impl Plugin for ParticleEffectsPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(HanabiPlugin)
+            .add_systems(Startup, setup_particle_assets)
+            .add_systems(
+                Update,
+                (
+                    spawn_car_exhaust_particles,
+                    spawn_helicopter_rotor_particles,
+                    update_particle_intensity,
+                ),
+            );
+    }
+}
+
+#[derive(Resource)]
+pub struct ParticleEffectAssets {
+    pub car_exhaust: Handle<EffectAsset>,
+    pub rotor_wash: Handle<EffectAsset>,
+}
+
+fn setup_particle_assets(mut commands: Commands, mut effects: ResMut<Assets<EffectAsset>>) {
+    let car_exhaust = create_car_exhaust_effect(&mut effects);
+    let rotor_wash = create_rotor_wash_effect(&mut effects);
+
+    commands.insert_resource(ParticleEffectAssets {
+        car_exhaust,
+        rotor_wash,
+    });
+}
+
+fn create_car_exhaust_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAsset> {
+    let mut gradient = Gradient::new();
+    gradient.add_key(0.0, Vec4::new(0.3, 0.3, 0.4, 0.8));
+    gradient.add_key(0.5, Vec4::new(0.2, 0.2, 0.3, 0.4));
+    gradient.add_key(1.0, Vec4::ZERO);
+
+    let mut module = Module::default();
+
+    let init_pos = SetPositionSphereModifier {
+        center: module.lit(Vec3::ZERO),
+        radius: module.lit(0.2),
+        dimension: ShapeDimension::Volume,
+    };
+
+    let init_vel = SetVelocitySphereModifier {
+        center: module.lit(Vec3::ZERO),
+        speed: module.lit(2.0),
+    };
+
+    let lifetime = module.lit(1.5);
+    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, lifetime);
+
+    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.05));
+
+    let accel = module.lit(Vec3::new(0.0, 1.0, 0.0));
+    let update_accel = AccelModifier::new(accel);
+
+    let effect = EffectAsset::new(2048, SpawnerSettings::rate(30.0.into()), module)
+        .with_name("CarExhaust")
+        .init(init_pos)
+        .init(init_vel)
+        .init(init_lifetime)
+        .init(init_size)
+        .update(update_accel)
+        .render(ColorOverLifetimeModifier {
+            gradient,
+            blend: ColorBlendMode::Overwrite,
+            mask: ColorBlendMask::RGBA,
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: {
+                let mut gradient = Gradient::new();
+                gradient.add_key(0.0, Vec3::splat(0.05));
+                gradient.add_key(1.0, Vec3::splat(0.3));
+                gradient
+            },
+            screen_space_size: false,
+        });
+
+    effects.add(effect)
+}
+
+fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAsset> {
+    let mut gradient = Gradient::new();
+    gradient.add_key(0.0, Vec4::new(0.8, 0.8, 0.9, 0.3));
+    gradient.add_key(0.5, Vec4::new(0.7, 0.7, 0.8, 0.15));
+    gradient.add_key(1.0, Vec4::ZERO);
+
+    let mut module = Module::default();
+
+    let init_pos = SetPositionCircleModifier {
+        center: module.lit(Vec3::ZERO),
+        axis: module.lit(Vec3::Y),
+        radius: module.lit(2.0),
+        dimension: ShapeDimension::Surface,
+    };
+
+    let init_vel = SetVelocityCircleModifier {
+        center: module.lit(Vec3::ZERO),
+        axis: module.lit(Vec3::Y),
+        speed: module.lit(5.0),
+    };
+
+    let lifetime = module.lit(0.8);
+    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, lifetime);
+
+    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.3));
+
+    let accel = module.lit(Vec3::new(0.0, -2.0, 0.0));
+    let update_accel = AccelModifier::new(accel);
+
+    let effect = EffectAsset::new(4096, SpawnerSettings::rate(100.0.into()), module)
+        .with_name("RotorWash")
+        .init(init_pos)
+        .init(init_vel)
+        .init(init_lifetime)
+        .init(init_size)
+        .update(update_accel)
+        .render(ColorOverLifetimeModifier {
+            gradient,
+            blend: ColorBlendMode::Overwrite,
+            mask: ColorBlendMask::RGBA,
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: {
+                let mut gradient = Gradient::new();
+                gradient.add_key(0.0, Vec3::splat(0.2));
+                gradient.add_key(1.0, Vec3::splat(1.0));
+                gradient
+            },
+            screen_space_size: false,
+        });
+
+    effects.add(effect)
+}
+
+fn spawn_car_exhaust_particles(
+    mut commands: Commands,
+    cars: Query<(Entity, &GlobalTransform), (With<Car>, Without<EngineExhaust>)>,
+    assets: Option<Res<ParticleEffectAssets>>,
+) {
+    let Some(assets) = assets else { return };
+
+    for (entity, transform) in &cars {
+        let exhaust_offset = Vec3::new(0.0, 0.3, -2.0);
+
+        commands.entity(entity).with_children(|parent| {
+            parent.spawn((
+                ParticleEffect::new(assets.car_exhaust.clone()),
+                Transform::from_translation(exhaust_offset),
+                EngineExhaust { intensity: 1.0 },
+            ));
+        });
+    }
+}
+
+fn spawn_helicopter_rotor_particles(
+    mut commands: Commands,
+    helicopters: Query<(Entity, &GlobalTransform), (With<Helicopter>, Without<RotorWash>)>,
+    assets: Option<Res<ParticleEffectAssets>>,
+) {
+    let Some(assets) = assets else { return };
+
+    for (entity, transform) in &helicopters {
+        let rotor_offset = Vec3::new(0.0, 1.5, 0.0);
+
+        commands.entity(entity).with_children(|parent| {
+            parent.spawn((
+                ParticleEffect::new(assets.rotor_wash.clone()),
+                Transform::from_translation(rotor_offset),
+                RotorWash { intensity: 1.0 },
+            ));
+        });
+    }
+}
+
+fn update_particle_intensity(
+    mut exhaust_query: Query<(&mut EffectSpawner, &EngineExhaust)>,
+    mut rotor_query: Query<(&mut EffectSpawner, &RotorWash), Without<EngineExhaust>>,
+) {
+    for (mut spawner, exhaust) in &mut exhaust_query {
+        spawner.set_active(exhaust.intensity > 0.1);
+    }
+
+    for (mut spawner, rotor) in &mut rotor_query {
+        spawner.set_active(rotor.intensity > 0.1);
+    }
+}

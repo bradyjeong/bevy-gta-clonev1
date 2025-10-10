@@ -57,7 +57,9 @@
 pub mod effects;
 pub mod map;
 pub mod movement_tracker;
+pub mod navigation_lights;
 pub mod player;
+pub mod rotor_wash;
 pub mod unified_water;
 pub mod vehicles;
 pub mod water;
@@ -76,8 +78,11 @@ pub use player::{
     PlayerTorso,
 };
 
+pub use navigation_lights::{LandingLight, NavigationLight, NavigationLightType};
+pub use rotor_wash::RotorWash;
+
 pub use vehicles::{
-    AircraftFlight, Car, F16, Helicopter, MainRotor, SimpleCarSpecs, SimpleF16Specs,
+    AircraftFlight, Car, F16, Helicopter, MainRotor, RotorBlurDisk, SimpleCarSpecs, SimpleF16Specs,
     SimpleHelicopterSpecs, TailRotor, VehicleHealth, VehicleLOD, VehicleRendering, VehicleState,
     VehicleType,
 };

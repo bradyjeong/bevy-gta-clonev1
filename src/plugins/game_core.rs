@@ -1,6 +1,7 @@
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
 use bevy::time::common_conditions::on_timer;
+use bevy_hanabi::HanabiPlugin;
 use bevy_rapier3d::prelude::*;
 use std::time::Duration;
 
@@ -56,6 +57,7 @@ impl Plugin for GameCorePlugin {
             // Performance optimizations: Lock physics to 60Hz fixed timestep
             .insert_resource(Time::<Fixed>::from_hz(60.0))
             .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+            .add_plugins(HanabiPlugin)
             .add_plugins(FrameTimeDiagnosticsPlugin::default())
             // Game State and Resources
             .init_state::<GameState>()
@@ -88,7 +90,6 @@ impl Plugin for GameCorePlugin {
                 brightness: 1800.0,
                 affects_lightmapped_meshes: true,
             })
-
             // Input and Player Systems
             .add_plugins((InputPlugin, PlayerPlugin))
             // Vehicle Systems

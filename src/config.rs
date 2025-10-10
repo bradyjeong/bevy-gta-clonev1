@@ -190,11 +190,11 @@ pub struct PerformanceConfig {
     pub max_visible_distance: f32, // 1000.0 - Maximum visibility distance (reduced for performance)
 
     // VisibilityRange distances per entity type
-    pub npc_visibility_distance: f32,      // 125.0 - NPCs visible range
-    pub vehicle_visibility_distance: f32,  // 250.0 - Vehicles visible range
-    pub tree_visibility_distance: f32,     // 300.0 - Trees visible range
+    pub npc_visibility_distance: f32, // 125.0 - NPCs visible range
+    pub vehicle_visibility_distance: f32, // 250.0 - Vehicles visible range
+    pub tree_visibility_distance: f32, // 300.0 - Trees visible range
     pub building_visibility_distance: f32, // 500.0 - Buildings visible range
-    pub road_visibility_distance: f32,     // 400.0 - Roads visible range
+    pub road_visibility_distance: f32, // 400.0 - Roads visible range
 }
 
 #[derive(Debug, Clone)]
@@ -519,9 +519,8 @@ impl WorldConfig {
             *distance = distance.clamp(50.0, 5000.0);
         }
         // Sort safely after sanitization
-        self.lod_distances.sort_by(|a, b| {
-            a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)
-        });
+        self.lod_distances
+            .sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         // Clamp density values to reasonable ranges
         self.building_density = self.building_density.clamp(0.1, 5.0);

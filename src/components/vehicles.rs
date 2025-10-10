@@ -135,6 +135,21 @@ pub struct MainRotor;
 #[derive(Component)]
 pub struct TailRotor;
 
+#[derive(Component)]
+pub struct RotorBlurDisk {
+    pub min_rpm_for_blur: f32,
+    pub is_main_rotor: bool,
+}
+
+impl Default for RotorBlurDisk {
+    fn default() -> Self {
+        Self {
+            min_rpm_for_blur: 10.0,
+            is_main_rotor: true,
+        }
+    }
+}
+
 // NEW LOD SYSTEM
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]

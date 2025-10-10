@@ -76,6 +76,7 @@ CORE PRINCIPLE: Keep communication simple and direct.
 - Build: `cargo build` | Check: `cargo check` | Test: `cargo test test_name`
 - Lint: `cargo clippy` | Format: `cargo fmt` | Run: `cargo run`
 - Features: `cargo run --features debug-movement,debug-audio,debug-ui`
+- Inspector: Enable with `--features debug-ui` then press F3 in-game
 
 ## Rendering & Visibility (UPDATED - Migration to Bevy 0.16 Built-ins)
 - **MIGRATED TO BEVY BUILT-INS**: Replaced custom Cullable component with Bevy's VisibilityRange
@@ -83,6 +84,13 @@ CORE PRINCIPLE: Keep communication simple and direct.
 - **NEW APPROACH**: Use VisibilityRange::abrupt(0.0, max_distance) for automatic distance culling
 - **DEBUG LAYERS**: RenderLayers system for selective debug visualization (F3 toggle)
 - **ASSET STREAMING**: Minimal system for memory management (not rendering culling)
+
+## Particle Systems (bevy_hanabi 0.16)
+- **PLUGIN**: ParticlePlugin manages all particle effects
+- **ENGINE EXHAUST**: Automatic orange-to-gray smoke for all cars (src/plugins/particle_plugin.rs)
+- **ROTOR WASH**: Dynamic downwash particles for helicopters, intensity based on altitude/velocity
+- **ARCHITECTURE**: ParticleEffects resource holds effect handles, spawned as entity children
+- **PERFORMANCE**: GPU-accelerated compute shaders, 2K-4K particles per effect
 
 ## Git Safety & Pre-commit Rules
 CRITICAL safety rules for version control and code quality.
@@ -105,7 +113,8 @@ cargo check && cargo clippy -- -D warnings && cargo test
 
 ## Project Structure
 - Bevy 0.16.1 game using Rust 2024 edition, bevy_rapier3d 0.30.0 physics
-- Core dependencies: bevy 0.16.1, bevy_rapier3d 0.30.0, bytemuck 1.18, rand 0.8, serde 1.0
+- Core dependencies: bevy 0.16.1, bevy_rapier3d 0.30.0, bevy_hanabi 0.16, bytemuck 1.18, rand 0.8, serde 1.0
+- Debug tools: bevy-inspector-egui 0.29, bevy_asset_loader 0.22, leafwing-input-manager 0.16
 - Plugin-based: components/, systems/, plugins/, setup/, factories/
 
 ### Directories

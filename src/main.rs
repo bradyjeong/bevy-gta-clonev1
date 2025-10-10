@@ -9,7 +9,7 @@ use gta_game::states::AppState;
 /// 3. InGame state - Run gameplay systems
 fn main() {
     App::new()
-        .add_plugins(GameCorePlugin) // Must come before init_state (includes DefaultPlugins)
+        .add_plugins(GameCorePlugin)
         .init_state::<AppState>()
         .add_plugins(GameSetupPlugin)
         .run();

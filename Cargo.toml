@@ -24,6 +24,10 @@ harness = false
 [dependencies]
 bevy = { version = "0.16.1", features = ["serialize", "shader_format_glsl"] }
 bevy_rapier3d = "0.30.0"
+bevy_hanabi = "0.16"
+bevy-inspector-egui = "0.29"
+bevy_asset_loader = "0.22"
+leafwing-input-manager = "0.16"
 bevy_common_assets = { version = "0.13", features = ["ron"] }
 bytemuck = { version = "1.18", features = ["derive"] }
 rand = "0.8"

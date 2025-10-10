@@ -3,8 +3,9 @@ use crate::components::MovementTracker;
 use crate::components::water::Yacht;
 use crate::components::water_new::WaterBodyId;
 use crate::components::{
-    AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, JetFlame, MainRotor,
-    SimpleCarSpecs, SimpleF16Specs, SimpleHelicopterSpecs, TailRotor, VehicleState, VehicleType,
+    AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, JetFlame, LandingLight,
+    MainRotor, NavigationLight, NavigationLightType, RotorBlurDisk, RotorWash, SimpleCarSpecs,
+    SimpleF16Specs, SimpleHelicopterSpecs, TailRotor, VehicleState, VehicleType,
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
@@ -79,7 +80,7 @@ impl VehicleFactory {
                 LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
                 Ccd::enabled(), // High-speed cars need continuous collision detection
                 Damping {
-                linear_damping: 1.0,
+                    linear_damping: 1.0,
                     angular_damping: 5.0,
                 },
                 MovementTracker::new(position, 10.0),
@@ -97,7 +98,7 @@ impl VehicleFactory {
             metallic: 0.0,
             ..default()
         });
-        
+
         // Lower chassis (wider, longer)
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(1.8, 0.6, 4.2))),
@@ -107,7 +108,7 @@ impl VehicleFactory {
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
-        
+
         // Upper cabin (narrower, sleeker)
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(1.6, 0.7, 2.0))),
@@ -117,7 +118,7 @@ impl VehicleFactory {
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
-        
+
         // Windshield
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(1.5, 0.5, 0.1))),
@@ -127,7 +128,7 @@ impl VehicleFactory {
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
-        
+
         // Hood (front slope)
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(1.7, 0.3, 1.2))),
@@ -137,17 +138,17 @@ impl VehicleFactory {
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
-        
+
         // 4 Wheels (positioned at collider bottom: -0.5 + wheel_radius 0.25)
         let wheel_mesh = MeshFactory::create_sports_wheel(meshes);
         let wheel_y = -0.5 + 0.25; // collider_bottom (-half_height) + wheel_radius
         let wheel_positions = [
-            Vec3::new(-0.9, wheel_y, 1.2),   // Front left
-            Vec3::new(0.9, wheel_y, 1.2),    // Front right
-            Vec3::new(-0.9, wheel_y, -1.2),  // Rear left
-            Vec3::new(0.9, wheel_y, -1.2),   // Rear right
+            Vec3::new(-0.9, wheel_y, 1.2),  // Front left
+            Vec3::new(0.9, wheel_y, 1.2),   // Front right
+            Vec3::new(-0.9, wheel_y, -1.2), // Rear left
+            Vec3::new(0.9, wheel_y, -1.2),  // Rear right
         ];
-        
+
         for pos in wheel_positions {
             commands.spawn((
                 Mesh3d(wheel_mesh.clone()),
@@ -184,7 +185,7 @@ impl VehicleFactory {
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(1.2 / 2.0, 1.2 / 2.0, 4.8 / 2.0), // GTA-style 0.8x
+                    collider: Collider::cuboid(1.2, 0.7, 2.5),
                     collision_groups: CollisionGroups::new(
                         self.config.physics.vehicle_group,
                         self.config.physics.static_group | self.config.physics.vehicle_group,
@@ -195,6 +196,7 @@ impl VehicleFactory {
                 Helicopter,
                 VehicleState::new(VehicleType::Helicopter),
                 SimpleHelicopterSpecs::default(),
+                RotorWash,
                 Damping {
                     linear_damping: 2.0,
                     angular_damping: 8.0,
@@ -205,100 +207,288 @@ impl VehicleFactory {
             ))
             .id();
 
-        // Helicopter body - Realistic shape using capsule
+        // Helicopter fuselage - Main cabin (above landing gear)
         commands.spawn((
-            Mesh3d(meshes.add(Capsule3d::new(0.8, 4.0))),
+            Mesh3d(meshes.add(Cuboid::new(2.2, 1.6, 3.5))),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.25, 0.28, 0.3), // Military gunmetal
-                metallic: 0.8,
-                perceptual_roughness: 0.4,
-                reflectance: 0.3,
+                base_color: Color::srgb(0.18, 0.22, 0.25),
+                metallic: 0.85,
+                perceptual_roughness: 0.35,
+                reflectance: 0.5,
                 ..default()
             })),
-            Transform::from_xyz(0.0, 0.0, 0.0),
+            Transform::from_xyz(0.0, 0.3, 0.3),
             ChildOf(vehicle_entity),
             self.visibility_range(),
         ));
 
-        // Cockpit bubble - rounded cockpit
+        // Helicopter nose - Tapered front
+        commands.spawn((
+            Mesh3d(meshes.add(Capsule3d::new(0.5, 0.6))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.18, 0.22, 0.25),
+                metallic: 0.85,
+                perceptual_roughness: 0.35,
+                reflectance: 0.5,
+                ..default()
+            })),
+            Transform::from_xyz(0.0, 0.1, -1.3)
+                .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+            ChildOf(vehicle_entity),
+            self.visibility_range(),
+        ));
+
+        // Cockpit bubble - glass canopy over cabin
         commands.spawn((
             Mesh3d(meshes.add(Sphere::new(0.8))),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgba(0.05, 0.05, 0.08, 0.15),
-                metallic: 0.1,
-                perceptual_roughness: 0.1,
+                base_color: Color::srgba(0.15, 0.18, 0.22, 0.3),
+                metallic: 0.0,
+                perceptual_roughness: 0.08,
+                reflectance: 0.9,
                 alpha_mode: AlphaMode::Blend,
+                ior: 1.5,
                 ..default()
             })),
-            Transform::from_xyz(0.0, 0.2, 1.5).with_scale(Vec3::new(1.2, 0.8, 1.0)),
+            Transform::from_xyz(0.0, 1.0, -0.3).with_scale(Vec3::new(1.5, 0.8, 1.6)),
             ChildOf(vehicle_entity),
             self.visibility_range(),
         ));
 
-        // Tail boom - tapered cylinder
+        // Tail boom - horizontal cylinder extending from rear
         commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(0.25, 3.5))),
+            Mesh3d(meshes.add(Cylinder::new(0.25, 4.0))),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.25, 0.28, 0.3),
-                metallic: 0.8,
-                perceptual_roughness: 0.4,
-                reflectance: 0.3,
+                base_color: Color::srgb(0.18, 0.22, 0.25),
+                metallic: 0.85,
+                perceptual_roughness: 0.35,
+                reflectance: 0.5,
                 ..default()
             })),
-            Transform::from_xyz(0.0, 0.0, 4.5),
+            Transform::from_xyz(0.0, 0.5, 4.0)
+                .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
             ChildOf(vehicle_entity),
             self.visibility_range(),
         ));
 
-        // Main rotor blades - thin and aerodynamic
+        // Main rotor blades - composite material with matte finish
         for i in 0..4 {
             let angle = i as f32 * std::f32::consts::PI / 2.0;
             commands.spawn((
                 Mesh3d(meshes.add(Cuboid::new(8.0, 0.02, 0.3))),
                 MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgb(0.08, 0.08, 0.08),
-                    metallic: 0.2,
-                    perceptual_roughness: 0.9,
+                    base_color: Color::srgb(0.12, 0.12, 0.14),
+                    metallic: 0.15,
+                    perceptual_roughness: 0.85,
+                    reflectance: 0.2,
                     ..default()
                 })),
-                Transform::from_xyz(0.0, 2.2, 0.0).with_rotation(Quat::from_rotation_y(angle)),
+                Transform::from_xyz(0.0, 1.6, 0.0).with_rotation(Quat::from_rotation_y(angle)),
                 ChildOf(vehicle_entity),
                 MainRotor,
                 self.visibility_range(),
             ));
         }
 
-        // Landing skids - long narrow cylinders
-        for x in [-0.8, 0.8] {
+        // Main rotor blur disk - appears when blades spin fast
+        commands.spawn((
+            Mesh3d(meshes.add(Circle::new(4.2))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgba(0.3, 0.3, 0.35, 0.4),
+                metallic: 0.0,
+                perceptual_roughness: 1.0,
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                ..default()
+            })),
+            Transform::from_xyz(0.0, 1.61, 0.0)
+                .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+            ChildOf(vehicle_entity),
+            RotorBlurDisk {
+                min_rpm_for_blur: 10.0,
+                is_main_rotor: true,
+            },
+            Visibility::Hidden,
+            self.visibility_range(),
+        ));
+
+        // Landing skids - ON THE GROUND underneath helicopter
+        for x in [-0.6, 0.6] {
             commands.spawn((
-                Mesh3d(meshes.add(Cylinder::new(0.04, 3.0))),
+                Mesh3d(meshes.add(Cylinder::new(0.08, 3.5))),
                 MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::srgb(0.35, 0.35, 0.35),
-                    metallic: 0.7,
-                    perceptual_roughness: 0.6,
+                    base_color: Color::srgb(0.55, 0.58, 0.60),
+                    metallic: 0.9,
+                    perceptual_roughness: 0.4,
+                    reflectance: 0.6,
                     ..default()
                 })),
-                Transform::from_xyz(x, -1.0, 0.0)
+                Transform::from_xyz(x, -0.62, 0.0)
+                    .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+                ChildOf(vehicle_entity),
+                self.visibility_range(),
+            ));
+        }
+
+        // Skid struts - vertical supports from cabin down to skids
+        for (x, z) in [(-0.6, -1.2), (-0.6, 1.2), (0.6, -1.2), (0.6, 1.2)] {
+            commands.spawn((
+                Mesh3d(meshes.add(Cylinder::new(0.04, 0.8))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.55, 0.58, 0.60),
+                    metallic: 0.9,
+                    perceptual_roughness: 0.4,
+                    reflectance: 0.6,
+                    ..default()
+                })),
+                Transform::from_xyz(x, -0.22, z),
+                ChildOf(vehicle_entity),
+                self.visibility_range(),
+            ));
+        }
+
+        // Cross-braces between skids for structural strength
+        for z in [-1.2, 0.0, 1.2] {
+            commands.spawn((
+                Mesh3d(meshes.add(Cylinder::new(0.03, 1.2))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.55, 0.58, 0.60),
+                    metallic: 0.9,
+                    perceptual_roughness: 0.4,
+                    reflectance: 0.6,
+                    ..default()
+                })),
+                Transform::from_xyz(0.0, -0.62, z)
                     .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
                 ChildOf(vehicle_entity),
                 self.visibility_range(),
             ));
         }
 
-        // Tail rotor at end of tail boom
+        // Tail rotor at end of tail boom (vertical orientation)
         commands.spawn((
             Mesh3d(MeshFactory::create_tail_rotor(meshes)),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.08, 0.08, 0.08),
-                metallic: 0.2,
-                perceptual_roughness: 0.9,
+                base_color: Color::srgb(0.12, 0.12, 0.14),
+                metallic: 0.15,
+                perceptual_roughness: 0.85,
+                reflectance: 0.2,
                 ..default()
             })),
-            Transform::from_xyz(0.0, 1.0, 6.2),
+            Transform::from_xyz(0.8, 0.3, 7.0)
+                .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
             ChildOf(vehicle_entity),
             TailRotor,
             self.visibility_range(),
         ));
+
+        // Tail rotor blur disk (vertical plane)
+        commands.spawn((
+            Mesh3d(meshes.add(Circle::new(0.8))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgba(0.3, 0.3, 0.35, 0.5),
+                metallic: 0.0,
+                perceptual_roughness: 1.0,
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                ..default()
+            })),
+            Transform::from_xyz(0.82, 0.3, 7.0)
+                .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+            ChildOf(vehicle_entity),
+            RotorBlurDisk {
+                min_rpm_for_blur: 15.0,
+                is_main_rotor: false,
+            },
+            TailRotor,
+            Visibility::Hidden,
+            self.visibility_range(),
+        ));
+
+        // NAVIGATION LIGHTS - Red port (left), Green starboard (right)
+        commands.spawn((
+            PointLight {
+                color: Color::srgb(1.0, 0.0, 0.0),
+                intensity: 50000.0,
+                range: 12.0,
+                radius: 0.1,
+                shadows_enabled: false,
+                ..default()
+            },
+            Transform::from_xyz(-1.3, 0.5, -1.0),
+            ChildOf(vehicle_entity),
+            NavigationLight::new(NavigationLightType::RedPort),
+            self.visibility_range(),
+        ));
+
+        commands.spawn((
+            PointLight {
+                color: Color::srgb(0.0, 1.0, 0.0),
+                intensity: 50000.0,
+                range: 12.0,
+                radius: 0.1,
+                shadows_enabled: false,
+                ..default()
+            },
+            Transform::from_xyz(1.3, 0.5, -1.0),
+            ChildOf(vehicle_entity),
+            NavigationLight::new(NavigationLightType::GreenStarboard),
+            self.visibility_range(),
+        ));
+
+        // White tail light (blinking)
+        commands.spawn((
+            PointLight {
+                color: Color::srgb(1.0, 1.0, 1.0),
+                intensity: 80000.0,
+                range: 15.0,
+                radius: 0.15,
+                shadows_enabled: false,
+                ..default()
+            },
+            Transform::from_xyz(0.0, 0.5, 7.2),
+            ChildOf(vehicle_entity),
+            NavigationLight::new(NavigationLightType::WhiteTail),
+            self.visibility_range(),
+        ));
+
+        // Red anti-collision beacon on top of cabin (blinking)
+        commands.spawn((
+            PointLight {
+                color: Color::srgb(1.0, 0.0, 0.0),
+                intensity: 100000.0,
+                range: 20.0,
+                radius: 0.2,
+                shadows_enabled: false,
+                ..default()
+            },
+            Transform::from_xyz(0.0, 1.8, 0.0),
+            ChildOf(vehicle_entity),
+            NavigationLight::new(NavigationLightType::RedBeacon),
+            self.visibility_range(),
+        ));
+
+        // Forward landing spotlights - illuminate ground when low altitude
+        for x in [-0.8, 0.8] {
+            commands.spawn((
+                SpotLight {
+                    color: Color::srgb(1.0, 0.95, 0.85),
+                    intensity: 0.0,
+                    range: 40.0,
+                    radius: 0.3,
+                    shadows_enabled: true,
+                    inner_angle: 0.4,
+                    outer_angle: 0.7,
+                    ..default()
+                },
+                Transform::from_xyz(x, -0.6, -1.8).looking_at(Vec3::new(x, -5.0, 0.0), Vec3::Y),
+                ChildOf(vehicle_entity),
+                LandingLight {
+                    activation_altitude: 25.0,
+                },
+                self.visibility_range(),
+            ));
+        }
 
         Ok(vehicle_entity)
     }
