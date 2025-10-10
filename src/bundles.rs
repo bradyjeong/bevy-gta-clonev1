@@ -218,7 +218,7 @@ impl Default for PlayerPhysicsBundle {
             velocity: Velocity::default(),
             sleeping: Sleeping::disabled(),
             damping: Damping {
-                linear_damping: 1.2,
+                linear_damping: 0.1, // Realistic air resistance for free-fall
                 angular_damping: 3.5,
             },
             movement: HumanMovement::default(),

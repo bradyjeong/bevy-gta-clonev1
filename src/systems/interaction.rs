@@ -294,7 +294,10 @@ pub fn interaction_system(
                         let exit_position = helicopter_gt.translation()
                             + right_horizontal * 4.0  // Horizontal offset only
                             + Vec3::new(0.0, -1.0, 0.0); // Drop to ground level
-                        let inherited_vel = helicopter_vel.cloned().unwrap_or(Velocity::zero());
+                        
+                        // Inherit only horizontal velocity for realistic free-fall
+                        let mut inherited_vel = helicopter_vel.cloned().unwrap_or(Velocity::zero());
+                        inherited_vel.linvel.y = 0.0; // Zero out upward velocity for realistic gravity
 
                         // Phase A: Set pose and keep physics disabled this frame
                         commands
@@ -339,7 +342,10 @@ pub fn interaction_system(
                         let exit_position = f16_gt.translation()
                             + right_horizontal * 6.0  // Horizontal offset only
                             + Vec3::new(0.0, -2.0, 0.0); // Drop to ground level
-                        let inherited_vel = f16_vel.cloned().unwrap_or(Velocity::zero());
+                        
+                        // Inherit only horizontal velocity for realistic free-fall
+                        let mut inherited_vel = f16_vel.cloned().unwrap_or(Velocity::zero());
+                        inherited_vel.linvel.y = 0.0; // Zero out upward velocity for realistic gravity
 
                         // Phase A: Set pose and keep physics disabled this frame
                         commands
