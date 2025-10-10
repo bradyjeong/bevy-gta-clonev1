@@ -8,10 +8,20 @@ use bevy::render::render_resource::{
 
 pub struct MapPlugin;
 
+#[derive(Resource)]
+struct MapSetupTimer(Timer);
+
+impl Default for MapSetupTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(3.0, TimerMode::Once))
+    }
+}
+
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_map_config)
-            .add_systems(Startup, setup_minimap.after(load_map_config))
+        app.init_resource::<MapSetupTimer>()
+            .add_systems(Startup, load_map_config)
+            .add_systems(Update, delayed_setup_minimap)
             .add_systems(Update, update_map_camera)
             .add_systems(Update, update_player_icon);
     }
@@ -24,6 +34,20 @@ fn load_map_config(mut commands: Commands) {
     .expect("Failed to parse map config");
 
     commands.insert_resource(config);
+}
+
+fn delayed_setup_minimap(
+    time: Res<Time>,
+    mut timer: ResMut<MapSetupTimer>,
+    commands: Commands,
+    images: ResMut<Assets<Image>>,
+    asset_server: Res<AssetServer>,
+    config: Res<MapConfig>,
+    minimap_query: Query<Entity, With<MinimapUI>>,
+) {
+    if timer.0.tick(time.delta()).just_finished() && minimap_query.is_empty() {
+        setup_minimap(commands, images, asset_server, config);
+    }
 }
 
 fn setup_minimap(
