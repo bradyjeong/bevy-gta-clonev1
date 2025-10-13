@@ -1,0 +1,25 @@
+(
+    building_activation: (
+        activation_radius: 200.0,
+        deactivation_radius: 250.0,
+    ),
+    dynamic_physics: (
+        full_physics_radius: 100.0,
+        disable_radius: 300.0,
+        hysteresis_buffer: 50.0,
+    ),
+    boundaries: (
+        pushback_strength: 100.0,
+        aircraft_pushback_strength: 150.0,
+        altitude_pushback: 50.0,
+    ),
+    emergency_thresholds: (
+        max_coordinate: 100000.0,
+        max_velocity: 600.0,
+        max_angular_velocity: 20.0,
+    ),
+    water: (
+        buoyancy_water_density: 1000.0,
+        gravity: 9.81,
+    ),
+)

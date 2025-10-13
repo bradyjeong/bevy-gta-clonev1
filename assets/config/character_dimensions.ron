@@ -1,0 +1,12 @@
+(
+    player: (
+        foot_level: -0.45,
+        capsule_radius: 0.25,
+        upper_sphere_y: 1.45,
+    ),
+    npc: (
+        foot_level: -0.45,
+        capsule_radius: 0.25,
+        upper_sphere_y: 1.45,
+    ),
+)

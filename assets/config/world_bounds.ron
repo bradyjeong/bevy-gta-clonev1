@@ -1,0 +1,10 @@
+(
+    world_half_size: 3000.0,
+    terrain: (
+        left_x: -1500.0,
+        right_x: 1500.0,
+        half_size: 600.0,
+    ),
+    edge_buffer: 200.0,
+    vehicle_spawn_half_size: 2000.0,
+)
