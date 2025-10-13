@@ -27,6 +27,12 @@ impl RoadGenerator {
         _world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
     ) {
+        // Skip if chunk is not on a terrain island
+        let chunk_center = coord.to_world_pos();
+        if !world.is_on_terrain_island(chunk_center) {
+            return;
+        }
+
         let new_road_ids = world.road_network.generate_chunk_roads(coord.x, coord.z);
 
         // Create road entities and add to placement grid
@@ -247,7 +253,7 @@ impl RoadGenerator {
                 if distance < intersection_threshold {
                     return Some(Vec3::new(
                         (point1.x + point2.x) * 0.5,
-                        0.0,
+                        (point1.y + point2.y) * 0.5,
                         (point1.z + point2.z) * 0.5,
                     ));
                 }

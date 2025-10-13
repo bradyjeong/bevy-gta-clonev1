@@ -125,26 +125,15 @@ impl PositionValidator {
     /// - Clear algorithm: Distance-based detection
     /// - Focused responsibility: Only water area checking
     fn is_in_water_area(&self, position: Vec3) -> bool {
-        // Lake position and size (must match water.rs setup)
-        let lake_center = Vec3::new(300.0, 0.0, 300.0);
-        let lake_size = 200.0;
-        let buffer = 20.0; // Extra buffer around lake
-
-        let distance_to_lake =
-            Vec2::new(position.x - lake_center.x, position.z - lake_center.z).length();
-        let in_lake = distance_to_lake < (lake_size / 2.0 + buffer);
-
         // Ocean bounds (2000, -3000) to (3000, 3000) - eastern ocean
         let ocean_min_x = 2000.0;
         let ocean_max_x = 3000.0;
         let ocean_min_z = -3000.0;
         let ocean_max_z = 3000.0;
 
-        let in_ocean = position.x >= ocean_min_x
+        position.x >= ocean_min_x
             && position.x <= ocean_max_x
             && position.z >= ocean_min_z
-            && position.z <= ocean_max_z;
-
-        in_lake || in_ocean
+            && position.z <= ocean_max_z
     }
 }

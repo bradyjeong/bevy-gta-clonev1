@@ -61,12 +61,15 @@ pub fn simple_npc_movement(
         // Calculate distance to target (XZ plane only to avoid vertical interference)
         let distance = (current_pos.xz() - target_pos.xz()).length();
 
-        // If close to target, pick a new random target (preserve current Y)
+        // If close to target, pick a new random target on left terrain island
         if distance < 5.0 {
+            let left_terrain_x = -1500.0;
+            let terrain_half_size = 600.0;
             npc.target_position = Vec3::new(
-                rand::thread_rng().gen_range(-900.0..900.0),
+                left_terrain_x
+                    + rand::thread_rng().gen_range(-terrain_half_size..terrain_half_size),
                 current_pos.y,
-                rand::thread_rng().gen_range(-900.0..900.0),
+                rand::thread_rng().gen_range(-terrain_half_size..terrain_half_size),
             );
         } else {
             // Simple, direct NPC movement (XZ plane only)
@@ -133,12 +136,15 @@ pub fn optimized_npc_movement(
             npc.update_interval = 0.05; // Normal updates for close NPCs
         }
 
-        // If close to target, pick a new random target
+        // If close to target, pick a new random target on left terrain island
         if distance < 5.0 {
+            let left_terrain_x = -1500.0;
+            let terrain_half_size = 600.0;
             npc.target_position = Vec3::new(
-                rand::thread_rng().gen_range(-900.0..900.0),
+                left_terrain_x
+                    + rand::thread_rng().gen_range(-terrain_half_size..terrain_half_size),
                 1.0,
-                rand::thread_rng().gen_range(-900.0..900.0),
+                rand::thread_rng().gen_range(-terrain_half_size..terrain_half_size),
             );
         } else {
             // Move towards target (legacy implementation)

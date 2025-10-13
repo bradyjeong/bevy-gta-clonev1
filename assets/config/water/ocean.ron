@@ -1,6 +1,6 @@
 (
-    name: "Eastern Ocean",
-    bounds: (2075.0, -3000.0, 2600.0, 3000.0),
+    name: "Global Ocean",
+    bounds: (-3200.0, -3200.0, 3200.0, 3200.0),  // Covers entire world, surrounds both islands
     surface_level: 0.0,
     depth: 50.0,
     tide: (
@@ -8,9 +8,9 @@
         period_sec: 480.0,
     ),
     wave_params: Some((
-        amplitude: 0.25,  // Calm ocean waves (was 0.8 - too high)
+        amplitude: 0.25,  // Calm ocean waves
         frequency: 0.05,  // Not used (Gerstner waves have fixed wavelengths)
-        speed: 0.0,       // 0.0 = use deep-water dispersion physics (was 1.5)
+        speed: 0.0,       // 0.0 = use deep-water dispersion physics
     )),
     surface_color: (0.05, 0.2, 0.4, 0.9),
 )

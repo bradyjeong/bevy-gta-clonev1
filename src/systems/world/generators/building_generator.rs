@@ -1,4 +1,5 @@
 use crate::components::ContentType;
+use crate::constants::LAND_ELEVATION;
 use crate::factories::BuildingFactory;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
@@ -34,6 +35,14 @@ impl BuildingGenerator {
             return;
         }
 
+        // Skip if chunk is not on a terrain island
+        if !world.is_on_terrain_island(chunk_center) {
+            if let Some(chunk) = world.get_chunk_mut(coord) {
+                chunk.buildings_generated = true;
+            }
+            return;
+        }
+
         // Determine building density based on distance from center
         let distance_from_center = Vec2::new(chunk_center.x, chunk_center.z).length();
         let building_density = (1.0 - (distance_from_center / 3000.0).min(0.8)).max(0.1);
@@ -44,7 +53,11 @@ impl BuildingGenerator {
         for _ in 0..building_attempts {
             let local_x = world_rng.global().gen_range(-half_size..half_size);
             let local_z = world_rng.global().gen_range(-half_size..half_size);
-            let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
+            let position = Vec3::new(
+                chunk_center.x + local_x,
+                LAND_ELEVATION,
+                chunk_center.z + local_z,
+            );
 
             // Check if position is valid (not on road, not overlapping other buildings, not in water)
             if !self.is_on_road(position, world) && !self.is_in_water_area(position) {
@@ -136,18 +149,9 @@ impl BuildingGenerator {
         false
     }
 
-    /// Check if position is in water area - includes both lake and ocean
+    /// Check if position is in water area - ocean only
     fn is_in_water_area(&self, position: Vec3) -> bool {
         let buffer = 20.0;
-
-        // Lake area (circular)
-        let lake_center = Vec3::new(300.0, 0.0, 300.0);
-        let lake_radius = 100.0; // Half of 200m size
-        let distance_to_lake =
-            Vec2::new(position.x - lake_center.x, position.z - lake_center.z).length();
-        if distance_to_lake < (lake_radius + buffer) {
-            return true;
-        }
 
         // Ocean area (rectangular) - Eastern Ocean
         let ocean_min_x = 2000.0 - buffer;
@@ -155,14 +159,9 @@ impl BuildingGenerator {
         let ocean_min_z = -3000.0 - buffer;
         let ocean_max_z = 3000.0 + buffer;
 
-        if position.x >= ocean_min_x
+        position.x >= ocean_min_x
             && position.x <= ocean_max_x
             && position.z >= ocean_min_z
             && position.z <= ocean_max_z
-        {
-            return true;
-        }
-
-        false
     }
 }

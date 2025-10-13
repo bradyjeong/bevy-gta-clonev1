@@ -1,15 +1,6 @@
 use bevy::prelude::*;
 
 #[derive(Component, Default)]
-pub struct Lake {
-    pub size: f32,
-    pub depth: f32,
-    pub wave_height: f32,
-    pub wave_speed: f32,
-    pub position: Vec3,
-}
-
-#[derive(Component, Default)]
 pub struct Yacht {
     pub speed: f32,
     pub max_speed: f32,

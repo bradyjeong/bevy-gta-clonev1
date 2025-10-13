@@ -1,4 +1,5 @@
 use crate::components::{NPC_LOD_CULL_DISTANCE, NPCState, NPCType};
+use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
 use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 
@@ -33,24 +34,25 @@ pub fn spawn_new_npc_system(
         return;
     }
 
-    // Spawn new NPCs occasionally using unified spawning pipeline
+    // Spawn new NPCs on left terrain island
     if spawn_timer.just_finished() {
-        // Try to find a valid spawn position using unified validation
-        for _ in 0..5 {
-            // REDUCED: From 10 to 5 attempts
-            let x = world_rng.global().gen_range(-50.0..50.0);
-            let z = world_rng.global().gen_range(-50.0..50.0);
+        let left_terrain_x = -1500.0;
+        let terrain_half_size = 600.0;
+        let x = left_terrain_x
+            + world_rng
+                .global()
+                .gen_range(-terrain_half_size..terrain_half_size);
+        let z = world_rng
+            .global()
+            .gen_range(-terrain_half_size..terrain_half_size);
 
+        // Spawn above terrain, let gravity drop NPCs
+        let spawn_position = Vec3::new(x, LAND_ELEVATION + SPAWN_DROP_HEIGHT, z);
 
-            // Spawn above ground, let gravity drop NPCs
-            let spawn_position = Vec3::new(x, 10.0, z);
+        // Use spawn_simple_npc which adds ALL required components
+        spawn_simple_npc(&mut commands, spawn_position, &mut world_rng);
 
-            // Use spawn_simple_npc which adds ALL required components
-            spawn_simple_npc(&mut commands, spawn_position, &mut world_rng);
-
-            println!("DEBUG: Spawned NPC at {spawn_position:?}");
-            break; // Found valid position, spawn and exit
-        }
+        println!("DEBUG: Spawned NPC at {spawn_position:?}");
     }
 }
 

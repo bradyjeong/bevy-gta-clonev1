@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use rand::prelude::*;
 
 use crate::GameConfig;
+use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
 use crate::factories::NPCFactory;
 use crate::resources::NPCAssetCache;
-
 
 /// UNIFIED NPC SETUP SYSTEM
 /// Consolidates setup_new_npcs (good patterns) and setup_npcs (bad patterns)
@@ -30,38 +30,38 @@ pub fn setup_initial_npcs_unified(
     let max_attempts = 500; // Increased for higher spawn count
     let mut attempts = 0;
 
-    // Spawn NPCs initially - GTA-style population density
+    // Spawn NPCs on left terrain island (X=-1500, terrain size=1200m)
+    let left_terrain_x = -1500.0;
+    let terrain_half_size = 600.0; // 1200 / 2
     let target_npcs = 100;
 
     while spawned_count < target_npcs && attempts < max_attempts {
         attempts += 1;
-        let x = rng.gen_range(-900.0..900.0);
-        let z = rng.gen_range(-900.0..900.0);
+        // Spawn within left terrain bounds
+        let x = left_terrain_x + rng.gen_range(-terrain_half_size..terrain_half_size);
+        let z = rng.gen_range(-terrain_half_size..terrain_half_size);
 
+        // Spawn NPCs above terrain, let gravity drop them
+        let spawn_position = Vec3::new(x, LAND_ELEVATION + SPAWN_DROP_HEIGHT, z);
 
-        // Spawn NPCs above ground, let gravity drop them
-        let spawn_position = Vec3::new(x, 10.0, z);
-
-            // Use focused NPCFactory for consistent spawning
-            match npc_factory.spawn_npc(
-                &mut commands,
-                &mut meshes,
-                &mut materials,
-                &mut cache,
-                spawn_position,
-                None, // Auto-select NPC type
-            ) {
-                Ok(_entity) => {
-                    spawned_count += 1;
-                    println!("DEBUG: Spawned NPC at {spawn_position:?}");
-                }
-                Err(e) => {
-                    println!("WARNING: Failed to spawn NPC at {spawn_position:?}: {e:?}");
-                }
+        // Use focused NPCFactory for consistent spawning
+        match npc_factory.spawn_npc(
+            &mut commands,
+            &mut meshes,
+            &mut materials,
+            &mut cache,
+            spawn_position,
+            None, // Auto-select NPC type
+        ) {
+            Ok(_entity) => {
+                spawned_count += 1;
+                println!("DEBUG: Spawned NPC at {spawn_position:?}");
             }
+            Err(e) => {
+                println!("WARNING: Failed to spawn NPC at {spawn_position:?}: {e:?}");
+            }
+        }
     }
 
-    println!(
-        "✅ UNIFIED NPC SETUP: Spawned {spawned_count} NPCs (attempted {attempts} positions)"
-    );
+    println!("✅ UNIFIED NPC SETUP: Spawned {spawned_count} NPCs (attempted {attempts} positions)");
 }

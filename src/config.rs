@@ -83,11 +83,6 @@ pub struct WorldConfig {
     // Performance parameters
     pub cleanup_delay: f32,   // 30.0 - Entity cleanup delay
     pub update_interval: f32, // 0.1 - Standard update interval
-
-    // Environment bounds
-    pub lake_size: f32,      // 200.0 - Lake size
-    pub lake_depth: f32,     // 5.0 - Lake depth
-    pub lake_position: Vec3, // (300.0, -2.0, 300.0) - Lake position
 }
 
 #[derive(Debug, Clone)]
@@ -297,9 +292,6 @@ impl Default for WorldConfig {
             npc_density: 0.2,
             cleanup_delay: 30.0,
             update_interval: 0.1,
-            lake_size: 200.0,
-            lake_depth: 5.0,
-            lake_position: Vec3::new(300.0, -2.0, 300.0),
         }
     }
 }
@@ -531,10 +523,6 @@ impl WorldConfig {
         // Clamp timing parameters
         self.cleanup_delay = self.cleanup_delay.clamp(5.0, 300.0);
         self.update_interval = self.update_interval.clamp(0.01, 1.0);
-
-        // Validate lake parameters
-        self.lake_size = self.lake_size.clamp(50.0, 1000.0);
-        self.lake_depth = self.lake_depth.clamp(1.0, 50.0);
     }
 
     /// Get total chunk count for the finite world

@@ -98,7 +98,7 @@ pub use world::{
 };
 
 pub use unified_water::{UnifiedWaterAsset, UnifiedWaterBody, WaterSurface};
-pub use water::{Boat, Lake, WaterBody, WaterWave, Yacht};
+pub use water::{Boat, WaterBody, WaterWave, Yacht};
 pub use water_material::WaterMaterial;
 pub use water_new::{TideConfig, WaterBodyId, WaterRegion, WaterRegionAsset, WaveParams};
 

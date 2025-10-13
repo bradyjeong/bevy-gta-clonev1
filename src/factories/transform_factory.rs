@@ -275,29 +275,6 @@ impl TransformFactory {
             .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2))
     }
 
-    // WATER FEATURES
-    pub fn lake_surface(lake_position: Vec3) -> Transform {
-        Transform::from_xyz(lake_position.x, lake_position.y, lake_position.z)
-    }
-
-    pub fn lake_bottom(lake_position: Vec3, depth: f32) -> Transform {
-        let safe_depth = depth.clamp(0.1, 1000.0);
-        Transform::from_xyz(
-            lake_position.x,
-            lake_position.y - safe_depth,
-            lake_position.z,
-        )
-    }
-
-    pub fn lake_cylinder(lake_position: Vec3, depth: f32) -> Transform {
-        let safe_depth = depth.clamp(0.1, 1000.0);
-        Transform::from_xyz(
-            lake_position.x,
-            lake_position.y - safe_depth / 2.0,
-            lake_position.z,
-        )
-    }
-
     // SKY COMPONENTS
     pub fn sky_dome() -> Transform {
         Transform::from_xyz(0.0, 0.0, 0.0)

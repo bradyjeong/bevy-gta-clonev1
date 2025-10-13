@@ -1,5 +1,6 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::ContentType;
+use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
 use crate::factories::VehicleFactory;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
@@ -76,11 +77,12 @@ fn setup_starter_vehicles_unified(
 ) -> Vec<Entity> {
     let mut spawned_vehicles = Vec::new();
 
-    // Safe starter positions (well-spaced from spawn point)
+    // Safe starter positions on left terrain island (X=-1500)
+    let left_terrain_x = -1500.0;
     let starter_positions = [
-        Vec3::new(25.0, 0.0, 10.0),  // Near spawn, well spaced
-        Vec3::new(-30.0, 0.0, 15.0), // Different area
-        Vec3::new(10.0, 0.0, -25.0), // Another area
+        Vec3::new(left_terrain_x + 25.0, 0.0, 10.0), // Near spawn, well spaced
+        Vec3::new(left_terrain_x - 30.0, 0.0, 15.0), // Different area
+        Vec3::new(left_terrain_x + 10.0, 0.0, -25.0), // Another area
     ];
 
     let car_colors = [
@@ -92,8 +94,8 @@ fn setup_starter_vehicles_unified(
     for (i, &preferred_position) in starter_positions.iter().enumerate() {
         let color = car_colors[i % car_colors.len()];
 
-        // Spawn above ground, let gravity drop vehicles
-        let vehicle_y = 10.0;
+        // Spawn above terrain, let gravity drop vehicles
+        let vehicle_y = LAND_ELEVATION + SPAWN_DROP_HEIGHT;
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
 
         // Use simplified approach with focused factory
@@ -164,16 +166,17 @@ fn setup_luxury_cars_unified(
 ) -> Vec<Entity> {
     let mut spawned_vehicles = Vec::new();
 
-    // Luxury car positions (selected safe positions from original list)
+    // Luxury car positions on left terrain island (X=-1500)
+    let left_terrain_x = -1500.0;
     let luxury_positions = [
-        Vec3::new(15.0, 0.0, 8.0),    // Near spawn area
-        Vec3::new(-8.0, 0.0, 12.0),   // Different area
-        Vec3::new(18.0, 0.0, -15.0),  // Another area
-        Vec3::new(50.0, 0.0, 0.0),    // Highway position (moved from 35,0 to avoid Bugatti)
-        Vec3::new(-40.0, 0.0, 0.0),   // Highway position
-        Vec3::new(65.0, 0.0, 55.0),   // District position
-        Vec3::new(-70.0, 0.0, 60.0),  // District position
-        Vec3::new(120.0, 0.0, 110.0), // Luxury area
+        Vec3::new(left_terrain_x + 15.0, 0.0, 8.0), // Near spawn area
+        Vec3::new(left_terrain_x - 8.0, 0.0, 12.0), // Different area
+        Vec3::new(left_terrain_x + 18.0, 0.0, -15.0), // Another area
+        Vec3::new(left_terrain_x + 50.0, 0.0, 0.0), // Highway position
+        Vec3::new(left_terrain_x - 40.0, 0.0, 0.0), // Highway position
+        Vec3::new(left_terrain_x + 65.0, 0.0, 55.0), // District position
+        Vec3::new(left_terrain_x - 70.0, 0.0, 60.0), // District position
+        Vec3::new(left_terrain_x + 120.0, 0.0, 110.0), // Luxury area
     ];
 
     // Luxury Dubai car colors
@@ -191,8 +194,8 @@ fn setup_luxury_cars_unified(
     for (i, &preferred_position) in luxury_positions.iter().enumerate() {
         let color = luxury_colors[i % luxury_colors.len()];
 
-        // Spawn above ground, let gravity drop vehicles
-        let vehicle_y = 10.0;
+        // Spawn above terrain, let gravity drop vehicles
+        let vehicle_y = LAND_ELEVATION + SPAWN_DROP_HEIGHT;
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
 
         // Use simplified approach with focused factory

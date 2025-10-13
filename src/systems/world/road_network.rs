@@ -1,3 +1,4 @@
+use crate::constants::LAND_ELEVATION;
 use crate::util::safe_math::safe_lerp;
 use bevy::prelude::*;
 use std::collections::HashMap;
@@ -423,10 +424,10 @@ impl RoadNetwork {
             } else {
                 RoadType::MainStreet
             };
-            let height = road_type.height();
+            let y = LAND_ELEVATION + road_type.height();
             let x_pos = base_x + cell_size * 0.5;
-            let start = Vec3::new(x_pos, height, base_z);
-            let end = Vec3::new(x_pos, height, base_z + cell_size);
+            let start = Vec3::new(x_pos, y, base_z);
+            let end = Vec3::new(x_pos, y, base_z + cell_size);
 
             let road_id = generate_unique_road_id(cell_coord, local_index);
             local_index += 1;
@@ -445,10 +446,10 @@ impl RoadNetwork {
             } else {
                 RoadType::MainStreet
             };
-            let height = road_type.height();
+            let y = LAND_ELEVATION + road_type.height();
             let z_pos = base_z + cell_size * 0.5;
-            let start = Vec3::new(base_x, height, z_pos);
-            let end = Vec3::new(base_x + cell_size, height, z_pos);
+            let start = Vec3::new(base_x, y, z_pos);
+            let end = Vec3::new(base_x + cell_size, y, z_pos);
 
             let road_id = generate_unique_road_id(cell_coord, local_index);
             local_index += 1;
@@ -463,9 +464,9 @@ impl RoadNetwork {
 
         if !is_vertical_arterial && !is_horizontal_arterial {
             let road_type = RoadType::SideStreet;
-            let height = road_type.height();
-            let start = Vec3::new(base_x + cell_size * 0.2, height, base_z + cell_size * 0.2);
-            let end = Vec3::new(base_x + cell_size * 0.8, height, base_z + cell_size * 0.8);
+            let y = LAND_ELEVATION + road_type.height();
+            let start = Vec3::new(base_x + cell_size * 0.2, y, base_z + cell_size * 0.2);
+            let end = Vec3::new(base_x + cell_size * 0.8, y, base_z + cell_size * 0.8);
             let road_id = generate_unique_road_id(cell_coord, local_index);
             local_index += 1;
             let road = RoadSpline::new(road_id, start, end, road_type);
@@ -479,7 +480,7 @@ impl RoadNetwork {
 
         if !is_vertical_arterial && !is_horizontal_arterial {
             let road_type = RoadType::SideStreet;
-            let height = road_type.height();
+            let y = LAND_ELEVATION + road_type.height();
 
             let nearest_vertical = ((cell_coord.x as f32 / arterial_spacing as f32).round()
                 * arterial_spacing as f32)
@@ -490,9 +491,9 @@ impl RoadNetwork {
                 * cell_size
                 + cell_size * 0.5;
 
-            let start = Vec3::new(base_x + cell_size * 0.5, height, base_z + cell_size * 0.5);
-            let end_v = Vec3::new(nearest_vertical, height, base_z + cell_size * 0.5);
-            let end_h = Vec3::new(base_x + cell_size * 0.5, height, nearest_horizontal);
+            let start = Vec3::new(base_x + cell_size * 0.5, y, base_z + cell_size * 0.5);
+            let end_v = Vec3::new(nearest_vertical, y, base_z + cell_size * 0.5);
+            let end_h = Vec3::new(base_x + cell_size * 0.5, y, nearest_horizontal);
 
             let road_id_v = generate_unique_road_id(cell_coord, local_index);
             local_index += 1;
@@ -533,7 +534,9 @@ impl RoadNetwork {
         local_index: &mut u16,
     ) -> Vec<u64> {
         let mut spawn_roads = Vec::new();
-        let height = 0.0;
+        let highway_y = LAND_ELEVATION + RoadType::Highway.height();
+        let main_y = LAND_ELEVATION + RoadType::MainStreet.height();
+        let side_y = LAND_ELEVATION + RoadType::SideStreet.height();
 
         let cell_min_x = base_x;
         let cell_max_x = base_x + cell_size;
@@ -542,30 +545,38 @@ impl RoadNetwork {
 
         let highway_configs = [
             (
-                Vec3::new(cell_min_x, height, base_z + cell_size * 0.5),
-                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.6),
-                Vec3::new(cell_max_x, height, base_z + cell_size * 0.5),
+                Vec3::new(cell_min_x, highway_y, base_z + cell_size * 0.5),
+                Vec3::new(
+                    base_x + cell_size * 0.3,
+                    highway_y,
+                    base_z + cell_size * 0.6,
+                ),
+                Vec3::new(cell_max_x, highway_y, base_z + cell_size * 0.5),
                 RoadType::Highway,
             ),
             (
-                Vec3::new(base_x + cell_size * 0.5, height, cell_min_z),
-                Vec3::new(base_x + cell_size * 0.6, height, base_z + cell_size * 0.3),
-                Vec3::new(base_x + cell_size * 0.5, height, cell_max_z),
+                Vec3::new(base_x + cell_size * 0.5, highway_y, cell_min_z),
+                Vec3::new(
+                    base_x + cell_size * 0.6,
+                    highway_y,
+                    base_z + cell_size * 0.3,
+                ),
+                Vec3::new(base_x + cell_size * 0.5, highway_y, cell_max_z),
                 RoadType::Highway,
             ),
         ];
 
         let main_street_configs = [
             (
-                Vec3::new(cell_min_x, height, base_z + cell_size * 0.25),
-                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.3),
-                Vec3::new(cell_max_x, height, base_z + cell_size * 0.25),
+                Vec3::new(cell_min_x, main_y, base_z + cell_size * 0.25),
+                Vec3::new(base_x + cell_size * 0.3, main_y, base_z + cell_size * 0.3),
+                Vec3::new(cell_max_x, main_y, base_z + cell_size * 0.25),
                 RoadType::MainStreet,
             ),
             (
-                Vec3::new(base_x + cell_size * 0.25, height, cell_min_z),
-                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.3),
-                Vec3::new(base_x + cell_size * 0.25, height, cell_max_z),
+                Vec3::new(base_x + cell_size * 0.25, main_y, cell_min_z),
+                Vec3::new(base_x + cell_size * 0.3, main_y, base_z + cell_size * 0.3),
+                Vec3::new(base_x + cell_size * 0.25, main_y, cell_max_z),
                 RoadType::MainStreet,
             ),
         ];
@@ -590,16 +601,16 @@ impl RoadNetwork {
                 let sub_x = base_x + (i as f32 + 0.5) * cell_size / 4.0;
                 let sub_z = base_z + (j as f32 + 0.5) * cell_size / 4.0;
 
-                let start = Vec3::new(sub_x - 30.0, height, sub_z);
-                let end = Vec3::new(sub_x + 30.0, height, sub_z);
+                let start = Vec3::new(sub_x - 30.0, side_y, sub_z);
+                let end = Vec3::new(sub_x + 30.0, side_y, sub_z);
                 let road_id = generate_unique_road_id(cell_coord, *local_index);
                 *local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, RoadType::SideStreet);
                 self.roads.insert(road_id, road);
                 spawn_roads.push(road_id);
 
-                let start = Vec3::new(sub_x, height, sub_z - 30.0);
-                let end = Vec3::new(sub_x, height, sub_z + 30.0);
+                let start = Vec3::new(sub_x, side_y, sub_z - 30.0);
+                let end = Vec3::new(sub_x, side_y, sub_z + 30.0);
                 let road_id = generate_unique_road_id(cell_coord, *local_index);
                 *local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, RoadType::SideStreet);

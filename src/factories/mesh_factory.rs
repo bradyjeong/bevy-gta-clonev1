@@ -141,17 +141,6 @@ impl MeshFactory {
         meshes.add(Cuboid::new(safe_width, 0.11, safe_length))
     }
 
-    // WATER FEATURES
-    pub fn create_lake_cylinder(
-        meshes: &mut ResMut<Assets<Mesh>>,
-        radius: f32,
-        depth: f32,
-    ) -> Handle<Mesh> {
-        let safe_radius = radius.clamp(1.0, 1000.0);
-        let safe_depth = depth.clamp(0.1, 100.0);
-        meshes.add(Cylinder::new(safe_radius, safe_depth))
-    }
-
     pub fn create_water_plane(meshes: &mut ResMut<Assets<Mesh>>, size: f32) -> Handle<Mesh> {
         let safe_size = size.clamp(1.0, 10000.0);
         meshes.add(Plane3d::default().mesh().size(safe_size, safe_size))

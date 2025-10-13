@@ -65,9 +65,10 @@ fn queue_all_chunks_for_generation(
         config.world.total_chunks_x, config.world.total_chunks_z
     );
 
-    // Pre-initialize all chunks
+    // Only initialize chunks on terrain islands (with 200m margin for beaches)
     let half_x = (config.world.total_chunks_x / 2) as i32;
     let half_z = (config.world.total_chunks_z / 2) as i32;
+    let margin = 200.0; // 1 chunk margin for beaches and nearshore content
 
     let mut total_count = 0;
     for array_z in 0..config.world.total_chunks_z {
@@ -76,14 +77,21 @@ fn queue_all_chunks_for_generation(
             let chunk_z = array_z as i32 - half_z;
             let coord = ChunkCoord::new(chunk_x, chunk_z);
 
-            if let Some(chunk) = world_manager.get_chunk_mut(coord) {
-                chunk.state = ChunkState::Loading;
-                total_count += 1;
+            // Check if chunk is on a terrain island (skip ocean chunks)
+            let chunk_center = coord.to_world_pos_with_size(world_manager.chunk_size);
+            if world_manager.is_on_terrain_island_with_margin(chunk_center, margin) {
+                if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+                    chunk.state = ChunkState::Loading;
+                    total_count += 1;
+                }
             }
         }
     }
 
-    info!("Initialized {} chunks for generation", total_count);
+    info!(
+        "Initialized {} chunks for generation (island chunks only, skipped ocean)",
+        total_count
+    );
 
     // Create generation queue
     commands.insert_resource(StaticGenerationQueue {

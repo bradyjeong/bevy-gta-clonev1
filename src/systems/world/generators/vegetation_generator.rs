@@ -1,7 +1,7 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
-use crate::constants::STATIC_GROUP;
+use crate::constants::{LAND_ELEVATION, STATIC_GROUP};
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
@@ -14,6 +14,7 @@ use rand::Rng;
 pub struct VegetationGenerator;
 
 impl VegetationGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub fn generate_vegetation(
         &self,
         commands: &mut Commands,
@@ -27,12 +28,8 @@ impl VegetationGenerator {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
 
-        // Skip vegetation generation for chunks near world edge (±3000m)
-        const WORLD_HALF_SIZE: f32 = 3000.0;
-        const EDGE_BUFFER: f32 = 200.0;
-        if chunk_center.x.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
-            || chunk_center.z.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
-        {
+        // Skip if chunk is not on a terrain island
+        if !world.is_on_terrain_island(chunk_center) {
             if let Some(chunk) = world.get_chunk_mut(coord) {
                 chunk.vegetation_generated = true;
             }
@@ -49,7 +46,11 @@ impl VegetationGenerator {
         for _ in 0..tree_attempts {
             let local_x = world_rng.global().gen_range(-half_size..half_size);
             let local_z = world_rng.global().gen_range(-half_size..half_size);
-            let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
+            let position = Vec3::new(
+                chunk_center.x + local_x,
+                LAND_ELEVATION,
+                chunk_center.z + local_z,
+            );
 
             // Check if position is valid (not on road, not overlapping other trees, not in water)
             if !self.is_on_road(position, world)
