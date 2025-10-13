@@ -23,19 +23,16 @@ impl Plugin for StaticWorldGenerationPlugin {
         app
             // Note: SpawnRegistry is already initialized by SpawnValidationPlugin
             // World generation screen UI (camera stays active for UI rendering)
-            .add_systems(
-                OnEnter(AppState::WorldGeneration),
-                setup_loading_screen,
-            )
+            .add_systems(OnEnter(AppState::WorldGeneration), setup_loading_screen)
             .add_systems(
                 OnExit(AppState::WorldGeneration),
-                (
-                    cleanup_loading_screen,
-                    cleanup_generation_resources,
-                ),
+                (cleanup_loading_screen, cleanup_generation_resources),
             )
             // World generation systems
-            .add_systems(OnEnter(AppState::WorldGeneration), queue_all_chunks_for_generation)
+            .add_systems(
+                OnEnter(AppState::WorldGeneration),
+                queue_all_chunks_for_generation,
+            )
             .add_systems(
                 Update,
                 (apply_generated_chunks, update_loading_progress)

@@ -74,10 +74,12 @@ pub mod npc_factory;
 pub mod vehicle_factory;
 
 // Specialized utility factories
+pub mod beach_terrain;
 pub mod generic_bundle;
 pub mod material_factory;
 pub mod mesh_factory;
 pub mod rendering_factory;
+pub mod subdivided_plane;
 pub mod transform_factory;
 
 // Utility module exports (explicit imports, no wildcards per AGENT.md)
@@ -92,10 +94,12 @@ pub use npc_factory::{NPCFactory, NPCType};
 pub use vehicle_factory::VehicleFactory;
 
 // Specialized factory exports (selective imports)
+pub use beach_terrain::{create_beach_slope, create_circular_beach_ring};
 pub use generic_bundle::{BundleError, GenericBundleFactory};
 pub use material_factory::{MaterialFactory, initialize_material_factory};
 pub use mesh_factory::MeshFactory;
 pub use rendering_factory::{
     RenderingBundleType, RenderingFactory, StandardRenderingPattern, VehicleBodyType,
 };
+pub use subdivided_plane::create_subdivided_plane;
 pub use transform_factory::TransformFactory;

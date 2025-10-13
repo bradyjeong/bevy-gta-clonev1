@@ -149,11 +149,22 @@ pub fn swim_state_transition_system(
             .iter()
             .find(|w| w.contains_point(pos.x, pos.z));
 
-        // Calculate submersion ratio first - always check submersion for hysteresis
-        let half_ext = collider
-            .as_cuboid()
-            .map(|c| Vec3::new(c.half_extents().x, c.half_extents().y, c.half_extents().z))
-            .unwrap_or(Vec3::splat(0.5));
+        // Calculate submersion ratio - handle both cuboid and capsule colliders
+        let half_ext = if let Some(cuboid) = collider.as_cuboid() {
+            // Cuboid collider (simple rectangular shape)
+            Vec3::new(
+                cuboid.half_extents().x,
+                cuboid.half_extents().y,
+                cuboid.half_extents().z,
+            )
+        } else if let Some(capsule) = collider.as_capsule() {
+            // Capsule collider (common for characters)
+            let total_half_height = capsule.half_height() + capsule.radius();
+            Vec3::new(capsule.radius(), total_half_height, capsule.radius())
+        } else {
+            // Fallback for other collider types (sphere, etc.)
+            Vec3::splat(0.5)
+        };
 
         let submersion = if let Some(w) = water {
             // DEBUG: Found water region

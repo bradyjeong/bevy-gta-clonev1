@@ -63,6 +63,7 @@ pub mod rotor_wash;
 pub mod unified_water;
 pub mod vehicles;
 pub mod water;
+pub mod water_material;
 pub mod water_new;
 pub mod world;
 
@@ -96,7 +97,9 @@ pub use world::{
     PerformanceCritical, PerformanceStats, RoadEntity, WorldBounds,
 };
 
+pub use unified_water::{UnifiedWaterAsset, UnifiedWaterBody, WaterSurface};
 pub use water::{Boat, Lake, WaterBody, WaterWave, Yacht};
+pub use water_material::WaterMaterial;
 pub use water_new::{TideConfig, WaterBodyId, WaterRegion, WaterRegionAsset, WaveParams};
 
 // Visual and rendering components

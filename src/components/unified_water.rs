@@ -13,7 +13,20 @@ pub struct UnifiedWaterBody {
 }
 
 impl UnifiedWaterBody {
+    /// Get visual water surface level (includes tides and waves for rendering)
     pub fn get_water_surface_level(&self, time: f32) -> f32 {
+        let tide_offset = if self.tide.amplitude > 0.0 {
+            (time * 2.0 * std::f32::consts::PI / self.tide.period_sec).sin() * self.tide.amplitude
+        } else {
+            0.0
+        };
+        self.surface_level + tide_offset
+    }
+
+    /// Get base water level for gameplay logic (no waves, only static level + tide)
+    /// Professional games separate visual waves from physics/gameplay logic
+    pub fn get_base_water_level(&self, time: f32) -> f32 {
+        // For gameplay: only use tide (slow, large-scale), ignore visual waves
         let tide_offset = if self.tide.amplitude > 0.0 {
             (time * 2.0 * std::f32::consts::PI / self.tide.period_sec).sin() * self.tide.amplitude
         } else {
@@ -30,13 +43,16 @@ impl UnifiedWaterBody {
         x >= self.bounds.0 && x <= self.bounds.2 && z >= self.bounds.1 && z <= self.bounds.3
     }
 
+    /// Calculate submersion ratio for gameplay (uses base water level, not visual waves)
+    /// This prevents swimming animation from triggering in wave troughs
     pub fn calculate_submersion_ratio(
         &self,
         transform: &Transform,
         half_extents: Vec3,
         time: f32,
     ) -> f32 {
-        let water_level = self.get_water_surface_level(time);
+        // Use base water level for gameplay logic - professional approach
+        let water_level = self.get_base_water_level(time);
         let entity_bottom = transform.translation.y - half_extents.y;
         let entity_top = transform.translation.y + half_extents.y;
 
@@ -80,6 +96,13 @@ pub struct WaveParams {
 /// Marker component for entities that should experience water physics
 #[derive(Component, Default)]
 pub struct WaterBodyId;
+
+/// Links a water surface mesh to its parent water region
+/// Enables O(1) updates instead of O(N) name-based scanning
+#[derive(Component)]
+pub struct WaterSurface {
+    pub region_entity: Entity,
+}
 
 // GlobalOcean removed - using only lake water bodies now
 

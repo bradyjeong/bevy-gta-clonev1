@@ -136,13 +136,33 @@ impl BuildingGenerator {
         false
     }
 
-    /// Check if position is in water area - same logic as PositionValidator
+    /// Check if position is in water area - includes both lake and ocean
     fn is_in_water_area(&self, position: Vec3) -> bool {
-        let lake_center = Vec3::new(300.0, 0.0, 300.0);
-        let lake_size = 200.0;
         let buffer = 20.0;
 
-        let distance = Vec2::new(position.x - lake_center.x, position.z - lake_center.z).length();
-        distance < (lake_size / 2.0 + buffer)
+        // Lake area (circular)
+        let lake_center = Vec3::new(300.0, 0.0, 300.0);
+        let lake_radius = 100.0; // Half of 200m size
+        let distance_to_lake =
+            Vec2::new(position.x - lake_center.x, position.z - lake_center.z).length();
+        if distance_to_lake < (lake_radius + buffer) {
+            return true;
+        }
+
+        // Ocean area (rectangular) - Eastern Ocean
+        let ocean_min_x = 2000.0 - buffer;
+        let ocean_max_x = 3000.0 + buffer;
+        let ocean_min_z = -3000.0 - buffer;
+        let ocean_max_z = 3000.0 + buffer;
+
+        if position.x >= ocean_min_x
+            && position.x <= ocean_max_x
+            && position.z >= ocean_min_z
+            && position.z <= ocean_max_z
+        {
+            return true;
+        }
+
+        false
     }
 }

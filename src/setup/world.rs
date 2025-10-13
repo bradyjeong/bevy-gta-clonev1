@@ -92,16 +92,54 @@ pub fn setup_basic_world(
         Name::new("Ocean Floor East"),
     ));
 
-    // Beach transition plane (sand at terrain-ocean boundary)
+    // BEACH SLOPE - Professional gradual transition from land to ocean
+    // Visual only - no collision (uses main terrain collision)
+    use crate::factories::create_beach_slope;
+    let beach_slope_width = 50.0; // Width of beach transition
+    let beach_slope_depth = 6000.0; // Length along coastline
+    let beach_mesh = create_beach_slope(
+        beach_slope_width,
+        beach_slope_depth,
+        0.0,  // Land height
+        -1.0, // Water edge height (slightly below water)
+        32,   // Subdivisions for smooth slope
+    );
+
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 6000.0))),
+        Mesh3d(meshes.add(beach_mesh)),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.9, 0.85, 0.7),
+            base_color: Color::srgb(0.9, 0.85, 0.7), // Sandy beach color
             perceptual_roughness: 0.8,
             ..default()
         })),
-        Transform::from_xyz(1975.0, 0.1, 0.0),
-        Name::new("Eastern Beach"),
+        Transform::from_xyz(1975.0, 0.0, 0.0), // Position at terrain edge
+        Name::new("Eastern Beach Slope (Visual)"),
+    ));
+
+    // LAKE BEACH - Circular beach around the central lake
+    // Visual only - no collision to avoid blocking spawn area
+    use crate::factories::create_circular_beach_ring;
+    let lake_center = Vec3::new(300.0, 0.0, 300.0);
+    let lake_radius = 100.0; // Inner radius (water edge)
+    let beach_ring = create_circular_beach_ring(
+        lake_radius,
+        lake_radius + 30.0, // Outer radius (30m beach width)
+        lake_center,
+        0.0,  // Land height
+        -0.8, // Water edge (slightly below lake surface at 1.2)
+        32,   // Radial segments for smooth circle
+        16,   // Height segments for smooth slope
+    );
+
+    commands.spawn((
+        Mesh3d(meshes.add(beach_ring)),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.85, 0.80, 0.65), // Lighter sand for lake beach
+            perceptual_roughness: 0.8,
+            ..default()
+        })),
+        Transform::from_xyz(0.0, 0.0, 0.0),
+        Name::new("Lake Beach Ring (Visual)"),
     ));
 
     // Calculate proper ground position for player spawn

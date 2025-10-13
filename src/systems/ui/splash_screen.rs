@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use bevy::asset::RecursiveDependencyLoadState;
+use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct SplashScreen;
@@ -98,14 +98,9 @@ pub fn setup_splash_screen(mut commands: Commands) {
         });
 }
 
-pub fn load_initial_assets(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
-    let handles = vec![
-        asset_server.load::<Image>("ui/arrow.png").untyped(),
-    ];
-    
+pub fn load_initial_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let handles = vec![asset_server.load::<Image>("ui/arrow.png").untyped()];
+
     let total = handles.len();
     commands.insert_resource(AssetLoadingState {
         handles,
@@ -123,7 +118,7 @@ pub fn update_asset_loading(
     mut next_state: ResMut<NextState<crate::states::AppState>>,
 ) {
     loading_state.min_display_timer.tick(time.delta());
-    
+
     let mut loaded = 0;
     for handle in &loading_state.handles {
         match asset_server.get_recursive_dependency_load_state(handle.id()) {
@@ -132,25 +127,28 @@ pub fn update_asset_loading(
             _ => {}
         }
     }
-    
+
     let progress = if loading_state.total_assets > 0 {
         loaded as f32 / loading_state.total_assets as f32
     } else {
         0.0
     };
-    
+
     for mut node in loading_bar_query.iter_mut() {
         node.width = Val::Px(300.0 * progress);
     }
-    
+
     for mut text in loading_text_query.iter_mut() {
         if loaded >= loading_state.total_assets {
             **text = "Ready!".to_string();
         } else {
-            **text = format!("Loading assets... {}/{}", loaded, loading_state.total_assets);
+            **text = format!(
+                "Loading assets... {}/{}",
+                loaded, loading_state.total_assets
+            );
         }
     }
-    
+
     if loaded >= loading_state.total_assets && loading_state.min_display_timer.finished() {
         next_state.set(crate::states::AppState::WorldGeneration);
     }
