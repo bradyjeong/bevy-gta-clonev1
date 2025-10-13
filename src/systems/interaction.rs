@@ -246,6 +246,10 @@ pub fn interaction_system(
                         let exit_position = car_gt.translation() + right_horizontal * 3.0;
                         let inherited_vel = car_vel.cloned().unwrap_or(Velocity::zero());
 
+                        // Preserve vehicle's Y rotation so player faces same direction
+                        let (vehicle_yaw, _, _) = car_gt.to_scale_rotation_translation().1.to_euler(EulerRot::YXZ);
+                        let exit_rotation = Quat::from_rotation_y(vehicle_yaw);
+
                         // Phase A: Set pose and keep physics disabled this frame
                         commands
                             .entity(player_entity)
@@ -253,7 +257,7 @@ pub fn interaction_system(
                             .remove::<ChildOf>()
                             .insert(
                                 Transform::from_translation(exit_position)
-                                    .with_rotation(Quat::IDENTITY),
+                                    .with_rotation(exit_rotation),
                             )
                             .insert(inherited_vel)
                             .insert(PlayerControlled)
@@ -299,6 +303,10 @@ pub fn interaction_system(
                         let mut inherited_vel = helicopter_vel.cloned().unwrap_or(Velocity::zero());
                         inherited_vel.linvel.y = 0.0; // Zero out upward velocity for realistic gravity
 
+                        // Preserve vehicle's Y rotation so player faces same direction
+                        let (vehicle_yaw, _, _) = helicopter_gt.to_scale_rotation_translation().1.to_euler(EulerRot::YXZ);
+                        let exit_rotation = Quat::from_rotation_y(vehicle_yaw);
+
                         // Phase A: Set pose and keep physics disabled this frame
                         commands
                             .entity(player_entity)
@@ -306,7 +314,7 @@ pub fn interaction_system(
                             .remove::<ChildOf>()
                             .insert(
                                 Transform::from_translation(exit_position)
-                                    .with_rotation(Quat::IDENTITY),
+                                    .with_rotation(exit_rotation),
                             )
                             .insert(inherited_vel)
                             .insert(PlayerControlled)
@@ -347,6 +355,10 @@ pub fn interaction_system(
                         let mut inherited_vel = f16_vel.cloned().unwrap_or(Velocity::zero());
                         inherited_vel.linvel.y = 0.0; // Zero out upward velocity for realistic gravity
 
+                        // Preserve vehicle's Y rotation so player faces same direction
+                        let (vehicle_yaw, _, _) = f16_gt.to_scale_rotation_translation().1.to_euler(EulerRot::YXZ);
+                        let exit_rotation = Quat::from_rotation_y(vehicle_yaw);
+
                         // Phase A: Set pose and keep physics disabled this frame
                         commands
                             .entity(player_entity)
@@ -354,7 +366,7 @@ pub fn interaction_system(
                             .remove::<ChildOf>()
                             .insert(
                                 Transform::from_translation(exit_position)
-                                    .with_rotation(Quat::IDENTITY),
+                                    .with_rotation(exit_rotation),
                             )
                             .insert(inherited_vel)
                             .insert(PlayerControlled)

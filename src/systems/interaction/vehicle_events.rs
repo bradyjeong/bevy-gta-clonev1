@@ -95,14 +95,16 @@ pub fn transfer_player_from_vehicle(
     player: Entity,
     vehicle: Entity,
     exit_offset: Vec3,
-    player_transform: &Transform,
+    vehicle_transform: &Transform,
 ) {
-    let exit_position = player_transform.translation + exit_offset;
+    let exit_position = vehicle_transform.translation + exit_offset;
+    // Preserve vehicle's Y rotation
+    let exit_rotation = Quat::from_rotation_y(vehicle_transform.rotation.to_euler(EulerRot::YXZ).0);
     transfer_player_from_vehicle_with_physics(
         commands,
         player,
         vehicle,
         exit_position,
-        Quat::IDENTITY,
+        exit_rotation,
     );
 }
