@@ -8,9 +8,9 @@
         period_sec: 240.0,
     ),
     wave_params: Some((
-        amplitude: 0.3,
-        frequency: 0.15,
-        speed: 1.0,
+        amplitude: 0.15,  // Gentle lake ripples (was 0.3 - too choppy for lake)
+        frequency: 0.15,  // Not used (Gerstner waves have fixed wavelengths)
+        speed: 0.0,       // 0.0 = use deep-water dispersion physics
     )),
     surface_color: (0.15, 0.5, 0.9, 0.6),
 )

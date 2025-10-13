@@ -26,8 +26,8 @@ pub fn create_beach_slope(
             let x_pos = (x as f32 / subdivisions as f32 - 0.5) * width;
             let z_pos = (z as f32 / subdivisions as f32 - 0.5) * depth;
 
-            // Calculate height transition using smooth curve
-            let t = z as f32 / subdivisions as f32; // 0 = back, 1 = front
+            // Calculate height transition along X axis (land to water)
+            let t = x as f32 / subdivisions as f32; // 0 = back (land), 1 = front (water)
 
             // Use smoothstep for natural looking slope
             let smooth_t = smoothstep(t);
@@ -35,9 +35,9 @@ pub fn create_beach_slope(
 
             positions.push([x_pos, height, z_pos]);
 
-            // Calculate normal based on slope
-            let slope_angle = (end_height - start_height) / depth;
-            let normal = Vec3::new(0.0, 1.0, -slope_angle).normalize();
+            // Calculate normal based on slope (along X axis)
+            let slope_angle = (end_height - start_height) / width;
+            let normal = Vec3::new(-slope_angle, 1.0, 0.0).normalize();
             normals.push([normal.x, normal.y, normal.z]);
 
             uvs.push([

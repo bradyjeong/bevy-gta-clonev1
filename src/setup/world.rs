@@ -6,7 +6,7 @@ use crate::components::{
     PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg, PlayerTorso, VehicleControlType,
 };
 use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
-use crate::services::ground_detection::GroundDetectionService;
+
 use crate::systems::audio::FootstepTimer;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
@@ -18,7 +18,6 @@ pub fn setup_basic_world(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
-    ground_service: Res<GroundDetectionService>,
 ) {
     // No longer need WorldRoot - spawn entities directly in world space
 
@@ -76,48 +75,75 @@ pub fn setup_basic_world(
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP), // All entities collide with terrain
     ));
 
-    // OCEAN FLOOR - Underwater terrain extending beyond main terrain
-    // Eastern ocean floor (X: 2000m to 3000m)
+    // OCEAN FLOOR - Starts exactly where beach slope ends (no overlap)
+    // Beach ends at X: 2148m at Y=-10, ocean floor must align perfectly
+    let ocean_floor_width = 500.0;
+    let ocean_floor_start_x = 2148.0; // Exactly where beach ends
+    let ocean_floor_center_x = ocean_floor_start_x + (ocean_floor_width / 2.0); // 2148 + 250 = 2398m
+    
+    // Visual mesh at Y=-10
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(1000.0, 6000.0))),
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(ocean_floor_width, 6000.0))),
         MeshMaterial3d(materials.add(StandardMaterial {
             base_color: Color::srgb(0.1, 0.1, 0.15),
             perceptual_roughness: 0.9,
             ..default()
         })),
-        Transform::from_xyz(2500.0, -10.0, 0.0),
+        Transform::from_xyz(ocean_floor_center_x, -10.0, 0.0),
+        Name::new("Ocean Floor East Visual"),
+    ));
+    
+    // Thin collision at Y=-10 (top surface) to match beach slope end exactly
+    commands.spawn((
+        Transform::from_xyz(ocean_floor_center_x, -10.05, 0.0), // Top at -10.0
         RigidBody::Fixed,
-        Collider::cuboid(500.0, 0.5, 3000.0),
+        Collider::cuboid(ocean_floor_width / 2.0, 0.05, 3000.0), // Thin like terrain
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
-        Name::new("Ocean Floor East"),
+        Name::new("Ocean Floor East Collision"),
     ));
 
-    // BEACH SLOPE - Professional gradual transition from land to ocean
-    // Visual only - no collision (uses main terrain collision)
+    // BEACH SLOPE - Inside the ocean area (X: 2048m to 2148m)
     use crate::factories::create_beach_slope;
-    let beach_slope_width = 50.0; // Width of beach transition
+    let beach_slope_width = 100.0; // Width of beach transition in ocean
     let beach_slope_depth = 6000.0; // Length along coastline
+    
+    // Position so left edge aligns with terrain edge at X: 2048m
+    let beach_center_x = 2048.0 + (beach_slope_width / 2.0); // 2048 + 50 = 2098m
+
+    // Create mesh for both visual and collision
     let beach_mesh = create_beach_slope(
         beach_slope_width,
         beach_slope_depth,
-        0.0,  // Land height
-        -1.0, // Water edge height (slightly below water)
-        32,   // Subdivisions for smooth slope
+        0.0,   // Shore height (at water surface)
+        -10.0, // Ocean floor height
+        32,    // Subdivisions for smooth slope
     );
 
+    // Visual mesh
     commands.spawn((
-        Mesh3d(meshes.add(beach_mesh)),
+        Mesh3d(meshes.add(beach_mesh.clone())),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.9, 0.85, 0.7), // Sandy beach color
-            perceptual_roughness: 0.8,
+            base_color: Color::srgb(0.8, 0.75, 0.6), // Sandy underwater color
+            perceptual_roughness: 0.7,
             ..default()
         })),
-        Transform::from_xyz(1975.0, 0.0, 0.0), // Position at terrain edge
-        Name::new("Eastern Beach Slope (Visual)"),
+        Transform::from_xyz(beach_center_x, 0.0, 0.0), // Aligned with terrain edge
+        Visibility::Visible,
+        InheritedVisibility::VISIBLE,
+        ViewVisibility::default(),
+        Name::new("Eastern Beach Slope Visual"),
+    ));
+
+    // BEACH COLLISION - Use mesh collider for smooth transition (no seams)
+    commands.spawn((
+        Transform::from_xyz(beach_center_x, 0.0, 0.0),
+        RigidBody::Fixed,
+        Collider::from_bevy_mesh(&beach_mesh, &default()).unwrap(), // Exact mesh collision
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Name::new("Eastern Beach Collision"),
     ));
 
     // LAKE BEACH - Circular beach around the central lake
-    // Visual only - no collision to avoid blocking spawn area
     use crate::factories::create_circular_beach_ring;
     let lake_center = Vec3::new(300.0, 0.0, 300.0);
     let lake_radius = 100.0; // Inner radius (water edge)
@@ -134,21 +160,45 @@ pub fn setup_basic_world(
     commands.spawn((
         Mesh3d(meshes.add(beach_ring)),
         MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.85, 0.80, 0.65), // Lighter sand for lake beach
-            perceptual_roughness: 0.8,
+            base_color: Color::srgb(0.98, 0.96, 0.82), // Bright tropical sand
+            perceptual_roughness: 0.6,
             ..default()
         })),
         Transform::from_xyz(0.0, 0.0, 0.0),
-        Name::new("Lake Beach Ring (Visual)"),
+        Visibility::Visible,
+        InheritedVisibility::VISIBLE,
+        ViewVisibility::default(),
+        Name::new("Lake Beach Ring Visual"),
     ));
 
-    // Calculate proper ground position for player spawn
-    let player_spawn_pos = Vec2::new(0.0, 0.0);
-    let ground_height = ground_service.get_ground_height_simple(player_spawn_pos);
-    // Distance from transform origin to collider bottom: -(-0.45) = 0.45
-    let player_y = ground_height + 0.45; // Position so collider bottom touches ground
+    // LAKE BEACH COLLISION - 8 angled planes forming octagonal ring
+    // Simple approximation of circular slope (1° gentle slope)
+    let lake_beach_width = 30.0_f32;
+    let lake_beach_height_change = 0.8_f32;
+    let lake_slope_angle = (lake_beach_height_change / lake_beach_width).atan();
+    let lake_mid_height = -0.4_f32;
+    let lake_mid_radius = lake_radius + 15.0_f32;
 
-    println!("DEBUG: Player spawn - ground height: {ground_height:.3}, final Y: {player_y:.3}",);
+    // Create 8 angled segments around the lake
+    for i in 0..8 {
+        let angle = (i as f32) * std::f32::consts::TAU / 8.0;
+        let segment_x = lake_center.x + lake_mid_radius * angle.cos();
+        let segment_z = lake_center.z + lake_mid_radius * angle.sin();
+
+        commands.spawn((
+            Transform::from_xyz(segment_x, lake_mid_height, segment_z).with_rotation(
+                Quat::from_rotation_y(angle) // Point outward from center
+                    * Quat::from_rotation_z(lake_slope_angle), // Slope downward
+            ),
+            RigidBody::Fixed,
+            Collider::cuboid(15.0, 0.05, 25.0), // Thin segment
+            CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+            Name::new(format!("Lake Beach Collision Segment {}", i)),
+        ));
+    }
+
+    // Spawn player above ground, let gravity drop them
+    let player_y = 10.0;
 
     // Player character with human-like components in world coordinates
     // Align collider bottom with visual feet at y=-0.45

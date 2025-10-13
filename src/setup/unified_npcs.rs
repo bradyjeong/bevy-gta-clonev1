@@ -4,7 +4,7 @@ use rand::prelude::*;
 use crate::GameConfig;
 use crate::factories::NPCFactory;
 use crate::resources::NPCAssetCache;
-use crate::services::ground_detection::GroundDetectionService;
+
 
 /// UNIFIED NPC SETUP SYSTEM
 /// Consolidates setup_new_npcs (good patterns) and setup_npcs (bad patterns)
@@ -19,7 +19,7 @@ pub fn setup_initial_npcs_unified(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut cache: ResMut<NPCAssetCache>,
-    ground_service: Res<GroundDetectionService>,
+
     _game_config: Res<GameConfig>,
 ) {
     // Initialize focused NPCFactory for consistent spawning following AGENT.md principles
@@ -37,12 +37,10 @@ pub fn setup_initial_npcs_unified(
         attempts += 1;
         let x = rng.gen_range(-900.0..900.0);
         let z = rng.gen_range(-900.0..900.0);
-        let position = Vec2::new(x, z);
 
-        // Use ground detection service for spawn validation (from good implementation)
-        if ground_service.is_spawn_position_valid(position) {
-            let ground_height = ground_service.get_ground_height_simple(position);
-            let spawn_position = Vec3::new(x, ground_height + 0.1, z);
+
+        // Spawn NPCs above ground, let gravity drop them
+        let spawn_position = Vec3::new(x, 10.0, z);
 
             // Use focused NPCFactory for consistent spawning
             match npc_factory.spawn_npc(
@@ -55,18 +53,15 @@ pub fn setup_initial_npcs_unified(
             ) {
                 Ok(_entity) => {
                     spawned_count += 1;
-                    println!(
-                        "DEBUG: Spawned NPC at {spawn_position:?} (ground: {ground_height:.2})",
-                    );
+                    println!("DEBUG: Spawned NPC at {spawn_position:?}");
                 }
                 Err(e) => {
-                    println!("WARNING: Failed to spawn NPC at {spawn_position:?}: {e:?}",);
+                    println!("WARNING: Failed to spawn NPC at {spawn_position:?}: {e:?}");
                 }
             }
-        }
     }
 
     println!(
-        "✅ UNIFIED NPC SETUP: Spawned {spawned_count} NPCs with ground detection (attempted {attempts} positions)",
+        "✅ UNIFIED NPC SETUP: Spawned {spawned_count} NPCs (attempted {attempts} positions)"
     );
 }

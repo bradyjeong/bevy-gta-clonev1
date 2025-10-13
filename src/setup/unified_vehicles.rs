@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::ContentType;
 use crate::factories::VehicleFactory;
-use crate::services::ground_detection::GroundDetectionService;
+
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::road_network::RoadNetwork;
 use bevy::prelude::*;
@@ -24,7 +24,7 @@ pub fn setup_initial_vehicles_unified(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
-    ground_service: Res<GroundDetectionService>,
+
     _road_network: Option<Res<RoadNetwork>>,
     _config: Res<GameConfig>,
 ) {
@@ -35,13 +35,12 @@ pub fn setup_initial_vehicles_unified(
     // Track all spawned vehicles for collision detection
     let mut existing_content: Vec<(Vec3, ContentType, f32)> = Vec::new();
 
-    // 1. STARTER VEHICLES (3 vehicles with ground detection - from starter_vehicles.rs)
+    // 1. STARTER VEHICLES (3 vehicles - from starter_vehicles.rs)
     let starter_vehicles = setup_starter_vehicles_unified(
         &mut commands,
         &mut meshes,
         &mut materials,
         &mut spawn_registry,
-        &ground_service,
         &vehicle_factory,
         &mut existing_content,
         current_time,
@@ -53,7 +52,6 @@ pub fn setup_initial_vehicles_unified(
         &mut meshes,
         &mut materials,
         &mut spawn_registry,
-        &ground_service,
         &vehicle_factory,
         &mut existing_content,
         current_time,
@@ -72,7 +70,6 @@ fn setup_starter_vehicles_unified(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
-    ground_service: &Res<GroundDetectionService>,
     vehicle_factory: &VehicleFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
@@ -95,10 +92,8 @@ fn setup_starter_vehicles_unified(
     for (i, &preferred_position) in starter_positions.iter().enumerate() {
         let color = car_colors[i % car_colors.len()];
 
-        // Use ground detection service for proper positioning
-        let vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
-        let ground_height = ground_service.get_ground_height_simple(vehicle_spawn_pos);
-        let vehicle_y = ground_height + 0.5; // Vehicle collider half-height above ground
+        // Spawn above ground, let gravity drop vehicles
+        let vehicle_y = 10.0;
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
 
         // Use simplified approach with focused factory
@@ -163,7 +158,6 @@ fn setup_luxury_cars_unified(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
-    ground_service: &Res<GroundDetectionService>,
     vehicle_factory: &VehicleFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
@@ -197,10 +191,8 @@ fn setup_luxury_cars_unified(
     for (i, &preferred_position) in luxury_positions.iter().enumerate() {
         let color = luxury_colors[i % luxury_colors.len()];
 
-        // Use ground detection service for proper positioning
-        let vehicle_spawn_pos = Vec2::new(preferred_position.x, preferred_position.z);
-        let ground_height = ground_service.get_ground_height_simple(vehicle_spawn_pos);
-        let vehicle_y = ground_height + 0.5;
+        // Spawn above ground, let gravity drop vehicles
+        let vehicle_y = 10.0;
         let final_position = Vec3::new(preferred_position.x, vehicle_y, preferred_position.z);
 
         // Use simplified approach with focused factory

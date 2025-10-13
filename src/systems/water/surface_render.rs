@@ -1,6 +1,7 @@
 use crate::components::unified_water::{UnifiedWaterBody, WaterSurface};
 use crate::components::water_material::WaterMaterial;
 use crate::factories::create_subdivided_plane;
+use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 
@@ -68,6 +69,7 @@ pub fn surface_render_system(
                 MeshMaterial3d(water_material_handle),
                 Transform::from_xyz(center_x, region.get_water_surface_level(0.0), center_z),
                 VisibilityRange::abrupt(0.0, 2000.0), // Visible up to 2km
+                NotShadowCaster, // Water should not cast shadows
                 WaterSurface {
                     region_entity: entity,
                 }, // Direct link for O(1) updates

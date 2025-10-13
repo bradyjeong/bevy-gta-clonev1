@@ -4,7 +4,7 @@ use bevy_rapier3d::prelude::*;
 
 use crate::config::GameConfig;
 use crate::resources::WorldRng;
-use crate::services::ground_detection::GroundDetectionService;
+
 use rand::prelude::*;
 
 /// Spawn NPCs using the new architecture while maintaining compatibility
@@ -15,7 +15,7 @@ pub fn spawn_new_npc_system(
     mut spawn_timer: Local<Timer>,
     time: Res<Time>,
     npc_query: Query<Entity, With<NPCState>>,
-    ground_service: Res<GroundDetectionService>,
+
     mut world_rng: ResMut<WorldRng>,
     _config: Res<GameConfig>,
 ) {
@@ -40,19 +40,16 @@ pub fn spawn_new_npc_system(
             // REDUCED: From 10 to 5 attempts
             let x = world_rng.global().gen_range(-50.0..50.0);
             let z = world_rng.global().gen_range(-50.0..50.0);
-            let position = Vec2::new(x, z);
 
-            if ground_service.is_spawn_position_valid(position) {
-                // Calculate spawn position with ground detection
-                let ground_height = ground_service.get_ground_height_simple(Vec2::new(x, z));
-                let spawn_position = Vec3::new(x, ground_height + 0.02, z);
 
-                // Use spawn_simple_npc which adds ALL required components
-                spawn_simple_npc(&mut commands, spawn_position, &mut world_rng);
+            // Spawn above ground, let gravity drop NPCs
+            let spawn_position = Vec3::new(x, 10.0, z);
 
-                println!("DEBUG: Spawned NPC at {spawn_position:?} (ground: {ground_height:.2})");
-                break; // Found valid position, spawn and exit
-            }
+            // Use spawn_simple_npc which adds ALL required components
+            spawn_simple_npc(&mut commands, spawn_position, &mut world_rng);
+
+            println!("DEBUG: Spawned NPC at {spawn_position:?}");
+            break; // Found valid position, spawn and exit
         }
     }
 }

@@ -1,6 +1,6 @@
 (
     name: "Eastern Ocean",
-    bounds: (2000.0, -3000.0, 3000.0, 3000.0),
+    bounds: (2075.0, -3000.0, 2600.0, 3000.0),
     surface_level: 0.0,
     depth: 50.0,
     tide: (

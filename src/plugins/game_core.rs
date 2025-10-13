@@ -13,7 +13,7 @@ use crate::plugins::{
     InputPlugin, MapPlugin, PlayerPlugin, UIPlugin, UnifiedWorldPlugin, VehiclePlugin, WaterPlugin,
 };
 use crate::resources::WorldRng;
-use crate::services::GroundDetectionPlugin;
+
 use crate::systems::performance::{DebugUIPlugin, PerformancePlugin, UnifiedPerformancePlugin};
 use crate::systems::physics::apply_universal_physics_safeguards;
 use crate::systems::player_physics_enable::enable_player_physics_next_frame;
@@ -95,7 +95,7 @@ impl Plugin for GameCorePlugin {
             // Vehicle Systems
             .add_plugins(VehiclePlugin)
             // World and Environment Systems
-            .add_plugins((WaterPlugin, GroundDetectionPlugin, UnifiedWorldPlugin))
+            .add_plugins((WaterPlugin, UnifiedWorldPlugin))
             // Performance and Validation Systems
             .add_plugins((
                 SpawnValidationPlugin,

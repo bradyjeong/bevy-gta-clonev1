@@ -1,6 +1,6 @@
 // HighSpeed component removed - no longer needed for finite world
 use crate::factories::VehicleFactory;
-use crate::services::ground_detection::GroundDetectionService;
+
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use bevy::prelude::*;
 
@@ -28,7 +28,7 @@ pub fn setup_initial_aircraft_unified(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
-    ground_service: Res<GroundDetectionService>,
+
     _config: Res<GameConfig>,
 ) {
     // Aircraft spawn positions (well-spaced from other content)
@@ -55,7 +55,6 @@ pub fn setup_initial_aircraft_unified(
             &mut meshes,
             &mut materials,
             &mut spawn_registry,
-            &ground_service,
             preferred_pos,
             aircraft_type,
         ) {
@@ -69,31 +68,17 @@ pub fn setup_initial_aircraft_unified(
     );
 }
 
-/// Spawn a single aircraft with ground detection and validation using VehicleFactory
+/// Spawn a single aircraft with validation using VehicleFactory
 fn spawn_aircraft_unified(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
-    ground_service: &Res<GroundDetectionService>,
     preferred_position: Vec3,
     aircraft_type: AircraftType,
 ) -> Option<Entity> {
-    // Get ground height for proper positioning
-    let ground_height = ground_service
-        .get_ground_height_simple(Vec2::new(preferred_position.x, preferred_position.z));
-
-    // Calculate spawn position (aircraft spawn at appropriate height above ground)
-    let spawn_height = match aircraft_type {
-        AircraftType::Helicopter => 1.5, // Helicopter body center height above ground (accounting for collider and skids)
-        AircraftType::F16 => 0.9,        // F16 capsule_z(0.9, 10.0) - radius 0.9 = ground clearance
-    };
-
-    let spawn_position = Vec3::new(
-        preferred_position.x,
-        ground_height + spawn_height,
-        preferred_position.z,
-    );
+    // Spawn above ground, let gravity drop aircraft
+    let spawn_position = Vec3::new(preferred_position.x, 10.0, preferred_position.z);
 
     // Validate spawn position
     let safe_position = SpawnValidator::spawn_entity_safely(
