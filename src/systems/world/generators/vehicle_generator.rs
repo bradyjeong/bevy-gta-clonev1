@@ -1,4 +1,5 @@
 use crate::components::{ContentType, VehicleType};
+use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
 use crate::factories::VehicleFactory;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
@@ -34,15 +35,28 @@ impl VehicleGenerator {
             return;
         }
 
+        // Skip if chunk is not on a terrain island
+        if !world.is_on_terrain_island(chunk_center) {
+            if let Some(chunk) = world.get_chunk_mut(coord) {
+                chunk.vehicles_generated = true;
+            }
+            return;
+        }
+
         // Generate road vehicles
         let vehicle_attempts = 8;
         for _ in 0..vehicle_attempts {
             let local_x = world_rng.global().gen_range(-half_size..half_size);
             let local_z = world_rng.global().gen_range(-half_size..half_size);
-            let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
+            let position = Vec3::new(
+                chunk_center.x + local_x,
+                LAND_ELEVATION,
+                chunk_center.z + local_z,
+            );
 
-            // Only spawn on roads with sufficient spacing
-            if self.is_on_road(position, world)
+            // Only spawn on roads (which are on islands) with sufficient spacing
+            if world.is_on_terrain_island(position)
+                && self.is_on_road(position, world)
                 && world
                     .placement_grid
                     .can_place(position, ContentType::Vehicle, 4.0, 15.0)
@@ -65,7 +79,11 @@ impl VehicleGenerator {
         if world_rng.global().gen_bool(0.02) {
             let local_x = world_rng.global().gen_range(-half_size..half_size);
             let local_z = world_rng.global().gen_range(-half_size..half_size);
-            let position = Vec3::new(chunk_center.x + local_x, 0.0, chunk_center.z + local_z);
+            let position = Vec3::new(
+                chunk_center.x + local_x,
+                LAND_ELEVATION + SPAWN_DROP_HEIGHT,
+                chunk_center.z + local_z,
+            );
 
             // Spawn in open areas away from roads
             if !self.is_on_road(position, world)

@@ -86,7 +86,7 @@ pub fn velocity_apply_system(
     // Preserve gravity in Y-axis like NPCs do
     velocity.linvel = Vec3::new(
         target_linear_velocity.x,
-        velocity.linvel.y, // Preserve gravity/falling
+        velocity.linvel.y,
         target_linear_velocity.z,
     );
     velocity.angvel = target_angular_velocity;

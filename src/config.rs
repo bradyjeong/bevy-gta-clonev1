@@ -1,6 +1,7 @@
 use crate::systems::world::unified_world::{ChunkCoord, chunk_coord_to_index};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use serde::{Deserialize, Serialize};
 
 /// CRITICAL: Centralized Game Configuration - Eliminates 470+ magic numbers
 /// All configurations have validation bounds and safety limits
@@ -29,6 +30,18 @@ pub struct GameConfig {
 
     // UI Configuration
     pub ui: UIConfig,
+
+    // World Streaming Configuration
+    pub world_streaming: WorldStreamingConfig,
+
+    // World Physics Configuration
+    pub world_physics: WorldPhysicsConfig,
+
+    // Character Dimensions Configuration
+    pub character_dimensions: CharacterDimensionsConfig,
+
+    // World Bounds Configuration
+    pub world_bounds: WorldBoundsConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -83,11 +96,6 @@ pub struct WorldConfig {
     // Performance parameters
     pub cleanup_delay: f32,   // 30.0 - Entity cleanup delay
     pub update_interval: f32, // 0.1 - Standard update interval
-
-    // Environment bounds
-    pub lake_size: f32,      // 200.0 - Lake size
-    pub lake_depth: f32,     // 5.0 - Lake depth
-    pub lake_position: Vec3, // (300.0, -2.0, 300.0) - Lake position
 }
 
 #[derive(Debug, Clone)]
@@ -257,6 +265,108 @@ pub struct UIConfig {
     pub border_radius: f32, // 5.0 - Default border radius
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorldStreamingConfig {
+    pub chunk_size: f32,
+    pub streaming_radius: f32,
+    pub lod_distances: LodDistancesConfig,
+    pub vehicle_lod: LodConfig,
+    pub npc_lod: LodConfig,
+    pub vegetation_cull_distance: f32,
+    pub road_cell_size: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LodDistancesConfig {
+    pub full: f32,
+    pub medium: f32,
+    pub far: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LodConfig {
+    pub full: f32,
+    pub medium: f32,
+    pub low: f32,
+    pub cull: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorldPhysicsConfig {
+    pub building_activation: ActivationRadiusConfig,
+    pub dynamic_physics: DynamicPhysicsConfig,
+    pub boundaries: BoundariesConfig,
+    pub emergency_thresholds: EmergencyThresholdsConfig,
+    pub water: WaterPhysicsConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActivationRadiusConfig {
+    pub activation_radius: f32,
+    pub deactivation_radius: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DynamicPhysicsConfig {
+    pub full_physics_radius: f32,
+    pub disable_radius: f32,
+    pub hysteresis_buffer: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BoundariesConfig {
+    pub pushback_strength: f32,
+    pub aircraft_pushback_strength: f32,
+    pub altitude_pushback: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EmergencyThresholdsConfig {
+    pub max_coordinate: f32,
+    pub max_velocity: f32,
+    pub max_angular_velocity: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WaterPhysicsConfig {
+    pub buoyancy_water_density: f32,
+    pub gravity: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CharacterDimensionsConfig {
+    pub player: CharacterDimensions,
+    pub npc: CharacterDimensions,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CharacterDimensions {
+    pub foot_level: f32,
+    pub capsule_radius: f32,
+    pub upper_sphere_y: f32,
+}
+
+impl CharacterDimensions {
+    pub fn lower_sphere_y(&self) -> f32 {
+        self.foot_level + self.capsule_radius
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorldBoundsConfig {
+    pub world_half_size: f32,
+    pub terrain: TerrainBoundsConfig,
+    pub edge_buffer: f32,
+    pub vehicle_spawn_half_size: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TerrainBoundsConfig {
+    pub left_x: f32,
+    pub right_x: f32,
+    pub half_size: f32,
+}
+
 impl Default for PhysicsConfig {
     fn default() -> Self {
         Self {
@@ -297,9 +407,6 @@ impl Default for WorldConfig {
             npc_density: 0.2,
             cleanup_delay: 30.0,
             update_interval: 0.1,
-            lake_size: 200.0,
-            lake_depth: 5.0,
-            lake_position: Vec3::new(300.0, -2.0, 300.0),
         }
     }
 }
@@ -458,6 +565,96 @@ impl Default for UIConfig {
     }
 }
 
+impl Default for WorldStreamingConfig {
+    fn default() -> Self {
+        Self {
+            chunk_size: 200.0,
+            streaming_radius: 800.0,
+            lod_distances: LodDistancesConfig {
+                full: 150.0,
+                medium: 300.0,
+                far: 500.0,
+            },
+            vehicle_lod: LodConfig {
+                full: 50.0,
+                medium: 100.0,
+                low: 125.0,
+                cull: 150.0,
+            },
+            npc_lod: LodConfig {
+                full: 25.0,
+                medium: 50.0,
+                low: 75.0,
+                cull: 100.0,
+            },
+            vegetation_cull_distance: 500.0,
+            road_cell_size: 400.0,
+        }
+    }
+}
+
+impl Default for WorldPhysicsConfig {
+    fn default() -> Self {
+        Self {
+            building_activation: ActivationRadiusConfig {
+                activation_radius: 200.0,
+                deactivation_radius: 250.0,
+            },
+            dynamic_physics: DynamicPhysicsConfig {
+                full_physics_radius: 100.0,
+                disable_radius: 300.0,
+                hysteresis_buffer: 50.0,
+            },
+            boundaries: BoundariesConfig {
+                pushback_strength: 100.0,
+                aircraft_pushback_strength: 150.0,
+                altitude_pushback: 50.0,
+            },
+            emergency_thresholds: EmergencyThresholdsConfig {
+                max_coordinate: 100000.0,
+                max_velocity: 600.0,
+                max_angular_velocity: 20.0,
+            },
+            water: WaterPhysicsConfig {
+                buoyancy_water_density: 1000.0,
+                gravity: 9.81,
+            },
+        }
+    }
+}
+
+impl Default for CharacterDimensionsConfig {
+    fn default() -> Self {
+        Self {
+            player: CharacterDimensions {
+                foot_level: -0.45,
+                capsule_radius: 0.25,
+                upper_sphere_y: 1.45,
+            },
+            npc: CharacterDimensions {
+                foot_level: -0.45,
+                capsule_radius: 0.25,
+                upper_sphere_y: 1.45,
+            },
+        }
+    }
+}
+
+impl Default for WorldBoundsConfig {
+    fn default() -> Self {
+        Self {
+            world_half_size: 3000.0,
+            terrain: TerrainBoundsConfig {
+                left_x: -1500.0,
+                right_x: 1500.0,
+                half_size: 600.0,
+            },
+            edge_buffer: 200.0,
+            vehicle_spawn_half_size: 2000.0,
+        }
+    }
+}
+
 /// CRITICAL VALIDATION FUNCTIONS - Prevent configuration errors
 impl GameConfig {
     /// Validates all configuration values and clamps to safe ranges
@@ -531,10 +728,6 @@ impl WorldConfig {
         // Clamp timing parameters
         self.cleanup_delay = self.cleanup_delay.clamp(5.0, 300.0);
         self.update_interval = self.update_interval.clamp(0.01, 1.0);
-
-        // Validate lake parameters
-        self.lake_size = self.lake_size.clamp(50.0, 1000.0);
-        self.lake_depth = self.lake_depth.clamp(1.0, 50.0);
     }
 
     /// Get total chunk count for the finite world

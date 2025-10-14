@@ -80,10 +80,7 @@ pub struct ProneRotation {
 #[derive(Component)]
 pub struct ExitingSwim;
 
-const ENTER_THRESHOLD: f32 = 0.10; // >10% submerged → enter (DEBUG: lowered)
-const EXIT_THRESHOLD: f32 = 0.05; // <5% submerged → exit (DEBUG: lowered)
-
-/// State machine with hysteresis - prevents flicker
+/// State machine based on center position - no thresholds needed
 pub fn swim_state_transition_system(
     mut commands: Commands,
     time: Res<Time>,
@@ -194,10 +191,7 @@ pub fn swim_state_transition_system(
                     "  Player half extents: ({:.3}, {:.3}, {:.3})",
                     half_ext.x, half_ext.y, half_ext.z
                 );
-                info!(
-                    "  Submersion ratio: {:.3} (need {:.2} to enter)",
-                    submersion, ENTER_THRESHOLD
-                );
+                info!("  Submersion ratio: {:.3} (need >0.0 to enter)", submersion);
 
                 if submersion > 0.0 {
                     info!("  🏊 SUBMERSION DETECTED! Ratio: {:.3}", submersion);
@@ -213,35 +207,48 @@ pub fn swim_state_transition_system(
 
         match swimming {
             None => {
-                if submersion > ENTER_THRESHOLD && water.is_some() {
-                    // ENTER SWIM MODE
-                    commands
-                        .entity(entity)
-                        .insert(Swimming {
-                            state: SwimState::Surface,
-                        })
-                        .insert(GravityScale(0.1)) // Light gravity to prevent floating
-                        .insert(Damping {
-                            linear_damping: 6.0,
-                            angular_damping: 3.0,
-                        }) // Higher damping in water
-                        .insert(WaterBodyId) // Enable water physics
-                        .insert(VehicleControlType::Swimming) // Switch to swimming controls
-                        .insert(ProneRotation {
-                            target_pitch: -std::f32::consts::FRAC_PI_2, // -90° for prone
-                            current_pitch: 0.0,                         // start upright
-                            going_prone: true,
-                        });
-                    state.set(GameState::Swimming); // Update UI state
-                    info!(
-                        "Player entered swimming mode at {:.1}% submersion",
-                        submersion * 100.0
-                    );
+                // ENTER: Pro games use head position - dive in when head goes underwater
+                if let Some(w) = water {
+                    let water_level = w.get_base_water_level(now);
+                    let head_y = pos.y + half_ext.y;
+
+                    if head_y < water_level {
+                        // HEAD UNDERWATER - enter swim mode
+                        commands
+                            .entity(entity)
+                            .insert(Swimming {
+                                state: SwimState::Surface,
+                            })
+                            .insert(GravityScale(0.1)) // Light gravity to prevent floating
+                            .insert(Damping {
+                                linear_damping: 6.0,
+                                angular_damping: 3.0,
+                            }) // Higher damping in water
+                            .insert(WaterBodyId) // Enable water physics
+                            .insert(VehicleControlType::Swimming) // Switch to swimming controls
+                            .insert(ProneRotation {
+                                target_pitch: -std::f32::consts::FRAC_PI_2, // -90° for prone
+                                current_pitch: 0.0,                         // start upright
+                                going_prone: true,
+                            });
+                        state.set(GameState::Swimming); // Update UI state
+                        info!(
+                            "Player entered swimming mode (head underwater: head Y={:.1}, water level={:.1})",
+                            head_y, water_level
+                        );
+                    }
                 }
             }
             Some(swim) => {
-                // Exit based on submersion hysteresis - prevents flicker
-                if submersion < EXIT_THRESHOLD {
+                // EXIT: Exit while still in shallow water (feet close to surface)
+                let entity_bottom = pos.y - half_ext.y;
+                let water_level = water
+                    .map(|w| w.get_base_water_level(now))
+                    .unwrap_or(f32::MAX);
+                let exit_margin = 0.3; // Exit when feet within 0.3m of water surface (still shallow)
+                let feet_on_ground = entity_bottom > water_level - exit_margin;
+
+                if feet_on_ground {
                     // Clamp velocity to prevent physics spikes on exit
                     if let Some(mut vel) = velocity {
                         vel.linvel.y = vel.linvel.y.clamp(-1.0, 2.0);
@@ -263,8 +270,8 @@ pub fn swim_state_transition_system(
                         .insert(PlayerPhysicsBundle::default()); // Restore clean physics state
                     state.set(GameState::Walking); // Update UI state
                     info!(
-                        "Player exited swimming mode at {:.1}% submersion",
-                        submersion * 100.0
+                        "Player exited swimming mode (feet on ground: feet Y={:.1}, water level={:.1})",
+                        entity_bottom, water_level
                     );
                     continue;
                 }

@@ -1,5 +1,6 @@
 use crate::components::ContentType;
 use crate::config::GameConfig;
+
 use crate::factories::generic_bundle::BundleError;
 use crate::systems::world::road_generation::is_on_road_spline;
 use crate::systems::world::road_network::RoadNetwork;
@@ -54,7 +55,7 @@ impl PositionValidator {
     /// Performance optimization that follows AGENT.md:
     /// - Clear caching strategy: 10m grid resolution
     /// - Explicit behavior: Shows exactly how height is calculated
-    /// - Simple algorithm: No complex terrain interpolation
+    /// - Matches island terrain curve: plateau, beach slope, ocean floor
     pub fn get_ground_height(&mut self, position: Vec2) -> f32 {
         let grid_x = (position.x / 10.0) as i32; // 10m grid resolution
         let grid_z = (position.y / 10.0) as i32;
@@ -63,10 +64,22 @@ impl PositionValidator {
             return cached_height;
         }
 
-        // Simple ground detection - would be enhanced with actual terrain data
-        let ground_height = 0.05; // Match terrain collider top surface at y = 0.05
+        use crate::constants::{LAND_ELEVATION, OCEAN_FLOOR_DEPTH};
+        use crate::systems::world::unified_world::UnifiedWorldManager;
 
-        // Cache for future use (following AGENT.md performance guidelines)
+        // Simplified: terrain islands are at LAND_ELEVATION, ocean at OCEAN_FLOOR_DEPTH
+        // Beach slopes handled by visual meshes only
+        let ground_height = if UnifiedWorldManager::default().is_on_terrain_island(Vec3::new(
+            position.x,
+            LAND_ELEVATION,
+            position.y,
+        )) {
+            LAND_ELEVATION
+        } else {
+            OCEAN_FLOOR_DEPTH
+        };
+
+        // Cache for future use (following AGENT.MD performance guidelines)
         self.position_cache.insert((grid_x, grid_z), ground_height);
         ground_height
     }
@@ -122,29 +135,12 @@ impl PositionValidator {
     ///
     /// Simple water detection following AGENT.md:
     /// - Explicit coordinates: No hidden magic values
-    /// - Clear algorithm: Distance-based detection
+    /// - Clear algorithm: Rectangular island detection
     /// - Focused responsibility: Only water area checking
     fn is_in_water_area(&self, position: Vec3) -> bool {
-        // Lake position and size (must match water.rs setup)
-        let lake_center = Vec3::new(300.0, 0.0, 300.0);
-        let lake_size = 200.0;
-        let buffer = 20.0; // Extra buffer around lake
+        use crate::systems::world::unified_world::UnifiedWorldManager;
 
-        let distance_to_lake =
-            Vec2::new(position.x - lake_center.x, position.z - lake_center.z).length();
-        let in_lake = distance_to_lake < (lake_size / 2.0 + buffer);
-
-        // Ocean bounds (2000, -3000) to (3000, 3000) - eastern ocean
-        let ocean_min_x = 2000.0;
-        let ocean_max_x = 3000.0;
-        let ocean_min_z = -3000.0;
-        let ocean_max_z = 3000.0;
-
-        let in_ocean = position.x >= ocean_min_x
-            && position.x <= ocean_max_x
-            && position.z >= ocean_min_z
-            && position.z <= ocean_max_z;
-
-        in_lake || in_ocean
+        // In water if not on terrain island
+        !UnifiedWorldManager::default().is_on_terrain_island(position)
     }
 }

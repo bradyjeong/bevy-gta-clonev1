@@ -346,6 +346,36 @@ impl UnifiedWorldManager {
     pub fn is_chunk_in_bounds(&self, coord: ChunkCoord) -> bool {
         self.chunk_coord_to_index(coord).is_some()
     }
+
+    /// Check if a world position is on a terrain island (left or right)
+    /// Left terrain: X=-1500, size=1200m (range: -2100 to -900)
+    /// Right terrain: X=1500, size=1200m (range: 900 to 2100)
+    /// Terrain Z range: -600 to 600
+    pub fn is_on_terrain_island(&self, position: Vec3) -> bool {
+        self.is_on_terrain_island_with_margin(position, 0.0)
+    }
+
+    /// Check if a world position is on a terrain island with optional margin
+    /// Margin extends the island bounds (useful for beaches, piers, nearshore chunks)
+    pub fn is_on_terrain_island_with_margin(&self, position: Vec3, margin: f32) -> bool {
+        use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
+
+        let half = TERRAIN_HALF_SIZE + margin;
+        let z_in_bounds = position.z >= -half && position.z <= half;
+
+        if !z_in_bounds {
+            return false;
+        }
+
+        // Check left terrain with margin
+        let on_left = position.x >= (LEFT_ISLAND_X - half) && position.x <= (LEFT_ISLAND_X + half);
+
+        // Check right terrain with margin
+        let on_right =
+            position.x >= (RIGHT_ISLAND_X - half) && position.x <= (RIGHT_ISLAND_X + half);
+
+        on_left || on_right
+    }
 }
 
 impl Default for UnifiedWorldManager {

@@ -6,9 +6,9 @@ use crate::resources::{MaterialRegistry, WorldRng};
 use crate::states::AppState;
 
 use crate::systems::spawn_validation::SpawnRegistry;
-use crate::systems::ui::loading_screen::{
-    cleanup_loading_screen, setup_loading_screen, update_loading_progress,
-};
+// use crate::systems::ui::loading_screen::{
+//     cleanup_loading_screen, setup_loading_screen, update_loading_progress,
+// };
 use crate::systems::world::generators::{
     BuildingGenerator, RoadGenerator, VegetationGenerator, VehicleGenerator,
 };
@@ -23,10 +23,10 @@ impl Plugin for StaticWorldGenerationPlugin {
         app
             // Note: SpawnRegistry is already initialized by SpawnValidationPlugin
             // World generation screen UI (camera stays active for UI rendering)
-            .add_systems(OnEnter(AppState::WorldGeneration), setup_loading_screen)
+            // .add_systems(OnEnter(AppState::WorldGeneration), setup_loading_screen)
             .add_systems(
                 OnExit(AppState::WorldGeneration),
-                (cleanup_loading_screen, cleanup_generation_resources),
+                cleanup_generation_resources,
             )
             // World generation systems
             .add_systems(
@@ -35,9 +35,7 @@ impl Plugin for StaticWorldGenerationPlugin {
             )
             .add_systems(
                 Update,
-                (apply_generated_chunks, update_loading_progress)
-                    .chain()
-                    .run_if(in_state(AppState::WorldGeneration)),
+                apply_generated_chunks.run_if(in_state(AppState::WorldGeneration)),
             );
     }
 }
@@ -65,9 +63,10 @@ fn queue_all_chunks_for_generation(
         config.world.total_chunks_x, config.world.total_chunks_z
     );
 
-    // Pre-initialize all chunks
+    // Only initialize chunks on terrain islands (with 200m margin for beaches)
     let half_x = (config.world.total_chunks_x / 2) as i32;
     let half_z = (config.world.total_chunks_z / 2) as i32;
+    let margin = 200.0; // 1 chunk margin for beaches and nearshore content
 
     let mut total_count = 0;
     for array_z in 0..config.world.total_chunks_z {
@@ -76,14 +75,21 @@ fn queue_all_chunks_for_generation(
             let chunk_z = array_z as i32 - half_z;
             let coord = ChunkCoord::new(chunk_x, chunk_z);
 
-            if let Some(chunk) = world_manager.get_chunk_mut(coord) {
-                chunk.state = ChunkState::Loading;
-                total_count += 1;
+            // Check if chunk is on a terrain island (skip ocean chunks)
+            let chunk_center = coord.to_world_pos_with_size(world_manager.chunk_size);
+            if world_manager.is_on_terrain_island_with_margin(chunk_center, margin) {
+                if let Some(chunk) = world_manager.get_chunk_mut(coord) {
+                    chunk.state = ChunkState::Loading;
+                    total_count += 1;
+                }
             }
         }
     }
 
-    info!("Initialized {} chunks for generation", total_count);
+    info!(
+        "Initialized {} chunks for generation (island chunks only, skipped ocean)",
+        total_count
+    );
 
     // Create generation queue
     commands.insert_resource(StaticGenerationQueue {
@@ -160,6 +166,7 @@ fn apply_generated_chunks(
             &mut meshes,
             &mut materials,
             &mut world_rng,
+            &water_bodies,
         );
 
         vehicle_generator.generate_vehicles(

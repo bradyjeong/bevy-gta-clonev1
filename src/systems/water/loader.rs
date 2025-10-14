@@ -5,12 +5,10 @@ use bevy::prelude::*;
 pub fn load_water_regions_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load water region assets
     let ocean_handle: Handle<WaterRegionAsset> = asset_server.load("config/water/ocean.ron");
-    let lake_handle: Handle<WaterRegionAsset> = asset_server.load("config/water/lake.ron");
 
     // Store handles for processing when loaded
     commands.insert_resource(WaterAssetHandles {
         ocean: ocean_handle,
-        lake: lake_handle,
     });
 
     info!("Started loading water region assets");
@@ -64,5 +62,4 @@ pub fn process_loaded_water_assets(
 #[derive(Resource)]
 pub struct WaterAssetHandles {
     pub ocean: Handle<WaterRegionAsset>,
-    pub lake: Handle<WaterRegionAsset>,
 }

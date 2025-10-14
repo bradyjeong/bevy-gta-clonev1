@@ -1,5 +1,6 @@
 use crate::GameConfig;
 use crate::components::vehicles::VehicleType;
+use crate::constants::SEA_LEVEL;
 use crate::factories::VehicleFactory;
 use bevy::prelude::*;
 
@@ -10,7 +11,15 @@ pub fn spawn_test_yacht(
     mut materials: ResMut<Assets<StandardMaterial>>,
     config: Res<GameConfig>,
 ) {
-    let yacht_position = Vec3::new(300.0, 1.0, 300.0); // Center of lake
+    // Yacht spawns near LEFT island shore for easy player access
+    // Position: just east of LEFT island center, accessible from beach
+    use crate::constants::{LEFT_ISLAND_X, TERRAIN_HALF_SIZE};
+    let yacht_position = Vec3::new(
+        LEFT_ISLAND_X + TERRAIN_HALF_SIZE + 150.0, // 150m offshore from east beach
+        SEA_LEVEL,
+        0.0,
+    );
+
     let vehicle_factory = VehicleFactory::with_config(config.clone());
 
     match vehicle_factory.spawn_vehicle_by_type(

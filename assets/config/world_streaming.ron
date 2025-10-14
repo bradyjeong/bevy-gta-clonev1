@@ -1,0 +1,23 @@
+(
+    chunk_size: 200.0,
+    streaming_radius: 800.0,
+    lod_distances: (
+        full: 150.0,
+        medium: 300.0,
+        far: 500.0,
+    ),
+    vehicle_lod: (
+        full: 50.0,
+        medium: 100.0,
+        low: 125.0,
+        cull: 150.0,
+    ),
+    npc_lod: (
+        full: 25.0,
+        medium: 50.0,
+        low: 75.0,
+        cull: 100.0,
+    ),
+    vegetation_cull_distance: 500.0,
+    road_cell_size: 400.0,
+)

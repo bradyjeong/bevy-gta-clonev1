@@ -13,6 +13,7 @@ debug-movement = []
 debug-audio = []
 debug-ui = []
 debug-timing = []
+debug-physics = []
 profile-worldgen = []
 
 # Removed gta_simple binary - using main.rs as default

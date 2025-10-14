@@ -62,6 +62,7 @@ impl Plugin for GameCorePlugin {
             // Game State and Resources
             .init_state::<GameState>()
             .init_resource::<GameConfig>()
+            .add_systems(PreStartup, load_world_configs)
             .init_resource::<CullingSettings>()
             .init_resource::<PerformanceStats>()
             .init_resource::<DirtyFlagsMetrics>()
@@ -157,5 +158,64 @@ impl Plugin for GameCorePlugin {
             );
 
         info!("✅ Game Core Plugin loaded with physics ordering and coordinate safety");
+    }
+}
+
+fn load_world_configs(mut config: ResMut<GameConfig>) {
+    use std::fs;
+
+    let configs = [
+        ("world_streaming.ron", "world streaming"),
+        ("world_physics.ron", "world physics"),
+        ("character_dimensions.ron", "character dimensions"),
+        ("world_bounds.ron", "world bounds"),
+    ];
+
+    for (filename, description) in configs.iter() {
+        let path = format!("assets/config/{filename}");
+        match fs::read_to_string(&path) {
+            Ok(contents) => match *filename {
+                "world_streaming.ron" => {
+                    match ron::from_str::<crate::config::WorldStreamingConfig>(&contents) {
+                        Ok(streaming_config) => {
+                            config.world_streaming = streaming_config;
+                            info!("✅ Loaded {} config", description);
+                        }
+                        Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
+                    }
+                }
+                "world_physics.ron" => {
+                    match ron::from_str::<crate::config::WorldPhysicsConfig>(&contents) {
+                        Ok(physics_config) => {
+                            config.world_physics = physics_config;
+                            info!("✅ Loaded {} config", description);
+                        }
+                        Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
+                    }
+                }
+                "world_bounds.ron" => {
+                    match ron::from_str::<crate::config::WorldBoundsConfig>(&contents) {
+                        Ok(bounds_config) => {
+                            config.world_bounds = bounds_config;
+                            info!("✅ Loaded {} config", description);
+                        }
+                        Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
+                    }
+                }
+                "character_dimensions.ron" => {
+                    match ron::from_str::<crate::config::CharacterDimensionsConfig>(&contents) {
+                        Ok(char_config) => {
+                            config.character_dimensions = char_config;
+                            info!("✅ Loaded {} config", description);
+                        }
+                        Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
+                    }
+                }
+                _ => {}
+            },
+            Err(e) => {
+                info!("ℹ️ No {} config found, using defaults: {}", description, e);
+            }
+        }
     }
 }

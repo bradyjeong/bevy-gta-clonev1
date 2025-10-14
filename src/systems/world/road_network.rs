@@ -1,3 +1,5 @@
+use crate::constants::LAND_ELEVATION;
+use crate::systems::world::unified_world::UNIFIED_CHUNK_SIZE;
 use crate::util::safe_math::safe_lerp;
 use bevy::prelude::*;
 use std::collections::HashMap;
@@ -373,6 +375,31 @@ impl RoadNetwork {
         id
     }
 
+    /// Check if position is on a rectangular terrain island
+    fn is_position_on_island(&self, position: Vec3) -> bool {
+        use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
+
+        // Check Z bounds (shared by both islands)
+        if position.z < -TERRAIN_HALF_SIZE || position.z > TERRAIN_HALF_SIZE {
+            return false;
+        }
+
+        // Check left island X bounds
+        let on_left = position.x >= (LEFT_ISLAND_X - TERRAIN_HALF_SIZE)
+            && position.x <= (LEFT_ISLAND_X + TERRAIN_HALF_SIZE);
+
+        // Check right island X bounds
+        let on_right = position.x >= (RIGHT_ISLAND_X - TERRAIN_HALF_SIZE)
+            && position.x <= (RIGHT_ISLAND_X + TERRAIN_HALF_SIZE);
+
+        on_left || on_right
+    }
+
+    /// Check if entire road segment (both endpoints) is on island
+    fn segment_on_island(&self, start: Vec3, end: Vec3) -> bool {
+        self.is_position_on_island(start) && self.is_position_on_island(end)
+    }
+
     pub fn generate_roads_for_cell(
         &mut self,
         cell_coord: IVec2,
@@ -423,20 +450,23 @@ impl RoadNetwork {
             } else {
                 RoadType::MainStreet
             };
-            let height = road_type.height();
+            let y = LAND_ELEVATION + road_type.height();
             let x_pos = base_x + cell_size * 0.5;
-            let start = Vec3::new(x_pos, height, base_z);
-            let end = Vec3::new(x_pos, height, base_z + cell_size);
+            let start = Vec3::new(x_pos, y, base_z);
+            let end = Vec3::new(x_pos, y, base_z + cell_size);
 
-            let road_id = generate_unique_road_id(cell_coord, local_index);
-            local_index += 1;
-            let road = RoadSpline::new(road_id, start, end, road_type);
-            self.roads.insert(road_id, road);
-            new_roads.push(road_id);
-            debug!(
-                "Generated VERTICAL arterial {:?} in cell {:?}",
-                road_type, cell_coord
-            );
+            // Only generate if BOTH endpoints are on island (prevents ocean roads)
+            if self.segment_on_island(start, end) {
+                let road_id = generate_unique_road_id(cell_coord, local_index);
+                local_index += 1;
+                let road = RoadSpline::new(road_id, start, end, road_type);
+                self.roads.insert(road_id, road);
+                new_roads.push(road_id);
+                debug!(
+                    "Generated VERTICAL arterial {:?} in cell {:?}",
+                    road_type, cell_coord
+                );
+            }
         }
 
         if is_horizontal_arterial {
@@ -445,41 +475,48 @@ impl RoadNetwork {
             } else {
                 RoadType::MainStreet
             };
-            let height = road_type.height();
+            let y = LAND_ELEVATION + road_type.height();
             let z_pos = base_z + cell_size * 0.5;
-            let start = Vec3::new(base_x, height, z_pos);
-            let end = Vec3::new(base_x + cell_size, height, z_pos);
+            let start = Vec3::new(base_x, y, z_pos);
+            let end = Vec3::new(base_x + cell_size, y, z_pos);
 
-            let road_id = generate_unique_road_id(cell_coord, local_index);
-            local_index += 1;
-            let road = RoadSpline::new(road_id, start, end, road_type);
-            self.roads.insert(road_id, road);
-            new_roads.push(road_id);
-            debug!(
-                "Generated HORIZONTAL arterial {:?} in cell {:?}",
-                road_type, cell_coord
-            );
+            // Only generate if BOTH endpoints are on island (prevents ocean roads)
+            if self.segment_on_island(start, end) {
+                let road_id = generate_unique_road_id(cell_coord, local_index);
+                local_index += 1;
+                let road = RoadSpline::new(road_id, start, end, road_type);
+                self.roads.insert(road_id, road);
+                new_roads.push(road_id);
+                debug!(
+                    "Generated HORIZONTAL arterial {:?} in cell {:?}",
+                    road_type, cell_coord
+                );
+            }
         }
 
         if !is_vertical_arterial && !is_horizontal_arterial {
             let road_type = RoadType::SideStreet;
-            let height = road_type.height();
-            let start = Vec3::new(base_x + cell_size * 0.2, height, base_z + cell_size * 0.2);
-            let end = Vec3::new(base_x + cell_size * 0.8, height, base_z + cell_size * 0.8);
-            let road_id = generate_unique_road_id(cell_coord, local_index);
-            local_index += 1;
-            let road = RoadSpline::new(road_id, start, end, road_type);
-            self.roads.insert(road_id, road);
-            new_roads.push(road_id);
-            debug!(
-                "Generated SideStreet in cell {:?} - no main roads",
-                cell_coord
-            );
+            let y = LAND_ELEVATION + road_type.height();
+            let start = Vec3::new(base_x + cell_size * 0.2, y, base_z + cell_size * 0.2);
+            let end = Vec3::new(base_x + cell_size * 0.8, y, base_z + cell_size * 0.8);
+
+            // Only generate if BOTH endpoints are on island (prevents ocean roads)
+            if self.segment_on_island(start, end) {
+                let road_id = generate_unique_road_id(cell_coord, local_index);
+                local_index += 1;
+                let road = RoadSpline::new(road_id, start, end, road_type);
+                self.roads.insert(road_id, road);
+                new_roads.push(road_id);
+                debug!(
+                    "Generated SideStreet in cell {:?} - no main roads",
+                    cell_coord
+                );
+            }
         }
 
         if !is_vertical_arterial && !is_horizontal_arterial {
             let road_type = RoadType::SideStreet;
-            let height = road_type.height();
+            let y = LAND_ELEVATION + road_type.height();
 
             let nearest_vertical = ((cell_coord.x as f32 / arterial_spacing as f32).round()
                 * arterial_spacing as f32)
@@ -490,20 +527,25 @@ impl RoadNetwork {
                 * cell_size
                 + cell_size * 0.5;
 
-            let start = Vec3::new(base_x + cell_size * 0.5, height, base_z + cell_size * 0.5);
-            let end_v = Vec3::new(nearest_vertical, height, base_z + cell_size * 0.5);
-            let end_h = Vec3::new(base_x + cell_size * 0.5, height, nearest_horizontal);
+            let start = Vec3::new(base_x + cell_size * 0.5, y, base_z + cell_size * 0.5);
+            let end_v = Vec3::new(nearest_vertical, y, base_z + cell_size * 0.5);
+            let end_h = Vec3::new(base_x + cell_size * 0.5, y, nearest_horizontal);
 
-            let road_id_v = generate_unique_road_id(cell_coord, local_index);
-            local_index += 1;
-            let connector_v = RoadSpline::new(road_id_v, start, end_v, road_type);
-            self.roads.insert(road_id_v, connector_v);
-            new_roads.push(road_id_v);
+            // Only generate connectors if BOTH endpoints are on island (prevents ocean roads)
+            if self.segment_on_island(start, end_v) {
+                let road_id_v = generate_unique_road_id(cell_coord, local_index);
+                local_index += 1;
+                let connector_v = RoadSpline::new(road_id_v, start, end_v, road_type);
+                self.roads.insert(road_id_v, connector_v);
+                new_roads.push(road_id_v);
+            }
 
-            let road_id_h = generate_unique_road_id(cell_coord, local_index);
-            let connector_h = RoadSpline::new(road_id_h, start, end_h, road_type);
-            self.roads.insert(road_id_h, connector_h);
-            new_roads.push(road_id_h);
+            if self.segment_on_island(start, end_h) {
+                let road_id_h = generate_unique_road_id(cell_coord, local_index);
+                let connector_h = RoadSpline::new(road_id_h, start, end_h, road_type);
+                self.roads.insert(road_id_h, connector_h);
+                new_roads.push(road_id_h);
+            }
 
             debug!("Generated connectors to arterials in cell {:?}", cell_coord);
         }
@@ -516,11 +558,43 @@ impl RoadNetwork {
 
     #[deprecated(note = "Use generate_roads_for_cell")]
     pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u64> {
-        use rand::SeedableRng;
+        use rand::{Rng, SeedableRng};
+
         let cell = IVec2::new(chunk_x, chunk_z);
         let seed = ((chunk_x as u64) << 32) | ((chunk_z as u64) & 0xFFFFFFFF);
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        self.generate_roads_for_cell(cell, ROAD_CELL_SIZE, &mut rng)
+        let mut roads = self.generate_roads_for_cell(cell, ROAD_CELL_SIZE, &mut rng);
+
+        // Generate local roads for island chunks
+        let chunk_center_x = chunk_x as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5;
+        let chunk_center_z = chunk_z as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5;
+        let chunk_center = Vec3::new(chunk_center_x, 0.0, chunk_center_z);
+
+        if self.is_position_on_island(chunk_center) {
+            // Generate 1-2 local roads per island chunk
+            let num_local_roads = rng.gen_range(1..=2);
+            for _ in 0..num_local_roads {
+                let y = LAND_ELEVATION + RoadType::SideStreet.height();
+                let offset1_x = rng.gen_range(-80.0..80.0);
+                let offset1_z = rng.gen_range(-80.0..80.0);
+                let offset2_x = rng.gen_range(-80.0..80.0);
+                let offset2_z = rng.gen_range(-80.0..80.0);
+
+                let start = Vec3::new(chunk_center_x + offset1_x, y, chunk_center_z + offset1_z);
+                let end = Vec3::new(chunk_center_x + offset2_x, y, chunk_center_z + offset2_z);
+
+                // Verify both ends are on island (prevents ocean roads)
+                if self.segment_on_island(start, end) {
+                    let road_id = self.next_road_id;
+                    self.next_road_id += 1;
+                    let road = RoadSpline::new(road_id, start, end, RoadType::SideStreet);
+                    self.roads.insert(road_id, road);
+                    roads.push(road_id);
+                }
+            }
+        }
+
+        roads
     }
 
     fn generate_premium_spawn_roads(
@@ -532,8 +606,16 @@ impl RoadNetwork {
         _rng: &mut impl rand::Rng,
         local_index: &mut u16,
     ) -> Vec<u64> {
+        // GUARD: Don't generate premium roads in ocean cells (between islands)
+        let cell_center = Vec3::new(base_x + cell_size * 0.5, 0.0, base_z + cell_size * 0.5);
+        if !self.is_position_on_island(cell_center) {
+            return Vec::new();
+        }
+
         let mut spawn_roads = Vec::new();
-        let height = 0.0;
+        let highway_y = LAND_ELEVATION + RoadType::Highway.height();
+        let main_y = LAND_ELEVATION + RoadType::MainStreet.height();
+        let side_y = LAND_ELEVATION + RoadType::SideStreet.height();
 
         let cell_min_x = base_x;
         let cell_max_x = base_x + cell_size;
@@ -542,30 +624,38 @@ impl RoadNetwork {
 
         let highway_configs = [
             (
-                Vec3::new(cell_min_x, height, base_z + cell_size * 0.5),
-                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.6),
-                Vec3::new(cell_max_x, height, base_z + cell_size * 0.5),
+                Vec3::new(cell_min_x, highway_y, base_z + cell_size * 0.5),
+                Vec3::new(
+                    base_x + cell_size * 0.3,
+                    highway_y,
+                    base_z + cell_size * 0.6,
+                ),
+                Vec3::new(cell_max_x, highway_y, base_z + cell_size * 0.5),
                 RoadType::Highway,
             ),
             (
-                Vec3::new(base_x + cell_size * 0.5, height, cell_min_z),
-                Vec3::new(base_x + cell_size * 0.6, height, base_z + cell_size * 0.3),
-                Vec3::new(base_x + cell_size * 0.5, height, cell_max_z),
+                Vec3::new(base_x + cell_size * 0.5, highway_y, cell_min_z),
+                Vec3::new(
+                    base_x + cell_size * 0.6,
+                    highway_y,
+                    base_z + cell_size * 0.3,
+                ),
+                Vec3::new(base_x + cell_size * 0.5, highway_y, cell_max_z),
                 RoadType::Highway,
             ),
         ];
 
         let main_street_configs = [
             (
-                Vec3::new(cell_min_x, height, base_z + cell_size * 0.25),
-                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.3),
-                Vec3::new(cell_max_x, height, base_z + cell_size * 0.25),
+                Vec3::new(cell_min_x, main_y, base_z + cell_size * 0.25),
+                Vec3::new(base_x + cell_size * 0.3, main_y, base_z + cell_size * 0.3),
+                Vec3::new(cell_max_x, main_y, base_z + cell_size * 0.25),
                 RoadType::MainStreet,
             ),
             (
-                Vec3::new(base_x + cell_size * 0.25, height, cell_min_z),
-                Vec3::new(base_x + cell_size * 0.3, height, base_z + cell_size * 0.3),
-                Vec3::new(base_x + cell_size * 0.25, height, cell_max_z),
+                Vec3::new(base_x + cell_size * 0.25, main_y, cell_min_z),
+                Vec3::new(base_x + cell_size * 0.3, main_y, base_z + cell_size * 0.3),
+                Vec3::new(base_x + cell_size * 0.25, main_y, cell_max_z),
                 RoadType::MainStreet,
             ),
         ];
@@ -590,16 +680,16 @@ impl RoadNetwork {
                 let sub_x = base_x + (i as f32 + 0.5) * cell_size / 4.0;
                 let sub_z = base_z + (j as f32 + 0.5) * cell_size / 4.0;
 
-                let start = Vec3::new(sub_x - 30.0, height, sub_z);
-                let end = Vec3::new(sub_x + 30.0, height, sub_z);
+                let start = Vec3::new(sub_x - 30.0, side_y, sub_z);
+                let end = Vec3::new(sub_x + 30.0, side_y, sub_z);
                 let road_id = generate_unique_road_id(cell_coord, *local_index);
                 *local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, RoadType::SideStreet);
                 self.roads.insert(road_id, road);
                 spawn_roads.push(road_id);
 
-                let start = Vec3::new(sub_x, height, sub_z - 30.0);
-                let end = Vec3::new(sub_x, height, sub_z + 30.0);
+                let start = Vec3::new(sub_x, side_y, sub_z - 30.0);
+                let end = Vec3::new(sub_x, side_y, sub_z + 30.0);
                 let road_id = generate_unique_road_id(cell_coord, *local_index);
                 *local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, RoadType::SideStreet);

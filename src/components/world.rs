@@ -1,3 +1,4 @@
+use crate::constants::LAND_ELEVATION;
 use bevy::prelude::*;
 
 /// NPC Behavior Component - replaces old NPCBehavior
@@ -572,8 +573,8 @@ impl WorldBounds {
         let center_x = (self.min_x + self.max_x) / 2.0;
         let center_z = (self.min_z + self.max_z) / 2.0;
 
-        // Spawn slightly offset from exact center
-        Vec3::new(center_x + 10.0, 2.0, center_z + 10.0)
+        // Spawn slightly offset from exact center at terrain elevation
+        Vec3::new(center_x + 10.0, LAND_ELEVATION + 0.5, center_z + 10.0)
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::bundles::VisibleChildBundle;
-use crate::constants::STATIC_GROUP;
+use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, STATIC_GROUP};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -12,7 +12,7 @@ pub fn setup_palm_trees(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // PALM TREES EVERYWHERE! (Dubai oasis style)
+    // Palm trees on left terrain island
     let palm_positions = [
         // Close to spawn area
         (10.0, 15.0),
@@ -41,7 +41,7 @@ pub fn setup_palm_trees(
         (-110.0, 55.0),
         (95.0, -115.0),
         (-105.0, 125.0),
-        // Scattered throughout the massive world
+        // Scattered throughout the island
         (150.0, 80.0),
         (140.0, -160.0),
         (-145.0, 155.0),
@@ -54,7 +54,7 @@ pub fn setup_palm_trees(
         (-195.0, 110.0),
         (190.0, -205.0),
         (-200.0, 195.0),
-        // Road-side palms (near highways)
+        // Road-side palms (near pathways)
         (15.0, 200.0),
         (15.0, -200.0),
         (-15.0, 180.0),
@@ -66,10 +66,12 @@ pub fn setup_palm_trees(
     ];
 
     for &(x, z) in palm_positions.iter() {
+        // Offset palm positions to left terrain island
+        let world_x = LEFT_ISLAND_X + x;
         // Simple palm tree - single trunk + simple crown
         let palm_entity = commands
             .spawn((
-                Transform::from_xyz(x, 0.0, z),
+                Transform::from_xyz(world_x, LAND_ELEVATION, z),
                 Visibility::Visible,
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),

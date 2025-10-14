@@ -1,5 +1,5 @@
 use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, NPC};
-
+use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -61,12 +61,19 @@ pub fn simple_npc_movement(
         // Calculate distance to target (XZ plane only to avoid vertical interference)
         let distance = (current_pos.xz() - target_pos.xz()).length();
 
-        // If close to target, pick a new random target (preserve current Y)
+        // If close to target, pick a new random target on current island
         if distance < 5.0 {
+            // Determine which island NPC is on
+            let island_x = if current_pos.x < 0.0 {
+                LEFT_ISLAND_X
+            } else {
+                RIGHT_ISLAND_X
+            };
+
             npc.target_position = Vec3::new(
-                rand::thread_rng().gen_range(-900.0..900.0),
+                island_x + rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
                 current_pos.y,
-                rand::thread_rng().gen_range(-900.0..900.0),
+                rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
             );
         } else {
             // Simple, direct NPC movement (XZ plane only)
@@ -133,12 +140,19 @@ pub fn optimized_npc_movement(
             npc.update_interval = 0.05; // Normal updates for close NPCs
         }
 
-        // If close to target, pick a new random target
+        // If close to target, pick a new random target on current island
         if distance < 5.0 {
+            // Determine which island NPC is on
+            let island_x = if current_pos.x < 0.0 {
+                LEFT_ISLAND_X
+            } else {
+                RIGHT_ISLAND_X
+            };
+
             npc.target_position = Vec3::new(
-                rand::thread_rng().gen_range(-900.0..900.0),
+                island_x + rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
                 1.0,
-                rand::thread_rng().gen_range(-900.0..900.0),
+                rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
             );
         } else {
             // Move towards target (legacy implementation)

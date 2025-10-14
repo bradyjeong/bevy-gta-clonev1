@@ -1,3 +1,4 @@
+use crate::constants::LAND_ELEVATION;
 use bevy::prelude::*;
 
 /// Unified Transform Factory - Eliminates 100+ Transform::from_xyz patterns  
@@ -11,7 +12,7 @@ impl TransformFactory {
     }
 
     pub fn at_ground_level(x: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, 0.0, z)
+        Transform::from_xyz(x, LAND_ELEVATION, z)
     }
 
     pub fn at_position(x: f32, y: f32, z: f32) -> Transform {
@@ -20,7 +21,7 @@ impl TransformFactory {
 
     // VEHICLE POSITIONING
     pub fn vehicle_spawn(x: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, 0.5, z)
+        Transform::from_xyz(x, LAND_ELEVATION + 0.5, z)
     }
 
     pub fn vehicle_elevated(x: f32, y: f32, z: f32) -> Transform {
@@ -241,7 +242,7 @@ impl TransformFactory {
 
     // WORLD STRUCTURES
     pub fn lamp_post(x: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, 0.0, z)
+        Transform::from_xyz(x, LAND_ELEVATION, z)
     }
 
     pub fn lamp_light() -> Transform {
@@ -249,7 +250,7 @@ impl TransformFactory {
     }
 
     pub fn tree_position(x: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, 0.0, z)
+        Transform::from_xyz(x, LAND_ELEVATION, z)
     }
 
     pub fn tree_fronds(frond_x: f32, frond_z: f32) -> Transform {
@@ -273,29 +274,6 @@ impl TransformFactory {
     pub fn street_light(x: f32, y: f32, z: f32) -> Transform {
         Transform::from_xyz(x, y, z)
             .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2))
-    }
-
-    // WATER FEATURES
-    pub fn lake_surface(lake_position: Vec3) -> Transform {
-        Transform::from_xyz(lake_position.x, lake_position.y, lake_position.z)
-    }
-
-    pub fn lake_bottom(lake_position: Vec3, depth: f32) -> Transform {
-        let safe_depth = depth.clamp(0.1, 1000.0);
-        Transform::from_xyz(
-            lake_position.x,
-            lake_position.y - safe_depth,
-            lake_position.z,
-        )
-    }
-
-    pub fn lake_cylinder(lake_position: Vec3, depth: f32) -> Transform {
-        let safe_depth = depth.clamp(0.1, 1000.0);
-        Transform::from_xyz(
-            lake_position.x,
-            lake_position.y - safe_depth / 2.0,
-            lake_position.z,
-        )
     }
 
     // SKY COMPONENTS

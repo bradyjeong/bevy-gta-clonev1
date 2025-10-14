@@ -35,7 +35,7 @@ pub fn buoyancy_system(
 
                 if submersion_ratio > 0.0 {
                     // Apply buoyancy force - proportional to submerged volume
-                    let buoyancy_force = 9.81 * 1000.0 * submersion_ratio * half_extents.volume(); // Water density * g * submerged volume
+                    let buoyancy_force = 9.81 * 1000.0 * submersion_ratio * half_extents.volume();
                     external_force.force.y += buoyancy_force;
 
                     // Debug logging for development

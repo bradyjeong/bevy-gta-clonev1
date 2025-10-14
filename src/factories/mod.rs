@@ -94,7 +94,9 @@ pub use npc_factory::{NPCFactory, NPCType};
 pub use vehicle_factory::VehicleFactory;
 
 // Specialized factory exports (selective imports)
-pub use beach_terrain::{create_beach_slope, create_circular_beach_ring};
+pub use beach_terrain::{
+    create_beach_slope, create_beach_slope_collider, create_circular_beach_ring,
+};
 pub use generic_bundle::{BundleError, GenericBundleFactory};
 pub use material_factory::{MaterialFactory, initialize_material_factory};
 pub use mesh_factory::MeshFactory;

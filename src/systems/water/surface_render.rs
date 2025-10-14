@@ -3,7 +3,6 @@ use crate::components::water_material::WaterMaterial;
 use crate::factories::create_subdivided_plane;
 use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
-use bevy::render::view::visibility::VisibilityRange;
 
 /// Water surface rendering system - creates visual water planes with animated waves
 pub fn surface_render_system(
@@ -68,7 +67,7 @@ pub fn surface_render_system(
                 Mesh3d(water_mesh),
                 MeshMaterial3d(water_material_handle),
                 Transform::from_xyz(center_x, region.get_water_surface_level(0.0), center_z),
-                VisibilityRange::abrupt(0.0, 2000.0), // Visible up to 2km
+                // No VisibilityRange - water is always visible like terrain
                 NotShadowCaster, // Water should not cast shadows
                 WaterSurface {
                     region_entity: entity,

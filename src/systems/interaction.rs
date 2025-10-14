@@ -247,7 +247,10 @@ pub fn interaction_system(
                         let inherited_vel = car_vel.cloned().unwrap_or(Velocity::zero());
 
                         // Preserve vehicle's Y rotation so player faces same direction
-                        let (vehicle_yaw, _, _) = car_gt.to_scale_rotation_translation().1.to_euler(EulerRot::YXZ);
+                        let (vehicle_yaw, _, _) = car_gt
+                            .to_scale_rotation_translation()
+                            .1
+                            .to_euler(EulerRot::YXZ);
                         let exit_rotation = Quat::from_rotation_y(vehicle_yaw);
 
                         // Phase A: Set pose and keep physics disabled this frame
@@ -304,7 +307,10 @@ pub fn interaction_system(
                         inherited_vel.linvel.y = 0.0; // Zero out upward velocity for realistic gravity
 
                         // Preserve vehicle's Y rotation so player faces same direction
-                        let (vehicle_yaw, _, _) = helicopter_gt.to_scale_rotation_translation().1.to_euler(EulerRot::YXZ);
+                        let (vehicle_yaw, _, _) = helicopter_gt
+                            .to_scale_rotation_translation()
+                            .1
+                            .to_euler(EulerRot::YXZ);
                         let exit_rotation = Quat::from_rotation_y(vehicle_yaw);
 
                         // Phase A: Set pose and keep physics disabled this frame
@@ -356,7 +362,10 @@ pub fn interaction_system(
                         inherited_vel.linvel.y = 0.0; // Zero out upward velocity for realistic gravity
 
                         // Preserve vehicle's Y rotation so player faces same direction
-                        let (vehicle_yaw, _, _) = f16_gt.to_scale_rotation_translation().1.to_euler(EulerRot::YXZ);
+                        let (vehicle_yaw, _, _) = f16_gt
+                            .to_scale_rotation_translation()
+                            .1
+                            .to_euler(EulerRot::YXZ);
                         let exit_rotation = Quat::from_rotation_y(vehicle_yaw);
 
                         // Phase A: Set pose and keep physics disabled this frame
