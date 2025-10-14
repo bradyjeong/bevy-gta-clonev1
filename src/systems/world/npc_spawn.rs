@@ -1,5 +1,8 @@
 use crate::components::{NPC_LOD_CULL_DISTANCE, NPCState, NPCType};
-use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
+use crate::constants::{
+    LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SPAWN_DROP_HEIGHT, TERRAIN_HALF_SIZE,
+};
+use crate::systems::world::unified_world::UnifiedWorldManager;
 use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
 
@@ -16,7 +19,7 @@ pub fn spawn_new_npc_system(
     mut spawn_timer: Local<Timer>,
     time: Res<Time>,
     npc_query: Query<Entity, With<NPCState>>,
-
+    world: Res<UnifiedWorldManager>,
     mut world_rng: ResMut<WorldRng>,
     _config: Res<GameConfig>,
 ) {
@@ -34,17 +37,28 @@ pub fn spawn_new_npc_system(
         return;
     }
 
-    // Spawn new NPCs on left terrain island
+    // Spawn new NPCs on both islands (randomly choose left or right)
     if spawn_timer.just_finished() {
-        let left_terrain_x = -1500.0;
-        let terrain_half_size = 600.0;
-        let x = left_terrain_x
+        let island_x = if world_rng.global().gen_bool(0.5) {
+            LEFT_ISLAND_X
+        } else {
+            RIGHT_ISLAND_X
+        };
+
+        let x = island_x
             + world_rng
                 .global()
-                .gen_range(-terrain_half_size..terrain_half_size);
+                .gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE);
         let z = world_rng
             .global()
-            .gen_range(-terrain_half_size..terrain_half_size);
+            .gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE);
+
+        let test_position = Vec3::new(x, LAND_ELEVATION, z);
+
+        // Validate spawn position is on terrain island
+        if !world.is_on_terrain_island(test_position) {
+            return; // Skip this spawn cycle, try again next time
+        }
 
         // Spawn above terrain, let gravity drop NPCs
         let spawn_position = Vec3::new(x, LAND_ELEVATION + SPAWN_DROP_HEIGHT, z);
@@ -74,6 +88,7 @@ pub fn spawn_simple_npc(
     let height = npc_state.appearance.height;
 
     // Use simplified entity creation
+    // TODO: Migrate to NPCFactory for proper visuals
     commands
         .spawn((
             npc_state,
@@ -116,6 +131,7 @@ pub fn spawn_npc_with_new_architecture(
     let height = npc_state.appearance.height;
 
     #[allow(deprecated)]
+    // TODO: Migrate to NPCFactory for proper visuals
     commands
         .spawn((
             // Use new simplified system

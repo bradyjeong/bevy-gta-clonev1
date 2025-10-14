@@ -1,5 +1,5 @@
 use crate::bundles::VisibleChildBundle;
-use crate::constants::{LAND_ELEVATION, STATIC_GROUP};
+use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, STATIC_GROUP};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -12,8 +12,7 @@ pub fn setup_palm_trees(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // Palm trees on left terrain island (X=-1500, size=1200m, so range is roughly -2100 to -900)
-    let left_terrain_x = -1500.0;
+    // Palm trees on left terrain island
     let palm_positions = [
         // Close to spawn area
         (10.0, 15.0),
@@ -68,7 +67,7 @@ pub fn setup_palm_trees(
 
     for &(x, z) in palm_positions.iter() {
         // Offset palm positions to left terrain island
-        let world_x = left_terrain_x + x;
+        let world_x = LEFT_ISLAND_X + x;
         // Simple palm tree - single trunk + simple crown
         let palm_entity = commands
             .spawn((

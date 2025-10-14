@@ -24,14 +24,20 @@ pub fn setup_debug_camera(mut _commands: Commands) {
 
 /// Add debug visualization to existing entities - TEMPORARILY DISABLED
 pub fn add_debug_visualization(
-    _commands: Commands,
-    _meshes: ResMut<Assets<Mesh>>,
-    _materials: ResMut<Assets<StandardMaterial>>,
-    _entity_query: Query<(Entity, &Transform), (With<VisibilityRange>, Without<Camera>)>,
+    #[allow(unused_variables)] commands: Commands,
+    #[allow(unused_variables)] meshes: ResMut<Assets<Mesh>>,
+    #[allow(unused_variables)] materials: ResMut<Assets<StandardMaterial>>,
+    #[allow(unused_variables)] entity_query: Query<
+        (Entity, &Transform),
+        (With<VisibilityRange>, Without<Camera>),
+    >,
 ) {
     // TEMPORARILY DISABLED
     #[cfg(feature = "debug-ui")]
     {
+        let mut commands = commands;
+        let mut meshes = meshes;
+        let mut materials = materials;
         let debug_material = materials.add(StandardMaterial {
             base_color: Color::srgba(1.0, 0.0, 0.0, 0.3),
             alpha_mode: AlphaMode::Blend,

@@ -53,11 +53,13 @@ impl UnifiedWaterBody {
     ) -> f32 {
         // Use base water level for gameplay logic - professional approach
         let water_level = self.get_base_water_level(time);
-        let entity_bottom = transform.translation.y - half_extents.y;
-        let entity_top = transform.translation.y + half_extents.y;
+        let entity_center = transform.translation.y;
+        let entity_bottom = entity_center - half_extents.y;
+        let entity_top = entity_center + half_extents.y;
 
+        // CRITICAL FIX: If entity bottom is above water, not swimming (prevents beach swimming bug)
         if entity_bottom > water_level {
-            0.0 // Completely above water
+            0.0 // Completely above water - not swimming
         } else if entity_top < water_level {
             1.0 // Completely submerged
         } else {

@@ -6,7 +6,8 @@ use crate::components::{
     PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg, PlayerTorso, VehicleControlType,
 };
 use crate::constants::{
-    CHARACTER_GROUP, LAND_ELEVATION, SEA_LEVEL, SPAWN_DROP_HEIGHT, STATIC_GROUP, VEHICLE_GROUP,
+    CHARACTER_GROUP, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SPAWN_DROP_HEIGHT,
+    STATIC_GROUP, TERRAIN_SIZE, VEHICLE_GROUP,
 };
 
 use crate::systems::audio::FootstepTimer;
@@ -27,6 +28,10 @@ pub fn setup_basic_world(
     commands.spawn((
         MainCamera,
         Camera3d::default(),
+        Projection::Perspective(PerspectiveProjection {
+            far: 3500.0, // Covers world boundaries at ±3200m with buffer
+            ..default()
+        }),
         Transform::from_xyz(0.0, 15.0, 25.0).looking_at(Vec3::ZERO, Vec3::Y),
         // Camera in direct world coordinates
     ));
@@ -66,23 +71,15 @@ pub fn setup_basic_world(
             ));
         });
 
-    // DUAL ISLAND CONFIGURATION
-    // World bounds remain unchanged, terrain is shrunk and positioned as islands
-    let terrain_size = 1200.0; // Shrunk from 4096m to 1200m
-
-    // Left terrain position (vertically centered, with margin from left edge)
-    let left_terrain_x = -1500.0; // Positioned left of center with margin
-
-    // Right terrain position (mirror of left)
-    let right_terrain_x = 1500.0; // Positioned right of center with margin
-
+    // DUAL RECTANGULAR ISLAND CONFIGURATION
+    // Using centralized constants from constants.rs
     // LEFT TERRAIN ISLAND
     spawn_terrain_island(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(left_terrain_x, LAND_ELEVATION, 0.0),
-        terrain_size,
+        Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0),
+        TERRAIN_SIZE,
         "Left",
     );
 
@@ -91,13 +88,13 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(right_terrain_x, LAND_ELEVATION, 0.0),
-        terrain_size,
+        Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
+        TERRAIN_SIZE,
         "Right",
     );
 
     // OCEAN FLOOR - Fills entire world
-    let ocean_size = 10000.0; // Large ocean covering entire world
+    let ocean_size = 6400.0; // Match world bounds at ±3200m
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(ocean_size, ocean_size))),
         MeshMaterial3d(materials.add(StandardMaterial {
@@ -110,7 +107,7 @@ pub fn setup_basic_world(
     ));
 
     commands.spawn((
-        Transform::from_xyz(0.0, -10.05, 0.0),
+        Transform::from_xyz(0.0, -10.2, 0.0), // Below heightfield ocean floor to prevent co-planar collision
         RigidBody::Fixed,
         Collider::cuboid(ocean_size / 2.0, 0.05, ocean_size / 2.0),
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
@@ -154,23 +151,23 @@ pub fn setup_basic_world(
         Name::new("World Boundary West"),
     ));
 
-    // LEFT TERRAIN BEACHES (all 4 edges)
+    // LEFT TERRAIN BEACHES (all 4 edges with corners filled)
     spawn_terrain_beaches(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(left_terrain_x, LAND_ELEVATION, 0.0),
-        terrain_size,
+        Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0),
+        TERRAIN_SIZE,
         "Left",
     );
 
-    // RIGHT TERRAIN BEACHES (all 4 edges)
+    // RIGHT TERRAIN BEACHES (all 4 edges with corners filled)
     spawn_terrain_beaches(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(right_terrain_x, LAND_ELEVATION, 0.0),
-        terrain_size,
+        Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
+        TERRAIN_SIZE,
         "Right",
     );
 
@@ -195,7 +192,7 @@ pub fn setup_basic_world(
             ),
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             Velocity::zero(),
-            Transform::from_xyz(left_terrain_x, player_y, 0.0),
+            Transform::from_xyz(LEFT_ISLAND_X, player_y, 0.0),
             Visibility::Visible,
             InheritedVisibility::VISIBLE,
             ViewVisibility::default(),
@@ -212,7 +209,7 @@ pub fn setup_basic_world(
         HumanAnimation::default(),
         PlayerBody::default(),
         FootstepTimer::default(),
-        MovementTracker::new(Vec3::new(left_terrain_x, LAND_ELEVATION, 0.0), 5.0),
+        MovementTracker::new(Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0), 5.0),
         ControlState::default(),
         PlayerControlled,
         VehicleControlType::Walking,
@@ -220,7 +217,7 @@ pub fn setup_basic_world(
 
     spawn_registry.register_entity(
         player_entity,
-        Vec3::new(left_terrain_x, player_y, 0.0),
+        Vec3::new(LEFT_ISLAND_X, player_y, 0.0),
         SpawnableType::Player,
     );
 
@@ -334,6 +331,7 @@ pub fn setup_basic_world(
     ));
 }
 
+#[allow(clippy::too_many_arguments)]
 fn spawn_terrain_island(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -364,124 +362,136 @@ fn spawn_terrain_beaches(
     terrain_size: f32,
     name: &str,
 ) {
-    use crate::factories::create_beach_slope;
+    use crate::factories::beach_terrain::{create_beach_slope, create_beach_slope_collider};
 
-    let land_elevation = terrain_center.y; // Extract land elevation from terrain center
+    let land_elevation = terrain_center.y;
+    let ocean_floor_y = -10.0;
     let beach_width = 100.0;
     let half_size = terrain_size / 2.0;
 
-    // NORTH BEACH (positive Z) - slope extends outward in +Z direction
-    let north_beach = create_beach_slope(beach_width, terrain_size, land_elevation, SEA_LEVEL, 32);
-    let north_center = Vec3::new(
-        terrain_center.x,
-        0.0,
-        terrain_center.z + half_size + beach_width / 2.0,
-    );
+    // Beach center Y (between land and ocean)
+    let beach_center_y = (land_elevation + ocean_floor_y) / 2.0; // Y = -3.5
 
-    commands.spawn((
-        Mesh3d(meshes.add(north_beach.clone())),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.75, 0.6),
-            perceptual_roughness: 0.7,
-            ..default()
-        })),
-        Transform::from_translation(north_center)
-            .with_rotation(Quat::from_rotation_y(-std::f32::consts::PI / 2.0)),
-        Name::new(format!("{name} North Beach Visual")),
-    ));
+    // Shared beach material
+    let beach_material = materials.add(StandardMaterial {
+        base_color: Color::srgb(0.8, 0.75, 0.6),
+        perceptual_roughness: 0.7,
+        ..default()
+    });
 
-    commands.spawn((
-        Transform::from_translation(north_center)
-            .with_rotation(Quat::from_rotation_y(-std::f32::consts::PI / 2.0)),
-        RigidBody::Fixed,
-        Collider::from_bevy_mesh(&north_beach, &default()).unwrap(),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
-        Name::new(format!("{name} North Beach Collision")),
-    ));
+    // SMOOTH BEACH PHYSICS: Use create_beach_slope_collider (2 triangles) for smooth collision
+    // Visual mesh: 32 subdivisions for smooth appearance
+    // Collider mesh: Simple sloped quad (2 triangles) prevents jolting
 
-    // SOUTH BEACH (negative Z) - slope extends outward in -Z direction
-    let south_beach = create_beach_slope(beach_width, terrain_size, land_elevation, SEA_LEVEL, 32);
-    let south_center = Vec3::new(
-        terrain_center.x,
-        0.0,
-        terrain_center.z - (half_size + beach_width / 2.0),
-    );
-
-    commands.spawn((
-        Mesh3d(meshes.add(south_beach.clone())),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.75, 0.6),
-            perceptual_roughness: 0.7,
-            ..default()
-        })),
-        Transform::from_translation(south_center)
-            .with_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0)),
-        Name::new(format!("{name} South Beach Visual")),
-    ));
-
-    commands.spawn((
-        Transform::from_translation(south_center)
-            .with_rotation(Quat::from_rotation_y(std::f32::consts::PI / 2.0)),
-        RigidBody::Fixed,
-        Collider::from_bevy_mesh(&south_beach, &default()).unwrap(),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
-        Name::new(format!("{name} South Beach Collision")),
-    ));
-
-    // EAST BEACH (positive X)
-    let east_beach = create_beach_slope(beach_width, terrain_size, land_elevation, SEA_LEVEL, 32);
-    let east_center = Vec3::new(
+    // EAST BEACH (+X direction) - mesh naturally slopes +X, NO rotation needed
+    let east_visual =
+        create_beach_slope(beach_width, terrain_size, land_elevation, ocean_floor_y, 32);
+    let east_collider_mesh =
+        create_beach_slope_collider(beach_width, terrain_size, land_elevation, ocean_floor_y);
+    let east_pos = Vec3::new(
         terrain_center.x + half_size + beach_width / 2.0,
-        0.0,
+        beach_center_y,
         terrain_center.z,
     );
 
     commands.spawn((
-        Mesh3d(meshes.add(east_beach.clone())),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.75, 0.6),
-            perceptual_roughness: 0.7,
-            ..default()
-        })),
-        Transform::from_translation(east_center),
+        Mesh3d(meshes.add(east_visual)),
+        MeshMaterial3d(beach_material.clone()),
+        Transform::from_translation(east_pos),
         Name::new(format!("{name} East Beach Visual")),
     ));
 
     commands.spawn((
-        Transform::from_translation(east_center),
+        Transform::from_translation(east_pos),
         RigidBody::Fixed,
-        Collider::from_bevy_mesh(&east_beach, &default()).unwrap(),
+        Collider::from_bevy_mesh(&east_collider_mesh, &default())
+            .expect("Beach collider creation failed"),
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
-        Name::new(format!("{name} East Beach Collision")),
+        Name::new(format!("{name} East Beach Collider")),
     ));
 
-    // WEST BEACH (negative X)
-    let west_beach = create_beach_slope(beach_width, terrain_size, land_elevation, SEA_LEVEL, 32);
-    let west_center = Vec3::new(
+    // WEST BEACH (-X direction) - flip 180° to slope toward -X
+    let west_visual =
+        create_beach_slope(beach_width, terrain_size, land_elevation, ocean_floor_y, 32);
+    let west_collider_mesh =
+        create_beach_slope_collider(beach_width, terrain_size, land_elevation, ocean_floor_y);
+    let west_pos = Vec3::new(
         terrain_center.x - (half_size + beach_width / 2.0),
-        0.0,
+        beach_center_y,
         terrain_center.z,
     );
+    let west_rotation = Quat::from_rotation_y(std::f32::consts::PI);
 
     commands.spawn((
-        Mesh3d(meshes.add(west_beach.clone())),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.8, 0.75, 0.6),
-            perceptual_roughness: 0.7,
-            ..default()
-        })),
-        Transform::from_translation(west_center)
-            .with_rotation(Quat::from_rotation_y(std::f32::consts::PI)),
+        Mesh3d(meshes.add(west_visual)),
+        MeshMaterial3d(beach_material.clone()),
+        Transform::from_translation(west_pos).with_rotation(west_rotation),
         Name::new(format!("{name} West Beach Visual")),
     ));
 
     commands.spawn((
-        Transform::from_translation(west_center)
-            .with_rotation(Quat::from_rotation_y(std::f32::consts::PI)),
+        Transform::from_translation(west_pos).with_rotation(west_rotation),
         RigidBody::Fixed,
-        Collider::from_bevy_mesh(&west_beach, &default()).unwrap(),
+        Collider::from_bevy_mesh(&west_collider_mesh, &default())
+            .expect("Beach collider creation failed"),
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
-        Name::new(format!("{name} West Beach Collision")),
+        Name::new(format!("{name} West Beach Collider")),
+    ));
+
+    // NORTH BEACH (+Z direction) - rotate -90° clockwise so X→-Z
+    let north_visual =
+        create_beach_slope(beach_width, terrain_size, land_elevation, ocean_floor_y, 32);
+    let north_collider_mesh =
+        create_beach_slope_collider(beach_width, terrain_size, land_elevation, ocean_floor_y);
+    let north_pos = Vec3::new(
+        terrain_center.x,
+        beach_center_y,
+        terrain_center.z + half_size + beach_width / 2.0,
+    );
+    let north_rotation = Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2);
+
+    commands.spawn((
+        Mesh3d(meshes.add(north_visual)),
+        MeshMaterial3d(beach_material.clone()),
+        Transform::from_translation(north_pos).with_rotation(north_rotation),
+        Name::new(format!("{name} North Beach Visual")),
+    ));
+
+    commands.spawn((
+        Transform::from_translation(north_pos).with_rotation(north_rotation),
+        RigidBody::Fixed,
+        Collider::from_bevy_mesh(&north_collider_mesh, &default())
+            .expect("Beach collider creation failed"),
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Name::new(format!("{name} North Beach Collider")),
+    ));
+
+    // SOUTH BEACH (-Z direction) - rotate +90° counterclockwise so X→Z
+    let south_visual =
+        create_beach_slope(beach_width, terrain_size, land_elevation, ocean_floor_y, 32);
+    let south_collider_mesh =
+        create_beach_slope_collider(beach_width, terrain_size, land_elevation, ocean_floor_y);
+    let south_pos = Vec3::new(
+        terrain_center.x,
+        beach_center_y,
+        terrain_center.z - (half_size + beach_width / 2.0),
+    );
+    let south_rotation = Quat::from_rotation_y(std::f32::consts::FRAC_PI_2);
+
+    commands.spawn((
+        Mesh3d(meshes.add(south_visual)),
+        MeshMaterial3d(beach_material.clone()),
+        Transform::from_translation(south_pos).with_rotation(south_rotation),
+        Name::new(format!("{name} South Beach Visual")),
+    ));
+
+    commands.spawn((
+        Transform::from_translation(south_pos).with_rotation(south_rotation),
+        RigidBody::Fixed,
+        Collider::from_bevy_mesh(&south_collider_mesh, &default())
+            .expect("Beach collider creation failed"),
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Name::new(format!("{name} South Beach Collider")),
     ));
 }
 
@@ -496,4 +506,7 @@ pub fn setup_dubai_noon_lighting(mut commands: Commands) {
         },
         Transform::from_xyz(8.0, 6.0, 8.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+
+    // Note: Bevy 0.16 doesn't have built-in fog - would need external crate like bevy_atmosphere
+    // For now, rely on natural atmospheric perspective from 3km far plane
 }

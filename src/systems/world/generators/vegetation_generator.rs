@@ -42,6 +42,7 @@ impl VegetationGenerator {
 
         // Generate palm tree positions - scaled by density
         let tree_attempts = (vegetation_density * 5.0) as usize;
+        let mut trees_spawned = 0;
 
         for _ in 0..tree_attempts {
             let local_x = world_rng.global().gen_range(-half_size..half_size);
@@ -52,8 +53,9 @@ impl VegetationGenerator {
                 chunk_center.z + local_z,
             );
 
-            // Check if position is valid (not on road, not overlapping other trees, not in water)
-            if !self.is_on_road(position, world)
+            // Check if position is valid (on island, not on road, not overlapping, not in water)
+            if world.is_on_terrain_island(position)
+                && !self.is_on_road(position, world)
                 && !self.is_in_water_area(position, water_bodies)
                 && world
                     .placement_grid
@@ -62,6 +64,8 @@ impl VegetationGenerator {
                 if let Ok(tree_entity) =
                     self.spawn_palm_tree(commands, coord, position, meshes, materials)
                 {
+                    trees_spawned += 1;
+
                     // Add to placement grid
                     world
                         .placement_grid
@@ -73,6 +77,13 @@ impl VegetationGenerator {
                     }
                 }
             }
+        }
+
+        if trees_spawned > 0 {
+            debug!(
+                "Spawned {} palm trees in chunk ({}, {})",
+                trees_spawned, coord.x, coord.z
+            );
         }
 
         // Mark vegetation as generated
@@ -96,7 +107,7 @@ impl VegetationGenerator {
                 Visibility::Visible,
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
-                VisibilityRange::abrupt(0.0, 500.0), // Standardized 500m culling
+                // Removed parent VisibilityRange - let children control their own culling
                 UnifiedChunkEntity {
                     coord: chunk_coord,
                     layer: ContentLayer::Vegetation,
@@ -132,13 +143,14 @@ impl VegetationGenerator {
                 VisibleChildBundle::default(),
                 VisibilityRange {
                     start_margin: 0.0..0.0,
-                    end_margin: 450.0..550.0,
-                    use_aabb: false,
+                    end_margin: 3000.0..3500.0,
+                    use_aabb: true, // Use AABB for accurate culling
                 },
             ));
         }
 
-        // Simple physics collider for trunk - inherits visibility from parent
+        // Simple physics collider for trunk
+        // Note: Colliders don't need visibility - they're always active for physics
         commands.spawn((
             RigidBody::Fixed,
             Collider::cylinder(4.0, 0.3),
@@ -184,9 +196,16 @@ impl VegetationGenerator {
 
     fn is_in_water_area(&self, position: Vec3, water_bodies: &Query<&UnifiedWaterBody>) -> bool {
         let buffer = 20.0; // Buffer zone around water to avoid palm trees
+        let vertical_clearance = 1.0; // Trees must be this much above water
 
         // Check if position is in any water body
         for water_body in water_bodies.iter() {
+            // Skip check if tree is above water surface (islands are elevated)
+            let water_surface = water_body.get_water_surface_level(0.0);
+            if position.y > water_surface + vertical_clearance {
+                continue; // Tree is safely above water
+            }
+
             if water_body.contains_point(position.x, position.z) {
                 return true;
             }

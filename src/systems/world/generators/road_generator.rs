@@ -1,6 +1,7 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
+use crate::constants::LAND_ELEVATION;
 use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
 use crate::systems::world::road_mesh::{
     generate_road_markings_mesh_local, generate_road_mesh_local,
@@ -38,6 +39,7 @@ impl RoadGenerator {
         // Create road entities and add to placement grid
         for road_id in new_road_ids {
             if let Some(road) = world.road_network.roads.get(&road_id).cloned() {
+                // RoadNetwork already validates island boundaries during generation
                 // Skip roads that pass through water areas
                 if self.road_intersects_water(&road, water_bodies) {
                     continue;
@@ -91,7 +93,10 @@ impl RoadGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         material_registry: &mut MaterialRegistry,
     ) -> Entity {
-        let center_pos = road.evaluate(0.5);
+        // Get road center position and set correct height
+        let mut center_pos = road.evaluate(0.5);
+        let base_y = LAND_ELEVATION + road.road_type.height();
+        center_pos.y = base_y;
 
         let road_material =
             self.create_road_material(&road.road_type, materials, material_registry);
@@ -108,11 +113,7 @@ impl RoadGenerator {
                 Visibility::default(),
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
-                VisibilityRange {
-                    start_margin: 0.0..0.0,
-                    end_margin: 450.0..550.0,
-                    use_aabb: false,
-                },
+                // Removed parent VisibilityRange - let children control their own culling
                 DynamicContent {
                     content_type: ContentType::Road,
                 },
@@ -145,8 +146,8 @@ impl RoadGenerator {
                 VisibleChildBundle::default(),
                 VisibilityRange {
                     start_margin: 0.0..0.0,
-                    end_margin: 450.0..550.0,
-                    use_aabb: false,
+                    end_margin: 3000.0..3500.0,
+                    use_aabb: true, // Use AABB for accurate culling of long roads
                 },
             ));
         }
@@ -263,13 +264,14 @@ impl RoadGenerator {
         None
     }
 
-    /// Check if road intersects water area
+    /// Check if road intersects water area (3D check - roads above water are OK)
     fn road_intersects_water(
         &self,
         road: &RoadSpline,
         water_bodies: &Query<&UnifiedWaterBody>,
     ) -> bool {
         let buffer = 10.0; // Buffer zone around water to avoid roads
+        let vertical_clearance = 2.0; // Roads must be this much above water surface
 
         // Sample road spline at multiple points
         let samples = 10;
@@ -279,6 +281,12 @@ impl RoadGenerator {
 
             // Check if road point intersects any water body
             for water_body in water_bodies.iter() {
+                // Skip check if road is above water surface (islands are elevated)
+                let water_surface = water_body.get_water_surface_level(0.0);
+                if road_point.y > water_surface + vertical_clearance {
+                    continue; // Road is safely above water
+                }
+
                 if water_body.contains_point(road_point.x, road_point.z) {
                     return true;
                 }

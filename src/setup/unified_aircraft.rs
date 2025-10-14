@@ -1,8 +1,9 @@
 // HighSpeed component removed - no longer needed for finite world
-use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
+use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, SPAWN_DROP_HEIGHT};
 use crate::factories::VehicleFactory;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
+use crate::systems::world::unified_world::UnifiedWorldManager;
 use bevy::prelude::*;
 
 use crate::GameConfig;
@@ -19,7 +20,7 @@ pub enum AircraftType {
 /// - Replaces setup_simple_f16 (src/setup/vehicles.rs line 310)
 ///
 /// KEY IMPROVEMENTS:
-/// - Ground detection using GroundDetectionService for proper positioning
+/// - Island-aware spawn validation for proper positioning
 /// - Spawn validation using SpawnValidator/SpawnRegistry
 /// - Consistent bundle patterns similar to DynamicVehicleBundle
 /// - Far visibility culling distances for aircraft
@@ -29,58 +30,58 @@ pub fn setup_initial_aircraft_unified(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
-
+    world: Res<UnifiedWorldManager>,
     _config: Res<GameConfig>,
 ) {
-    // Aircraft spawn positions on left terrain island (X=-1500)
-    let left_terrain_x = -1500.0;
+    // Aircraft spawn positions on left terrain island (within 600m radius flat terrain)
+    // Max distance from island center: ~500m to stay safely on plateau
     let aircraft_spawns = [
         (
-            Vec3::new(left_terrain_x + 15.0, 0.0, 15.0),
+            Vec3::new(LEFT_ISLAND_X + 15.0, 0.0, 15.0),
             AircraftType::Helicopter,
         ),
         (
-            Vec3::new(left_terrain_x + 80.0, 0.0, 120.0),
+            Vec3::new(LEFT_ISLAND_X + 80.0, 0.0, 120.0),
             AircraftType::F16,
         ),
         (
-            Vec3::new(left_terrain_x - 150.0, 0.0, 200.0),
+            Vec3::new(LEFT_ISLAND_X - 150.0, 0.0, 200.0),
             AircraftType::F16,
         ),
         (
-            Vec3::new(left_terrain_x + 250.0, 0.0, -180.0),
+            Vec3::new(LEFT_ISLAND_X + 250.0, 0.0, -180.0),
             AircraftType::F16,
         ),
         (
-            Vec3::new(left_terrain_x - 300.0, 0.0, -250.0),
+            Vec3::new(LEFT_ISLAND_X - 300.0, 0.0, -250.0),
             AircraftType::F16,
         ),
         (
-            Vec3::new(left_terrain_x + 400.0, 0.0, 350.0),
+            Vec3::new(LEFT_ISLAND_X + 350.0, 0.0, 250.0),
             AircraftType::F16,
         ),
         (
-            Vec3::new(left_terrain_x - 450.0, 0.0, 100.0),
+            Vec3::new(LEFT_ISLAND_X - 400.0, 0.0, 100.0),
             AircraftType::Helicopter,
         ),
         (
-            Vec3::new(left_terrain_x + 500.0, 0.0, -450.0),
+            Vec3::new(LEFT_ISLAND_X + 450.0, 0.0, -350.0),
             AircraftType::F16,
         ),
         (
-            Vec3::new(left_terrain_x - 200.0, 0.0, -500.0),
+            Vec3::new(LEFT_ISLAND_X - 200.0, 0.0, -400.0),
             AircraftType::F16,
         ),
         (
-            Vec3::new(left_terrain_x + 600.0, 0.0, 200.0),
+            Vec3::new(LEFT_ISLAND_X + 480.0, 0.0, 150.0),
             AircraftType::F16,
         ),
         (
-            Vec3::new(left_terrain_x - 550.0, 0.0, 550.0),
+            Vec3::new(LEFT_ISLAND_X - 500.0, 0.0, 200.0),
             AircraftType::Helicopter,
         ),
         (
-            Vec3::new(left_terrain_x + 700.0, 0.0, -100.0),
+            Vec3::new(LEFT_ISLAND_X + 300.0, 0.0, -450.0),
             AircraftType::F16,
         ),
     ];
@@ -88,6 +89,15 @@ pub fn setup_initial_aircraft_unified(
     let mut spawned_aircraft = Vec::new();
 
     for (preferred_pos, aircraft_type) in aircraft_spawns {
+        // Validate spawn position is on terrain island
+        if !world.is_on_terrain_island(preferred_pos) {
+            warn!(
+                "Skipping {:?} - position {:?} is not on terrain island",
+                aircraft_type, preferred_pos
+            );
+            continue;
+        }
+
         if let Some(aircraft_entity) = spawn_aircraft_unified(
             &mut commands,
             &mut meshes,

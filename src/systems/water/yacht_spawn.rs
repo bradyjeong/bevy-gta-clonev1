@@ -11,9 +11,15 @@ pub fn spawn_test_yacht(
     mut materials: ResMut<Assets<StandardMaterial>>,
     config: Res<GameConfig>,
 ) {
-    // Yacht spawns on left terrain island lake (X=-1500+300=-1200, Z=300)
-    let left_terrain_x = -1500.0;
-    let yacht_position = Vec3::new(left_terrain_x + 300.0, SEA_LEVEL, 300.0);
+    // Yacht spawns near LEFT island shore for easy player access
+    // Position: just east of LEFT island center, accessible from beach
+    use crate::constants::{LEFT_ISLAND_X, TERRAIN_HALF_SIZE};
+    let yacht_position = Vec3::new(
+        LEFT_ISLAND_X + TERRAIN_HALF_SIZE + 150.0, // 150m offshore from east beach
+        SEA_LEVEL,
+        0.0,
+    );
+
     let vehicle_factory = VehicleFactory::with_config(config.clone());
 
     match vehicle_factory.spawn_vehicle_by_type(

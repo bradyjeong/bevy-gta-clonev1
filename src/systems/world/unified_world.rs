@@ -358,9 +358,7 @@ impl UnifiedWorldManager {
     /// Check if a world position is on a terrain island with optional margin
     /// Margin extends the island bounds (useful for beaches, piers, nearshore chunks)
     pub fn is_on_terrain_island_with_margin(&self, position: Vec3, margin: f32) -> bool {
-        const LEFT_TERRAIN_X: f32 = -1500.0;
-        const RIGHT_TERRAIN_X: f32 = 1500.0;
-        const TERRAIN_HALF_SIZE: f32 = 600.0;
+        use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
 
         let half = TERRAIN_HALF_SIZE + margin;
         let z_in_bounds = position.z >= -half && position.z <= half;
@@ -370,12 +368,11 @@ impl UnifiedWorldManager {
         }
 
         // Check left terrain with margin
-        let on_left =
-            position.x >= (LEFT_TERRAIN_X - half) && position.x <= (LEFT_TERRAIN_X + half);
+        let on_left = position.x >= (LEFT_ISLAND_X - half) && position.x <= (LEFT_ISLAND_X + half);
 
         // Check right terrain with margin
         let on_right =
-            position.x >= (RIGHT_TERRAIN_X - half) && position.x <= (RIGHT_TERRAIN_X + half);
+            position.x >= (RIGHT_ISLAND_X - half) && position.x <= (RIGHT_ISLAND_X + half);
 
         on_left || on_right
     }

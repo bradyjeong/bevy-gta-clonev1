@@ -16,6 +16,9 @@ pub mod system_sets;
 pub mod systems;
 pub mod util; // Safe math and utility functions
 
+#[cfg(test)]
+mod tests;
+
 // Core public API - essential items for external use (reduced from 100+ to 10)
 pub use components::{ActiveEntity, CullingSettings, MainCamera, PerformanceStats, Player};
 pub use config::GameConfig;

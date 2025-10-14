@@ -1,4 +1,5 @@
 use crate::components::ContentType;
+use crate::components::unified_water::UnifiedWaterBody;
 use crate::constants::LAND_ELEVATION;
 use crate::factories::BuildingFactory;
 use crate::resources::WorldRng;
@@ -11,6 +12,7 @@ use rand::Rng;
 pub struct BuildingGenerator;
 
 impl BuildingGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub fn generate_buildings(
         &self,
         commands: &mut Commands,
@@ -19,6 +21,7 @@ impl BuildingGenerator {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         world_rng: &mut WorldRng,
+        water_bodies: &Query<&UnifiedWaterBody>,
     ) {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
@@ -59,8 +62,11 @@ impl BuildingGenerator {
                 chunk_center.z + local_z,
             );
 
-            // Check if position is valid (not on road, not overlapping other buildings, not in water)
-            if !self.is_on_road(position, world) && !self.is_in_water_area(position) {
+            // Check if position is valid (on island, not on road, not overlapping, not in water)
+            if world.is_on_terrain_island(position)
+                && !self.is_on_road(position, world)
+                && !self.is_in_water_area(position, water_bodies)
+            {
                 let building_size = world_rng.global().gen_range(8.0..15.0);
                 if world.placement_grid.can_place(
                     position,
@@ -149,19 +155,41 @@ impl BuildingGenerator {
         false
     }
 
-    /// Check if position is in water area - ocean only
-    fn is_in_water_area(&self, position: Vec3) -> bool {
-        let buffer = 20.0;
+    /// Check if position is in water area (3D check - buildings above water are OK)
+    fn is_in_water_area(&self, position: Vec3, water_bodies: &Query<&UnifiedWaterBody>) -> bool {
+        let buffer = 20.0; // Buffer zone around water
+        let vertical_clearance = 1.0; // Buildings must be this much above water
 
-        // Ocean area (rectangular) - Eastern Ocean
-        let ocean_min_x = 2000.0 - buffer;
-        let ocean_max_x = 3000.0 + buffer;
-        let ocean_min_z = -3000.0 - buffer;
-        let ocean_max_z = 3000.0 + buffer;
+        // Check if position is in any water body
+        for water_body in water_bodies.iter() {
+            // Skip check if building is above water surface (islands are elevated)
+            let water_surface = water_body.get_water_surface_level(0.0);
+            if position.y > water_surface + vertical_clearance {
+                continue; // Building is safely above water
+            }
 
-        position.x >= ocean_min_x
-            && position.x <= ocean_max_x
-            && position.z >= ocean_min_z
-            && position.z <= ocean_max_z
+            if water_body.contains_point(position.x, position.z) {
+                return true;
+            }
+
+            // Check buffer zone around water body
+            let (min_x, min_z, max_x, max_z) = water_body.bounds;
+            let expanded_bounds = (
+                min_x - buffer,
+                min_z - buffer,
+                max_x + buffer,
+                max_z + buffer,
+            );
+
+            if position.x >= expanded_bounds.0
+                && position.x <= expanded_bounds.2
+                && position.z >= expanded_bounds.1
+                && position.z <= expanded_bounds.3
+            {
+                return true;
+            }
+        }
+
+        false
     }
 }

@@ -1,10 +1,11 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::ContentType;
-use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
+use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, SPAWN_DROP_HEIGHT};
 use crate::factories::VehicleFactory;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
 use crate::systems::world::road_network::RoadNetwork;
+use crate::systems::world::unified_world::UnifiedWorldManager;
 use bevy::prelude::*;
 
 use crate::GameConfig;
@@ -25,7 +26,7 @@ pub fn setup_initial_vehicles_unified(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
-
+    world: Res<UnifiedWorldManager>,
     _road_network: Option<Res<RoadNetwork>>,
     _config: Res<GameConfig>,
 ) {
@@ -56,6 +57,7 @@ pub fn setup_initial_vehicles_unified(
         &vehicle_factory,
         &mut existing_content,
         current_time,
+        &world,
     );
 
     info!(
@@ -77,12 +79,11 @@ fn setup_starter_vehicles_unified(
 ) -> Vec<Entity> {
     let mut spawned_vehicles = Vec::new();
 
-    // Safe starter positions on left terrain island (X=-1500)
-    let left_terrain_x = -1500.0;
+    // Safe starter positions on left terrain island (within ±600m bounds)
     let starter_positions = [
-        Vec3::new(left_terrain_x + 25.0, 0.0, 10.0), // Near spawn, well spaced
-        Vec3::new(left_terrain_x - 30.0, 0.0, 15.0), // Different area
-        Vec3::new(left_terrain_x + 10.0, 0.0, -25.0), // Another area
+        Vec3::new(LEFT_ISLAND_X + 25.0, 0.0, 10.0), // Near spawn, well spaced
+        Vec3::new(LEFT_ISLAND_X - 30.0, 0.0, 15.0), // Different area
+        Vec3::new(LEFT_ISLAND_X + 10.0, 0.0, -25.0), // Another area
     ];
 
     let car_colors = [
@@ -163,20 +164,20 @@ fn setup_luxury_cars_unified(
     vehicle_factory: &VehicleFactory,
     existing_content: &mut Vec<(Vec3, ContentType, f32)>,
     _current_time: f32,
+    world: &UnifiedWorldManager,
 ) -> Vec<Entity> {
     let mut spawned_vehicles = Vec::new();
 
-    // Luxury car positions on left terrain island (X=-1500)
-    let left_terrain_x = -1500.0;
+    // Luxury car positions on left terrain island (clamped within ±600m bounds)
     let luxury_positions = [
-        Vec3::new(left_terrain_x + 15.0, 0.0, 8.0), // Near spawn area
-        Vec3::new(left_terrain_x - 8.0, 0.0, 12.0), // Different area
-        Vec3::new(left_terrain_x + 18.0, 0.0, -15.0), // Another area
-        Vec3::new(left_terrain_x + 50.0, 0.0, 0.0), // Highway position
-        Vec3::new(left_terrain_x - 40.0, 0.0, 0.0), // Highway position
-        Vec3::new(left_terrain_x + 65.0, 0.0, 55.0), // District position
-        Vec3::new(left_terrain_x - 70.0, 0.0, 60.0), // District position
-        Vec3::new(left_terrain_x + 120.0, 0.0, 110.0), // Luxury area
+        Vec3::new(LEFT_ISLAND_X + 15.0, 0.0, 8.0), // Near spawn area
+        Vec3::new(LEFT_ISLAND_X - 8.0, 0.0, 12.0), // Different area
+        Vec3::new(LEFT_ISLAND_X + 18.0, 0.0, -15.0), // Another area
+        Vec3::new(LEFT_ISLAND_X + 50.0, 0.0, 0.0), // Highway position
+        Vec3::new(LEFT_ISLAND_X - 40.0, 0.0, 0.0), // Highway position
+        Vec3::new(LEFT_ISLAND_X + 65.0, 0.0, 55.0), // District position
+        Vec3::new(LEFT_ISLAND_X - 70.0, 0.0, 60.0), // District position
+        Vec3::new(LEFT_ISLAND_X + 120.0, 0.0, 110.0), // Edge position (needs clamping)
     ];
 
     // Luxury Dubai car colors
@@ -193,6 +194,15 @@ fn setup_luxury_cars_unified(
 
     for (i, &preferred_position) in luxury_positions.iter().enumerate() {
         let color = luxury_colors[i % luxury_colors.len()];
+
+        // Validate spawn position is on terrain island
+        if !world.is_on_terrain_island(preferred_position) {
+            warn!(
+                "Skipping luxury car {} - position {:?} is not on terrain island",
+                i, preferred_position
+            );
+            continue;
+        }
 
         // Spawn above terrain, let gravity drop vehicles
         let vehicle_y = LAND_ELEVATION + SPAWN_DROP_HEIGHT;

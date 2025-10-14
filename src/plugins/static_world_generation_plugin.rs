@@ -6,9 +6,9 @@ use crate::resources::{MaterialRegistry, WorldRng};
 use crate::states::AppState;
 
 use crate::systems::spawn_validation::SpawnRegistry;
-use crate::systems::ui::loading_screen::{
-    cleanup_loading_screen, setup_loading_screen, update_loading_progress,
-};
+// use crate::systems::ui::loading_screen::{
+//     cleanup_loading_screen, setup_loading_screen, update_loading_progress,
+// };
 use crate::systems::world::generators::{
     BuildingGenerator, RoadGenerator, VegetationGenerator, VehicleGenerator,
 };
@@ -23,10 +23,10 @@ impl Plugin for StaticWorldGenerationPlugin {
         app
             // Note: SpawnRegistry is already initialized by SpawnValidationPlugin
             // World generation screen UI (camera stays active for UI rendering)
-            .add_systems(OnEnter(AppState::WorldGeneration), setup_loading_screen)
+            // .add_systems(OnEnter(AppState::WorldGeneration), setup_loading_screen)
             .add_systems(
                 OnExit(AppState::WorldGeneration),
-                (cleanup_loading_screen, cleanup_generation_resources),
+                cleanup_generation_resources,
             )
             // World generation systems
             .add_systems(
@@ -35,9 +35,7 @@ impl Plugin for StaticWorldGenerationPlugin {
             )
             .add_systems(
                 Update,
-                (apply_generated_chunks, update_loading_progress)
-                    .chain()
-                    .run_if(in_state(AppState::WorldGeneration)),
+                apply_generated_chunks.run_if(in_state(AppState::WorldGeneration)),
             );
     }
 }
@@ -168,6 +166,7 @@ fn apply_generated_chunks(
             &mut meshes,
             &mut materials,
             &mut world_rng,
+            &water_bodies,
         );
 
         vehicle_generator.generate_vehicles(

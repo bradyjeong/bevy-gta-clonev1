@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::prelude::*;
 
 use crate::GameConfig;
-use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
+use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, SPAWN_DROP_HEIGHT, TERRAIN_HALF_SIZE};
 use crate::factories::NPCFactory;
 use crate::resources::NPCAssetCache;
 
@@ -30,16 +30,24 @@ pub fn setup_initial_npcs_unified(
     let max_attempts = 500; // Increased for higher spawn count
     let mut attempts = 0;
 
-    // Spawn NPCs on left terrain island (X=-1500, terrain size=1200m)
-    let left_terrain_x = -1500.0;
-    let terrain_half_size = 600.0; // 1200 / 2
+    // Spawn NPCs on both terrain islands
     let target_npcs = 100;
 
     while spawned_count < target_npcs && attempts < max_attempts {
         attempts += 1;
-        // Spawn within left terrain bounds
-        let x = left_terrain_x + rng.gen_range(-terrain_half_size..terrain_half_size);
-        let z = rng.gen_range(-terrain_half_size..terrain_half_size);
+        // Randomly choose left or right island
+        let island_x = if rng.gen_bool(0.5) {
+            LEFT_ISLAND_X
+        } else {
+            crate::constants::RIGHT_ISLAND_X
+        };
+
+        // Use polar coordinates to spawn uniformly within circular flat terrain
+        let angle = rng.gen_range(0.0..std::f32::consts::TAU);
+        let radius_squared: f32 = rng.gen_range(0.0..(TERRAIN_HALF_SIZE * TERRAIN_HALF_SIZE));
+        let radius = radius_squared.sqrt(); // sqrt for uniform distribution
+        let x = island_x + radius * angle.cos();
+        let z = radius * angle.sin();
 
         // Spawn NPCs above terrain, let gravity drop them
         let spawn_position = Vec3::new(x, LAND_ELEVATION + SPAWN_DROP_HEIGHT, z);

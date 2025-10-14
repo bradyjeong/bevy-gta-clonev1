@@ -1,5 +1,5 @@
 use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, NPC};
-
+use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -61,15 +61,19 @@ pub fn simple_npc_movement(
         // Calculate distance to target (XZ plane only to avoid vertical interference)
         let distance = (current_pos.xz() - target_pos.xz()).length();
 
-        // If close to target, pick a new random target on left terrain island
+        // If close to target, pick a new random target on current island
         if distance < 5.0 {
-            let left_terrain_x = -1500.0;
-            let terrain_half_size = 600.0;
+            // Determine which island NPC is on
+            let island_x = if current_pos.x < 0.0 {
+                LEFT_ISLAND_X
+            } else {
+                RIGHT_ISLAND_X
+            };
+
             npc.target_position = Vec3::new(
-                left_terrain_x
-                    + rand::thread_rng().gen_range(-terrain_half_size..terrain_half_size),
+                island_x + rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
                 current_pos.y,
-                rand::thread_rng().gen_range(-terrain_half_size..terrain_half_size),
+                rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
             );
         } else {
             // Simple, direct NPC movement (XZ plane only)
@@ -136,15 +140,19 @@ pub fn optimized_npc_movement(
             npc.update_interval = 0.05; // Normal updates for close NPCs
         }
 
-        // If close to target, pick a new random target on left terrain island
+        // If close to target, pick a new random target on current island
         if distance < 5.0 {
-            let left_terrain_x = -1500.0;
-            let terrain_half_size = 600.0;
+            // Determine which island NPC is on
+            let island_x = if current_pos.x < 0.0 {
+                LEFT_ISLAND_X
+            } else {
+                RIGHT_ISLAND_X
+            };
+
             npc.target_position = Vec3::new(
-                left_terrain_x
-                    + rand::thread_rng().gen_range(-terrain_half_size..terrain_half_size),
+                island_x + rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
                 1.0,
-                rand::thread_rng().gen_range(-terrain_half_size..terrain_half_size),
+                rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
             );
         } else {
             // Move towards target (legacy implementation)

@@ -1,4 +1,5 @@
 use crate::components::unified_water::UnifiedWaterBody;
+use crate::constants::LAND_ELEVATION;
 use bevy::prelude::*;
 
 pub enum SurfaceType {
@@ -23,8 +24,8 @@ pub fn get_surface_type_at(
         }
     }
 
-    // Default to ground level (you may want to integrate with actual terrain)
-    SurfaceType::Ground(0.0)
+    // Default to ground level (terrain at LAND_ELEVATION)
+    SurfaceType::Ground(LAND_ELEVATION)
 }
 
 pub fn get_safe_spawn_height(pos: Vec2, water_bodies: &Query<&UnifiedWaterBody>, time: f32) -> f32 {
