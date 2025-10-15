@@ -113,6 +113,7 @@ fn apply_generated_chunks(
     mut queue: ResMut<StaticGenerationQueue>,
     mut next_state: ResMut<NextState<AppState>>,
     water_bodies: Query<&UnifiedWaterBody>,
+    asset_server: Res<AssetServer>,
 ) {
     // Increased from 10 to 200 - no need to maintain 60 FPS during loading
     const CHUNKS_PER_FRAME: usize = 200;
@@ -175,6 +176,7 @@ fn apply_generated_chunks(
             coord,
             &mut meshes,
             &mut materials,
+            &asset_server,
             &mut world_rng,
         );
 

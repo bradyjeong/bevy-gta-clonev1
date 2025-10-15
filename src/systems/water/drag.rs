@@ -1,11 +1,16 @@
 use crate::components::unified_water::{UnifiedWaterBody, WaterBodyId};
+use crate::components::water::Yacht;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 /// Water drag system - applies resistance forces when in water
+#[allow(clippy::type_complexity)]
 pub fn water_drag_system(
     time: Res<Time>,
-    mut query: Query<(Entity, &GlobalTransform, &mut Velocity, &Collider), With<WaterBodyId>>,
+    mut query: Query<
+        (Entity, &GlobalTransform, &mut Velocity, &Collider),
+        (With<WaterBodyId>, Without<Yacht>),
+    >,
     water_regions: Query<&UnifiedWaterBody>,
 ) {
     let current_time = time.elapsed_secs();

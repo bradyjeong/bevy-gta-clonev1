@@ -1,6 +1,6 @@
 use crate::bundles::{DynamicPhysicsBundle, VisibleChildBundle};
 use crate::components::MovementTracker;
-use crate::components::water::Yacht;
+use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::water_new::WaterBodyId;
 use crate::components::{
     AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, JetFlame, LandingLight,
@@ -10,6 +10,7 @@ use crate::components::{
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use crate::factories::{MaterialFactory, MeshFactory};
+use crate::systems::water::yacht_buoyancy::YachtSpecsHandle;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -689,17 +690,19 @@ impl VehicleFactory {
         Ok(vehicle_entity)
     }
 
-    /// Spawn Yacht with intentionally smaller collider for water navigation
-    /// Mesh: 8×2×20, Collider: 4×1×10 (0.5x for boats - smaller for easier navigation)
+    /// Spawn Superyacht with helipad
+    /// Mesh: 20×6×60, Collider: 10×3×30 (0.5x for boats)
     pub fn spawn_yacht(
         &self,
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &AssetServer,
         position: Vec3,
         color: Option<Color>,
     ) -> Result<Entity, BundleError> {
         let color = color.unwrap_or(Color::srgb(1.0, 1.0, 1.0));
+        let yacht_specs_handle: Handle<YachtSpecs> = asset_server.load("config/simple_yacht.ron");
 
         let vehicle_entity = commands
             .spawn((
@@ -712,7 +715,7 @@ impl VehicleFactory {
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(4.0 / 2.0, 1.0 / 2.0, 10.0 / 2.0), // 0.5x for boats
+                    collider: Collider::cuboid(10.0 / 2.0, 3.0 / 2.0, 30.0 / 2.0),
                     collision_groups: CollisionGroups::new(
                         self.config.physics.vehicle_group,
                         self.config.physics.static_group,
@@ -720,41 +723,66 @@ impl VehicleFactory {
                     velocity: Velocity::default(),
                     visibility_range: VisibilityRange {
                         start_margin: 0.0..0.0,
-                        end_margin: 500.0..600.0,
-                        use_aabb: false,
+                        end_margin: 1200.0..1400.0,
+                        use_aabb: true,
                     },
                 },
                 Yacht::default(),
+                YachtState::default(),
                 VehicleState::new(VehicleType::Yacht),
-                WaterBodyId, // Mark yacht for water physics
+                WaterBodyId,
+                YachtSpecsHandle(yacht_specs_handle),
+                ExternalForce::default(),
                 Damping {
-                    linear_damping: 3.0,
-                    angular_damping: 10.0,
+                    linear_damping: 0.2,
+                    angular_damping: 1.0,
                 },
                 MovementTracker::new(position, 12.0),
-                Name::new("Yacht"),
+                Name::new("Superyacht"),
             ))
             .id();
 
-        // Add yacht body as child entity
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(8.0, 2.0, 20.0))), // Full visual size
+            Mesh3d(meshes.add(Cuboid::new(20.0, 6.0, 60.0))),
             MeshMaterial3d(materials.add(color)),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             self.visibility_range(),
+            Name::new("Yacht Hull"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(12.0, 0.5, 12.0))),
+            MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.3))),
+            Transform::from_xyz(0.0, 6.5, 10.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            self.visibility_range(),
+            Name::new("Helipad"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cylinder::new(5.5, 0.6))),
+            MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.1))),
+            Transform::from_xyz(0.0, 6.8, 10.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            self.visibility_range(),
+            Name::new("Helipad Circle"),
         ));
 
         Ok(vehicle_entity)
     }
 
     /// Spawn vehicle by type with automatic configuration
+    #[allow(clippy::too_many_arguments)]
     pub fn spawn_vehicle_by_type(
         &self,
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &AssetServer,
         vehicle_type: VehicleType,
         position: Vec3,
         color: Option<Color>,
@@ -767,7 +795,9 @@ impl VehicleFactory {
                 self.spawn_helicopter(commands, meshes, materials, position, color)
             }
             VehicleType::F16 => self.spawn_f16(commands, meshes, materials, position, color),
-            VehicleType::Yacht => self.spawn_yacht(commands, meshes, materials, position, color),
+            VehicleType::Yacht => {
+                self.spawn_yacht(commands, meshes, materials, asset_server, position, color)
+            }
         }
     }
 
@@ -777,10 +807,11 @@ impl VehicleFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &AssetServer,
         position: Vec3,
         color: Option<Color>,
     ) -> Result<Entity, BundleError> {
-        self.spawn_yacht(commands, meshes, materials, position, color)
+        self.spawn_yacht(commands, meshes, materials, asset_server, position, color)
     }
 
     /// Generate random car color

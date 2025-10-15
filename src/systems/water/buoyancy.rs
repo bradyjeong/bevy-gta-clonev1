@@ -1,11 +1,16 @@
 use crate::components::unified_water::{UnifiedWaterBody, WaterBodyId};
+use crate::components::water::Yacht;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 /// GTA-style buoyancy system - applies upward force based on submersion
+#[allow(clippy::type_complexity)]
 pub fn buoyancy_system(
     time: Res<Time>,
-    mut query: Query<(Entity, &GlobalTransform, &mut ExternalForce, &Collider), With<WaterBodyId>>,
+    mut query: Query<
+        (Entity, &GlobalTransform, &mut ExternalForce, &Collider),
+        (With<WaterBodyId>, Without<Yacht>),
+    >,
     water_regions: Query<&UnifiedWaterBody>,
 ) {
     let current_time = time.elapsed_secs();
