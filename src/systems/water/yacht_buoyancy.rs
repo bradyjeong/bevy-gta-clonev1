@@ -56,8 +56,8 @@ pub fn yacht_buoyancy_system(
         }
 
         let clamped_force =
-            total_buoyancy_force.clamp(Vec3::splat(-500000.0), Vec3::splat(500000.0));
-        let clamped_torque = total_torque.clamp(Vec3::splat(-100000.0), Vec3::splat(100000.0));
+            total_buoyancy_force.clamp(Vec3::splat(-1500000.0), Vec3::splat(1500000.0));
+        let clamped_torque = total_torque.clamp(Vec3::splat(-500000.0), Vec3::splat(500000.0));
 
         if clamped_force.is_finite() && clamped_torque.is_finite() {
             external_force.force += clamped_force;

@@ -39,26 +39,28 @@ pub fn yacht_controls_system(
 
         let rotation = transform.to_scale_rotation_translation().1;
         let forward = rotation * Vec3::NEG_Z;
+        let right = rotation * Vec3::X;
         let forward_speed = velocity.linvel.dot(forward);
 
-        let speed = forward_speed.max(0.0);
-        let speed_factor = (1.0 - (speed / specs.max_speed).clamp(0.0, 1.0)).powf(1.5);
-        let thrust_force = state.throttle * specs.max_thrust * speed_factor;
+        let thrust_force = state.throttle * specs.max_thrust;
         let prop_force_world = forward * thrust_force;
 
         state.current_thrust = thrust_force;
 
-        let speed_normalized = (forward_speed.abs() / 5.0).min(1.0);
-        let rudder_effectiveness = state.rudder * (speed_normalized + 0.2).min(1.0);
+        let speed_norm = (forward_speed.abs() / 12.0).min(1.0);
+        let rudder_effectiveness = state.rudder * (0.4 + 0.6 * speed_norm);
 
         let rudder_torque = specs.rudder_power * rudder_effectiveness * forward_speed.signum();
         let rudder_torque_vec = Vec3::new(0.0, rudder_torque, 0.0);
 
-        let clamped_thrust = prop_force_world.clamp(Vec3::splat(-100000.0), Vec3::splat(100000.0));
-        let clamped_rudder = rudder_torque_vec.clamp(Vec3::splat(-80000.0), Vec3::splat(80000.0));
+        let lateral_carve_force = right * (-state.rudder) * 15000.0 * (0.3 + 0.7 * speed_norm);
 
-        if clamped_thrust.is_finite() && clamped_rudder.is_finite() {
-            external_force.force += clamped_thrust;
+        let clamped_thrust = prop_force_world.clamp(Vec3::splat(-300000.0), Vec3::splat(300000.0));
+        let clamped_rudder = rudder_torque_vec.clamp(Vec3::splat(-250000.0), Vec3::splat(250000.0));
+        let clamped_lateral = lateral_carve_force.clamp(Vec3::splat(-50000.0), Vec3::splat(50000.0));
+
+        if clamped_thrust.is_finite() && clamped_rudder.is_finite() && clamped_lateral.is_finite() {
+            external_force.force += clamped_thrust + clamped_lateral;
             external_force.torque += clamped_rudder;
         }
 

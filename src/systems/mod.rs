@@ -51,6 +51,7 @@
 
 pub mod audio;
 pub mod camera;
+pub mod camera_yacht;
 pub mod effects;
 
 pub mod interaction;
