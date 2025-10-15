@@ -690,8 +690,8 @@ impl VehicleFactory {
         Ok(vehicle_entity)
     }
 
-    /// Spawn Superyacht with helipad
-    /// Mesh: 20×6×60, Collider: 10×3×30 (0.5x for boats)
+    /// Spawn Superyacht with multi-deck design and helipad
+    /// Mesh: 20×6×60 hull base, Collider: full-size hull + deck colliders
     pub fn spawn_yacht(
         &self,
         commands: &mut Commands,
@@ -701,8 +701,27 @@ impl VehicleFactory {
         position: Vec3,
         color: Option<Color>,
     ) -> Result<Entity, BundleError> {
-        let color = color.unwrap_or(Color::srgb(1.0, 1.0, 1.0));
+        let hull_color = color.unwrap_or(Color::srgb(0.95, 0.95, 0.98));
         let yacht_specs_handle: Handle<YachtSpecs> = asset_server.load("config/simple_yacht.ron");
+        let yacht_visibility = || VisibilityRange::abrupt(0.0, 2000.0);
+
+        let hull_collider = Collider::compound(vec![
+            (
+                Vec3::ZERO,
+                Quat::IDENTITY,
+                Collider::cuboid(10.0, 3.0, 30.0),
+            ),
+            (
+                Vec3::new(0.0, 6.5, 10.0),
+                Quat::IDENTITY,
+                Collider::cuboid(6.0, 0.25, 6.0),
+            ),
+            (
+                Vec3::new(0.0, 9.5, -5.0),
+                Quat::IDENTITY,
+                Collider::cuboid(4.0, 1.25, 7.0),
+            ),
+        ]);
 
         let vehicle_entity = commands
             .spawn((
@@ -715,17 +734,15 @@ impl VehicleFactory {
                     inherited_visibility: InheritedVisibility::VISIBLE,
                     view_visibility: ViewVisibility::default(),
                     rigid_body: RigidBody::Dynamic,
-                    collider: Collider::cuboid(10.0 / 2.0, 3.0 / 2.0, 30.0 / 2.0),
+                    collider: hull_collider,
                     collision_groups: CollisionGroups::new(
                         self.config.physics.vehicle_group,
-                        self.config.physics.static_group,
+                        self.config.physics.static_group
+                            | self.config.physics.character_group
+                            | self.config.physics.vehicle_group,
                     ),
                     velocity: Velocity::default(),
-                    visibility_range: VisibilityRange {
-                        start_margin: 0.0..0.0,
-                        end_margin: 1200.0..1400.0,
-                        use_aabb: true,
-                    },
+                    visibility_range: yacht_visibility(),
                 },
                 Yacht::default(),
                 YachtState::default(),
@@ -733,6 +750,7 @@ impl VehicleFactory {
                 WaterBodyId,
                 YachtSpecsHandle(yacht_specs_handle),
                 ExternalForce::default(),
+                Ccd::enabled(),
                 Damping {
                     linear_damping: 0.2,
                     angular_damping: 1.0,
@@ -742,14 +760,106 @@ impl VehicleFactory {
             ))
             .id();
 
+        let glass_material = materials.add(StandardMaterial {
+            base_color: Color::srgba(0.15, 0.15, 0.2, 0.6),
+            metallic: 0.9,
+            perceptual_roughness: 0.1,
+            reflectance: 0.8,
+            ..default()
+        });
+
+        let deck_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.85, 0.85, 0.85),
+            metallic: 0.3,
+            perceptual_roughness: 0.7,
+            ..default()
+        });
+
+        let accent_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.2, 0.2, 0.25),
+            metallic: 0.8,
+            perceptual_roughness: 0.2,
+            ..default()
+        });
+
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(20.0, 6.0, 60.0))),
-            MeshMaterial3d(materials.add(color)),
+            MeshMaterial3d(materials.add(hull_color)),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            self.visibility_range(),
+            yacht_visibility(),
             Name::new("Yacht Hull"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(18.0, 1.0, 40.0))),
+            MeshMaterial3d(deck_material.clone()),
+            Transform::from_xyz(0.0, 3.5, 0.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Main Deck"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(16.0, 3.0, 20.0))),
+            MeshMaterial3d(materials.add(hull_color)),
+            Transform::from_xyz(0.0, 6.0, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Lower Superstructure"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(15.5, 0.2, 19.5))),
+            MeshMaterial3d(glass_material.clone()),
+            Transform::from_xyz(0.0, 5.8, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Lower Windows"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(12.0, 2.5, 14.0))),
+            MeshMaterial3d(materials.add(hull_color)),
+            Transform::from_xyz(0.0, 9.0, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Upper Superstructure"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(11.5, 0.2, 13.5))),
+            MeshMaterial3d(glass_material.clone()),
+            Transform::from_xyz(0.0, 8.8, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Upper Windows"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(8.0, 2.0, 8.0))),
+            MeshMaterial3d(materials.add(hull_color)),
+            Transform::from_xyz(0.0, 12.0, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Bridge"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(7.5, 0.2, 7.5))),
+            MeshMaterial3d(glass_material),
+            Transform::from_xyz(0.0, 11.8, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Bridge Windows"),
         ));
 
         commands.spawn((
@@ -758,19 +868,42 @@ impl VehicleFactory {
             Transform::from_xyz(0.0, 6.5, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            self.visibility_range(),
+            yacht_visibility(),
             Name::new("Helipad"),
         ));
 
         commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(5.5, 0.6))),
+            Mesh3d(meshes.add(Cylinder::new(5.5, 0.1))),
             MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.1))),
-            Transform::from_xyz(0.0, 6.8, 10.0),
+            Transform::from_xyz(0.0, 7.0, 10.0)
+                .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
-            self.visibility_range(),
+            yacht_visibility(),
             Name::new("Helipad Circle"),
         ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.15, 8.0))),
+            MeshMaterial3d(accent_material.clone()),
+            Transform::from_xyz(0.0, 17.0, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Mast"),
+        ));
+
+        for (x, z) in [(-9.5, 25.0), (9.5, 25.0), (-9.5, -25.0), (9.5, -25.0)] {
+            commands.spawn((
+                Mesh3d(meshes.add(Cylinder::new(0.08, 1.5))),
+                MeshMaterial3d(accent_material.clone()),
+                Transform::from_xyz(x, 4.25, z),
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                yacht_visibility(),
+                Name::new("Railing Post"),
+            ));
+        }
 
         Ok(vehicle_entity)
     }

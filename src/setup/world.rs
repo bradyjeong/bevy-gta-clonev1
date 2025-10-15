@@ -197,6 +197,7 @@ pub fn setup_basic_world(
             InheritedVisibility::VISIBLE,
             ViewVisibility::default(),
             CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP),
+            Ccd::enabled(),
             Damping {
                 linear_damping: 0.1,
                 angular_damping: 3.5,

@@ -9,6 +9,7 @@ pub mod yacht_controls;
 pub mod yacht_drag;
 pub mod yacht_force_reset;
 pub mod yacht_spawn;
+pub mod yacht_wake_effects;
 
 pub use buoyancy::*;
 pub use drag::*;
@@ -21,3 +22,4 @@ pub use yacht_controls::*;
 pub use yacht_drag::*;
 pub use yacht_force_reset::*;
 pub use yacht_spawn::*;
+pub use yacht_wake_effects::*;

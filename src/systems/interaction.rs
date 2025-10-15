@@ -1,4 +1,5 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
+use crate::components::water::Yacht;
 use crate::components::{
     ActiveEntity, Car, ControlState, F16, Helicopter, InCar, PendingPhysicsEnable, Player,
     PlayerControlled, VehicleControlType,
@@ -27,6 +28,7 @@ pub fn interaction_system(
             Without<Car>,
             Without<Helicopter>,
             Without<F16>,
+            Without<Yacht>,
         ),
     >,
     car_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<Car>, Without<Player>)>,
@@ -35,6 +37,10 @@ pub fn interaction_system(
         (With<Helicopter>, Without<Player>),
     >,
     f16_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<F16>, Without<Player>)>,
+    yacht_query: Query<
+        (Entity, &GlobalTransform, Option<&Velocity>),
+        (With<Yacht>, Without<Player>),
+    >,
     _vehicle_control_query: Query<
         (
             Option<&ControlState>,
@@ -42,7 +48,7 @@ pub fn interaction_system(
             Option<&VehicleControlType>,
         ),
         (
-            Or<(With<Car>, With<Helicopter>, With<F16>)>,
+            Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>)>,
             Without<Player>,
         ),
     >,
@@ -224,10 +230,144 @@ pub fn interaction_system(
                     return;
                 }
             }
+
+            // Check for yachts
+            for (yacht_entity, yacht_gt, _) in yacht_query.iter() {
+                let distance = player_transform
+                    .translation
+                    .distance(yacht_gt.translation());
+                if distance < 35.0 {
+                    info!(
+                        "Player at {:?}, Yacht at {:?}, Distance: {:.1}m - Boarding yacht!",
+                        player_transform.translation,
+                        yacht_gt.translation(),
+                        distance
+                    );
+
+                    // Queue atomic ActiveEntity transfer (prevents gaps)
+                    queue_active_transfer(&mut commands, player_entity, yacht_entity);
+
+                    // Remove control components from player and hide them
+                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
+                    commands
+                        .entity(player_entity)
+                        .remove::<PlayerControlled>()
+                        .remove::<ControlState>()
+                        .remove::<VehicleControlType>()
+                        .insert(Visibility::Hidden)
+                        .insert(RigidBodyDisabled);
+
+                    // Make player a child of the yacht
+                    commands.entity(player_entity).insert(ChildOf(yacht_entity));
+
+                    // Add control components to yacht (ActiveEntity handled by transfer system)
+                    let mut yacht_commands = commands.entity(yacht_entity);
+
+                    // Transfer control components to yacht with appropriate vehicle type
+                    if let Some(control_state) = control_state {
+                        yacht_commands.insert(control_state.clone());
+                    } else {
+                        yacht_commands.insert(ControlState::default());
+                    }
+
+                    if player_controlled.is_some() {
+                        yacht_commands.insert(PlayerControlled);
+                    }
+
+                    // Set appropriate vehicle control type for yachts
+                    yacht_commands.insert(VehicleControlType::Yacht);
+
+                    // Store which yacht the player is in
+                    commands.entity(player_entity).insert(InCar(yacht_entity)); // Reuse InCar for vehicles
+
+                    // Switch to driving state (reuse for yachts)
+                    state.set(GameState::Driving);
+                    info!("Boarded Superyacht!");
+                    return;
+                } else if distance < 100.0 {
+                    info!(
+                        "Yacht too far! Distance: {:.1}m (need < 35m). Swim closer and press F.",
+                        distance
+                    );
+                }
+            }
         }
         GameState::Swimming => {
-            // Swimming doesn't have vehicle interaction - same as walking
-            // Could add underwater vehicle interaction here in the future
+            // Try to enter yacht from swimming
+            let Ok((
+                player_entity,
+                player_transform,
+                _,
+                control_state,
+                player_controlled,
+                _vehicle_control_type,
+            )) = player_query.single_mut()
+            else {
+                warn!("Failed to get player entity!");
+                return;
+            };
+
+            // Check for yachts
+            for (yacht_entity, yacht_gt, _) in yacht_query.iter() {
+                let distance = player_transform
+                    .translation
+                    .distance(yacht_gt.translation());
+
+                if distance < 35.0 {
+                    info!(
+                        "Player at {:?}, Yacht at {:?}, Distance: {:.1}m - Boarding yacht!",
+                        player_transform.translation,
+                        yacht_gt.translation(),
+                        distance
+                    );
+
+                    // Queue atomic ActiveEntity transfer (prevents gaps)
+                    queue_active_transfer(&mut commands, player_entity, yacht_entity);
+
+                    // Remove control components from player and hide them
+                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
+                    commands
+                        .entity(player_entity)
+                        .remove::<PlayerControlled>()
+                        .remove::<ControlState>()
+                        .remove::<VehicleControlType>()
+                        .insert(Visibility::Hidden)
+                        .insert(RigidBodyDisabled);
+
+                    // Make player a child of the yacht
+                    commands.entity(player_entity).insert(ChildOf(yacht_entity));
+
+                    // Add control components to yacht (ActiveEntity handled by transfer system)
+                    let mut yacht_commands = commands.entity(yacht_entity);
+
+                    // Transfer control components to yacht with appropriate vehicle type
+                    if let Some(control_state) = control_state {
+                        yacht_commands.insert(control_state.clone());
+                    } else {
+                        yacht_commands.insert(ControlState::default());
+                    }
+
+                    if player_controlled.is_some() {
+                        yacht_commands.insert(PlayerControlled);
+                    }
+
+                    // Set appropriate vehicle control type for yachts
+                    yacht_commands.insert(VehicleControlType::Yacht);
+
+                    // Store which yacht the player is in
+                    commands.entity(player_entity).insert(InCar(yacht_entity));
+
+                    // Switch to driving state (reuse for yachts)
+                    state.set(GameState::Driving);
+                    info!("Climbed aboard Superyacht from water!");
+                    return;
+                } else if distance < 100.0 {
+                    info!(
+                        "Yacht too far! Distance: {:.1}m (need < 35m). Swim closer and press F.",
+                        distance
+                    );
+                }
+            }
         }
         GameState::Driving => {
             // Exit car

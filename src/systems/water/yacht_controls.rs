@@ -57,7 +57,8 @@ pub fn yacht_controls_system(
 
         let clamped_thrust = prop_force_world.clamp(Vec3::splat(-300000.0), Vec3::splat(300000.0));
         let clamped_rudder = rudder_torque_vec.clamp(Vec3::splat(-250000.0), Vec3::splat(250000.0));
-        let clamped_lateral = lateral_carve_force.clamp(Vec3::splat(-50000.0), Vec3::splat(50000.0));
+        let clamped_lateral =
+            lateral_carve_force.clamp(Vec3::splat(-50000.0), Vec3::splat(50000.0));
 
         if clamped_thrust.is_finite() && clamped_rudder.is_finite() && clamped_lateral.is_finite() {
             external_force.force += clamped_thrust + clamped_lateral;
