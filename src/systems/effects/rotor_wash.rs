@@ -1,4 +1,5 @@
 use crate::components::{ActiveEntity, Helicopter, RotorWash};
+use crate::constants::LAND_ELEVATION;
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 use bevy_rapier3d::prelude::Velocity;
@@ -113,13 +114,16 @@ pub fn update_rotor_wash_position_and_intensity(
     mut particle_query: ParticleTransformQuery,
 ) {
     for (helicopter_transform, velocity) in helicopter_query.iter() {
-        let altitude = helicopter_transform.translation.y;
+        let heli_pos = helicopter_transform.translation;
         let vertical_velocity = velocity.linvel.y.abs();
 
+        let ground_height = LAND_ELEVATION;
+        let altitude = (heli_pos.y - ground_height).max(0.0);
+
         for (mut particle_transform, mut spawner) in particle_query.iter_mut() {
-            particle_transform.translation.x = helicopter_transform.translation.x;
-            particle_transform.translation.z = helicopter_transform.translation.z;
-            particle_transform.translation.y = 0.1;
+            particle_transform.translation.x = heli_pos.x;
+            particle_transform.translation.z = heli_pos.z;
+            particle_transform.translation.y = ground_height + 0.1;
 
             if altitude < 10.0 && vertical_velocity > 0.5 {
                 let altitude_factor = (1.0 - (altitude / 10.0)).max(0.0);
