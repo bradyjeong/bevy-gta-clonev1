@@ -313,10 +313,11 @@ pub fn setup_basic_world(
         VisibleChildBundle::default(),
     ));
 
+    // Foot meshes aligned with capsule FOOT_LEVEL (-0.45)
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
         MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))),
-        Transform::from_xyz(-0.15, -0.4, 0.1),
+        Transform::from_xyz(-0.15, FOOT_LEVEL, 0.1),
         ChildOf(player_entity),
         crate::components::player::PlayerLeftFoot,
         VisibleChildBundle::default(),
@@ -325,7 +326,7 @@ pub fn setup_basic_world(
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
         MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))),
-        Transform::from_xyz(0.15, -0.4, 0.1),
+        Transform::from_xyz(0.15, FOOT_LEVEL, 0.1),
         ChildOf(player_entity),
         crate::components::player::PlayerRightFoot,
         VisibleChildBundle::default(),
@@ -342,14 +343,16 @@ fn spawn_terrain_island(
     name: &str,
 ) {
     let half_size = size / 2.0;
+    let collider_half_height = 0.05;
 
     commands.spawn((
         DynamicTerrain,
         Mesh3d(meshes.add(Plane3d::default().mesh().size(size, size))),
         MeshMaterial3d(materials.add(Color::srgb(0.85, 0.75, 0.6))),
-        Transform::from_translation(position),
+        // Lower visual mesh by half collider height to align top surface with physics
+        Transform::from_translation(position - Vec3::Y * collider_half_height),
         RigidBody::Fixed,
-        Collider::cuboid(half_size, 0.05, half_size),
+        Collider::cuboid(half_size, collider_half_height, half_size),
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
         Name::new(format!("{name} Terrain Island")),
     ));
@@ -365,13 +368,16 @@ fn spawn_terrain_beaches(
 ) {
     use crate::factories::beach_terrain::{create_beach_slope, create_beach_slope_collider};
 
-    let land_elevation = terrain_center.y;
+    let collider_half_height = 0.05; // Match terrain collider
+    let land_elevation_phys = terrain_center.y; // Physics top surface
     let ocean_floor_y = -10.0;
     let beach_width = 100.0;
     let half_size = terrain_size / 2.0;
 
-    // Beach center Y (between land and ocean)
-    let beach_center_y = (land_elevation + ocean_floor_y) / 2.0; // Y = -3.5
+    // Beach center Y for physics (collider alignment)
+    let beach_center_y_phys = (land_elevation_phys + ocean_floor_y) / 2.0;
+    // Beach center Y for visuals (lowered to match terrain visual pattern)
+    let beach_center_y_visual = beach_center_y_phys - collider_half_height;
 
     // Shared beach material
     let beach_material = materials.add(StandardMaterial {
@@ -386,24 +392,30 @@ fn spawn_terrain_beaches(
 
     // EAST BEACH (+X direction) - mesh naturally slopes +X, NO rotation needed
     let east_visual =
-        create_beach_slope(beach_width, terrain_size, land_elevation, ocean_floor_y, 32);
+        create_beach_slope(beach_width, terrain_size, land_elevation_phys, ocean_floor_y, 32);
     let east_collider_mesh =
-        create_beach_slope_collider(beach_width, terrain_size, land_elevation, ocean_floor_y);
-    let east_pos = Vec3::new(
+        create_beach_slope_collider(beach_width, terrain_size, land_elevation_phys, ocean_floor_y);
+    
+    let east_pos_visual = Vec3::new(
         terrain_center.x + half_size + beach_width / 2.0,
-        beach_center_y,
+        beach_center_y_visual,
+        terrain_center.z,
+    );
+    let east_pos_collider = Vec3::new(
+        terrain_center.x + half_size + beach_width / 2.0,
+        beach_center_y_phys,
         terrain_center.z,
     );
 
     commands.spawn((
         Mesh3d(meshes.add(east_visual)),
         MeshMaterial3d(beach_material.clone()),
-        Transform::from_translation(east_pos),
+        Transform::from_translation(east_pos_visual),
         Name::new(format!("{name} East Beach Visual")),
     ));
 
     commands.spawn((
-        Transform::from_translation(east_pos),
+        Transform::from_translation(east_pos_collider),
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&east_collider_mesh, &default())
             .expect("Beach collider creation failed"),
@@ -413,12 +425,18 @@ fn spawn_terrain_beaches(
 
     // WEST BEACH (-X direction) - flip 180° to slope toward -X
     let west_visual =
-        create_beach_slope(beach_width, terrain_size, land_elevation, ocean_floor_y, 32);
+        create_beach_slope(beach_width, terrain_size, land_elevation_phys, ocean_floor_y, 32);
     let west_collider_mesh =
-        create_beach_slope_collider(beach_width, terrain_size, land_elevation, ocean_floor_y);
-    let west_pos = Vec3::new(
+        create_beach_slope_collider(beach_width, terrain_size, land_elevation_phys, ocean_floor_y);
+    
+    let west_pos_visual = Vec3::new(
         terrain_center.x - (half_size + beach_width / 2.0),
-        beach_center_y,
+        beach_center_y_visual,
+        terrain_center.z,
+    );
+    let west_pos_collider = Vec3::new(
+        terrain_center.x - (half_size + beach_width / 2.0),
+        beach_center_y_phys,
         terrain_center.z,
     );
     let west_rotation = Quat::from_rotation_y(std::f32::consts::PI);
@@ -426,12 +444,12 @@ fn spawn_terrain_beaches(
     commands.spawn((
         Mesh3d(meshes.add(west_visual)),
         MeshMaterial3d(beach_material.clone()),
-        Transform::from_translation(west_pos).with_rotation(west_rotation),
+        Transform::from_translation(west_pos_visual).with_rotation(west_rotation),
         Name::new(format!("{name} West Beach Visual")),
     ));
 
     commands.spawn((
-        Transform::from_translation(west_pos).with_rotation(west_rotation),
+        Transform::from_translation(west_pos_collider).with_rotation(west_rotation),
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&west_collider_mesh, &default())
             .expect("Beach collider creation failed"),
@@ -441,12 +459,18 @@ fn spawn_terrain_beaches(
 
     // NORTH BEACH (+Z direction) - rotate -90° clockwise so X→-Z
     let north_visual =
-        create_beach_slope(beach_width, terrain_size, land_elevation, ocean_floor_y, 32);
+        create_beach_slope(beach_width, terrain_size, land_elevation_phys, ocean_floor_y, 32);
     let north_collider_mesh =
-        create_beach_slope_collider(beach_width, terrain_size, land_elevation, ocean_floor_y);
-    let north_pos = Vec3::new(
+        create_beach_slope_collider(beach_width, terrain_size, land_elevation_phys, ocean_floor_y);
+    
+    let north_pos_visual = Vec3::new(
         terrain_center.x,
-        beach_center_y,
+        beach_center_y_visual,
+        terrain_center.z + half_size + beach_width / 2.0,
+    );
+    let north_pos_collider = Vec3::new(
+        terrain_center.x,
+        beach_center_y_phys,
         terrain_center.z + half_size + beach_width / 2.0,
     );
     let north_rotation = Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2);
@@ -454,12 +478,12 @@ fn spawn_terrain_beaches(
     commands.spawn((
         Mesh3d(meshes.add(north_visual)),
         MeshMaterial3d(beach_material.clone()),
-        Transform::from_translation(north_pos).with_rotation(north_rotation),
+        Transform::from_translation(north_pos_visual).with_rotation(north_rotation),
         Name::new(format!("{name} North Beach Visual")),
     ));
 
     commands.spawn((
-        Transform::from_translation(north_pos).with_rotation(north_rotation),
+        Transform::from_translation(north_pos_collider).with_rotation(north_rotation),
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&north_collider_mesh, &default())
             .expect("Beach collider creation failed"),
@@ -469,12 +493,18 @@ fn spawn_terrain_beaches(
 
     // SOUTH BEACH (-Z direction) - rotate +90° counterclockwise so X→Z
     let south_visual =
-        create_beach_slope(beach_width, terrain_size, land_elevation, ocean_floor_y, 32);
+        create_beach_slope(beach_width, terrain_size, land_elevation_phys, ocean_floor_y, 32);
     let south_collider_mesh =
-        create_beach_slope_collider(beach_width, terrain_size, land_elevation, ocean_floor_y);
-    let south_pos = Vec3::new(
+        create_beach_slope_collider(beach_width, terrain_size, land_elevation_phys, ocean_floor_y);
+    
+    let south_pos_visual = Vec3::new(
         terrain_center.x,
-        beach_center_y,
+        beach_center_y_visual,
+        terrain_center.z - (half_size + beach_width / 2.0),
+    );
+    let south_pos_collider = Vec3::new(
+        terrain_center.x,
+        beach_center_y_phys,
         terrain_center.z - (half_size + beach_width / 2.0),
     );
     let south_rotation = Quat::from_rotation_y(std::f32::consts::FRAC_PI_2);
@@ -482,12 +512,12 @@ fn spawn_terrain_beaches(
     commands.spawn((
         Mesh3d(meshes.add(south_visual)),
         MeshMaterial3d(beach_material.clone()),
-        Transform::from_translation(south_pos).with_rotation(south_rotation),
+        Transform::from_translation(south_pos_visual).with_rotation(south_rotation),
         Name::new(format!("{name} South Beach Visual")),
     ));
 
     commands.spawn((
-        Transform::from_translation(south_pos).with_rotation(south_rotation),
+        Transform::from_translation(south_pos_collider).with_rotation(south_rotation),
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&south_collider_mesh, &default())
             .expect("Beach collider creation failed"),
