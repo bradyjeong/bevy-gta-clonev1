@@ -13,6 +13,10 @@ use crate::systems::water::{
     update_wake_trail_points, update_water_material_time_system, update_water_surface_system,
     water_drag_system, yacht_buoyancy_system, yacht_controls_system, yacht_drag_system,
 };
+use crate::systems::yacht_exit::{
+    deck_walk_movement_system, heli_landing_detection_system, yacht_board_from_deck_system,
+    yacht_exit_system,
+};
 
 use bevy::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
@@ -65,10 +69,24 @@ impl Plugin for WaterPlugin {
                     swim_animation_flag_system.run_if(in_state(GameState::Swimming)),
                     apply_prone_rotation_system,
                     reset_animation_on_land_system,
+                ),
+            )
+            .add_systems(
+                Update,
+                (
                     spawn_yacht_wake_trail,
                     update_wake_trail_points,
                     spawn_bow_splash,
                     spawn_prop_wash,
+                ),
+            )
+            .add_systems(
+                Update,
+                (
+                    yacht_exit_system,
+                    yacht_board_from_deck_system,
+                    deck_walk_movement_system,
+                    heli_landing_detection_system,
                 ),
             );
     }

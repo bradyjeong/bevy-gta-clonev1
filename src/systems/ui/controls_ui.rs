@@ -1,16 +1,20 @@
-use crate::components::ControlsText;
-use crate::components::VehicleControlType;
+use crate::components::{ActiveEntity, ControlsText, VehicleControlType};
 use crate::game_state::GameState;
-use crate::systems::input::{LoadedVehicleControls, get_vehicle_control_help};
+use crate::systems::input::{get_vehicle_control_help, LoadedVehicleControls};
 use bevy::prelude::*;
 
 pub fn controls_ui_system(
     current_state: Res<State<GameState>>,
     loaded_controls: Res<LoadedVehicleControls>,
     mut controls_query: Query<&mut Text, With<ControlsText>>,
+    active_vehicle_query: Query<&VehicleControlType, With<ActiveEntity>>,
 ) {
     for mut text in controls_query.iter_mut() {
-        let controls_text = generate_dynamic_controls_text(current_state.get(), &loaded_controls);
+        let controls_text = generate_dynamic_controls_text(
+            current_state.get(),
+            &loaded_controls,
+            &active_vehicle_query,
+        );
         text.0 = controls_text;
     }
 }
@@ -18,14 +22,20 @@ pub fn controls_ui_system(
 fn generate_dynamic_controls_text(
     state: &GameState,
     loaded_controls: &LoadedVehicleControls,
+    active_vehicle_query: &Query<&VehicleControlType, With<ActiveEntity>>,
 ) -> String {
-    // Convert GameState to VehicleControlType
-    let vehicle_type = match state {
-        GameState::Walking => VehicleControlType::Walking,
-        GameState::Swimming => VehicleControlType::Swimming,
-        GameState::Driving => VehicleControlType::Car,
-        GameState::Flying => VehicleControlType::Helicopter,
-        GameState::Jetting => VehicleControlType::F16,
+    // Get actual VehicleControlType from active entity if available
+    let vehicle_type = if let Ok(vehicle_control_type) = active_vehicle_query.single() {
+        *vehicle_control_type
+    } else {
+        // Fallback to GameState-based detection
+        match state {
+            GameState::Walking => VehicleControlType::Walking,
+            GameState::Swimming => VehicleControlType::Swimming,
+            GameState::Driving => VehicleControlType::Car,
+            GameState::Flying => VehicleControlType::Helicopter,
+            GameState::Jetting => VehicleControlType::F16,
+        }
     };
 
     // Use asset-based control help generation
@@ -33,12 +43,13 @@ fn generate_dynamic_controls_text(
         help_text
     } else {
         // Fallback if controls haven't loaded yet
-        match state {
-            GameState::Walking => "LOADING WALKING CONTROLS...".to_string(),
-            GameState::Swimming => "LOADING SWIMMING CONTROLS...".to_string(),
-            GameState::Driving => "LOADING VEHICLE CONTROLS...".to_string(),
-            GameState::Flying => "LOADING HELICOPTER CONTROLS...".to_string(),
-            GameState::Jetting => "LOADING F16 CONTROLS...".to_string(),
+        match vehicle_type {
+            VehicleControlType::Walking => "LOADING WALKING CONTROLS...".to_string(),
+            VehicleControlType::Swimming => "LOADING SWIMMING CONTROLS...".to_string(),
+            VehicleControlType::Car => "LOADING CAR CONTROLS...".to_string(),
+            VehicleControlType::Helicopter => "LOADING HELICOPTER CONTROLS...".to_string(),
+            VehicleControlType::F16 => "LOADING F16 CONTROLS...".to_string(),
+            VehicleControlType::Yacht => "LOADING YACHT CONTROLS...".to_string(),
         }
     }
 }

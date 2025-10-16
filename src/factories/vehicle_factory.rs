@@ -205,6 +205,9 @@ impl VehicleFactory {
                 },
                 Sleeping::default(),
                 MovementTracker::new(position, 15.0),
+                crate::components::Enterable {
+                    vehicle_type: crate::components::VehicleControlType::Helicopter,
+                },
                 Name::new("Helicopter"),
             ))
             .id();
@@ -904,6 +907,58 @@ impl VehicleFactory {
                 Name::new("Railing Post"),
             ));
         }
+
+        commands.spawn((
+            Transform::from_xyz(0.0, 3.5, 0.0),
+            ChildOf(vehicle_entity),
+            crate::components::DeckWalkAnchor,
+            Name::new("DeckWalkAnchor"),
+        ));
+
+        commands.spawn((
+            Transform::from_xyz(0.0, 3.5, 0.0),
+            Collider::cuboid(9.0, 0.5, 20.0),
+            Sensor,
+            ChildOf(vehicle_entity),
+            crate::components::DeckWalkable,
+            Name::new("DeckWalkVolume"),
+        ));
+
+        commands.spawn((
+            Transform::from_xyz(0.0, 6.5, 10.0),
+            Collider::cuboid(6.0, 1.0, 6.0),
+            Sensor,
+            ChildOf(vehicle_entity),
+            crate::components::Helipad,
+            Name::new("HelipadVolume"),
+        ));
+
+        commands.spawn((
+            Transform::from_xyz(0.0, 3.5, 5.0),
+            ChildOf(vehicle_entity),
+            crate::components::ExitPoint {
+                kind: crate::components::ExitPointKind::Deck,
+            },
+            Name::new("ExitPoint Deck"),
+        ));
+
+        commands.spawn((
+            Transform::from_xyz(11.0, 1.0, 0.0),
+            ChildOf(vehicle_entity),
+            crate::components::ExitPoint {
+                kind: crate::components::ExitPointKind::Water,
+            },
+            Name::new("ExitPoint Water Starboard"),
+        ));
+
+        commands.spawn((
+            Transform::from_xyz(-11.0, 1.0, 0.0),
+            ChildOf(vehicle_entity),
+            crate::components::ExitPoint {
+                kind: crate::components::ExitPointKind::Water,
+            },
+            Name::new("ExitPoint Water Port"),
+        ));
 
         Ok(vehicle_entity)
     }
