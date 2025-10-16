@@ -12,7 +12,7 @@ VehicleControls(
     ],
     secondary_controls: [
         (action: VerticalUp, key: ShiftLeft, description: "Collective up / Ascend"),
-        (action: VerticalDown, key: ControlLeft, description: "Collective down / Descend"),
+        (action: VerticalDown, key: KeyC, description: "Collective down / Descend"),
     ],
     meta_controls: [
         (action: Interact, key: KeyF, description: "Exit helicopter"),
