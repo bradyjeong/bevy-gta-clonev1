@@ -24,14 +24,15 @@ impl Plugin for InputPlugin {
 
         // Asset-based input systems - process assets then map input to ControlState
         // CRITICAL: Label this system so interaction systems can run after it
-        app.add_systems(Startup, load_vehicle_controls_system).add_systems(
-            Update,
-            (
-                process_loaded_controls_system,
-                asset_based_input_mapping_system.in_set(InputProcessingSet),
-            )
-                .chain(),
-        );
+        app.add_systems(Startup, load_vehicle_controls_system)
+            .add_systems(
+                Update,
+                (
+                    process_loaded_controls_system,
+                    asset_based_input_mapping_system.in_set(InputProcessingSet),
+                )
+                    .chain(),
+            );
 
         info!("Input Plugin initialized with asset-based control system");
     }

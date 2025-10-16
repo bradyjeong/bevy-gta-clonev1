@@ -4,18 +4,18 @@ use bevy_rapier3d::prelude::{Damping, GravityScale, Velocity};
 
 use crate::components::unified_water::WaterBodyId;
 use crate::components::{
-    ControlState, DeckWalkAnchor, DeckWalkable, DeckWalker, Enterable, ExitPoint, ExitPointKind,
-    Helipad, InCar, LandedOnYacht, PendingPhysicsEnable, Player, PlayerControlled,
-    VehicleControlType, Yacht,
+    ControlState, DeckWalkAnchor, DeckWalker, Enterable, ExitPoint, ExitPointKind, Helipad, InCar,
+    LandedOnYacht, PendingPhysicsEnable, Player, PlayerControlled, VehicleControlType, Yacht,
 };
 use crate::game_state::GameState;
 use crate::systems::safe_active_entity::queue_active_transfer;
-use crate::systems::swimming::{ProneRotation, Swimming, SwimState};
+use crate::systems::swimming::{ProneRotation, SwimState, Swimming};
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 pub fn yacht_exit_system(
     mut commands: Commands,
-    mut yacht_query: Query<(Entity, &ControlState, &Children, &mut Velocity), (With<Yacht>, With<PlayerControlled>)>,
+    yacht_query: Query<(Entity, &ControlState, &Children), (With<Yacht>, With<PlayerControlled>)>,
+    just_controlled: Query<Entity, (With<Yacht>, Added<PlayerControlled>)>,
     helipad_query: Query<(&GlobalTransform, &Collider), With<Helipad>>,
     helicopter_query: Query<
         (Entity, &GlobalTransform, &Collider),
@@ -33,7 +33,12 @@ pub fn yacht_exit_system(
     >,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    for (yacht_entity, control_state, children, mut yacht_velocity) in yacht_query.iter_mut() {
+    for (yacht_entity, control_state, children) in yacht_query.iter() {
+        // Skip one frame after control transfer to prevent immediate exit when F is held
+        if just_controlled.get(yacht_entity).is_ok() {
+            continue;
+        }
+
         if !control_state.interact {
             continue;
         }
@@ -75,6 +80,7 @@ pub fn yacht_exit_system(
             }
         }
 
+        // Determine exit behavior: Shift+F = water, plain F = deck walk
         let exit_to_water = control_state.run;
 
         let target_exit_kind = if exit_to_water {
@@ -98,29 +104,26 @@ pub fn yacht_exit_system(
             if let Ok((player_entity, mut player_transform, mut player_visibility)) =
                 player_query.single_mut()
             {
-                // Remove control from yacht and stop it completely
+                // Remove control from yacht
                 commands
                     .entity(yacht_entity)
                     .remove::<PlayerControlled>()
                     .insert(ControlState::default());
-                
-                // Stop yacht movement when player exits
-                yacht_velocity.linvel = Vec3::ZERO;
-                yacht_velocity.angvel = Vec3::ZERO;
 
                 *player_visibility = Visibility::Visible;
 
-                // Transfer control to player (but don't enable physics yet - handled per exit type)
+                // Transfer control to player
                 commands
                     .entity(player_entity)
                     .insert(PlayerControlled)
                     .insert(ControlState::default())
-                    .remove::<InCar>();
+                    .remove::<InCar>()
+                    .remove::<ChildOf>();
 
                 match exit_point.kind {
                     ExitPointKind::Deck => {
-                        // CRITICAL: Do NOT enable physics for deck walking - player is parented
-                        // to yacht and moves via transform only, not physics
+                        const FOOT_OFFSET: f32 = 0.45;
+
                         if let Some((anchor_entity, anchor_gt)) = children
                             .iter()
                             .find_map(|child| deck_anchor_query.get(child).ok())
@@ -129,17 +132,22 @@ pub fn yacht_exit_system(
                                 .affine()
                                 .inverse()
                                 .transform_point3(exit_gt.translation());
-                            *player_transform = Transform::from_translation(local_pos);
+                            let local_snapped = Vec3::new(local_pos.x, FOOT_OFFSET, local_pos.z);
+                            let world_pos = anchor_gt.affine().transform_point3(local_snapped);
+
+                            *player_transform = Transform::from_translation(world_pos);
 
                             commands.entity(player_entity).insert((
                                 VehicleControlType::Walking,
                                 DeckWalker {
                                     yacht: yacht_entity,
+                                    deck_anchor: anchor_entity,
+                                    last_anchor: *anchor_gt,
+                                    half_extents: Vec2::new(9.0, 20.0),
+                                    foot_offset: FOOT_OFFSET,
                                 },
-                                ChildOf(anchor_entity),
                             ));
                         } else {
-                            commands.entity(player_entity).remove::<ChildOf>();
                             *player_transform = Transform::from_translation(exit_gt.translation());
                             commands
                                 .entity(player_entity)
@@ -188,49 +196,52 @@ pub fn yacht_exit_system(
 
 pub fn deck_walk_movement_system(
     time: Res<Time>,
-    deck_walker_query: Query<(Entity, &DeckWalker, &ControlState), With<Player>>,
+    mut deck_walker_query: Query<(Entity, &mut DeckWalker, &ControlState), With<Player>>,
     mut player_transform_query: Query<&mut Transform, With<Player>>,
-    yacht_children_query: Query<&Children, With<Yacht>>,
-    deck_volume_query: Query<&Collider, With<DeckWalkable>>,
+    anchor_query: Query<&GlobalTransform, With<DeckWalkAnchor>>,
 ) {
-    for (player_entity, deck_walker, control_state) in deck_walker_query.iter() {
+    for (player_entity, mut deck_walker, control_state) in deck_walker_query.iter_mut() {
         if let Ok(mut player_transform) = player_transform_query.get_mut(player_entity) {
-            let walk_speed = if control_state.run { 8.0 } else { 4.0 };
-            
-            let mut movement = Vec3::ZERO;
-            if control_state.is_accelerating() {
-                movement += *player_transform.forward();
-            }
-            if control_state.is_braking() {
-                movement -= *player_transform.forward();
-            }
-            
-            if movement.length() > 0.0 {
-                movement = movement.normalize() * walk_speed * time.delta_secs();
-                player_transform.translation += movement;
-            }
-            
-            if control_state.steering != 0.0 {
-                player_transform.rotate_y(control_state.steering * 1.8 * time.delta_secs());
-            }
-            
-            if let Ok(yacht_children) = yacht_children_query.get(deck_walker.yacht) {
-                if let Some(deck_collider) = yacht_children
-                    .iter()
-                    .filter_map(|child| deck_volume_query.get(child).ok())
-                    .next()
-                {
-                    if let Some(cuboid) = deck_collider.as_cuboid() {
-                        let half_extents = cuboid.half_extents();
-                        let local_pos = player_transform.translation;
-                        let clamped = Vec3::new(
-                            local_pos.x.clamp(-half_extents.x, half_extents.x),
-                            local_pos.y,
-                            local_pos.z.clamp(-half_extents.z, half_extents.z),
-                        );
-                        player_transform.translation = clamped;
-                    }
+            if let Ok(anchor_gt) = anchor_query.get(deck_walker.deck_anchor) {
+                let a_now = anchor_gt.affine();
+                let a_last = deck_walker.last_anchor.affine();
+                let delta = a_now * a_last.inverse();
+
+                let delta_translation = delta.transform_point3(Vec3::ZERO);
+                player_transform.translation += delta_translation;
+
+                let walk_speed = if control_state.run { 8.0 } else { 4.0 };
+
+                let mut fwd_axis: f32 = 0.0;
+                if control_state.is_accelerating() {
+                    fwd_axis += 1.0;
                 }
+                if control_state.is_braking() {
+                    fwd_axis -= 1.0;
+                }
+
+                if fwd_axis != 0.0 {
+                    let direction = *player_transform.forward() * fwd_axis.signum();
+                    player_transform.translation += direction * walk_speed * time.delta_secs();
+                }
+
+                if control_state.steering != 0.0 {
+                    player_transform.rotate_y(control_state.steering * 1.8 * time.delta_secs());
+                }
+
+                let mut p_local = a_now
+                    .inverse()
+                    .transform_point3(player_transform.translation);
+                p_local.y = deck_walker.foot_offset;
+                p_local.x = p_local
+                    .x
+                    .clamp(-deck_walker.half_extents.x, deck_walker.half_extents.x);
+                p_local.z = p_local
+                    .z
+                    .clamp(-deck_walker.half_extents.y, deck_walker.half_extents.y);
+                player_transform.translation = a_now.transform_point3(p_local);
+
+                deck_walker.last_anchor = *anchor_gt;
             }
         }
     }
@@ -256,8 +267,9 @@ pub fn yacht_board_from_deck_system(
                 .entity(player_entity)
                 .remove::<PlayerControlled>()
                 .remove::<DeckWalker>()
-                .remove::<ChildOf>()
-                .insert(InCar(yacht_entity));
+                .insert(InCar(yacht_entity))
+                .insert(ChildOf(yacht_entity))
+                .insert(Visibility::Hidden);
 
             commands
                 .entity(yacht_entity)

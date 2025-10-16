@@ -715,9 +715,14 @@ impl VehicleFactory {
                 Collider::cuboid(10.0, 3.0, 30.0),
             ),
             (
-                Vec3::new(0.0, 6.5, 10.0),
+                Vec3::new(0.0, 3.95, 0.0),
                 Quat::IDENTITY,
-                Collider::cuboid(6.0, 0.25, 6.0),
+                Collider::cuboid(9.0, 0.05, 20.0),
+            ),
+            (
+                Vec3::new(0.0, 3.95, 10.0),
+                Quat::IDENTITY,
+                Collider::cuboid(6.0, 0.05, 6.0),
             ),
             (
                 Vec3::new(0.0, 9.5, -5.0),
@@ -741,8 +746,8 @@ impl VehicleFactory {
                     collision_groups: CollisionGroups::new(
                         self.config.physics.vehicle_group,
                         self.config.physics.static_group
-                            | self.config.physics.character_group
-                            | self.config.physics.vehicle_group,
+                            | self.config.physics.vehicle_group
+                            | self.config.physics.character_group,
                     ),
                     velocity: Velocity::default(),
                     visibility_range: yacht_visibility(),
@@ -763,25 +768,10 @@ impl VehicleFactory {
             ))
             .id();
 
-        let glass_material = materials.add(StandardMaterial {
-            base_color: Color::srgba(0.15, 0.15, 0.2, 0.6),
-            metallic: 0.9,
-            perceptual_roughness: 0.1,
-            reflectance: 0.8,
-            ..default()
-        });
-
         let deck_material = materials.add(StandardMaterial {
             base_color: Color::srgb(0.85, 0.85, 0.85),
             metallic: 0.3,
             perceptual_roughness: 0.7,
-            ..default()
-        });
-
-        let accent_material = materials.add(StandardMaterial {
-            base_color: Color::srgb(0.2, 0.2, 0.25),
-            metallic: 0.8,
-            perceptual_roughness: 0.2,
             ..default()
         });
 
@@ -805,102 +795,113 @@ impl VehicleFactory {
             Name::new("Main Deck"),
         ));
 
+        // Helipad markings (flat layered decals on deck surface at y=4.0)
+        let deck_gray = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.7, 0.7, 0.75),
+            metallic: 0.1,
+            perceptual_roughness: 0.9,
+            ..default()
+        });
+
+        let helipad_white = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.95, 0.95, 0.98),
+            metallic: 0.0,
+            perceptual_roughness: 0.9,
+            ..default()
+        });
+
+        let helipad_red = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.9, 0.1, 0.1),
+            metallic: 0.0,
+            perceptual_roughness: 0.9,
+            ..default()
+        });
+
+        // Base disc
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(16.0, 3.0, 20.0))),
-            MeshMaterial3d(materials.add(hull_color)),
-            Transform::from_xyz(0.0, 6.0, -5.0),
+            Mesh3d(meshes.add(Cylinder::new(5.4, 0.02))),
+            MeshMaterial3d(deck_gray.clone()),
+            Transform::from_xyz(0.0, 4.05, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
-            Name::new("Lower Superstructure"),
+            Name::new("Helipad Base Disc"),
         ));
 
+        // White ring outer
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(15.5, 0.2, 19.5))),
-            MeshMaterial3d(glass_material.clone()),
-            Transform::from_xyz(0.0, 5.8, -5.0),
+            Mesh3d(meshes.add(Cylinder::new(5.2, 0.015))),
+            MeshMaterial3d(helipad_white.clone()),
+            Transform::from_xyz(0.0, 4.06, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
-            Name::new("Lower Windows"),
+            Name::new("Helipad Ring Outer"),
         ));
 
+        // Ring inner mask
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(12.0, 2.5, 14.0))),
-            MeshMaterial3d(materials.add(hull_color)),
-            Transform::from_xyz(0.0, 9.0, -5.0),
+            Mesh3d(meshes.add(Cylinder::new(4.4, 0.018))),
+            MeshMaterial3d(deck_gray.clone()),
+            Transform::from_xyz(0.0, 4.062, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
-            Name::new("Upper Superstructure"),
+            Name::new("Helipad Ring Inner Mask"),
         ));
 
+        // "H" letter - left bar
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(11.5, 0.2, 13.5))),
-            MeshMaterial3d(glass_material.clone()),
-            Transform::from_xyz(0.0, 8.8, -5.0),
+            Mesh3d(meshes.add(Cuboid::new(0.35, 0.02, 2.2))),
+            MeshMaterial3d(helipad_red.clone()),
+            Transform::from_xyz(-0.55, 4.07, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
-            Name::new("Upper Windows"),
+            Name::new("Helipad H - Left Bar"),
         ));
 
+        // "H" letter - right bar
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(8.0, 2.0, 8.0))),
-            MeshMaterial3d(materials.add(hull_color)),
-            Transform::from_xyz(0.0, 12.0, -5.0),
+            Mesh3d(meshes.add(Cuboid::new(0.35, 0.02, 2.2))),
+            MeshMaterial3d(helipad_red.clone()),
+            Transform::from_xyz(0.55, 4.07, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
-            Name::new("Bridge"),
+            Name::new("Helipad H - Right Bar"),
         ));
 
+        // "H" letter - crossbar
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(7.5, 0.2, 7.5))),
-            MeshMaterial3d(glass_material),
-            Transform::from_xyz(0.0, 11.8, -5.0),
+            Mesh3d(meshes.add(Cuboid::new(1.5, 0.02, 0.35))),
+            MeshMaterial3d(helipad_red),
+            Transform::from_xyz(0.0, 4.07, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
-            Name::new("Bridge Windows"),
+            Name::new("Helipad H - Crossbar"),
         ));
 
-        commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(12.0, 0.5, 12.0))),
-            MeshMaterial3d(materials.add(Color::srgb(0.3, 0.3, 0.3))),
-            Transform::from_xyz(0.0, 6.5, 10.0),
-            ChildOf(vehicle_entity),
-            VisibleChildBundle::default(),
-            yacht_visibility(),
-            Name::new("Helipad"),
-        ));
+        let accent_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.2, 0.2, 0.25),
+            metallic: 0.8,
+            perceptual_roughness: 0.2,
+            ..default()
+        });
 
-        commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(5.5, 0.1))),
-            MeshMaterial3d(materials.add(Color::srgb(0.9, 0.7, 0.1))),
-            Transform::from_xyz(0.0, 7.0, 10.0)
-                .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
-            ChildOf(vehicle_entity),
-            VisibleChildBundle::default(),
-            yacht_visibility(),
-            Name::new("Helipad Circle"),
-        ));
-
-        commands.spawn((
-            Mesh3d(meshes.add(Cylinder::new(0.15, 8.0))),
-            MeshMaterial3d(accent_material.clone()),
-            Transform::from_xyz(0.0, 17.0, -5.0),
-            ChildOf(vehicle_entity),
-            VisibleChildBundle::default(),
-            yacht_visibility(),
-            Name::new("Mast"),
-        ));
+        let mast_groups = CollisionGroups::new(
+            self.config.physics.vehicle_group,
+            self.config.physics.character_group,
+        );
 
         for (x, z) in [(-9.5, 25.0), (9.5, 25.0), (-9.5, -25.0), (9.5, -25.0)] {
             commands.spawn((
                 Mesh3d(meshes.add(Cylinder::new(0.08, 1.5))),
                 MeshMaterial3d(accent_material.clone()),
                 Transform::from_xyz(x, 4.25, z),
+                Collider::cylinder(0.75, 0.08),
+                mast_groups,
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
@@ -908,25 +909,102 @@ impl VehicleFactory {
             ));
         }
 
+        let steel_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.85, 0.86, 0.9),
+            metallic: 1.0,
+            perceptual_roughness: 0.2,
+            reflectance: 0.5,
+            ..default()
+        });
+
+        let rail_specs = [
+            (4.25, 0.055, "Top"),
+            (3.95, 0.04, "Mid"),
+            (3.65, 0.035, "Low"),
+        ];
+
+        for (y, radius, tag) in rail_specs {
+            let length_x = 19.0;
+            let length_z = 50.0;
+
+            commands.spawn((
+                Mesh3d(meshes.add(Cylinder::new(radius, length_z))),
+                MeshMaterial3d(steel_material.clone()),
+                Transform::from_xyz(-9.5, y, 0.0)
+                    .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+                Collider::cylinder(length_z / 2.0, radius),
+                mast_groups,
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                yacht_visibility(),
+                Name::new(format!("{} Rail Left", tag)),
+            ));
+
+            commands.spawn((
+                Mesh3d(meshes.add(Cylinder::new(radius, length_z))),
+                MeshMaterial3d(steel_material.clone()),
+                Transform::from_xyz(9.5, y, 0.0)
+                    .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+                Collider::cylinder(length_z / 2.0, radius),
+                mast_groups,
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                yacht_visibility(),
+                Name::new(format!("{} Rail Right", tag)),
+            ));
+
+            commands.spawn((
+                Mesh3d(meshes.add(Cylinder::new(radius, length_x))),
+                MeshMaterial3d(steel_material.clone()),
+                Transform::from_xyz(0.0, y, -25.0)
+                    .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+                Collider::cylinder(length_x / 2.0, radius),
+                mast_groups,
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                yacht_visibility(),
+                Name::new(format!("{} Rail Front", tag)),
+            ));
+
+            commands.spawn((
+                Mesh3d(meshes.add(Cylinder::new(radius, length_x))),
+                MeshMaterial3d(steel_material.clone()),
+                Transform::from_xyz(0.0, y, 25.0)
+                    .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+                Collider::cylinder(length_x / 2.0, radius),
+                mast_groups,
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                yacht_visibility(),
+                Name::new(format!("{} Rail Back", tag)),
+            ));
+        }
+
         commands.spawn((
-            Transform::from_xyz(0.0, 3.5, 0.0),
+            Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(vehicle_entity),
             crate::components::DeckWalkAnchor,
             Name::new("DeckWalkAnchor"),
         ));
 
         commands.spawn((
-            Transform::from_xyz(0.0, 3.5, 0.0),
-            Collider::cuboid(9.0, 0.5, 20.0),
+            Transform::from_xyz(0.0, 4.0, 0.0),
+            Collider::cuboid(9.0, 0.02, 20.0),
             Sensor,
+            CollisionGroups::new(
+                self.config.physics.vehicle_group,
+                self.config.physics.character_group,
+            ),
+            Friction::coefficient(0.0),
+            Restitution::coefficient(0.0),
             ChildOf(vehicle_entity),
             crate::components::DeckWalkable,
             Name::new("DeckWalkVolume"),
         ));
 
         commands.spawn((
-            Transform::from_xyz(0.0, 6.5, 10.0),
-            Collider::cuboid(6.0, 1.0, 6.0),
+            Transform::from_xyz(0.0, 5.5, 10.0), // Detection zone above deck surface
+            Collider::cuboid(6.0, 3.0, 6.0),     // 12m × 6m height × 12m
             Sensor,
             ChildOf(vehicle_entity),
             crate::components::Helipad,

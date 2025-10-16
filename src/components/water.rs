@@ -27,8 +27,8 @@ pub struct YachtState {
     pub rudder: f32,
     pub current_thrust: f32,
     pub current_rudder: f32,
-    pub on_water: bool,          // Yacht is in water region
-    pub thrust_in_water: bool,   // Propeller is submerged (can generate thrust)
+    pub on_water: bool,        // Yacht is in water region
+    pub thrust_in_water: bool, // Propeller is submerged (can generate thrust)
 }
 
 #[derive(Resource)]

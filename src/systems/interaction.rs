@@ -56,6 +56,7 @@ pub fn interaction_system(
         ),
     >,
     active_query: Query<Entity, With<ActiveEntity>>,
+    just_controlled: Query<Entity, Added<PlayerControlled>>,
 ) {
     // Check for interact action from ControlState (unified input source)
     // Use active entity's ControlState if available, fallback to keyboard for Walking/Swimming
@@ -393,6 +394,11 @@ pub fn interaction_system(
         GameState::Driving => {
             // Exit car (NOT yacht - yacht is handled by yacht_exit_system)
             if let Ok(active_car) = active_query.single() {
+                // Skip one frame after control transfer to prevent immediate exit when F is held
+                if just_controlled.get(active_car).is_ok() {
+                    return;
+                }
+
                 // CRITICAL: Only handle car exits here, yachts use yacht_exit_system
                 // Get the specific active car's global transform and velocity
                 if let Ok((_, car_gt, car_vel)) = car_query.get(active_car) {
@@ -448,6 +454,11 @@ pub fn interaction_system(
         GameState::Flying => {
             // Exit helicopter
             if let Ok(active_helicopter) = active_query.single() {
+                // Skip one frame after control transfer to prevent immediate exit when F is held
+                if just_controlled.get(active_helicopter).is_ok() {
+                    return;
+                }
+
                 // Get the specific active helicopter's global transform and velocity
                 if let Ok((_, helicopter_gt, helicopter_vel)) =
                     helicopter_query.get(active_helicopter)
@@ -506,6 +517,11 @@ pub fn interaction_system(
         GameState::Jetting => {
             // Exit F16
             if let Ok(active_f16) = active_query.single() {
+                // Skip one frame after control transfer to prevent immediate exit when F is held
+                if just_controlled.get(active_f16).is_ok() {
+                    return;
+                }
+
                 // Get the specific active F16's global transform and velocity
                 if let Ok((_, f16_gt, f16_vel)) = f16_query.get(active_f16) {
                     // Find player and properly detach and position them

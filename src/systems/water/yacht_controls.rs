@@ -1,7 +1,7 @@
+use crate::components::PlayerControlled;
 use crate::components::control_state::ControlState;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::water::{Yacht, YachtSpecs, YachtState};
-use crate::components::PlayerControlled;
 use crate::systems::water::yacht_buoyancy::YachtSpecsHandle;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;

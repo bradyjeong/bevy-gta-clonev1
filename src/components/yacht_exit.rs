@@ -2,9 +2,13 @@ use bevy::prelude::*;
 
 use super::control_state::VehicleControlType;
 
-#[derive(Component, Debug, Clone, Copy)]
+#[derive(Component, Debug, Clone)]
 pub struct DeckWalker {
     pub yacht: Entity,
+    pub deck_anchor: Entity,
+    pub last_anchor: GlobalTransform,
+    pub half_extents: Vec2,
+    pub foot_offset: f32,
 }
 
 #[derive(Component, Debug, Clone, Copy)]

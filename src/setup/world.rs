@@ -391,11 +391,20 @@ fn spawn_terrain_beaches(
     // Collider mesh: Simple sloped quad (2 triangles) prevents jolting
 
     // EAST BEACH (+X direction) - mesh naturally slopes +X, NO rotation needed
-    let east_visual =
-        create_beach_slope(beach_width, terrain_size, land_elevation_phys, ocean_floor_y, 32);
-    let east_collider_mesh =
-        create_beach_slope_collider(beach_width, terrain_size, land_elevation_phys, ocean_floor_y);
-    
+    let east_visual = create_beach_slope(
+        beach_width,
+        terrain_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        32,
+    );
+    let east_collider_mesh = create_beach_slope_collider(
+        beach_width,
+        terrain_size,
+        land_elevation_phys,
+        ocean_floor_y,
+    );
+
     let east_pos_visual = Vec3::new(
         terrain_center.x + half_size + beach_width / 2.0,
         beach_center_y_visual,
@@ -424,11 +433,20 @@ fn spawn_terrain_beaches(
     ));
 
     // WEST BEACH (-X direction) - flip 180° to slope toward -X
-    let west_visual =
-        create_beach_slope(beach_width, terrain_size, land_elevation_phys, ocean_floor_y, 32);
-    let west_collider_mesh =
-        create_beach_slope_collider(beach_width, terrain_size, land_elevation_phys, ocean_floor_y);
-    
+    let west_visual = create_beach_slope(
+        beach_width,
+        terrain_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        32,
+    );
+    let west_collider_mesh = create_beach_slope_collider(
+        beach_width,
+        terrain_size,
+        land_elevation_phys,
+        ocean_floor_y,
+    );
+
     let west_pos_visual = Vec3::new(
         terrain_center.x - (half_size + beach_width / 2.0),
         beach_center_y_visual,
@@ -458,11 +476,20 @@ fn spawn_terrain_beaches(
     ));
 
     // NORTH BEACH (+Z direction) - rotate -90° clockwise so X→-Z
-    let north_visual =
-        create_beach_slope(beach_width, terrain_size, land_elevation_phys, ocean_floor_y, 32);
-    let north_collider_mesh =
-        create_beach_slope_collider(beach_width, terrain_size, land_elevation_phys, ocean_floor_y);
-    
+    let north_visual = create_beach_slope(
+        beach_width,
+        terrain_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        32,
+    );
+    let north_collider_mesh = create_beach_slope_collider(
+        beach_width,
+        terrain_size,
+        land_elevation_phys,
+        ocean_floor_y,
+    );
+
     let north_pos_visual = Vec3::new(
         terrain_center.x,
         beach_center_y_visual,
@@ -492,11 +519,20 @@ fn spawn_terrain_beaches(
     ));
 
     // SOUTH BEACH (-Z direction) - rotate +90° counterclockwise so X→Z
-    let south_visual =
-        create_beach_slope(beach_width, terrain_size, land_elevation_phys, ocean_floor_y, 32);
-    let south_collider_mesh =
-        create_beach_slope_collider(beach_width, terrain_size, land_elevation_phys, ocean_floor_y);
-    
+    let south_visual = create_beach_slope(
+        beach_width,
+        terrain_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        32,
+    );
+    let south_collider_mesh = create_beach_slope_collider(
+        beach_width,
+        terrain_size,
+        land_elevation_phys,
+        ocean_floor_y,
+    );
+
     let south_pos_visual = Vec3::new(
         terrain_center.x,
         beach_center_y_visual,

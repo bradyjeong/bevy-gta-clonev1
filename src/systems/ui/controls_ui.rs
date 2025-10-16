@@ -1,6 +1,6 @@
 use crate::components::{ActiveEntity, ControlsText, VehicleControlType};
 use crate::game_state::GameState;
-use crate::systems::input::{get_vehicle_control_help, LoadedVehicleControls};
+use crate::systems::input::{LoadedVehicleControls, get_vehicle_control_help};
 use bevy::prelude::*;
 
 pub fn controls_ui_system(
@@ -37,9 +37,7 @@ fn generate_dynamic_controls_text(
     // Prefer GameState-derived type if there's a mismatch (prevents stale ActiveEntity issues)
     let vehicle_type = if let Ok(active_vehicle_type) = active_vehicle_query.single() {
         // If both agree or state is generic (Driving), use active entity's specific type
-        if *active_vehicle_type == state_vehicle_type
-            || matches!(state, GameState::Driving)
-        {
+        if *active_vehicle_type == state_vehicle_type || matches!(state, GameState::Driving) {
             *active_vehicle_type
         } else {
             // Mismatch: prefer GameState to avoid showing wrong controls
