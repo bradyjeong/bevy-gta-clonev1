@@ -24,18 +24,30 @@ fn generate_dynamic_controls_text(
     loaded_controls: &LoadedVehicleControls,
     active_vehicle_query: &Query<&VehicleControlType, With<ActiveEntity>>,
 ) -> String {
+    // Map GameState to expected VehicleControlType
+    let state_vehicle_type = match state {
+        GameState::Walking => VehicleControlType::Walking,
+        GameState::Swimming => VehicleControlType::Swimming,
+        GameState::Driving => VehicleControlType::Car, // Note: could also be Yacht
+        GameState::Flying => VehicleControlType::Helicopter,
+        GameState::Jetting => VehicleControlType::F16,
+    };
+
     // Get actual VehicleControlType from active entity if available
-    let vehicle_type = if let Ok(vehicle_control_type) = active_vehicle_query.single() {
-        *vehicle_control_type
-    } else {
-        // Fallback to GameState-based detection
-        match state {
-            GameState::Walking => VehicleControlType::Walking,
-            GameState::Swimming => VehicleControlType::Swimming,
-            GameState::Driving => VehicleControlType::Car,
-            GameState::Flying => VehicleControlType::Helicopter,
-            GameState::Jetting => VehicleControlType::F16,
+    // Prefer GameState-derived type if there's a mismatch (prevents stale ActiveEntity issues)
+    let vehicle_type = if let Ok(active_vehicle_type) = active_vehicle_query.single() {
+        // If both agree or state is generic (Driving), use active entity's specific type
+        if *active_vehicle_type == state_vehicle_type
+            || matches!(state, GameState::Driving)
+        {
+            *active_vehicle_type
+        } else {
+            // Mismatch: prefer GameState to avoid showing wrong controls
+            state_vehicle_type
         }
+    } else {
+        // No active entity: use GameState
+        state_vehicle_type
     };
 
     // Use asset-based control help generation

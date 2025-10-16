@@ -1,11 +1,12 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::water::Yacht;
 use crate::components::{
-    ActiveEntity, Car, ControlState, F16, Helicopter, InCar, PendingPhysicsEnable, Player,
-    PlayerControlled, VehicleControlType,
+    ActiveEntity, Car, ControlState, F16, Helicopter, HumanAnimation, InCar, PendingPhysicsEnable,
+    Player, PlayerControlled, VehicleControlType,
 };
 use crate::game_state::GameState;
 use crate::systems::safe_active_entity::queue_active_transfer;
+use crate::systems::swimming::{ProneRotation, Swimming};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -22,6 +23,7 @@ pub fn interaction_system(
             Option<&ControlState>,
             Option<&PlayerControlled>,
             Option<&VehicleControlType>,
+            Option<&mut HumanAnimation>,
         ),
         (
             With<Player>,
@@ -31,6 +33,7 @@ pub fn interaction_system(
             Without<Yacht>,
         ),
     >,
+    active_control_query: Query<&ControlState, With<ActiveEntity>>,
     car_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<Car>, Without<Player>)>,
     helicopter_query: Query<
         (Entity, &GlobalTransform, Option<&Velocity>),
@@ -54,8 +57,14 @@ pub fn interaction_system(
     >,
     active_query: Query<Entity, With<ActiveEntity>>,
 ) {
-    // Check for F key press directly from keyboard input
-    let interact_pressed = keyboard_input.just_pressed(KeyCode::KeyF);
+    // Check for interact action from ControlState (unified input source)
+    // Use active entity's ControlState if available, fallback to keyboard for Walking/Swimming
+    let interact_pressed = if let Ok(control_state) = active_control_query.single() {
+        control_state.interact
+    } else {
+        // Fallback for Walking/Swimming states where player is ActiveEntity
+        keyboard_input.just_pressed(KeyCode::KeyF)
+    };
 
     if !interact_pressed {
         return;
@@ -71,6 +80,7 @@ pub fn interaction_system(
                 control_state,
                 player_controlled,
                 _vehicle_control_type,
+                _human_animation,
             )) = player_query.single_mut()
             else {
                 warn!("Failed to get player entity!");
@@ -301,6 +311,7 @@ pub fn interaction_system(
                 control_state,
                 player_controlled,
                 _vehicle_control_type,
+                human_animation,
             )) = player_query.single_mut()
             else {
                 warn!("Failed to get player entity!");
@@ -326,13 +337,23 @@ pub fn interaction_system(
 
                     // Remove control components from player and hide them
                     // CRITICAL: Disable player physics to prevent corruption while in vehicle
+                    // CRITICAL: Clean up swimming state components when entering from water
                     commands
                         .entity(player_entity)
                         .remove::<PlayerControlled>()
                         .remove::<ControlState>()
                         .remove::<VehicleControlType>()
+                        .remove::<Swimming>()
+                        .remove::<ProneRotation>()
+                        .remove::<GravityScale>()
+                        .remove::<Damping>()
                         .insert(Visibility::Hidden)
                         .insert(RigidBodyDisabled);
+
+                    // Reset swim animation flag to prevent swim animation on vehicle
+                    if let Some(mut anim) = human_animation {
+                        anim.is_swimming = false;
+                    }
 
                     // Make player a child of the yacht
                     commands.entity(player_entity).insert(ChildOf(yacht_entity));
@@ -370,12 +391,13 @@ pub fn interaction_system(
             }
         }
         GameState::Driving => {
-            // Exit car
+            // Exit car (NOT yacht - yacht is handled by yacht_exit_system)
             if let Ok(active_car) = active_query.single() {
+                // CRITICAL: Only handle car exits here, yachts use yacht_exit_system
                 // Get the specific active car's global transform and velocity
                 if let Ok((_, car_gt, car_vel)) = car_query.get(active_car) {
                     // Find player and properly detach and position them
-                    if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
+                    if let Ok((player_entity, _, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_car, player_entity);
 
@@ -414,11 +436,13 @@ pub fn interaction_system(
                             "ActiveEntity transferred from Car({:?}) back to Player({:?})",
                             active_car, player_entity
                         );
-                    }
 
-                    // Switch to walking state
-                    state.set(GameState::Walking);
+                        // ONLY set Walking state if we actually exited a car
+                        state.set(GameState::Walking);
+                    }
                 }
+                // If active_car exists but isn't a Car (e.g., it's a Yacht), do nothing here
+                // Let yacht_exit_system handle it
             }
         }
         GameState::Flying => {
@@ -429,7 +453,7 @@ pub fn interaction_system(
                     helicopter_query.get(active_helicopter)
                 {
                     // Find player and properly detach and position them
-                    if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
+                    if let Ok((player_entity, _, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_helicopter, player_entity);
 
@@ -485,7 +509,7 @@ pub fn interaction_system(
                 // Get the specific active F16's global transform and velocity
                 if let Ok((_, f16_gt, f16_vel)) = f16_query.get(active_f16) {
                     // Find player and properly detach and position them
-                    if let Ok((player_entity, _, _, _, _, _)) = player_query.single_mut() {
+                    if let Ok((player_entity, _, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_f16, player_entity);
 

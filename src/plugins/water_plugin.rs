@@ -83,7 +83,8 @@ impl Plugin for WaterPlugin {
             .add_systems(
                 Update,
                 (
-                    yacht_exit_system,
+                    // CRITICAL: Run yacht_exit_system AFTER input processing
+                    yacht_exit_system.after(crate::plugins::input_plugin::InputProcessingSet),
                     yacht_board_from_deck_system,
                     deck_walk_movement_system,
                     heli_landing_detection_system,

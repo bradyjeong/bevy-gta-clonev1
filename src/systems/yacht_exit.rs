@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier3d::geometry::Collider;
-use bevy_rapier3d::prelude::Velocity;
+use bevy_rapier3d::prelude::{Damping, GravityScale, Velocity};
 
+use crate::components::unified_water::WaterBodyId;
 use crate::components::{
     ControlState, DeckWalkAnchor, DeckWalkable, DeckWalker, Enterable, ExitPoint, ExitPointKind,
     Helipad, InCar, LandedOnYacht, PendingPhysicsEnable, Player, PlayerControlled,
@@ -9,11 +10,12 @@ use crate::components::{
 };
 use crate::game_state::GameState;
 use crate::systems::safe_active_entity::queue_active_transfer;
+use crate::systems::swimming::{ProneRotation, Swimming, SwimState};
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 pub fn yacht_exit_system(
     mut commands: Commands,
-    yacht_query: Query<(Entity, &ControlState, &Children), (With<Yacht>, With<PlayerControlled>)>,
+    mut yacht_query: Query<(Entity, &ControlState, &Children, &mut Velocity), (With<Yacht>, With<PlayerControlled>)>,
     helipad_query: Query<(&GlobalTransform, &Collider), With<Helipad>>,
     helicopter_query: Query<
         (Entity, &GlobalTransform, &Collider),
@@ -31,7 +33,7 @@ pub fn yacht_exit_system(
     >,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    for (yacht_entity, control_state, children) in yacht_query.iter() {
+    for (yacht_entity, control_state, children, mut yacht_velocity) in yacht_query.iter_mut() {
         if !control_state.interact {
             continue;
         }
@@ -96,19 +98,29 @@ pub fn yacht_exit_system(
             if let Ok((player_entity, mut player_transform, mut player_visibility)) =
                 player_query.single_mut()
             {
-                commands.entity(yacht_entity).remove::<PlayerControlled>();
+                // Remove control from yacht and stop it completely
+                commands
+                    .entity(yacht_entity)
+                    .remove::<PlayerControlled>()
+                    .insert(ControlState::default());
+                
+                // Stop yacht movement when player exits
+                yacht_velocity.linvel = Vec3::ZERO;
+                yacht_velocity.angvel = Vec3::ZERO;
 
                 *player_visibility = Visibility::Visible;
 
+                // Transfer control to player (but don't enable physics yet - handled per exit type)
                 commands
                     .entity(player_entity)
                     .insert(PlayerControlled)
-                    .insert(PendingPhysicsEnable)
                     .insert(ControlState::default())
                     .remove::<InCar>();
 
                 match exit_point.kind {
                     ExitPointKind::Deck => {
+                        // CRITICAL: Do NOT enable physics for deck walking - player is parented
+                        // to yacht and moves via transform only, not physics
                         if let Some((anchor_entity, anchor_gt)) = children
                             .iter()
                             .find_map(|child| deck_anchor_query.get(child).ok())
@@ -139,12 +151,30 @@ pub fn yacht_exit_system(
                         next_state.set(GameState::Walking);
                     }
                     ExitPointKind::Water => {
+                        // Enable physics for swimming (buoyancy, collisions)
                         commands.entity(player_entity).remove::<ChildOf>();
                         *player_transform = Transform::from_translation(exit_gt.translation());
 
+                        // CRITICAL: Insert swimming components and physics for proper water entry
                         commands
                             .entity(player_entity)
                             .insert(VehicleControlType::Swimming)
+                            .insert(ControlState::default())
+                            .insert(Swimming {
+                                state: SwimState::Surface,
+                            })
+                            .insert(GravityScale(0.1))
+                            .insert(Damping {
+                                linear_damping: 6.0,
+                                angular_damping: 3.0,
+                            })
+                            .insert(WaterBodyId)
+                            .insert(ProneRotation {
+                                target_pitch: -std::f32::consts::FRAC_PI_2,
+                                current_pitch: 0.0,
+                                going_prone: true,
+                            })
+                            .insert(PendingPhysicsEnable)
                             .remove::<DeckWalker>();
 
                         queue_active_transfer(&mut commands, yacht_entity, player_entity);
@@ -157,13 +187,33 @@ pub fn yacht_exit_system(
 }
 
 pub fn deck_walk_movement_system(
-    deck_walker_query: Query<(Entity, &DeckWalker), With<Player>>,
+    time: Res<Time>,
+    deck_walker_query: Query<(Entity, &DeckWalker, &ControlState), With<Player>>,
     mut player_transform_query: Query<&mut Transform, With<Player>>,
     yacht_children_query: Query<&Children, With<Yacht>>,
     deck_volume_query: Query<&Collider, With<DeckWalkable>>,
 ) {
-    for (player_entity, deck_walker) in deck_walker_query.iter() {
+    for (player_entity, deck_walker, control_state) in deck_walker_query.iter() {
         if let Ok(mut player_transform) = player_transform_query.get_mut(player_entity) {
+            let walk_speed = if control_state.run { 8.0 } else { 4.0 };
+            
+            let mut movement = Vec3::ZERO;
+            if control_state.is_accelerating() {
+                movement += *player_transform.forward();
+            }
+            if control_state.is_braking() {
+                movement -= *player_transform.forward();
+            }
+            
+            if movement.length() > 0.0 {
+                movement = movement.normalize() * walk_speed * time.delta_secs();
+                player_transform.translation += movement;
+            }
+            
+            if control_state.steering != 0.0 {
+                player_transform.rotate_y(control_state.steering * 1.8 * time.delta_secs());
+            }
+            
             if let Ok(yacht_children) = yacht_children_query.get(deck_walker.yacht) {
                 if let Some(deck_collider) = yacht_children
                     .iter()

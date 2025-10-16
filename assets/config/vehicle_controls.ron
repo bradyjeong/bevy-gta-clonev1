@@ -121,8 +121,8 @@ VehicleControlsConfig(
                 (action: Turbo, key: Space, description: "Engine boost"),
             ],
             meta_controls: [
-                (action: Interact, key: KeyF, description: "Exit to deck (walk on yacht)"),
-                (action: Run, key: ShiftLeft, description: "Hold Shift + F: Jump to water (swimming)"),
+                (action: Interact, key: KeyF, description: "Exit to deck"),
+                (action: Run, key: ShiftLeft, description: "Jump to water modifier"),
                 (action: DebugInfo, key: F1, description: "Toggle debug info"),
                 (action: EmergencyReset, key: F2, description: "Emergency reset"),
             ],

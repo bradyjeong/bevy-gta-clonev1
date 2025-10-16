@@ -942,8 +942,9 @@ impl VehicleFactory {
             Name::new("ExitPoint Deck"),
         ));
 
+        // Water exit points should be BELOW sea level (SEA_LEVEL = 0.0) to trigger swimming
         commands.spawn((
-            Transform::from_xyz(11.0, 1.0, 0.0),
+            Transform::from_xyz(11.0, -0.5, 0.0),
             ChildOf(vehicle_entity),
             crate::components::ExitPoint {
                 kind: crate::components::ExitPointKind::Water,
@@ -952,7 +953,7 @@ impl VehicleFactory {
         ));
 
         commands.spawn((
-            Transform::from_xyz(-11.0, 1.0, 0.0),
+            Transform::from_xyz(-11.0, -0.5, 0.0),
             ChildOf(vehicle_entity),
             crate::components::ExitPoint {
                 kind: crate::components::ExitPointKind::Water,
