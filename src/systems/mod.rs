@@ -51,6 +51,7 @@
 
 pub mod audio;
 pub mod camera;
+pub mod camera_yacht;
 pub mod effects;
 
 pub mod interaction;
@@ -82,6 +83,7 @@ pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
 pub mod performance; // Simplified performance system (replaces performance_monitor)
+pub mod yacht_exit;
 
 // MINIMAL CURATED EXPORTS - Use explicit module paths elsewhere to maintain clear dependencies
 // Only export items that are genuinely shared across multiple plugins and form stable APIs

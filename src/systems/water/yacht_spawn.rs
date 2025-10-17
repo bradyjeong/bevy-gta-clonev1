@@ -9,13 +9,12 @@ pub fn spawn_test_yacht(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
     config: Res<GameConfig>,
 ) {
-    // Yacht spawns near LEFT island shore for easy player access
-    // Position: just east of LEFT island center, accessible from beach
-    use crate::constants::{LEFT_ISLAND_X, TERRAIN_HALF_SIZE};
+    use crate::constants::{BEACH_WIDTH, LEFT_ISLAND_X, TERRAIN_HALF_SIZE};
     let yacht_position = Vec3::new(
-        LEFT_ISLAND_X + TERRAIN_HALF_SIZE + 150.0, // 150m offshore from east beach
+        LEFT_ISLAND_X + TERRAIN_HALF_SIZE + BEACH_WIDTH,
         SEA_LEVEL,
         0.0,
     );
@@ -26,6 +25,7 @@ pub fn spawn_test_yacht(
         &mut commands,
         &mut meshes,
         &mut materials,
+        &asset_server,
         VehicleType::Yacht,
         yacht_position,
         Some(Color::srgb(0.9, 0.9, 1.0)),

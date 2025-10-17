@@ -75,7 +75,7 @@ VehicleControlsConfig(
             ],
             secondary_controls: [
                 (action: VerticalUp, key: ShiftLeft, description: "Collective up / Ascend"),
-                (action: VerticalDown, key: ControlLeft, description: "Collective down / Descend"),
+                (action: VerticalDown, key: KeyC, description: "Collective down / Descend"),
             ],
             meta_controls: [
                 (action: Interact, key: KeyF, description: "Exit helicopter"),
@@ -110,18 +110,19 @@ VehicleControlsConfig(
         
         Yacht: VehicleControls(
             name: "Yacht",
-            description: "Water vehicle controls",
+            description: "Luxury water vessel controls",
             primary_controls: [
-                (action: Forward, key: KeyI, description: "Move forward"),
-                (action: Backward, key: KeyK, description: "Move backward"),
-                (action: TurnLeft, key: KeyJ, description: "Turn left"),
-                (action: TurnRight, key: KeyL, description: "Turn right"),
+                (action: Forward, key: ArrowUp, description: "Throttle forward"),
+                (action: Backward, key: ArrowDown, description: "Throttle reverse"),
+                (action: TurnLeft, key: ArrowLeft, description: "Rudder left"),
+                (action: TurnRight, key: ArrowRight, description: "Rudder right"),
             ],
             secondary_controls: [
-                (action: Turbo, key: Space, description: "Boost / Faster speed"),
+                (action: Turbo, key: Space, description: "Engine boost"),
             ],
             meta_controls: [
-                (action: Interact, key: KeyF, description: "Exit yacht"),
+                (action: Interact, key: KeyF, description: "Exit to deck"),
+                (action: Run, key: ShiftLeft, description: "Jump to water modifier"),
                 (action: DebugInfo, key: F1, description: "Toggle debug info"),
                 (action: EmergencyReset, key: F2, description: "Emergency reset"),
             ],

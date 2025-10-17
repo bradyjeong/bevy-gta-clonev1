@@ -69,6 +69,7 @@ pub mod world;
 
 pub mod control_state;
 pub mod dirty_flags;
+pub mod yacht_exit;
 
 pub mod unified_vehicle;
 
@@ -115,3 +116,7 @@ pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility};
 pub use map::{MapCamera, MapConfig, MinimapUI, PlayerMapIcon};
 pub use movement_tracker::MovementTracker;
 pub use unified_vehicle::UnifiedVehicleSpecs;
+pub use yacht_exit::{
+    DeckWalkAnchor, DeckWalkable, DeckWalker, Enterable, ExitPoint, ExitPointKind, Helipad,
+    LandedOnYacht,
+};

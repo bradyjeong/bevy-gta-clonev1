@@ -252,8 +252,46 @@ pub fn get_vehicle_control_help(
 
     if !vehicle_controls.meta_controls.is_empty() {
         help_text.push("META CONTROLS:".to_string());
-        for binding in &vehicle_controls.meta_controls {
-            help_text.push(format!("  {:?}: {}", binding.key, binding.description));
+
+        // Special handling for Yacht: combine Run + Interact into Shift+F
+        if matches!(vehicle_type, VehicleControlType::Yacht) {
+            let interact_binding = vehicle_controls
+                .meta_controls
+                .iter()
+                .find(|b| matches!(b.action, AssetControlAction::Interact));
+            let run_binding = vehicle_controls
+                .meta_controls
+                .iter()
+                .find(|b| matches!(b.action, AssetControlAction::Run));
+
+            if let (Some(interact), Some(run)) = (interact_binding, run_binding) {
+                // Show combined Shift+F controls
+                help_text.push(format!("  {:?}: Exit to deck", interact.key));
+                help_text.push(format!(
+                    "  {:?}+{:?}: Jump to water (exit swimming)",
+                    run.key, interact.key
+                ));
+
+                // Show other meta controls except Run (already shown in combo)
+                for binding in &vehicle_controls.meta_controls {
+                    if !matches!(
+                        binding.action,
+                        AssetControlAction::Interact | AssetControlAction::Run
+                    ) {
+                        help_text.push(format!("  {:?}: {}", binding.key, binding.description));
+                    }
+                }
+            } else {
+                // Fallback: show all meta controls normally
+                for binding in &vehicle_controls.meta_controls {
+                    help_text.push(format!("  {:?}: {}", binding.key, binding.description));
+                }
+            }
+        } else {
+            // For all other vehicles, show meta controls normally
+            for binding in &vehicle_controls.meta_controls {
+                help_text.push(format!("  {:?}: {}", binding.key, binding.description));
+            }
         }
     }
 

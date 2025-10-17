@@ -1,3 +1,4 @@
+use crate::plugins::input_plugin::InputProcessingSet;
 use crate::systems::audio::{cleanup_footstep_sounds, footstep_system};
 use crate::systems::camera::camera_follow_system;
 use crate::systems::interaction::interaction_system;
@@ -34,7 +35,8 @@ impl Plugin for PlayerPlugin {
                 footstep_system.run_if(in_state(GameState::Walking)),
                 cleanup_footstep_sounds,
                 camera_follow_system,
-                interaction_system,
+                // CRITICAL: Run interaction_system AFTER input processing
+                interaction_system.after(InputProcessingSet),
                 debug_game_state,
                 (
                     player_collision_resolution_system,

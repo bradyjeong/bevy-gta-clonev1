@@ -11,6 +11,7 @@ use rand::Rng;
 pub struct VehicleGenerator;
 
 impl VehicleGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub fn generate_vehicles(
         &self,
         commands: &mut Commands,
@@ -18,6 +19,7 @@ impl VehicleGenerator {
         coord: ChunkCoord,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &AssetServer,
         world_rng: &mut WorldRng,
     ) {
         let chunk_center = coord.to_world_pos();
@@ -61,9 +63,15 @@ impl VehicleGenerator {
                     .placement_grid
                     .can_place(position, ContentType::Vehicle, 4.0, 15.0)
             {
-                if let Ok(vehicle_entity) = self
-                    .spawn_ground_vehicle(commands, coord, position, meshes, materials, world_rng)
-                {
+                if let Ok(vehicle_entity) = self.spawn_ground_vehicle(
+                    commands,
+                    coord,
+                    position,
+                    meshes,
+                    materials,
+                    asset_server,
+                    world_rng,
+                ) {
                     world
                         .placement_grid
                         .add_entity(position, ContentType::Vehicle, 4.0);
@@ -94,9 +102,15 @@ impl VehicleGenerator {
                     50.0, // More spacing
                 )
             {
-                if let Ok(aircraft_entity) =
-                    self.spawn_aircraft(commands, coord, position, meshes, materials, world_rng)
-                {
+                if let Ok(aircraft_entity) = self.spawn_aircraft(
+                    commands,
+                    coord,
+                    position,
+                    meshes,
+                    materials,
+                    asset_server,
+                    world_rng,
+                ) {
                     world
                         .placement_grid
                         .add_entity(position, ContentType::Vehicle, 10.0);
@@ -114,6 +128,7 @@ impl VehicleGenerator {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn spawn_ground_vehicle(
         &self,
         commands: &mut Commands,
@@ -121,10 +136,10 @@ impl VehicleGenerator {
         position: Vec3,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &AssetServer,
         world_rng: &mut WorldRng,
     ) -> Result<Entity, String> {
         let factory = VehicleFactory::new();
-        // Only ground vehicles on roads
         let vehicle_types = [VehicleType::SuperCar];
         let vehicle_type = vehicle_types[world_rng.global().gen_range(0..vehicle_types.len())];
 
@@ -132,6 +147,7 @@ impl VehicleGenerator {
             commands,
             meshes,
             materials,
+            asset_server,
             vehicle_type,
             position,
             None,
@@ -147,6 +163,7 @@ impl VehicleGenerator {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn spawn_aircraft(
         &self,
         commands: &mut Commands,
@@ -154,10 +171,10 @@ impl VehicleGenerator {
         position: Vec3,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &AssetServer,
         world_rng: &mut WorldRng,
     ) -> Result<Entity, String> {
         let factory = VehicleFactory::new();
-        // Mix of helicopters and F16s
         let aircraft_types = [VehicleType::Helicopter, VehicleType::F16];
         let vehicle_type = aircraft_types[world_rng.global().gen_range(0..aircraft_types.len())];
 
@@ -165,6 +182,7 @@ impl VehicleGenerator {
             commands,
             meshes,
             materials,
+            asset_server,
             vehicle_type,
             position,
             None,

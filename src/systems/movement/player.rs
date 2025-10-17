@@ -37,7 +37,7 @@ pub fn read_input_system(
     if control_state.is_accelerating() {
         input_data.input_direction += *transform.forward();
     }
-    if control_state.is_braking() {
+    if control_state.is_reversing() {
         input_data.input_direction -= *transform.forward();
     }
 
