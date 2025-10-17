@@ -937,7 +937,7 @@ impl VehicleFactory {
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
-                Name::new(format!("{} Rail Left", tag)),
+                Name::new(format!("{tag} Rail Left")),
             ));
 
             commands.spawn((
@@ -950,7 +950,7 @@ impl VehicleFactory {
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
-                Name::new(format!("{} Rail Right", tag)),
+                Name::new(format!("{tag} Rail Right")),
             ));
 
             commands.spawn((
@@ -963,7 +963,7 @@ impl VehicleFactory {
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
-                Name::new(format!("{} Rail Front", tag)),
+                Name::new(format!("{tag} Rail Front")),
             ));
 
             commands.spawn((
@@ -976,7 +976,7 @@ impl VehicleFactory {
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
-                Name::new(format!("{} Rail Back", tag)),
+                Name::new(format!("{tag} Rail Back")),
             ));
         }
 

@@ -366,7 +366,10 @@ fn spawn_terrain_beaches(
     terrain_size: f32,
     name: &str,
 ) {
-    use crate::factories::beach_terrain::{create_beach_slope, create_beach_slope_collider};
+    use crate::factories::beach_terrain::{
+        create_beach_slope, create_beach_slope_collider, create_corner_beach_slope,
+        create_corner_beach_slope_collider, CornerType,
+    };
 
     let collider_half_height = 0.05; // Match terrain collider
     let land_elevation_phys = terrain_center.y; // Physics top surface
@@ -559,6 +562,183 @@ fn spawn_terrain_beaches(
             .expect("Beach collider creation failed"),
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
         Name::new(format!("{name} South Beach Collider")),
+    ));
+
+    // CORNER BEACHES: Fill 100m × 100m gaps at island corners
+    // Slight overlap with side beaches to prevent visual gaps
+    let corner_size = 100.0;
+    let corner_offset = half_size + corner_size / 2.0 - 0.1; // Subtract 0.1m for overlap
+
+    // NORTHEAST CORNER (+X, +Z)
+    let ne_visual = create_corner_beach_slope(
+        corner_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        20,
+        CornerType::NorthEast,
+    );
+    let ne_collider_mesh = create_corner_beach_slope_collider(
+        corner_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        CornerType::NorthEast,
+    );
+
+    let ne_pos_visual = Vec3::new(
+        terrain_center.x + corner_offset,
+        beach_center_y_visual,
+        terrain_center.z + corner_offset,
+    );
+    let ne_pos_collider = Vec3::new(
+        terrain_center.x + corner_offset,
+        beach_center_y_phys,
+        terrain_center.z + corner_offset,
+    );
+
+    commands.spawn((
+        Mesh3d(meshes.add(ne_visual)),
+        MeshMaterial3d(beach_material.clone()),
+        Transform::from_translation(ne_pos_visual),
+        Name::new(format!("{name} NE Corner Visual")),
+    ));
+
+    commands.spawn((
+        Transform::from_translation(ne_pos_collider),
+        RigidBody::Fixed,
+        Collider::from_bevy_mesh(&ne_collider_mesh, &default())
+            .expect("Corner collider creation failed"),
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Ccd::enabled(),
+        Name::new(format!("{name} NE Corner Collider")),
+    ));
+
+    // NORTHWEST CORNER (-X, +Z)
+    let nw_visual = create_corner_beach_slope(
+        corner_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        20,
+        CornerType::NorthWest,
+    );
+    let nw_collider_mesh = create_corner_beach_slope_collider(
+        corner_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        CornerType::NorthWest,
+    );
+
+    let nw_pos_visual = Vec3::new(
+        terrain_center.x - corner_offset,
+        beach_center_y_visual,
+        terrain_center.z + corner_offset,
+    );
+    let nw_pos_collider = Vec3::new(
+        terrain_center.x - corner_offset,
+        beach_center_y_phys,
+        terrain_center.z + corner_offset,
+    );
+
+    commands.spawn((
+        Mesh3d(meshes.add(nw_visual)),
+        MeshMaterial3d(beach_material.clone()),
+        Transform::from_translation(nw_pos_visual),
+        Name::new(format!("{name} NW Corner Visual")),
+    ));
+
+    commands.spawn((
+        Transform::from_translation(nw_pos_collider),
+        RigidBody::Fixed,
+        Collider::from_bevy_mesh(&nw_collider_mesh, &default())
+            .expect("Corner collider creation failed"),
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Ccd::enabled(),
+        Name::new(format!("{name} NW Corner Collider")),
+    ));
+
+    // SOUTHEAST CORNER (+X, -Z)
+    let se_visual = create_corner_beach_slope(
+        corner_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        20,
+        CornerType::SouthEast,
+    );
+    let se_collider_mesh = create_corner_beach_slope_collider(
+        corner_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        CornerType::SouthEast,
+    );
+
+    let se_pos_visual = Vec3::new(
+        terrain_center.x + corner_offset,
+        beach_center_y_visual,
+        terrain_center.z - corner_offset,
+    );
+    let se_pos_collider = Vec3::new(
+        terrain_center.x + corner_offset,
+        beach_center_y_phys,
+        terrain_center.z - corner_offset,
+    );
+
+    commands.spawn((
+        Mesh3d(meshes.add(se_visual)),
+        MeshMaterial3d(beach_material.clone()),
+        Transform::from_translation(se_pos_visual),
+        Name::new(format!("{name} SE Corner Visual")),
+    ));
+
+    commands.spawn((
+        Transform::from_translation(se_pos_collider),
+        RigidBody::Fixed,
+        Collider::from_bevy_mesh(&se_collider_mesh, &default())
+            .expect("Corner collider creation failed"),
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Ccd::enabled(),
+        Name::new(format!("{name} SE Corner Collider")),
+    ));
+
+    // SOUTHWEST CORNER (-X, -Z)
+    let sw_visual = create_corner_beach_slope(
+        corner_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        20,
+        CornerType::SouthWest,
+    );
+    let sw_collider_mesh = create_corner_beach_slope_collider(
+        corner_size,
+        land_elevation_phys,
+        ocean_floor_y,
+        CornerType::SouthWest,
+    );
+
+    let sw_pos_visual = Vec3::new(
+        terrain_center.x - corner_offset,
+        beach_center_y_visual,
+        terrain_center.z - corner_offset,
+    );
+    let sw_pos_collider = Vec3::new(
+        terrain_center.x - corner_offset,
+        beach_center_y_phys,
+        terrain_center.z - corner_offset,
+    );
+
+    commands.spawn((
+        Mesh3d(meshes.add(sw_visual)),
+        MeshMaterial3d(beach_material.clone()),
+        Transform::from_translation(sw_pos_visual),
+        Name::new(format!("{name} SW Corner Visual")),
+    ));
+
+    commands.spawn((
+        Transform::from_translation(sw_pos_collider),
+        RigidBody::Fixed,
+        Collider::from_bevy_mesh(&sw_collider_mesh, &default())
+            .expect("Corner collider creation failed"),
+        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Ccd::enabled(),
+        Name::new(format!("{name} SW Corner Collider")),
     ));
 }
 
