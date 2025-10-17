@@ -55,6 +55,7 @@ pub mod map_plugin;
 pub mod particle_plugin;
 pub mod player_plugin;
 pub mod ui_plugin;
+pub mod underwater_plugin;
 pub mod unified_world_plugin;
 pub mod vehicle_plugin;
 pub mod water_plugin;
@@ -74,6 +75,7 @@ pub use map_plugin::MapPlugin;
 pub use particle_plugin::ParticlePlugin;
 pub use player_plugin::PlayerPlugin;
 pub use ui_plugin::UIPlugin;
+pub use underwater_plugin::UnderwaterPlugin;
 
 // World and rendering plugins
 pub use unified_world_plugin::UnifiedWorldPlugin;

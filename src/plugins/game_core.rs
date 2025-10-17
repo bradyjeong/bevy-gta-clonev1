@@ -10,7 +10,8 @@ use crate::components::world::{EntityLimits, MaterialCache, MeshCache, WorldBoun
 use crate::components::{CullingSettings, DirtyFlagsMetrics, PerformanceStats};
 use crate::config::GameConfig;
 use crate::plugins::{
-    InputPlugin, MapPlugin, PlayerPlugin, UIPlugin, UnifiedWorldPlugin, VehiclePlugin, WaterPlugin,
+    InputPlugin, MapPlugin, PlayerPlugin, UIPlugin, UnderwaterPlugin, UnifiedWorldPlugin,
+    VehiclePlugin, WaterPlugin,
 };
 use crate::resources::WorldRng;
 
@@ -96,7 +97,7 @@ impl Plugin for GameCorePlugin {
             // Vehicle Systems
             .add_plugins(VehiclePlugin)
             // World and Environment Systems
-            .add_plugins((WaterPlugin, UnifiedWorldPlugin))
+            .add_plugins((WaterPlugin, UnifiedWorldPlugin, UnderwaterPlugin))
             // Performance and Validation Systems
             .add_plugins((
                 SpawnValidationPlugin,

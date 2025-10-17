@@ -60,6 +60,7 @@ pub mod movement_tracker;
 pub mod navigation_lights;
 pub mod player;
 pub mod rotor_wash;
+pub mod underwater_settings;
 pub mod unified_water;
 pub mod vehicles;
 pub mod water;
@@ -120,3 +121,4 @@ pub use yacht_exit::{
     DeckWalkAnchor, DeckWalkable, DeckWalker, Enterable, ExitPoint, ExitPointKind, Helipad,
     LandedOnYacht,
 };
+pub use underwater_settings::UnderwaterSettings;

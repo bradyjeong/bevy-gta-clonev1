@@ -3,16 +3,18 @@ use crate::components::MovementTracker;
 use crate::components::{
     ActiveEntity, BodyPart, ControlState, ControlsDisplay, ControlsText, DynamicTerrain,
     HumanAnimation, HumanMovement, MainCamera, Player, PlayerBody, PlayerControlled, PlayerHead,
-    PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg, PlayerTorso, VehicleControlType,
+    PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg, PlayerTorso, UnderwaterSettings,
+    VehicleControlType,
 };
 use crate::constants::{
-    CHARACTER_GROUP, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SPAWN_DROP_HEIGHT,
+    CHARACTER_GROUP, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL, SPAWN_DROP_HEIGHT,
     STATIC_GROUP, TERRAIN_SIZE, VEHICLE_GROUP,
 };
 
 use crate::systems::audio::FootstepTimer;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
+use bevy::core_pipeline::prepass::DepthPrepass;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -28,11 +30,24 @@ pub fn setup_basic_world(
     commands.spawn((
         MainCamera,
         Camera3d::default(),
+        Msaa::Off,
+        DepthPrepass,
         Projection::Perspective(PerspectiveProjection {
             far: 3500.0, // Covers world boundaries at ±3200m with buffer
             ..default()
         }),
         Transform::from_xyz(0.0, 15.0, 25.0).looking_at(Vec3::ZERO, Vec3::Y),
+        UnderwaterSettings {
+            sea_level: SEA_LEVEL,
+            // Research-based realistic ocean parameters:
+            // - Red light absorbed in top 10m
+            // - Blue/green penetrate deepest
+            // - At 10m depth: only 16% light remains
+            fog_density: 0.25,  // Moderate density for clear ocean (0.1-0.5 range)
+            absorption: Vec3::new(0.8, 0.3, 0.15),  // RED >> GREEN > BLUE (realistic attenuation)
+            scatter_color: Vec3::new(0.02, 0.35, 0.48),  // Deep blue-cyan (clear ocean at depth)
+            enabled: 1,
+        },
         // Camera in direct world coordinates
     ));
 
