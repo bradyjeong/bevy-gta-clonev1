@@ -14,7 +14,9 @@ use bevy::render::render_resource::{
     *,
 };
 use bevy::render::renderer::{RenderContext, RenderDevice};
-use bevy::render::view::{ViewDepthTexture, ViewTarget, ViewUniform, ViewUniforms, ViewUniformOffset};
+use bevy::render::view::{
+    ViewDepthTexture, ViewTarget, ViewUniform, ViewUniformOffset, ViewUniforms,
+};
 use bevy::render::{Render, RenderApp, RenderSet};
 
 pub struct UnderwaterPlugin;
@@ -42,7 +44,7 @@ impl Plugin for UnderwaterPlugin {
                     Node3d::Tonemapping,
                 ),
             );
-        
+
         info!("✅ Underwater post-processing plugin initialized");
     }
 
@@ -58,9 +60,7 @@ impl Plugin for UnderwaterPlugin {
 #[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
 struct UnderwaterLabel;
 
-fn configure_underwater_depth_texture(
-    mut cameras: Query<&mut Camera3d, With<UnderwaterSettings>>,
-) {
+fn configure_underwater_depth_texture(mut cameras: Query<&mut Camera3d, With<UnderwaterSettings>>) {
     for mut camera_3d in cameras.iter_mut() {
         let mut depth_texture_usages = TextureUsages::from(camera_3d.depth_texture_usages);
         depth_texture_usages |= TextureUsages::TEXTURE_BINDING;
@@ -91,7 +91,8 @@ impl ViewNode for UnderwaterNode {
         let settings_uniforms = world.resource::<ComponentUniforms<UnderwaterSettings>>();
         let view_uniforms = world.resource::<ViewUniforms>();
 
-        let Some(pipeline) = pipeline_cache.get_render_pipeline(pipeline_resource.pipeline_id) else {
+        let Some(pipeline) = pipeline_cache.get_render_pipeline(pipeline_resource.pipeline_id)
+        else {
             warn_once!("Underwater pipeline not ready yet");
             return Ok(());
         };
@@ -113,34 +114,25 @@ impl ViewNode for UnderwaterNode {
         let view_bind_group = render_context.render_device().create_bind_group(
             "underwater_view_bind_group",
             &pipeline_resource.view_layout,
-            &BindGroupEntries::sequential((
-                view_binding.clone(),
-            )),
+            &BindGroupEntries::sequential((view_binding.clone(),)),
         );
 
         let src_bind_group = render_context.render_device().create_bind_group(
             "underwater_src_bind_group",
             &pipeline_resource.src_layout,
-            &BindGroupEntries::sequential((
-                post_process.source,
-                &pipeline_resource.sampler,
-            )),
+            &BindGroupEntries::sequential((post_process.source, &pipeline_resource.sampler)),
         );
 
         let depth_bind_group = render_context.render_device().create_bind_group(
             "underwater_depth_bind_group",
             &pipeline_resource.depth_layout,
-            &BindGroupEntries::sequential((
-                depth.view(),
-            )),
+            &BindGroupEntries::sequential((depth.view(),)),
         );
 
         let settings_bind_group = render_context.render_device().create_bind_group(
             "underwater_settings_bind_group",
             &pipeline_resource.settings_layout,
-            &BindGroupEntries::sequential((
-                settings_binding.clone(),
-            )),
+            &BindGroupEntries::sequential((settings_binding.clone(),)),
         );
 
         let mut render_pass = render_context.begin_tracked_render_pass(RenderPassDescriptor {
@@ -207,21 +199,14 @@ impl FromWorld for UnderwaterPipeline {
 
         let depth_layout = render_device.create_bind_group_layout(
             "underwater_depth_layout",
-            &BindGroupLayoutEntries::sequential(
-                ShaderStages::FRAGMENT,
-                (
-                    texture_depth_2d(),
-                ),
-            ),
+            &BindGroupLayoutEntries::sequential(ShaderStages::FRAGMENT, (texture_depth_2d(),)),
         );
 
         let settings_layout = render_device.create_bind_group_layout(
             "underwater_settings_layout",
             &BindGroupLayoutEntries::sequential(
                 ShaderStages::FRAGMENT,
-                (
-                    uniform_buffer::<UnderwaterSettings>(true),
-                ),
+                (uniform_buffer::<UnderwaterSettings>(true),),
             ),
         );
 
@@ -238,28 +223,34 @@ impl FromWorld for UnderwaterPipeline {
 
         let shader = world.load_asset("shaders/underwater_post.wgsl");
 
-        let pipeline_id = world.resource::<PipelineCache>().queue_render_pipeline(
-            RenderPipelineDescriptor {
-                label: Some("underwater_pipeline".into()),
-                layout: vec![view_layout.clone(), src_layout.clone(), depth_layout.clone(), settings_layout.clone()],
-                vertex: fullscreen_shader_vertex_state(),
-                fragment: Some(FragmentState {
-                    shader,
-                    shader_defs: vec![],
-                    entry_point: "fragment".into(),
-                    targets: vec![Some(ColorTargetState {
-                        format: TextureFormat::Rgba8UnormSrgb,
-                        blend: None,
-                        write_mask: ColorWrites::ALL,
-                    })],
-                }),
-                primitive: PrimitiveState::default(),
-                depth_stencil: None,
-                multisample: MultisampleState::default(),
-                push_constant_ranges: vec![],
-                zero_initialize_workgroup_memory: false,
-            },
-        );
+        let pipeline_id =
+            world
+                .resource::<PipelineCache>()
+                .queue_render_pipeline(RenderPipelineDescriptor {
+                    label: Some("underwater_pipeline".into()),
+                    layout: vec![
+                        view_layout.clone(),
+                        src_layout.clone(),
+                        depth_layout.clone(),
+                        settings_layout.clone(),
+                    ],
+                    vertex: fullscreen_shader_vertex_state(),
+                    fragment: Some(FragmentState {
+                        shader,
+                        shader_defs: vec![],
+                        entry_point: "fragment".into(),
+                        targets: vec![Some(ColorTargetState {
+                            format: TextureFormat::Rgba8UnormSrgb,
+                            blend: None,
+                            write_mask: ColorWrites::ALL,
+                        })],
+                    }),
+                    primitive: PrimitiveState::default(),
+                    depth_stencil: None,
+                    multisample: MultisampleState::default(),
+                    push_constant_ranges: vec![],
+                    zero_initialize_workgroup_memory: false,
+                });
 
         Self {
             view_layout,

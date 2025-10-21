@@ -116,9 +116,9 @@ pub use control_state::{
 pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility};
 pub use map::{MapCamera, MapConfig, MinimapUI, PlayerMapIcon};
 pub use movement_tracker::MovementTracker;
+pub use underwater_settings::UnderwaterSettings;
 pub use unified_vehicle::UnifiedVehicleSpecs;
 pub use yacht_exit::{
     DeckWalkAnchor, DeckWalkable, DeckWalker, Enterable, ExitPoint, ExitPointKind, Helipad,
     LandedOnYacht,
 };
-pub use underwater_settings::UnderwaterSettings;

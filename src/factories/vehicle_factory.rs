@@ -10,7 +10,7 @@ use crate::components::{
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use crate::factories::{MaterialFactory, MeshFactory};
-use crate::systems::water::yacht_buoyancy::YachtSpecsHandle;
+use crate::systems::movement::simple_yacht::YachtSpecsHandle;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;

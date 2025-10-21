@@ -1,25 +1,19 @@
 pub mod buoyancy;
 pub mod drag;
 pub mod loader;
+pub mod simple_yacht_buoyancy;
 pub mod surface_render;
 pub mod unified_loader;
 pub mod water_material_time;
-pub mod yacht_buoyancy;
-pub mod yacht_controls;
-pub mod yacht_drag;
-pub mod yacht_force_reset;
 pub mod yacht_spawn;
 pub mod yacht_wake_effects;
 
 pub use buoyancy::*;
 pub use drag::*;
 pub use loader::*;
+pub use simple_yacht_buoyancy::*;
 pub use surface_render::*;
 pub use unified_loader::*;
 pub use water_material_time::*;
-pub use yacht_buoyancy::*;
-pub use yacht_controls::*;
-pub use yacht_drag::*;
-pub use yacht_force_reset::*;
 pub use yacht_spawn::*;
 pub use yacht_wake_effects::*;

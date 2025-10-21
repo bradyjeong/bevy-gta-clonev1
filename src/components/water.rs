@@ -4,19 +4,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Asset, TypePath, Serialize, Deserialize, Clone)]
 pub struct YachtSpecs {
-    pub mass: f32,
-    pub max_thrust: f32,
     pub max_speed: f32,
-    pub rudder_power: f32,
     pub throttle_ramp: f32,
-    pub rudder_ramp: f32,
-    pub drag_longitudinal: f32,
-    pub drag_lateral: f32,
-    pub drag_vertical: f32,
-    pub yaw_damping: f32,
-    pub buoyancy_damping: f32,
-    pub target_submersion: f32,
-    pub buoyancy_points: Vec<(f32, f32, f32)>,
     pub linear_damping: f32,
     pub angular_damping: f32,
 }

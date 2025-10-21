@@ -43,9 +43,9 @@ pub fn setup_basic_world(
             // - Red light absorbed in top 10m
             // - Blue/green penetrate deepest
             // - At 10m depth: only 16% light remains
-            fog_density: 0.25,  // Moderate density for clear ocean (0.1-0.5 range)
-            absorption: Vec3::new(0.8, 0.3, 0.15),  // RED >> GREEN > BLUE (realistic attenuation)
-            scatter_color: Vec3::new(0.02, 0.35, 0.48),  // Deep blue-cyan (clear ocean at depth)
+            fog_density: 0.25, // Moderate density for clear ocean (0.1-0.5 range)
+            absorption: Vec3::new(0.8, 0.3, 0.15), // RED >> GREEN > BLUE (realistic attenuation)
+            scatter_color: Vec3::new(0.02, 0.35, 0.48), // Deep blue-cyan (clear ocean at depth)
             enabled: 1,
         },
         // Camera in direct world coordinates
@@ -382,8 +382,8 @@ fn spawn_terrain_beaches(
     name: &str,
 ) {
     use crate::factories::beach_terrain::{
-        create_beach_slope, create_beach_slope_collider, create_corner_beach_slope,
-        create_corner_beach_slope_collider, CornerType,
+        CornerType, create_beach_slope, create_beach_slope_collider, create_corner_beach_slope,
+        create_corner_beach_slope_collider,
     };
 
     let collider_half_height = 0.05; // Match terrain collider

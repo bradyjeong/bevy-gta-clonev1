@@ -2,16 +2,17 @@ use crate::components::unified_water::UnifiedWaterAsset;
 use crate::components::water::{WaterSurface, YachtSpecs};
 use crate::components::water_material::WaterMaterial;
 use crate::game_state::GameState;
+use crate::systems::movement::simple_yacht_movement;
 use crate::systems::swimming::{
     apply_prone_rotation_system, reset_animation_on_land_system, swim_animation_flag_system,
     swim_state_transition_system, swim_velocity_apply_system,
 };
 use crate::systems::water::{
     buoyancy_system, initialize_yacht_wake_trail, load_unified_water_assets,
-    process_loaded_unified_water_assets, reset_yacht_forces, setup_yacht_effects, spawn_bow_splash,
-    spawn_prop_wash, spawn_test_yacht, spawn_yacht_wake_trail, surface_render_system,
-    update_wake_trail_points, update_water_material_time_system, update_water_surface_system,
-    water_drag_system, yacht_buoyancy_system, yacht_controls_system, yacht_drag_system,
+    process_loaded_unified_water_assets, setup_yacht_effects, simple_yacht_buoyancy,
+    spawn_bow_splash, spawn_prop_wash, spawn_test_yacht, spawn_yacht_wake_trail,
+    surface_render_system, update_wake_trail_points, update_water_material_time_system,
+    update_water_surface_system, water_drag_system,
 };
 use crate::systems::yacht_exit::{
     deck_walk_movement_system, heli_landing_detection_system, yacht_board_from_deck_system,
@@ -49,12 +50,10 @@ impl Plugin for WaterPlugin {
             .add_systems(
                 FixedUpdate,
                 (
-                    reset_yacht_forces,
                     buoyancy_system,
                     water_drag_system,
-                    yacht_controls_system,
-                    yacht_buoyancy_system,
-                    yacht_drag_system,
+                    simple_yacht_buoyancy,
+                    simple_yacht_movement,
                     swim_state_transition_system,
                     swim_velocity_apply_system.run_if(in_state(GameState::Swimming)),
                 )
