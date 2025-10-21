@@ -8,10 +8,9 @@ use crate::systems::swimming::{
     swim_state_transition_system, swim_velocity_apply_system,
 };
 use crate::systems::water::{
-    buoyancy_system, initialize_yacht_wake_trail, load_unified_water_assets,
-    process_loaded_unified_water_assets, setup_yacht_effects, simple_yacht_buoyancy,
-    spawn_bow_splash, spawn_prop_wash, spawn_test_yacht, spawn_yacht_wake_trail,
-    surface_render_system, update_wake_trail_points, update_water_material_time_system,
+    buoyancy_system, load_unified_water_assets, process_loaded_unified_water_assets,
+    setup_yacht_effects, simple_yacht_buoyancy, spawn_bow_splash, spawn_or_update_wake_foam,
+    spawn_prop_wash, spawn_test_yacht, surface_render_system, update_water_material_time_system,
     update_water_surface_system, water_drag_system,
 };
 use crate::systems::yacht_exit::{
@@ -40,13 +39,7 @@ impl Plugin for WaterPlugin {
                     setup_yacht_effects,
                 ),
             )
-            .add_systems(
-                Update,
-                (
-                    process_loaded_unified_water_assets,
-                    initialize_yacht_wake_trail,
-                ),
-            )
+            .add_systems(Update, (process_loaded_unified_water_assets,))
             .add_systems(
                 FixedUpdate,
                 (
@@ -73,8 +66,7 @@ impl Plugin for WaterPlugin {
             .add_systems(
                 Update,
                 (
-                    spawn_yacht_wake_trail,
-                    update_wake_trail_points,
+                    spawn_or_update_wake_foam,
                     spawn_bow_splash,
                     spawn_prop_wash,
                     propeller_spin_system,

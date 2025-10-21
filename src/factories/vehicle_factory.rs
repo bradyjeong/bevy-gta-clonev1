@@ -1120,7 +1120,10 @@ impl VehicleFactory {
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
-                Name::new(format!("Bridge Window {}", if x < 0.0 { "Port" } else { "Starboard" })),
+                Name::new(format!(
+                    "Bridge Window {}",
+                    if x < 0.0 { "Port" } else { "Starboard" }
+                )),
             ));
         }
 
