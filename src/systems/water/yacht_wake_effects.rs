@@ -185,7 +185,7 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
 
 pub fn spawn_or_update_wake_foam(
     mut commands: Commands,
-    yacht_q: Query<(&Transform, &Velocity, Entity), With<Yacht>>,
+    yacht_q: Query<(&Velocity, Entity), With<Yacht>>,
     foam_q: Query<Entity, With<WakeFoam>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -193,10 +193,8 @@ pub fn spawn_or_update_wake_foam(
         return;
     };
 
-    for (xf, vel, yacht_e) in yacht_q.iter() {
+    for (vel, yacht_e) in yacht_q.iter() {
         let speed = vel.linvel.length();
-        let fwd = horizontal_forward(xf);
-        let stern_offset_local = -fwd * 28.0 + Vec3::Y * 0.05;
 
         if speed < 2.0 {
             for e in foam_q.iter() {
@@ -212,7 +210,7 @@ pub fn spawn_or_update_wake_foam(
                 parent.spawn((
                     ParticleEffect::new(effects.wake_foam.clone()),
                     Transform {
-                        translation: stern_offset_local,
+                        translation: Vec3::new(0.0, 0.05, -28.0),
                         rotation: Quat::IDENTITY,
                         scale: Vec3::new(width, 1.0, 1.0),
                     },
@@ -237,8 +235,6 @@ pub fn spawn_bow_splash(
         let fwd = horizontal_forward(xf);
         let fwd_speed = vel.linvel.dot(fwd).max(0.0);
 
-        let bow_offset = fwd * 29.0 + Vec3::Y * 0.6;
-
         if fwd_speed < 6.0 {
             for e in splash_query.iter() {
                 commands.entity(e).despawn();
@@ -250,7 +246,7 @@ pub fn spawn_bow_splash(
             commands.entity(yacht_e).with_children(|parent| {
                 parent.spawn((
                     ParticleEffect::new(effects.bow_splash.clone()),
-                    Transform::from_translation(bow_offset),
+                    Transform::from_translation(Vec3::new(0.0, 0.6, 29.0)),
                     BowSplash,
                 ));
             });
@@ -260,7 +256,7 @@ pub fn spawn_bow_splash(
 
 pub fn spawn_prop_wash(
     mut commands: Commands,
-    yacht_query: Query<(&Transform, &YachtState, &Velocity, Entity), With<Yacht>>,
+    yacht_query: Query<(&YachtState, &Velocity, Entity), With<Yacht>>,
     wash_query: Query<Entity, With<PropWash>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -268,12 +264,9 @@ pub fn spawn_prop_wash(
         return;
     };
 
-    for (xf, state, vel, yacht_e) in yacht_query.iter() {
+    for (state, vel, yacht_e) in yacht_query.iter() {
         let throttle = state.throttle.abs();
         let speed = vel.linvel.length();
-
-        let fwd = horizontal_forward(xf);
-        let prop_offset_local = -fwd * 29.0 + Vec3::Y * -0.4;
 
         let width = (1.8 + (speed / 20.0).clamp(0.0, 1.0) * 2.0).max(1.8);
 
@@ -289,7 +282,7 @@ pub fn spawn_prop_wash(
                 parent.spawn((
                     ParticleEffect::new(effects.prop_wash.clone()),
                     Transform {
-                        translation: prop_offset_local,
+                        translation: Vec3::new(0.0, -0.4, -29.0),
                         rotation: Quat::IDENTITY,
                         scale: Vec3::new(width, 1.0, 1.0),
                     },
