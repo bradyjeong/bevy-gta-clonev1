@@ -1,4 +1,5 @@
 use crate::components::control_state::ControlState;
+use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::water::{Yacht, YachtSpecs};
 use crate::components::{ActiveEntity, PlayerControlled};
 use crate::config::GameConfig;
@@ -15,6 +16,7 @@ pub fn simple_yacht_movement(
     time: Res<Time>,
     config: Res<GameConfig>,
     yacht_specs: Res<Assets<YachtSpecs>>,
+    water_regions: Query<&UnifiedWaterBody>,
     mut query: Query<
         (&mut Velocity, &Transform, &ControlState, &YachtSpecsHandle),
         (With<Yacht>, With<ActiveEntity>, With<PlayerControlled>),
@@ -31,8 +33,19 @@ pub fn simple_yacht_movement(
         let inv_rotation = transform.rotation.inverse();
         let mut v_local = inv_rotation * velocity.linvel;
 
+        // Check if yacht is in water (prop-in-water check to prevent land driving)
+        let in_water = water_regions
+            .iter()
+            .any(|w| w.contains_point(transform.translation.x, transform.translation.z));
+
         // Forward/backward speed control (arcade style)
-        let input_throttle = controls.throttle - controls.brake;
+        let mut input_throttle = controls.throttle - controls.brake;
+
+        // Gate throttle if beached (GTA-style behavior)
+        if !in_water {
+            input_throttle = 0.0;
+        }
+
         let target_speed = specs.max_speed * input_throttle.clamp(-0.5, 1.0);
 
         // Smooth acceleration with frame-independent lerp
@@ -43,14 +56,12 @@ pub fn simple_yacht_movement(
         };
         v_local.z = safe_lerp_f32(v_local.z, -target_speed, dt * accel_rate);
 
-        // Lateral grip: boats slide more than cars (lower grip)
-        let boat_grip = 2.0;
-        v_local.x = safe_lerp_f32(v_local.x, 0.0, dt * boat_grip);
+        // Lateral grip: boats slide more than cars (tunable from specs)
+        v_local.x = safe_lerp_f32(v_local.x, 0.0, dt * specs.boat_grip);
 
         // Coasting drag when no throttle input
         if input_throttle.abs() < 0.05 {
-            let drag_per_second: f32 = 0.992;
-            let frame_drag = drag_per_second.powf(dt);
+            let frame_drag = specs.drag_factor.powf(dt);
             v_local.z *= frame_drag;
         }
 

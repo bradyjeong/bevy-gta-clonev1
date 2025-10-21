@@ -3,4 +3,8 @@
     throttle_ramp: 3.5,
     linear_damping: 2.5,
     angular_damping: 9.0,
+    draft: 0.6,
+    buoyancy_strength: 3.0,
+    boat_grip: 2.0,
+    drag_factor: 0.992,
 )

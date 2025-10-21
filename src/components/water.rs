@@ -8,6 +8,10 @@ pub struct YachtSpecs {
     pub throttle_ramp: f32,
     pub linear_damping: f32,
     pub angular_damping: f32,
+    pub draft: f32,
+    pub buoyancy_strength: f32,
+    pub boat_grip: f32,
+    pub drag_factor: f32,
 }
 
 #[derive(Component, Default)]

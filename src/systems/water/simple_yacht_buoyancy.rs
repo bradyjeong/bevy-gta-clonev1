@@ -1,5 +1,8 @@
 use crate::components::unified_water::UnifiedWaterBody;
-use crate::components::water::Yacht;
+use crate::components::water::{Yacht, YachtSpecs};
+use crate::config::GameConfig;
+use crate::systems::movement::simple_yacht::YachtSpecsHandle;
+use crate::systems::physics::PhysicsUtilities;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -7,32 +10,34 @@ use bevy_rapier3d::prelude::*;
 /// Keeps yachts floating at the correct water level using velocity correction
 pub fn simple_yacht_buoyancy(
     time: Res<Time>,
+    config: Res<GameConfig>,
+    yacht_specs: Res<Assets<YachtSpecs>>,
     water_regions: Query<&UnifiedWaterBody>,
-    mut query: Query<(&mut Velocity, &Transform), With<Yacht>>,
+    mut query: Query<(&mut Velocity, &Transform, &YachtSpecsHandle), With<Yacht>>,
 ) {
-    for (mut velocity, transform) in query.iter_mut() {
+    for (mut velocity, transform, specs_handle) in query.iter_mut() {
+        let Some(specs) = yacht_specs.get(&specs_handle.0) else {
+            continue;
+        };
+
         // Check if yacht is in a water region
         if let Some(water) = water_regions
             .iter()
             .find(|w| w.contains_point(transform.translation.x, transform.translation.z))
         {
             let water_level = water.get_base_water_level(time.elapsed_secs());
-            let draft = 0.6; // How deep the yacht sits in water (meters)
-            let target_y = water_level + draft;
+            let target_y = water_level + specs.draft;
             let y_error = target_y - transform.translation.y;
 
-            // Convert vertical position error to velocity correction
-            // Stronger for larger errors (proportional control)
-            let vertical_gain = 3.0; // Higher = faster floating response
-            let target_vy = (y_error * vertical_gain).clamp(-5.0, 5.0);
+            // Proportional control: direct velocity set (no blending to prevent oscillation)
+            let target_vy = (y_error * specs.buoyancy_strength).clamp(-5.0, 5.0);
+            velocity.linvel.y = target_vy;
 
-            // Apply buoyancy force via velocity
-            velocity.linvel.y = velocity.linvel.y * 0.9 + target_vy * 0.1;
-
-            // Keep yacht upright: dampen roll and pitch strongly
-            let upright_damping = 0.85;
-            velocity.angvel.x *= upright_damping;
-            velocity.angvel.z *= upright_damping;
+            // Upright stabilization: let Rapier's angular_damping handle this naturally
+            // No manual angular velocity manipulation - keeps it simple
         }
+
+        // Apply velocity clamping to prevent physics solver panics
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
     }
 }
