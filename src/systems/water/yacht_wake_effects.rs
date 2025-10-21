@@ -114,11 +114,7 @@ fn create_prop_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
         dimension: ShapeDimension::Surface,
     };
 
-    let init_vel = SetVelocityCircleModifier {
-        center: module.lit(Vec3::ZERO),
-        axis: module.lit(Vec3::NEG_Z),
-        speed: module.lit(5.0),
-    };
+    let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, module.lit(Vec3::Z * 5.0));
 
     let lifetime = module.lit(3.0);
     let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, lifetime);
@@ -250,7 +246,7 @@ pub fn spawn_bow_splash(
         let has_splash = !splash_query.is_empty();
 
         if !has_splash {
-            let bow_offset = forward * 27.0 + Vec3::Y * 0.5;
+            let bow_offset = forward * 29.0 + Vec3::Y * 0.5;
             let splash_pos = transform.translation + bow_offset;
 
             commands.spawn((
@@ -260,7 +256,7 @@ pub fn spawn_bow_splash(
             ));
         } else {
             for splash_entity in splash_query.iter() {
-                let bow_offset = forward * 27.0 + Vec3::Y * 0.5;
+                let bow_offset = forward * 29.0 + Vec3::Y * 0.5;
                 let splash_pos = transform.translation + bow_offset;
 
                 if let Ok(mut entity_commands) = commands.get_entity(splash_entity) {
@@ -295,7 +291,7 @@ pub fn spawn_prop_wash(
 
         if !has_wash {
             let forward = horizontal_forward(transform);
-            let prop_offset = -forward * 28.0 + Vec3::Y * -1.0;
+            let prop_offset = -forward * 29.0 + Vec3::Y * -1.0;
 
             commands.entity(yacht_entity).with_children(|parent| {
                 parent.spawn((

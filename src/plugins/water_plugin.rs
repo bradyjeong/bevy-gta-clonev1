@@ -2,7 +2,7 @@ use crate::components::unified_water::UnifiedWaterAsset;
 use crate::components::water::{WaterSurface, YachtSpecs};
 use crate::components::water_material::WaterMaterial;
 use crate::game_state::GameState;
-use crate::systems::movement::simple_yacht_movement;
+use crate::systems::movement::{propeller_spin_system, simple_yacht_movement};
 use crate::systems::swimming::{
     apply_prone_rotation_system, reset_animation_on_land_system, swim_animation_flag_system,
     swim_state_transition_system, swim_velocity_apply_system,
@@ -77,6 +77,7 @@ impl Plugin for WaterPlugin {
                     update_wake_trail_points,
                     spawn_bow_splash,
                     spawn_prop_wash,
+                    propeller_spin_system,
                 ),
             )
             .add_systems(

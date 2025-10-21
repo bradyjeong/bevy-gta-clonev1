@@ -1039,6 +1039,153 @@ impl VehicleFactory {
             Name::new("ExitPoint Water Port"),
         ));
 
+        // PROPELLER ASSEMBLY (Decorative - positioned at stern below waterline)
+        let prop_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.3, 0.3, 0.35),
+            metallic: 0.9,
+            perceptual_roughness: 0.3,
+            ..default()
+        });
+
+        let prop_hub_entity = commands
+            .spawn((
+                Mesh3d(meshes.add(Cylinder::new(0.25, 0.4))),
+                MeshMaterial3d(prop_material.clone()),
+                Transform::from_xyz(0.0, -1.0, 29.0)
+                    .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                yacht_visibility(),
+                crate::components::PropellerHub,
+                Name::new("Propeller Hub"),
+            ))
+            .id();
+
+        for i in 0..3 {
+            let angle = (i as f32) * (2.0 * std::f32::consts::PI / 3.0);
+            commands.spawn((
+                Mesh3d(meshes.add(Cuboid::new(0.05, 1.2, 0.3))),
+                MeshMaterial3d(prop_material.clone()),
+                Transform::from_xyz(angle.sin() * 0.6, 0.0, angle.cos() * 0.6)
+                    .with_rotation(Quat::from_rotation_y(angle)),
+                ChildOf(prop_hub_entity),
+                VisibleChildBundle::default(),
+                yacht_visibility(),
+                Name::new(format!("Propeller Blade {}", i + 1)),
+            ));
+        }
+
+        // RUDDER (Decorative control surface behind propeller)
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.1, 1.2, 1.0))),
+            MeshMaterial3d(prop_material.clone()),
+            Transform::from_xyz(0.0, -0.5, 29.5),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Rudder"),
+        ));
+
+        // BRIDGE/SUPERSTRUCTURE (Command center with windows)
+        let bridge_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.9, 0.9, 0.92),
+            metallic: 0.2,
+            perceptual_roughness: 0.6,
+            ..default()
+        });
+
+        let window_material = materials.add(StandardMaterial {
+            base_color: Color::srgba(0.2, 0.3, 0.4, 0.7),
+            metallic: 0.8,
+            perceptual_roughness: 0.1,
+            alpha_mode: bevy::prelude::AlphaMode::Blend,
+            ..default()
+        });
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(8.0, 2.5, 14.0))),
+            MeshMaterial3d(bridge_material.clone()),
+            Transform::from_xyz(0.0, 9.5, -5.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Bridge Structure"),
+        ));
+
+        for x in [-2.5, 2.5] {
+            commands.spawn((
+                Mesh3d(meshes.add(Cuboid::new(1.8, 1.8, 0.05))),
+                MeshMaterial3d(window_material.clone()),
+                Transform::from_xyz(x, 9.5, 2.0),
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                yacht_visibility(),
+                Name::new(format!("Bridge Window {}", if x < 0.0 { "Port" } else { "Starboard" })),
+            ));
+        }
+
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(6.0, 1.8, 0.05))),
+            MeshMaterial3d(window_material.clone()),
+            Transform::from_xyz(0.0, 9.5, -12.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Bridge Front Windscreen"),
+        ));
+
+        // NAVIGATION LIGHTS (Port red, Starboard green, Stern white)
+        let red_light_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(1.0, 0.1, 0.1),
+            emissive: LinearRgba::new(2.0, 0.2, 0.2, 1.0),
+            unlit: true,
+            ..default()
+        });
+
+        let green_light_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.1, 1.0, 0.1),
+            emissive: LinearRgba::new(0.2, 2.0, 0.2, 1.0),
+            unlit: true,
+            ..default()
+        });
+
+        let white_light_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(1.0, 1.0, 1.0),
+            emissive: LinearRgba::new(3.0, 3.0, 3.0, 1.0),
+            unlit: true,
+            ..default()
+        });
+
+        commands.spawn((
+            Mesh3d(meshes.add(Sphere::new(0.15))),
+            MeshMaterial3d(red_light_material),
+            Transform::from_xyz(-9.0, 4.5, -25.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Nav Light Port Red"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Sphere::new(0.15))),
+            MeshMaterial3d(green_light_material),
+            Transform::from_xyz(9.0, 4.5, -25.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Nav Light Starboard Green"),
+        ));
+
+        commands.spawn((
+            Mesh3d(meshes.add(Sphere::new(0.15))),
+            MeshMaterial3d(white_light_material),
+            Transform::from_xyz(0.0, 5.0, 29.0),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Nav Light Stern White"),
+        ));
+
         Ok(vehicle_entity)
     }
 
