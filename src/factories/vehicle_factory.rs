@@ -1105,7 +1105,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(8.0, 2.5, 14.0))),
             MeshMaterial3d(bridge_material.clone()),
-            Transform::from_xyz(0.0, 9.5, -5.0),
+            Transform::from_xyz(0.0, 4.25, -15.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -1116,7 +1116,7 @@ impl VehicleFactory {
             commands.spawn((
                 Mesh3d(meshes.add(Cuboid::new(1.8, 1.8, 0.05))),
                 MeshMaterial3d(window_material.clone()),
-                Transform::from_xyz(x, 9.5, 2.0),
+                Transform::from_xyz(x, 4.25, -8.0),
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
@@ -1130,7 +1130,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(6.0, 1.8, 0.05))),
             MeshMaterial3d(window_material.clone()),
-            Transform::from_xyz(0.0, 9.5, -12.0),
+            Transform::from_xyz(0.0, 4.25, -22.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),

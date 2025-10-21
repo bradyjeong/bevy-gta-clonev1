@@ -36,23 +36,23 @@ fn create_bow_splash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
     let mut module = Module::default();
 
     let mut color_gradient = Gradient::new();
-    color_gradient.add_key(0.0, Vec4::new(1.0, 1.0, 1.0, 0.95));
-    color_gradient.add_key(0.25, Vec4::new(0.92, 0.97, 1.0, 0.75));
-    color_gradient.add_key(1.0, Vec4::new(0.75, 0.88, 0.95, 0.0));
+    color_gradient.add_key(0.0, Vec4::new(1.0, 1.0, 1.0, 0.9));
+    color_gradient.add_key(0.25, Vec4::new(0.95, 0.98, 1.0, 0.7));
+    color_gradient.add_key(1.0, Vec4::new(0.8, 0.9, 0.98, 0.0));
 
     let init_pos = SetPositionSphereModifier {
         center: module.lit(Vec3::ZERO),
-        radius: module.lit(1.2),
+        radius: module.lit(2.0),
         dimension: ShapeDimension::Surface,
     };
 
     let init_vel = SetVelocitySphereModifier {
         center: module.lit(Vec3::ZERO),
-        speed: module.lit(10.0),
+        speed: module.lit(12.0),
     };
 
-    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(1.2));
-    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.25));
+    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(1.5));
+    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.4));
 
     let update_accel = AccelModifier::new(module.lit(Vec3::new(0.0, -9.0, 0.0)));
     let update_drag = LinearDragModifier::new(module.lit(2.0));
@@ -73,9 +73,9 @@ fn create_bow_splash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
         .render(SizeOverLifetimeModifier {
             gradient: {
                 let mut gradient = Gradient::new();
-                gradient.add_key(0.0, Vec3::splat(0.25));
-                gradient.add_key(0.3, Vec3::splat(1.0));
-                gradient.add_key(1.0, Vec3::splat(0.1));
+                gradient.add_key(0.0, Vec3::splat(0.4));
+                gradient.add_key(0.3, Vec3::splat(1.5));
+                gradient.add_key(1.0, Vec3::splat(0.2));
                 gradient
             },
             screen_space_size: false,
@@ -138,25 +138,25 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
     let mut module = Module::default();
 
     let mut color_gradient = Gradient::new();
-    color_gradient.add_key(0.0, Vec4::new(0.9, 0.95, 1.0, 0.35));
-    color_gradient.add_key(0.5, Vec4::new(0.88, 0.93, 0.98, 0.25));
-    color_gradient.add_key(1.0, Vec4::new(0.8, 0.88, 0.95, 0.0));
+    color_gradient.add_key(0.0, Vec4::new(0.95, 0.98, 1.0, 0.7));
+    color_gradient.add_key(0.5, Vec4::new(0.9, 0.95, 0.98, 0.5));
+    color_gradient.add_key(1.0, Vec4::new(0.85, 0.9, 0.95, 0.0));
 
     let init_pos = SetPositionCircleModifier {
         center: module.lit(Vec3::ZERO),
         axis: module.lit(Vec3::Y),
-        radius: module.lit(2.2),
+        radius: module.lit(3.0),
         dimension: ShapeDimension::Surface,
     };
 
-    let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, module.lit(Vec3::Z * 3.5));
-    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(8.0));
-    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.5));
+    let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, module.lit(Vec3::Z * -4.0));
+    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(6.0));
+    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.8));
 
-    let update_accel = AccelModifier::new(module.lit(Vec3::new(0.0, -0.3, 0.0)));
-    let update_drag = LinearDragModifier::new(module.lit(1.5));
+    let update_accel = AccelModifier::new(module.lit(Vec3::new(0.0, -0.5, 0.0)));
+    let update_drag = LinearDragModifier::new(module.lit(1.2));
 
-    let effect = EffectAsset::new(8192, SpawnerSettings::rate(150.0.into()), module)
+    let effect = EffectAsset::new(8192, SpawnerSettings::rate(300.0.into()), module)
         .with_name("WakeFoam")
         .init(init_pos)
         .init(init_vel)
@@ -172,9 +172,9 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
         .render(SizeOverLifetimeModifier {
             gradient: {
                 let mut gradient = Gradient::new();
-                gradient.add_key(0.0, Vec3::splat(0.6));
-                gradient.add_key(0.4, Vec3::splat(2.4));
-                gradient.add_key(1.0, Vec3::splat(2.0));
+                gradient.add_key(0.0, Vec3::splat(0.8));
+                gradient.add_key(0.5, Vec3::splat(2.5));
+                gradient.add_key(1.0, Vec3::splat(1.8));
                 gradient
             },
             screen_space_size: false,
