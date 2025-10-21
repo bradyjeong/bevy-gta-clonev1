@@ -248,8 +248,7 @@ impl FromWorld for UnderwaterPipeline {
                     shader_defs: vec![],
                     entry_point: "fragment".into(),
                     targets: vec![Some(ColorTargetState {
-                        // TODO: Specialize by view_target.main_texture_format() if non-HDR cameras added
-                        format: TextureFormat::Rgba16Float,  // HDR format to match Core3d
+                        format: TextureFormat::Rgba8UnormSrgb,
                         blend: None,
                         write_mask: ColorWrites::ALL,
                     })],
