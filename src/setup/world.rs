@@ -6,6 +6,7 @@ use crate::components::{
     PlayerLeftArm, PlayerLeftLeg, PlayerRightArm, PlayerRightLeg, PlayerTorso, UnderwaterSettings,
     VehicleControlType,
 };
+use crate::config::GameConfig;
 use crate::constants::{
     CHARACTER_GROUP, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL, SPAWN_DROP_HEIGHT,
     STATIC_GROUP, TERRAIN_SIZE, VEHICLE_GROUP,
@@ -23,6 +24,7 @@ pub fn setup_basic_world(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
+    config: Res<GameConfig>,
 ) {
     // No longer need WorldRoot - spawn entities directly in world space
 
@@ -121,10 +123,12 @@ pub fn setup_basic_world(
         Name::new("Ocean Floor Visual"),
     ));
 
+    // Ocean floor collider from config
+    let ocean_config = &config.world_objects.ocean_floor;
     commands.spawn((
-        Transform::from_xyz(0.0, -10.2, 0.0), // Below heightfield ocean floor to prevent co-planar collision
+        Transform::from_xyz(0.0, -10.2, 0.0),
         RigidBody::Fixed,
-        Collider::cuboid(ocean_size / 2.0, 0.05, ocean_size / 2.0),
+        ocean_config.create_collider(),
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
         Name::new("Ocean Floor Collision"),
     ));
@@ -193,10 +197,8 @@ pub fn setup_basic_world(
     let player_y = LAND_ELEVATION + SPAWN_DROP_HEIGHT;
 
     // Player character with human-like components in world coordinates
-    const FOOT_LEVEL: f32 = -0.45;
-    const CAPSULE_RADIUS: f32 = 0.25;
-    const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS;
-    const UPPER_SPHERE_Y: f32 = 1.45;
+    // Use player dimensions from config
+    let player_dims = &config.character_dimensions.player;
 
     let player_entity = commands
         .spawn((
@@ -204,9 +206,9 @@ pub fn setup_basic_world(
             ActiveEntity,
             RigidBody::Dynamic,
             Collider::capsule(
-                Vec3::new(0.0, LOWER_SPHERE_Y, 0.0),
-                Vec3::new(0.0, UPPER_SPHERE_Y, 0.0),
-                CAPSULE_RADIUS,
+                Vec3::new(0.0, player_dims.lower_sphere_y(), 0.0),
+                Vec3::new(0.0, player_dims.upper_sphere_y, 0.0),
+                player_dims.capsule_radius,
             ),
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             Velocity::zero(),
@@ -331,11 +333,11 @@ pub fn setup_basic_world(
         VisibleChildBundle::default(),
     ));
 
-    // Foot meshes aligned with capsule FOOT_LEVEL (-0.45)
+    // Foot meshes aligned with capsule foot_level from config
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
         MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))),
-        Transform::from_xyz(-0.15, FOOT_LEVEL, 0.1),
+        Transform::from_xyz(-0.15, player_dims.foot_level, 0.1),
         ChildOf(player_entity),
         crate::components::player::PlayerLeftFoot,
         VisibleChildBundle::default(),
@@ -344,7 +346,7 @@ pub fn setup_basic_world(
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(0.2, 0.1, 0.35))),
         MeshMaterial3d(materials.add(Color::srgb(0.1, 0.1, 0.1))),
-        Transform::from_xyz(0.15, FOOT_LEVEL, 0.1),
+        Transform::from_xyz(0.15, player_dims.foot_level, 0.1),
         ChildOf(player_entity),
         crate::components::player::PlayerRightFoot,
         VisibleChildBundle::default(),

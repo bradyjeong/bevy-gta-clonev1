@@ -114,6 +114,7 @@ fn apply_generated_chunks(
     mut next_state: ResMut<NextState<AppState>>,
     water_bodies: Query<&UnifiedWaterBody>,
     asset_server: Res<AssetServer>,
+    config: Res<GameConfig>,
 ) {
     // Increased from 10 to 200 - no need to maintain 60 FPS during loading
     const CHUNKS_PER_FRAME: usize = 200;
@@ -168,6 +169,7 @@ fn apply_generated_chunks(
             &mut materials,
             &mut world_rng,
             &water_bodies,
+            &config,
         );
 
         vehicle_generator.generate_vehicles(
@@ -178,6 +180,7 @@ fn apply_generated_chunks(
             &mut materials,
             &asset_server,
             &mut world_rng,
+            &config,
         );
 
         vegetation_generator.generate_vegetation(
@@ -188,6 +191,7 @@ fn apply_generated_chunks(
             &mut materials,
             &mut world_rng,
             &water_bodies,
+            &config,
         );
 
         // Mark chunk as complete

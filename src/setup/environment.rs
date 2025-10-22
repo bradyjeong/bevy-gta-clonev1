@@ -1,4 +1,5 @@
 use crate::bundles::VisibleChildBundle;
+use crate::config::GameConfig;
 use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, STATIC_GROUP};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
@@ -11,6 +12,7 @@ pub fn setup_palm_trees(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    config: Res<GameConfig>,
 ) {
     // Palm trees on left terrain island
     let palm_positions = [
@@ -103,10 +105,11 @@ pub fn setup_palm_trees(
             ));
         }
 
-        // Simple physics collider for trunk - inherits visibility from parent
+        // Tree trunk collider from config
+        let tree_config = &config.world_objects.palm_tree;
         commands.spawn((
             RigidBody::Fixed,
-            Collider::cylinder(4.0, 0.3),
+            tree_config.create_collider(),
             CollisionGroups::new(STATIC_GROUP, Group::ALL),
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(palm_entity),

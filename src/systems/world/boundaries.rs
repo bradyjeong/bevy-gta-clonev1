@@ -1,22 +1,24 @@
 #![allow(clippy::type_complexity)]
 use crate::components::world::WorldBounds;
 use crate::components::{Car, F16, Helicopter, Yacht};
+use crate::config::GameConfig;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 /// System that enforces world boundaries for all vehicles
 pub fn world_boundary_system(
     bounds: Res<WorldBounds>,
+    config: Res<GameConfig>,
     mut vehicle_query: Query<
         (&mut Velocity, &Transform),
         Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>)>,
     >,
 ) {
-    const PUSHBACK_STRENGTH: f32 = 100.0;
+    let pushback_strength = config.world_physics.boundaries.pushback_strength;
 
     for (mut velocity, transform) in vehicle_query.iter_mut() {
         // Apply gentle pushback force near boundaries
-        let pushback = bounds.get_pushback_force(transform.translation, PUSHBACK_STRENGTH);
+        let pushback = bounds.get_pushback_force(transform.translation, pushback_strength);
         if pushback != Vec3::ZERO {
             // Apply pushback as velocity modification (gentler than force)
             velocity.linvel.x += pushback.x * 0.1; // Gentle pushback
@@ -55,13 +57,14 @@ pub fn world_boundary_system(
 /// System specifically for aircraft boundary handling
 pub fn aircraft_boundary_system(
     bounds: Res<WorldBounds>,
+    config: Res<GameConfig>,
     mut aircraft_query: Query<(&mut Velocity, &Transform), Or<(With<Helicopter>, With<F16>)>>,
 ) {
-    const AIRCRAFT_PUSHBACK_STRENGTH: f32 = 150.0;
+    let aircraft_pushback_strength = config.world_physics.boundaries.aircraft_pushback_strength;
 
     for (mut velocity, transform) in aircraft_query.iter_mut() {
         // Aircraft get stronger pushback and turning forces
-        let pushback = bounds.get_pushback_force(transform.translation, AIRCRAFT_PUSHBACK_STRENGTH);
+        let pushback = bounds.get_pushback_force(transform.translation, aircraft_pushback_strength);
         if pushback != Vec3::ZERO {
             // Apply both linear pushback and angular turning
             velocity.linvel.x += pushback.x * 0.2; // Stronger than ground vehicles

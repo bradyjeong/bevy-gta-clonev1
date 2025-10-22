@@ -104,8 +104,6 @@ pub fn spawn_bridge(
                     Name::new("Side Barrier"),
                 ));
             }
-
-
         });
 
     info!(

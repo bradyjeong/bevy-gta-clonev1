@@ -4,12 +4,6 @@ use bevy_rapier3d::prelude::*;
 use crate::components::{ActiveEntity, Building};
 use crate::config::GameConfig;
 
-/// Physics activation radius - buildings within this distance get physics
-const PHYSICS_ACTIVATION_RADIUS: f32 = 200.0;
-
-/// Physics deactivation radius - buildings beyond this distance lose physics
-const PHYSICS_DEACTIVATION_RADIUS: f32 = 250.0;
-
 /// Marker component for buildings that have physics active
 #[derive(Component)]
 pub struct PhysicsActive;
@@ -31,7 +25,8 @@ pub fn activate_nearby_building_physics(
     };
 
     let player_pos = player_transform.translation();
-    let activation_radius_sq = PHYSICS_ACTIVATION_RADIUS.powi(2);
+    let activation_radius = config.world_physics.building_activation.activation_radius;
+    let activation_radius_sq = activation_radius.powi(2);
 
     let mut activated_count = 0;
     const MAX_ACTIVATIONS_PER_FRAME: usize = 100;
@@ -64,10 +59,11 @@ pub fn activate_nearby_building_physics(
 }
 
 /// Deactivate physics for distant buildings to maintain performance
-/// Removes RigidBody + Collider from buildings beyond 250m
+/// Removes RigidBody + Collider from buildings beyond deactivation radius
 #[allow(clippy::type_complexity)]
 pub fn deactivate_distant_building_physics(
     mut commands: Commands,
+    config: Res<GameConfig>,
     player_query: Query<&GlobalTransform, With<ActiveEntity>>,
     buildings_with_physics: Query<
         (Entity, &GlobalTransform),
@@ -79,7 +75,8 @@ pub fn deactivate_distant_building_physics(
     };
 
     let player_pos = player_transform.translation();
-    let deactivation_radius_sq = PHYSICS_DEACTIVATION_RADIUS.powi(2);
+    let deactivation_radius = config.world_physics.building_activation.deactivation_radius;
+    let deactivation_radius_sq = deactivation_radius.powi(2);
 
     let mut deactivated_count = 0;
     const MAX_DEACTIVATIONS_PER_FRAME: usize = 200;

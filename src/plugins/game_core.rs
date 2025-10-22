@@ -219,4 +219,8 @@ fn load_world_configs(mut config: ResMut<GameConfig>) {
             }
         }
     }
+
+    // Validate and clamp all loaded config values
+    config.validate_and_clamp();
+    info!("✅ Validated and clamped all configuration values");
 }

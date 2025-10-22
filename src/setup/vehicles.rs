@@ -71,7 +71,12 @@ impl BugattiColorScheme {
     }
 }
 
-/// Enhanced Bugatti Chiron with premium customization options
+/// DEPRECATED: Use VehicleFactory::spawn_supercar() instead
+/// This function had hardcoded colliders and is replaced by config-driven factory
+#[deprecated(
+    since = "0.1.0",
+    note = "Use VehicleFactory::spawn_supercar() instead - this has hardcoded colliders violating AGENT.md"
+)]
 pub fn setup_luxury_bugatti_chiron(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -79,12 +84,12 @@ pub fn setup_luxury_bugatti_chiron(
     color_scheme: BugattiColorScheme,
     position: Vec3,
 ) {
-    // Create the luxury Bugatti entity
+    // DEPRECATED - hardcoded collider violates config system
     let bugatti_entity = commands
         .spawn((
             Car,
             RigidBody::Dynamic,
-            Collider::cuboid(1.1, 0.5, 2.4),
+            Collider::cuboid(1.1, 0.5, 2.4), // STRAY COLLIDER - should use config
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             Velocity::zero(),
             Transform::from_translation(position),

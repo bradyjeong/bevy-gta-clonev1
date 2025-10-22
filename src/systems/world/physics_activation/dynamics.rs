@@ -2,21 +2,14 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::components::{ActiveEntity, Car, F16, Helicopter, NPC, Yacht};
-
-/// Distance where dynamic objects get full physics
-const FULL_PHYSICS_RADIUS: f32 = 100.0;
-
-/// Distance where physics gets disabled completely
-const PHYSICS_DISABLE_RADIUS: f32 = 300.0;
-
-/// Hysteresis buffer to prevent rapid toggling
-const HYSTERESIS_BUFFER: f32 = 50.0;
+use crate::config::GameConfig;
 
 /// Disable physics for distant vehicles and NPCs (GTA-style optimization)
 /// Excludes player-controlled entities (ActiveEntity marker)
 #[allow(clippy::type_complexity)]
 pub fn disable_distant_dynamic_physics(
     mut commands: Commands,
+    config: Res<GameConfig>,
     player_query: Query<&GlobalTransform, With<ActiveEntity>>,
     dynamic_entities: Query<
         (Entity, &GlobalTransform),
@@ -39,7 +32,9 @@ pub fn disable_distant_dynamic_physics(
     };
 
     let player_pos = player_transform.translation();
-    let disable_radius_sq = (PHYSICS_DISABLE_RADIUS + HYSTERESIS_BUFFER).powi(2);
+    let disable_radius = config.world_physics.dynamic_physics.disable_radius;
+    let hysteresis = config.world_physics.dynamic_physics.hysteresis_buffer;
+    let disable_radius_sq = (disable_radius + hysteresis).powi(2);
 
     let mut disabled_count = 0;
     const MAX_DISABLES_PER_FRAME: usize = 25;
@@ -66,6 +61,7 @@ pub fn disable_distant_dynamic_physics(
 #[allow(clippy::type_complexity)]
 pub fn enable_nearby_dynamic_physics(
     mut commands: Commands,
+    config: Res<GameConfig>,
     player_query: Query<&GlobalTransform, With<ActiveEntity>>,
     disabled_entities: Query<
         (Entity, &GlobalTransform),
@@ -87,7 +83,9 @@ pub fn enable_nearby_dynamic_physics(
     };
 
     let player_pos = player_transform.translation();
-    let enable_radius_sq = (FULL_PHYSICS_RADIUS + HYSTERESIS_BUFFER).powi(2);
+    let full_physics_radius = config.world_physics.dynamic_physics.full_physics_radius;
+    let hysteresis = config.world_physics.dynamic_physics.hysteresis_buffer;
+    let enable_radius_sq = (full_physics_radius + hysteresis).powi(2);
 
     let mut enabled_count = 0;
     const MAX_ENABLES_PER_FRAME: usize = 25;
