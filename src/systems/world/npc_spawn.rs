@@ -1,4 +1,5 @@
 use crate::components::{NPCState, NPCType};
+use crate::constants::WorldEnvConfig;
 use crate::systems::world::unified_world::UnifiedWorldManager;
 use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
@@ -18,6 +19,7 @@ pub fn spawn_new_npc_system(
     npc_query: Query<Entity, With<NPCState>>,
     world: Res<UnifiedWorldManager>,
     mut world_rng: ResMut<WorldRng>,
+    env: Res<WorldEnvConfig>,
     config: Res<GameConfig>,
 ) {
     // Initialize timer on first run
@@ -37,12 +39,12 @@ pub fn spawn_new_npc_system(
     // Spawn new NPCs on both islands (randomly choose left or right)
     if spawn_timer.just_finished() {
         let island_x = if world_rng.global().gen_bool(0.5) {
-            config.world_env.islands.left_x
+            env.islands.left_x
         } else {
-            config.world_env.islands.right_x
+            env.islands.right_x
         };
 
-        let terrain_half_size = config.world_env.terrain.half_size;
+        let terrain_half_size = env.terrain.half_size;
         let x = island_x
             + world_rng
                 .global()
@@ -51,7 +53,7 @@ pub fn spawn_new_npc_system(
             .global()
             .gen_range(-terrain_half_size..terrain_half_size);
 
-        let test_position = Vec3::new(x, config.world_env.land_elevation, z);
+        let test_position = Vec3::new(x, env.land_elevation, z);
 
         // Validate spawn position is on terrain island
         if !world.is_on_terrain_island(test_position) {
@@ -61,14 +63,14 @@ pub fn spawn_new_npc_system(
         // Spawn above terrain, let gravity drop NPCs
         let spawn_position = Vec3::new(
             x,
-            config.world_env.land_elevation + config.world_env.spawn_drop_height,
+            env.land_elevation + env.spawn_drop_height,
             z,
         );
 
         // Use spawn_simple_npc which adds ALL required components
         spawn_simple_npc(&mut commands, spawn_position, &mut world_rng, &config);
 
-        println!("DEBUG: Spawned NPC at {spawn_position:?}");
+        debug!("Spawned NPC at {spawn_position:?}");
     }
 }
 

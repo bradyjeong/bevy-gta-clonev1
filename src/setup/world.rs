@@ -33,6 +33,7 @@ pub fn setup_basic_world(
         Msaa::Off,
         DepthPrepass,
         Projection::Perspective(PerspectiveProjection {
+            near: 0.1, // Prevent near-plane clipping of cockpit/close objects
             // Derived from config: world_half_size (3000.0) + 500m buffer = 3500.0
             far: config.world_bounds.world_half_size + 500.0,
             ..default()

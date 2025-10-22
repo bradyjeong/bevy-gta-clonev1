@@ -599,6 +599,7 @@ impl VehicleFactory {
             metallic: 0.9,
             perceptual_roughness: 0.1,
             reflectance: 0.8,
+            cull_mode: None, // Render both sides to fix camera-inside issues
             ..default()
         });
 
@@ -674,6 +675,7 @@ impl VehicleFactory {
             base_color: Color::srgb(1.0, 0.5, 0.2),
             emissive: LinearRgba::rgb(1.0, 0.3, 0.0),
             alpha_mode: AlphaMode::Blend,
+            cull_mode: None, // Render both sides for visibility from all angles
             ..default()
         });
 

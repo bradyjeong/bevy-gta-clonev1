@@ -13,6 +13,16 @@ pub fn spawn_bridge(
     let end_clearance = 1.0;
     let gap_len = (env.islands.right_x - env.terrain.half_size)
         - (env.islands.left_x + env.terrain.half_size);
+    
+    let min_gap = end_clearance * 2.0;
+    if gap_len <= min_gap {
+        warn!(
+            "Islands too close to spawn bridge: gap={:.1}m, min_required={:.1}m. Skipping bridge spawn.",
+            gap_len, min_gap
+        );
+        return;
+    }
+    
     let half_len_x = 0.5 * gap_len - end_clearance;
     let half_width_z = 12.0;
     let half_thickness_y = 1.0;

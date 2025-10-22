@@ -156,6 +156,43 @@ impl Plugin for GameCorePlugin {
     }
 }
 
+#[allow(dead_code)]
+fn validate_world_env_config(env: &crate::constants::WorldEnvConfig) {
+    assert!(
+        env.land_elevation >= env.sea_level,
+        "land_elevation ({}) must be >= sea_level ({})",
+        env.land_elevation,
+        env.sea_level
+    );
+    assert!(
+        env.terrain.beach_width >= 0.0,
+        "beach_width ({}) must be >= 0",
+        env.terrain.beach_width
+    );
+    assert!(
+        env.terrain.half_size > 0.0,
+        "terrain.half_size ({}) must be > 0",
+        env.terrain.half_size
+    );
+    assert!(
+        env.spawn_drop_height >= 0.0,
+        "spawn_drop_height ({}) must be >= 0",
+        env.spawn_drop_height
+    );
+    assert!(
+        env.islands.left_x < env.islands.right_x,
+        "left_x ({}) must be < right_x ({})",
+        env.islands.left_x,
+        env.islands.right_x
+    );
+    assert!(
+        env.max_world_coordinate > 0.0,
+        "max_world_coordinate ({}) must be > 0",
+        env.max_world_coordinate
+    );
+    info!("✅ WorldEnvConfig validation passed");
+}
+
 fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
     use std::fs;
     use std::path::Path;
@@ -188,6 +225,7 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
                 "world_config.ron" => {
                     match ron::from_str::<crate::constants::WorldEnvConfig>(&contents) {
                         Ok(world_env_config) => {
+                            validate_world_env_config(&world_env_config);
                             config.world_env = world_env_config.clone();
                             commands.insert_resource(world_env_config);
                             info!("✅ Loaded {} config", description);

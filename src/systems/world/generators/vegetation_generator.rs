@@ -41,7 +41,8 @@ impl VegetationGenerator {
 
         // Determine vegetation density based on distance from center
         let distance_from_center = Vec2::new(chunk_center.x, chunk_center.z).length();
-        let vegetation_density = (1.0 - (distance_from_center / 3000.0).min(0.7)).max(0.2);
+        let radius = env.max_world_coordinate.max(1.0);
+        let vegetation_density = (1.0 - (distance_from_center / radius).min(0.7)).max(0.2);
 
         // Generate palm tree positions - scaled by density
         let tree_attempts = (vegetation_density * 5.0) as usize;
