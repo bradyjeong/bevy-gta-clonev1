@@ -102,7 +102,7 @@ pub fn spawn_simple_npc(
             Collider::capsule(
                 Vec3::new(0.0, -height / 2.0, 0.0),
                 Vec3::new(0.0, height / 2.0, 0.0),
-                0.3,
+                0.3, // TODO: Migrate to config.npc.capsule_radius (currently 0.4 in config but 0.3 historically)
             ),
             Velocity::zero(),
             Transform::from_translation(position),
@@ -140,7 +140,7 @@ pub fn spawn_npc_with_new_architecture(
             Collider::capsule(
                 Vec3::new(0.0, -height / 2.0, 0.0),
                 Vec3::new(0.0, height / 2.0, 0.0),
-                0.3,
+                0.3, // TODO: Migrate to config.npc.capsule_radius (currently 0.4 in config but 0.3 historically)
             ),
             Velocity::zero(),
             Transform::from_translation(position),

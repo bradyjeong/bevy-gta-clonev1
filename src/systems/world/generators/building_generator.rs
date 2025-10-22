@@ -1,5 +1,6 @@
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
+use crate::config::GameConfig;
 use crate::constants::LAND_ELEVATION;
 use crate::factories::BuildingFactory;
 use crate::resources::WorldRng;
@@ -22,15 +23,16 @@ impl BuildingGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
+        config: &GameConfig,
     ) {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
 
-        // Skip building generation for chunks near world edge (±3000m)
-        const WORLD_HALF_SIZE: f32 = 3000.0;
-        const EDGE_BUFFER: f32 = 200.0;
-        if chunk_center.x.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
-            || chunk_center.z.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
+        // Skip building generation for chunks near world edge
+        let world_half_size = config.world_bounds.world_half_size;
+        let edge_buffer = config.world_bounds.edge_buffer;
+        if chunk_center.x.abs() > world_half_size - edge_buffer
+            || chunk_center.z.abs() > world_half_size - edge_buffer
         {
             if let Some(chunk) = world.get_chunk_mut(coord) {
                 chunk.buildings_generated = true;
@@ -48,7 +50,7 @@ impl BuildingGenerator {
 
         // Determine building density based on distance from center
         let distance_from_center = Vec2::new(chunk_center.x, chunk_center.z).length();
-        let building_density = (1.0 - (distance_from_center / 3000.0).min(0.8)).max(0.1);
+        let building_density = (1.0 - (distance_from_center / world_half_size).min(0.8)).max(0.1);
 
         // Generate building positions - reduced for simplicity
         let building_attempts = (building_density * 8.0) as usize;

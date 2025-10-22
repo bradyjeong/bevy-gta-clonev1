@@ -37,9 +37,14 @@ impl VehicleFactory {
         Self { config }
     }
 
-    /// Get visibility range for vehicles based on config
+    /// Get visibility range for vehicles based on config with ±10% variance
     fn visibility_range(&self) -> VisibilityRange {
-        VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance)
+        let distance = self.config.performance.vehicle_visibility_distance;
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: (distance * 0.9)..(distance * 1.1),
+            use_aabb: false,
+        }
     }
 
     /// Spawn SuperCar with multi-part realistic geometry
@@ -694,7 +699,7 @@ impl VehicleFactory {
     }
 
     /// Spawn Superyacht with multi-deck design and helipad
-    /// Mesh: 20×6×60 hull base, Collider: full-size hull + deck colliders
+    /// Uses config.vehicles.yacht for mesh and collider dimensions
     pub fn spawn_yacht(
         &self,
         commands: &mut Commands,
@@ -704,15 +709,22 @@ impl VehicleFactory {
         position: Vec3,
         color: Option<Color>,
     ) -> Result<Entity, BundleError> {
-        let hull_color = color.unwrap_or(Color::srgb(0.95, 0.95, 0.98));
+        let yacht_config = &self.config.vehicles.yacht;
+        let hull_color = color.unwrap_or(yacht_config.default_color);
         let yacht_specs_handle: Handle<YachtSpecs> = asset_server.load("config/simple_yacht.ron");
-        let yacht_visibility = || VisibilityRange::abrupt(0.0, 2000.0);
+        let yacht_visibility =
+            || VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance);
 
+        // Use yacht config collider_size as base (10.0, 3.0, 30.0)
         let hull_collider = Collider::compound(vec![
             (
                 Vec3::ZERO,
                 Quat::IDENTITY,
-                Collider::cuboid(10.0, 3.0, 30.0),
+                Collider::cuboid(
+                    yacht_config.collider_size.x,
+                    yacht_config.collider_size.y,
+                    yacht_config.collider_size.z,
+                ),
             ),
             (
                 Vec3::new(0.0, 3.95, 0.0),
@@ -760,8 +772,8 @@ impl VehicleFactory {
                 ExternalForce::default(),
                 Ccd::enabled(),
                 Damping {
-                    linear_damping: 0.2,
-                    angular_damping: 1.0,
+                    linear_damping: yacht_config.linear_damping,
+                    angular_damping: yacht_config.angular_damping,
                 },
                 MovementTracker::new(position, 12.0),
                 Name::new("Superyacht"),
@@ -775,8 +787,13 @@ impl VehicleFactory {
             ..default()
         });
 
+        // Hull mesh using yacht config body_size
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(20.0, 6.0, 60.0))),
+            Mesh3d(meshes.add(Cuboid::new(
+                yacht_config.body_size.x,
+                yacht_config.body_size.y,
+                yacht_config.body_size.z,
+            ))),
             MeshMaterial3d(materials.add(hull_color)),
             Transform::from_xyz(0.0, 0.0, 0.0),
             ChildOf(vehicle_entity),

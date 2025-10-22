@@ -42,6 +42,9 @@ pub struct GameConfig {
 
     // World Bounds Configuration
     pub world_bounds: WorldBoundsConfig,
+
+    // World Object Configuration
+    pub world_objects: WorldObjectsConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -108,6 +111,9 @@ pub struct VehicleConfig {
 
     // F16 jet parameters
     pub f16: VehicleTypeConfig,
+
+    // Yacht parameters
+    pub yacht: VehicleTypeConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -367,6 +373,38 @@ pub struct TerrainBoundsConfig {
     pub half_size: f32,
 }
 
+/// World object mesh and collider configurations
+#[derive(Debug, Clone)]
+pub struct WorldObjectsConfig {
+    // Trees
+    pub palm_tree: WorldObjectConfig,
+
+    // Ocean
+    pub ocean_floor: WorldObjectConfig,
+
+    // Roads
+    pub road_segment: WorldObjectConfig,
+
+    // Buildings (generic sizes)
+    pub small_building: WorldObjectConfig,
+    pub medium_building: WorldObjectConfig,
+    pub large_building: WorldObjectConfig,
+}
+
+#[derive(Debug, Clone)]
+pub struct WorldObjectConfig {
+    pub mesh_size: Vec3,
+    pub collider_size: Vec3,
+    pub collider_type: ColliderType,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ColliderType {
+    Cuboid,
+    Cylinder { half_height: f32, radius: f32 },
+    Capsule { half_height: f32, radius: f32 },
+}
+
 impl Default for PhysicsConfig {
     fn default() -> Self {
         Self {
@@ -449,6 +487,18 @@ impl Default for VehicleConfig {
                 default_color: Color::srgb(0.4, 0.4, 0.5),
                 engine_volume: 1.2,
                 horn_volume: 0.3,
+            },
+            yacht: VehicleTypeConfig {
+                body_size: Vec3::new(20.0, 8.0, 60.0), // Visual mesh size (from vehicle_factory.rs)
+                collider_size: Vec3::new(10.0, 3.0, 30.0), // 0.5x for boats (from vehicle_factory.rs:715)
+                max_speed: 30.0,
+                acceleration: 10.0,
+                mass: 50000.0,
+                linear_damping: 3.0,
+                angular_damping: 10.0,
+                default_color: Color::srgb(0.95, 0.95, 1.0),
+                engine_volume: 0.6,
+                horn_volume: 0.8,
             },
         }
     }
@@ -655,6 +705,59 @@ impl Default for WorldBoundsConfig {
     }
 }
 
+impl Default for WorldObjectsConfig {
+    fn default() -> Self {
+        Self {
+            // Palm tree - from setup/environment.rs:109
+            // Total capsule height = 2*half_height + 2*radius = 2*3.7 + 2*0.3 = 8.0m (matches mesh)
+            palm_tree: WorldObjectConfig {
+                mesh_size: Vec3::new(0.6, 8.0, 0.6), // Visual trunk size (8m tall)
+                collider_size: Vec3::new(0.3, 3.7, 0.3), // Cylinder params (radius, half_height)
+                collider_type: ColliderType::Cylinder {
+                    half_height: 3.7, // Adjusted from 4.0 to match 8m visual height
+                    radius: 0.3,
+                },
+            },
+
+            // Ocean floor - from setup/world.rs:127
+            // Original: ocean_size = 6400.0, Collider::cuboid(ocean_size / 2.0, 0.05, ocean_size / 2.0)
+            ocean_floor: WorldObjectConfig {
+                mesh_size: Vec3::new(10000.0, 0.1, 10000.0), // Visual ocean size
+                collider_size: Vec3::new(3200.0, 0.05, 3200.0), // Half-extents (6400 / 2)
+                collider_type: ColliderType::Cuboid,
+            },
+
+            // Road segment - from systems/world/road_generation.rs:122
+            road_segment: WorldObjectConfig {
+                mesh_size: Vec3::new(10.0, 0.04, 10.0), // Visual road size (varies)
+                collider_size: Vec3::new(5.0, 0.02, 5.0), // Half-extents (varies)
+                collider_type: ColliderType::Cuboid,
+            },
+
+            // Small building - from setup/world.rs:373
+            small_building: WorldObjectConfig {
+                mesh_size: Vec3::new(20.0, 20.0, 20.0),     // Visual size
+                collider_size: Vec3::new(10.0, 10.0, 10.0), // Half-extents
+                collider_type: ColliderType::Cuboid,
+            },
+
+            // Medium building
+            medium_building: WorldObjectConfig {
+                mesh_size: Vec3::new(40.0, 40.0, 40.0),
+                collider_size: Vec3::new(20.0, 20.0, 20.0),
+                collider_type: ColliderType::Cuboid,
+            },
+
+            // Large building
+            large_building: WorldObjectConfig {
+                mesh_size: Vec3::new(80.0, 80.0, 80.0),
+                collider_size: Vec3::new(40.0, 40.0, 40.0),
+                collider_type: ColliderType::Cuboid,
+            },
+        }
+    }
+}
+
 /// CRITICAL VALIDATION FUNCTIONS - Prevent configuration errors
 impl GameConfig {
     /// Validates all configuration values and clamps to safe ranges
@@ -665,9 +768,12 @@ impl GameConfig {
         self.npc.validate_and_clamp();
         self.performance.validate_and_clamp();
         self.audio.validate_and_clamp();
-
         self.camera.validate_and_clamp();
         self.ui.validate_and_clamp();
+        self.world_objects.validate_and_clamp();
+        // Validate additional config sections
+        // Note: world_bounds, world_physics, character_dimensions, world_streaming
+        // don't have validate_and_clamp yet - add if needed
     }
 }
 
@@ -761,20 +867,22 @@ impl VehicleConfig {
         self.super_car.validate_and_clamp();
         self.helicopter.validate_and_clamp();
         self.f16.validate_and_clamp();
+        self.yacht.validate_and_clamp();
     }
 }
 
 impl VehicleTypeConfig {
     pub fn validate_and_clamp(&mut self) {
-        // Clamp body size to reasonable vehicle dimensions
+        // Clamp body size to reasonable vehicle dimensions (expanded for boats and large aircraft)
         self.body_size.x = self.body_size.x.clamp(0.5, 20.0);
-        self.body_size.y = self.body_size.y.clamp(0.2, 5.0);
-        self.body_size.z = self.body_size.z.clamp(1.0, 25.0);
+        self.body_size.y = self.body_size.y.clamp(0.2, 10.0); // Raised from 5.0 to accommodate yacht height 8.0
+        self.body_size.z = self.body_size.z.clamp(1.0, 100.0); // Raised from 25.0 to accommodate yacht length 60.0
 
-        // Clamp collider size to be smaller than body size
-        self.collider_size.x = self.collider_size.x.clamp(0.25, self.body_size.x);
-        self.collider_size.y = self.collider_size.y.clamp(0.1, self.body_size.y);
-        self.collider_size.z = self.collider_size.z.clamp(0.5, self.body_size.z);
+        // Clamp collider size to half-extents (collider_size represents HALF-EXTENTS for Rapier cuboids)
+        let half_body = self.body_size * 0.5;
+        self.collider_size.x = self.collider_size.x.clamp(0.25, half_body.x);
+        self.collider_size.y = self.collider_size.y.clamp(0.1, half_body.y);
+        self.collider_size.z = self.collider_size.z.clamp(0.5, half_body.z);
 
         // Clamp performance parameters
         self.max_speed = self.max_speed.clamp(10.0, 800.0);
@@ -883,8 +991,8 @@ impl FootstepConfig {
 impl CameraConfig {
     pub fn validate_and_clamp(&mut self) {
         self.distance = self.distance.clamp(5.0, 100.0);
-        self.height = self.height.clamp(2.0, 50.0);
-        self.lerp_speed = self.lerp_speed.clamp(0.001, 0.5);
+        self.height = self.height.clamp(1.0, 50.0); // Lowered min from 2.0 to accommodate default 1.5
+        self.lerp_speed = self.lerp_speed.clamp(0.001, 5.0); // Raised max from 0.5 to accommodate default 2.5
         self.look_ahead_distance = self.look_ahead_distance.clamp(2.0, 50.0);
         self.look_ahead_height = self.look_ahead_height.clamp(0.5, 20.0);
     }
@@ -897,5 +1005,74 @@ impl UIConfig {
         self.default_padding = self.default_padding.clamp(0.0, 50.0);
         self.panel_padding = self.panel_padding.clamp(0.0, 50.0);
         self.border_radius = self.border_radius.clamp(0.0, 20.0);
+    }
+}
+
+impl WorldObjectsConfig {
+    pub fn validate_and_clamp(&mut self) {
+        self.palm_tree.validate_and_clamp();
+        self.ocean_floor.validate_and_clamp();
+        self.road_segment.validate_and_clamp();
+        self.small_building.validate_and_clamp();
+        self.medium_building.validate_and_clamp();
+        self.large_building.validate_and_clamp();
+    }
+}
+
+impl WorldObjectConfig {
+    pub fn validate_and_clamp(&mut self) {
+        // Clamp mesh size to reasonable ranges
+        self.mesh_size.x = self.mesh_size.x.clamp(0.1, 10000.0);
+        self.mesh_size.y = self.mesh_size.y.clamp(0.01, 1000.0);
+        self.mesh_size.z = self.mesh_size.z.clamp(0.1, 10000.0);
+
+        // Validate collider parameters based on type
+        match &mut self.collider_type {
+            ColliderType::Cuboid => {
+                // For cuboids, collider_size is half-extents, so clamp to mesh_size/2
+                self.collider_size.x = self.collider_size.x.clamp(0.01, self.mesh_size.x / 2.0);
+                self.collider_size.y = self.collider_size.y.clamp(0.001, self.mesh_size.y / 2.0);
+                self.collider_size.z = self.collider_size.z.clamp(0.01, self.mesh_size.z / 2.0);
+            }
+            ColliderType::Cylinder {
+                half_height,
+                radius,
+            } => {
+                // Validate cylinder parameters
+                *half_height = half_height.clamp(0.01, 1000.0);
+                *radius = radius.clamp(0.01, 1000.0);
+                // Keep collider_size in sync for reference
+                self.collider_size = Vec3::new(*radius, *half_height, *radius);
+            }
+            ColliderType::Capsule {
+                half_height,
+                radius,
+            } => {
+                // Validate capsule parameters
+                *half_height = half_height.clamp(0.01, 1000.0);
+                *radius = radius.clamp(0.01, 1000.0);
+                // Keep collider_size in sync for reference
+                self.collider_size = Vec3::new(*radius, *half_height, *radius);
+            }
+        }
+    }
+
+    /// Helper to create a Collider from this config
+    pub fn create_collider(&self) -> Collider {
+        match self.collider_type {
+            ColliderType::Cuboid => Collider::cuboid(
+                self.collider_size.x,
+                self.collider_size.y,
+                self.collider_size.z,
+            ),
+            ColliderType::Cylinder {
+                half_height,
+                radius,
+            } => Collider::cylinder(half_height, radius),
+            ColliderType::Capsule {
+                half_height,
+                radius,
+            } => Collider::capsule_y(half_height, radius),
+        }
     }
 }

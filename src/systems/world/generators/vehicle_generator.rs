@@ -1,4 +1,5 @@
 use crate::components::{ContentType, VehicleType};
+use crate::config::GameConfig;
 use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
 use crate::factories::VehicleFactory;
 use crate::resources::WorldRng;
@@ -21,15 +22,16 @@ impl VehicleGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         asset_server: &AssetServer,
         world_rng: &mut WorldRng,
+        config: &GameConfig,
     ) {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
 
-        // Skip vehicle generation for chunks near world edge (±2000m)
-        const WORLD_HALF_SIZE: f32 = 2000.0;
-        const EDGE_BUFFER: f32 = 200.0;
-        if chunk_center.x.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
-            || chunk_center.z.abs() > WORLD_HALF_SIZE - EDGE_BUFFER
+        // Skip vehicle generation for chunks near world edge
+        let world_half_size = config.world_bounds.vehicle_spawn_half_size;
+        let edge_buffer = config.world_bounds.edge_buffer;
+        if chunk_center.x.abs() > world_half_size - edge_buffer
+            || chunk_center.z.abs() > world_half_size - edge_buffer
         {
             if let Some(chunk) = world.get_chunk_mut(coord) {
                 chunk.vehicles_generated = true;
@@ -71,6 +73,7 @@ impl VehicleGenerator {
                     materials,
                     asset_server,
                     world_rng,
+                    config,
                 ) {
                     world
                         .placement_grid
@@ -110,6 +113,7 @@ impl VehicleGenerator {
                     materials,
                     asset_server,
                     world_rng,
+                    config,
                 ) {
                     world
                         .placement_grid
@@ -138,8 +142,9 @@ impl VehicleGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         asset_server: &AssetServer,
         world_rng: &mut WorldRng,
+        config: &GameConfig,
     ) -> Result<Entity, String> {
-        let factory = VehicleFactory::new();
+        let factory = VehicleFactory::with_config(config.clone());
         let vehicle_types = [VehicleType::SuperCar];
         let vehicle_type = vehicle_types[world_rng.global().gen_range(0..vehicle_types.len())];
 
@@ -173,8 +178,9 @@ impl VehicleGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         asset_server: &AssetServer,
         world_rng: &mut WorldRng,
+        config: &GameConfig,
     ) -> Result<Entity, String> {
-        let factory = VehicleFactory::new();
+        let factory = VehicleFactory::with_config(config.clone());
         let aircraft_types = [VehicleType::Helicopter, VehicleType::F16];
         let vehicle_type = aircraft_types[world_rng.global().gen_range(0..aircraft_types.len())];
 

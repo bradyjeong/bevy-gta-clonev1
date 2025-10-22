@@ -2,6 +2,7 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::RoadEntity;
 use crate::components::{ActiveEntity, ContentType, DynamicContent, NPC};
+use crate::config::GameConfig;
 use crate::systems::world::road_mesh::{generate_road_markings_mesh, generate_road_mesh};
 use crate::systems::world::road_network::RoadNetwork;
 use bevy::prelude::*;
@@ -72,9 +73,8 @@ fn spawn_road_entity(
     road: &crate::systems::world::road_network::RoadSpline,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    config: &GameConfig,
 ) {
-    use crate::constants::{STATIC_GROUP, VEHICLE_GROUP};
-
     let start_pos = road.evaluate(0.0);
 
     let road_material = create_road_material(&road.road_type, materials);
@@ -90,8 +90,8 @@ fn spawn_road_entity(
                 content_type: ContentType::Road,
             },
             RigidBody::Fixed,
-            create_road_collider(road),
-            CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP),
+            create_road_collider(road, config),
+            CollisionGroups::new(config.physics.static_group, config.physics.vehicle_group),
         ))
         .id();
 
@@ -116,10 +116,15 @@ fn spawn_road_entity(
     }
 }
 
-fn create_road_collider(road: &crate::systems::world::road_network::RoadSpline) -> Collider {
+fn create_road_collider(
+    road: &crate::systems::world::road_network::RoadSpline,
+    config: &GameConfig,
+) -> Collider {
     let width = road.road_type.width();
     let length = road.length();
-    Collider::cuboid(width * 0.5, 0.02, length * 0.5)
+    // Use config for road thickness (y component)
+    let thickness = config.world_objects.road_segment.collider_size.y;
+    Collider::cuboid(width * 0.5, thickness, length * 0.5)
 }
 
 fn create_road_material(

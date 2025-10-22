@@ -22,7 +22,6 @@ mod tests;
 // Core public API - essential items for external use (reduced from 100+ to 10)
 pub use components::{ActiveEntity, CullingSettings, MainCamera, PerformanceStats, Player};
 pub use config::GameConfig;
-pub use constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
 pub use game_state::GameState;
 pub use plugins::UnifiedWorldPlugin;
 pub use render_primitives::{Mesh3d, MeshMaterial3d};

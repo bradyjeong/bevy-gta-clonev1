@@ -1,7 +1,8 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
-use crate::constants::{LAND_ELEVATION, STATIC_GROUP};
+use crate::config::GameConfig;
+use crate::constants::LAND_ELEVATION;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
@@ -24,6 +25,7 @@ impl VegetationGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
+        config: &GameConfig,
     ) {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
@@ -62,7 +64,7 @@ impl VegetationGenerator {
                     .can_place(position, ContentType::Tree, 3.0, 10.0)
             {
                 if let Ok(tree_entity) =
-                    self.spawn_palm_tree(commands, coord, position, meshes, materials)
+                    self.spawn_palm_tree(commands, coord, position, meshes, materials, config)
                 {
                     trees_spawned += 1;
 
@@ -99,6 +101,7 @@ impl VegetationGenerator {
         position: Vec3,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        config: &GameConfig,
     ) -> Result<Entity, String> {
         // Create palm tree parent entity
         let palm_entity = commands
@@ -124,7 +127,8 @@ impl VegetationGenerator {
             VisibleChildBundle::default(),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
+                end_margin: (config.performance.tree_visibility_distance * 0.9)
+                    ..(config.performance.tree_visibility_distance * 1.1),
                 use_aabb: false,
             },
         ));
@@ -143,18 +147,22 @@ impl VegetationGenerator {
                 VisibleChildBundle::default(),
                 VisibilityRange {
                     start_margin: 0.0..0.0,
-                    end_margin: 3000.0..3500.0,
+                    end_margin: (config.performance.tree_visibility_distance * 0.9)
+                        ..(config.performance.tree_visibility_distance * 1.1),
                     use_aabb: true, // Use AABB for accurate culling
                 },
             ));
         }
 
-        // Simple physics collider for trunk
-        // Note: Colliders don't need visibility - they're always active for physics
+        // Tree trunk collider from config
+        let tree_config = &config.world_objects.palm_tree;
         commands.spawn((
             RigidBody::Fixed,
-            Collider::cylinder(4.0, 0.3),
-            CollisionGroups::new(STATIC_GROUP, Group::ALL),
+            tree_config.create_collider(),
+            CollisionGroups::new(
+                config.physics.static_group,
+                config.physics.vehicle_group | config.physics.character_group,
+            ),
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(palm_entity),
         ));

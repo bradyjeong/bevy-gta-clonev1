@@ -1,5 +1,5 @@
 use crate::components::Car;
-use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
+use crate::config::GameConfig;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -71,20 +71,26 @@ impl BugattiColorScheme {
     }
 }
 
-/// Enhanced Bugatti Chiron with premium customization options
+/// DEPRECATED: Use VehicleFactory::spawn_supercar() instead
+/// This function had hardcoded colliders and is replaced by config-driven factory
+#[deprecated(
+    since = "0.1.0",
+    note = "Use VehicleFactory::spawn_supercar() instead - this has hardcoded colliders violating AGENT.md"
+)]
 pub fn setup_luxury_bugatti_chiron(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    config: Res<GameConfig>,
     color_scheme: BugattiColorScheme,
     position: Vec3,
 ) {
-    // Create the luxury Bugatti entity
+    // DEPRECATED - hardcoded collider violates config system
     let bugatti_entity = commands
         .spawn((
             Car,
             RigidBody::Dynamic,
-            Collider::cuboid(1.1, 0.5, 2.4),
+            Collider::cuboid(1.1, 0.5, 2.4), // STRAY COLLIDER - should use config
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             Velocity::zero(),
             Transform::from_translation(position),
@@ -92,10 +98,12 @@ pub fn setup_luxury_bugatti_chiron(
                 linear_damping: 1.0,
                 angular_damping: 5.0,
             },
-            VisibilityRange::abrupt(0.0, 1000.0),
+            VisibilityRange::abrupt(0.0, config.performance.vehicle_visibility_distance),
             CollisionGroups::new(
-                VEHICLE_GROUP,
-                STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,
+                config.physics.vehicle_group,
+                config.physics.static_group
+                    | config.physics.vehicle_group
+                    | config.physics.character_group,
             ),
         ))
         .id();

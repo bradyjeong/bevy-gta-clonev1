@@ -1,5 +1,5 @@
 use crate::config::GameConfig;
-use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
+
 use crate::util::safe_math::{Vec3SafeExt, validate_transform, validate_velocity};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -60,21 +60,26 @@ pub struct CollisionGroupHelper;
 
 impl CollisionGroupHelper {
     /// Get collision groups for static objects (buildings, terrain)
-    pub fn static_groups() -> CollisionGroups {
-        CollisionGroups::new(STATIC_GROUP, Group::ALL)
+    pub fn static_groups(config: &GameConfig) -> CollisionGroups {
+        CollisionGroups::new(config.physics.static_group, Group::ALL)
     }
 
     /// Get collision groups for vehicles (cars, aircraft)
-    pub fn vehicle_groups() -> CollisionGroups {
+    pub fn vehicle_groups(config: &GameConfig) -> CollisionGroups {
         CollisionGroups::new(
-            VEHICLE_GROUP,
-            STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,
+            config.physics.vehicle_group,
+            config.physics.static_group
+                | config.physics.vehicle_group
+                | config.physics.character_group,
         )
     }
 
     /// Get collision groups for characters (player, NPCs)
-    pub fn character_groups() -> CollisionGroups {
-        CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP)
+    pub fn character_groups(config: &GameConfig) -> CollisionGroups {
+        CollisionGroups::new(
+            config.physics.character_group,
+            config.physics.static_group | config.physics.vehicle_group,
+        )
     }
 }
 

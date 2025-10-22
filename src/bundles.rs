@@ -3,6 +3,7 @@ use crate::components::{
     Building, Car, DynamicContent, HumanMovement, MovementController, NPCAppearance,
     NPCBehaviorComponent, NPCState, VehicleState, VehicleType,
 };
+use crate::config::GameConfig;
 use crate::systems::world::unified_world::UnifiedChunkEntity;
 use bevy::prelude::*;
 use bevy::render::view::VisibilityRange;
@@ -199,13 +200,38 @@ pub struct PlayerPhysicsBundle {
     pub movement: HumanMovement,
 }
 
+impl PlayerPhysicsBundle {
+    /// Create PlayerPhysicsBundle from GameConfig
+    pub fn from_config(config: &GameConfig) -> Self {
+        let player_dims = &config.character_dimensions.player;
+
+        Self {
+            rigid_body: RigidBody::Dynamic,
+            collider: Collider::capsule(
+                Vec3::new(0.0, player_dims.lower_sphere_y(), 0.0),
+                Vec3::new(0.0, player_dims.upper_sphere_y, 0.0),
+                player_dims.capsule_radius,
+            ),
+            locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+            velocity: Velocity::default(),
+            sleeping: Sleeping::disabled(),
+            damping: Damping {
+                linear_damping: 0.1,
+                angular_damping: 3.5,
+            },
+            movement: HumanMovement::default(),
+        }
+    }
+}
+
+// Keep Default for backwards compatibility, but it uses hardcoded values
 impl Default for PlayerPhysicsBundle {
     fn default() -> Self {
-        // Match the initial spawn collider dimensions from world.rs
+        // DEPRECATED: Use from_config() instead - this has hardcoded collider dimensions
         const FOOT_LEVEL: f32 = -0.45;
-        const CAPSULE_RADIUS: f32 = 0.25; // Slimmer for better door navigation
-        const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS; // -0.20
-        const UPPER_SPHERE_Y: f32 = 1.45; // ~1.70m total height
+        const CAPSULE_RADIUS: f32 = 0.25;
+        const LOWER_SPHERE_Y: f32 = FOOT_LEVEL + CAPSULE_RADIUS;
+        const UPPER_SPHERE_Y: f32 = 1.45;
 
         Self {
             rigid_body: RigidBody::Dynamic,
@@ -218,7 +244,7 @@ impl Default for PlayerPhysicsBundle {
             velocity: Velocity::default(),
             sleeping: Sleeping::disabled(),
             damping: Damping {
-                linear_damping: 0.1, // Realistic air resistance for free-fall
+                linear_damping: 0.1,
                 angular_damping: 3.5,
             },
             movement: HumanMovement::default(),
