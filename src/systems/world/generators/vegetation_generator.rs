@@ -2,7 +2,7 @@ use crate::bundles::VisibleChildBundle;
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
-use crate::constants::{LAND_ELEVATION, STATIC_GROUP};
+use crate::constants::LAND_ELEVATION;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
@@ -127,7 +127,8 @@ impl VegetationGenerator {
             VisibleChildBundle::default(),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
+                end_margin: (config.performance.tree_visibility_distance * 0.9)
+                    ..(config.performance.tree_visibility_distance * 1.1),
                 use_aabb: false,
             },
         ));
@@ -146,7 +147,8 @@ impl VegetationGenerator {
                 VisibleChildBundle::default(),
                 VisibilityRange {
                     start_margin: 0.0..0.0,
-                    end_margin: 3000.0..3500.0,
+                    end_margin: (config.performance.tree_visibility_distance * 0.9)
+                        ..(config.performance.tree_visibility_distance * 1.1),
                     use_aabb: true, // Use AABB for accurate culling
                 },
             ));
@@ -157,7 +159,10 @@ impl VegetationGenerator {
         commands.spawn((
             RigidBody::Fixed,
             tree_config.create_collider(),
-            CollisionGroups::new(STATIC_GROUP, Group::ALL),
+            CollisionGroups::new(
+                config.physics.static_group,
+                config.physics.vehicle_group | config.physics.character_group,
+            ),
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(palm_entity),
         ));

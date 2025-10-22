@@ -1,6 +1,6 @@
 use crate::bundles::VisibleChildBundle;
 use crate::config::GameConfig;
-use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, STATIC_GROUP};
+use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -77,17 +77,22 @@ pub fn setup_palm_trees(
                 Visibility::Visible,
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
-                VisibilityRange::abrupt(0.0, 500.0), // Standardized 500m culling
             ))
             .id();
 
-        // Simple trunk - single brown cylinder
+        // Simple trunk - single brown cylinder with ±10% visibility variance
+        let tree_vis_distance = config.performance.tree_visibility_distance;
         commands.spawn((
             Mesh3d(meshes.add(Cylinder::new(0.3, 8.0))),
             MeshMaterial3d(materials.add(Color::srgb(0.4, 0.25, 0.15))), // Brown trunk
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(palm_entity),
             VisibleChildBundle::default(),
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: (tree_vis_distance * 0.9)..(tree_vis_distance * 1.1),
+                use_aabb: true,
+            },
         ));
 
         // Simple fronds - just 4 green rectangles arranged in a cross
@@ -102,6 +107,11 @@ pub fn setup_palm_trees(
                 ),
                 ChildOf(palm_entity),
                 VisibleChildBundle::default(),
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: (tree_vis_distance * 0.9)..(tree_vis_distance * 1.1),
+                    use_aabb: true,
+                },
             ));
         }
 
@@ -110,7 +120,10 @@ pub fn setup_palm_trees(
         commands.spawn((
             RigidBody::Fixed,
             tree_config.create_collider(),
-            CollisionGroups::new(STATIC_GROUP, Group::ALL),
+            CollisionGroups::new(
+                config.physics.static_group,
+                config.physics.vehicle_group | config.physics.character_group,
+            ),
             Transform::from_xyz(0.0, 4.0, 0.0),
             ChildOf(palm_entity),
         ));

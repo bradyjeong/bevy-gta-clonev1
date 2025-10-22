@@ -8,8 +8,7 @@ use crate::components::{
 };
 use crate::config::GameConfig;
 use crate::constants::{
-    CHARACTER_GROUP, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL, SPAWN_DROP_HEIGHT,
-    STATIC_GROUP, TERRAIN_SIZE, VEHICLE_GROUP,
+    LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL, SPAWN_DROP_HEIGHT, TERRAIN_SIZE,
 };
 use crate::factories::spawn_bridge;
 use crate::systems::audio::FootstepTimer;
@@ -35,7 +34,8 @@ pub fn setup_basic_world(
         Msaa::Off,
         DepthPrepass,
         Projection::Perspective(PerspectiveProjection {
-            far: 3500.0, // Covers world boundaries at ±3200m with buffer
+            // Derived from config: world_half_size (3000.0) + 500m buffer = 3500.0
+            far: config.world_bounds.world_half_size + 500.0,
             ..default()
         }),
         Transform::from_xyz(0.0, 15.0, 25.0).looking_at(Vec3::ZERO, Vec3::Y),
@@ -98,6 +98,7 @@ pub fn setup_basic_world(
         Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0),
         TERRAIN_SIZE,
         "Left",
+        &config,
     );
 
     // RIGHT TERRAIN ISLAND
@@ -108,10 +109,12 @@ pub fn setup_basic_world(
         Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
         TERRAIN_SIZE,
         "Right",
+        &config,
     );
 
     // OCEAN FLOOR - Fills entire world
-    let ocean_size = 6400.0; // Match world bounds at ±3200m
+    // Derived from config: (world_half_size * 2.0) + 400m margin = 6400.0
+    let ocean_size = config.world_bounds.world_half_size * 2.0 + 400.0;
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(ocean_size, ocean_size))),
         MeshMaterial3d(materials.add(StandardMaterial {
@@ -123,18 +126,22 @@ pub fn setup_basic_world(
         Name::new("Ocean Floor Visual"),
     ));
 
-    // Ocean floor collider from config
-    let ocean_config = &config.world_objects.ocean_floor;
+    // Ocean floor collider - derive from ocean_size to match visual bounds
+    // ocean_size is derived from world_bounds, so collider scales with world
     commands.spawn((
         Transform::from_xyz(0.0, -10.2, 0.0),
         RigidBody::Fixed,
-        ocean_config.create_collider(),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        Collider::cuboid(ocean_size * 0.5, 0.05, ocean_size * 0.5),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Name::new("Ocean Floor Collision"),
     ));
 
     // WORLD BOUNDARY MARKERS (visible on minimap at Y=5 for visibility)
-    let boundary_size = 3200.0; // World bounds at ±3200m
+    // Derived from config: world_half_size (3000.0) + edge_buffer (200.0) = 3200.0
+    let boundary_size = config.world_bounds.world_half_size + config.world_bounds.edge_buffer;
     let boundary_color = Color::srgb(1.0, 0.0, 0.0); // Red boundary lines
     let boundary_thickness = 20.0; // Thick enough to see on minimap
 
@@ -178,6 +185,7 @@ pub fn setup_basic_world(
         Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0),
         TERRAIN_SIZE,
         "Left",
+        &config,
     );
 
     // RIGHT TERRAIN BEACHES (all 4 edges with corners filled)
@@ -188,10 +196,11 @@ pub fn setup_basic_world(
         Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
         TERRAIN_SIZE,
         "Right",
+        &config,
     );
 
     // BRIDGE CONNECTING ISLANDS
-    spawn_bridge(&mut commands, &mut meshes, &mut materials);
+    spawn_bridge(&mut commands, &mut meshes, &mut materials, &config);
 
     // Spawn player above terrain, let gravity drop them
     let player_y = LAND_ELEVATION + SPAWN_DROP_HEIGHT;
@@ -216,7 +225,10 @@ pub fn setup_basic_world(
             Visibility::Visible,
             InheritedVisibility::VISIBLE,
             ViewVisibility::default(),
-            CollisionGroups::new(CHARACTER_GROUP, STATIC_GROUP | VEHICLE_GROUP),
+            CollisionGroups::new(
+                config.physics.character_group,
+                config.physics.static_group | config.physics.vehicle_group,
+            ),
             Ccd::enabled(),
             Damping {
                 linear_damping: 0.1,
@@ -361,6 +373,7 @@ fn spawn_terrain_island(
     position: Vec3,
     size: f32,
     name: &str,
+    config: &GameConfig,
 ) {
     let half_size = size / 2.0;
     let collider_half_height = 0.05;
@@ -373,7 +386,10 @@ fn spawn_terrain_island(
         Transform::from_translation(position - Vec3::Y * collider_half_height),
         RigidBody::Fixed,
         Collider::cuboid(half_size, collider_half_height, half_size),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Name::new(format!("{name} Terrain Island")),
     ));
 }
@@ -385,6 +401,7 @@ fn spawn_terrain_beaches(
     terrain_center: Vec3,
     terrain_size: f32,
     name: &str,
+    config: &GameConfig,
 ) {
     use crate::factories::beach_terrain::{
         CornerType, create_beach_slope, create_beach_slope_collider, create_corner_beach_slope,
@@ -451,7 +468,10 @@ fn spawn_terrain_beaches(
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&east_collider_mesh, &default())
             .expect("Beach collider creation failed"),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Name::new(format!("{name} East Beach Collider")),
     ));
 
@@ -494,7 +514,10 @@ fn spawn_terrain_beaches(
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&west_collider_mesh, &default())
             .expect("Beach collider creation failed"),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Name::new(format!("{name} West Beach Collider")),
     ));
 
@@ -537,7 +560,10 @@ fn spawn_terrain_beaches(
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&north_collider_mesh, &default())
             .expect("Beach collider creation failed"),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Name::new(format!("{name} North Beach Collider")),
     ));
 
@@ -580,7 +606,10 @@ fn spawn_terrain_beaches(
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&south_collider_mesh, &default())
             .expect("Beach collider creation failed"),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Name::new(format!("{name} South Beach Collider")),
     ));
 
@@ -627,7 +656,10 @@ fn spawn_terrain_beaches(
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&ne_collider_mesh, &default())
             .expect("Corner collider creation failed"),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Ccd::enabled(),
         Name::new(format!("{name} NE Corner Collider")),
     ));
@@ -670,7 +702,10 @@ fn spawn_terrain_beaches(
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&nw_collider_mesh, &default())
             .expect("Corner collider creation failed"),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Ccd::enabled(),
         Name::new(format!("{name} NW Corner Collider")),
     ));
@@ -713,7 +748,10 @@ fn spawn_terrain_beaches(
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&se_collider_mesh, &default())
             .expect("Corner collider creation failed"),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Ccd::enabled(),
         Name::new(format!("{name} SE Corner Collider")),
     ));
@@ -756,7 +794,10 @@ fn spawn_terrain_beaches(
         RigidBody::Fixed,
         Collider::from_bevy_mesh(&sw_collider_mesh, &default())
             .expect("Corner collider creation failed"),
-        CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+        CollisionGroups::new(
+            config.physics.static_group,
+            config.physics.vehicle_group | config.physics.character_group,
+        ),
         Ccd::enabled(),
         Name::new(format!("{name} SW Corner Collider")),
     ));

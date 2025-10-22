@@ -140,7 +140,7 @@ impl BundleSpec for VehicleBundleSpec {
             VehicleType::SuperCar => &config.vehicles.super_car,
             VehicleType::Helicopter => &config.vehicles.helicopter,
             VehicleType::F16 => &config.vehicles.f16,
-            VehicleType::Yacht => &config.vehicles.super_car, // Use car config for yacht
+            VehicleType::Yacht => &config.vehicles.yacht,
         };
 
         // Apply overrides with validation
@@ -181,15 +181,21 @@ impl BundleSpec for VehicleBundleSpec {
                 RigidBody::Fixed
             },
             collider: if self.include_collision {
+                // collider_size already represents half-extents
                 Collider::cuboid(
-                    vehicle_config.collider_size.x / 2.0,
-                    vehicle_config.collider_size.y / 2.0,
-                    vehicle_config.collider_size.z / 2.0,
+                    vehicle_config.collider_size.x,
+                    vehicle_config.collider_size.y,
+                    vehicle_config.collider_size.z,
                 )
             } else {
                 Collider::ball(0.1) // Minimal collider
             },
-            collision_groups: CollisionGroups::new(config.physics.vehicle_group, Group::ALL),
+            collision_groups: CollisionGroups::new(
+                config.physics.vehicle_group,
+                config.physics.static_group
+                    | config.physics.character_group
+                    | config.physics.vehicle_group,
+            ),
             additional_mass: AdditionalMassProperties::Mass(mass),
             velocity: Velocity::zero(),
             damping: Damping {
@@ -198,7 +204,8 @@ impl BundleSpec for VehicleBundleSpec {
             },
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 450.0..500.0,
+                end_margin: (config.performance.vehicle_visibility_distance * 0.9)
+                    ..(config.performance.vehicle_visibility_distance * 1.1),
                 use_aabb: false,
             },
         }
@@ -298,7 +305,8 @@ impl BundleSpec for NPCBundleSpec {
             velocity: Velocity::zero(),
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 130.0..150.0,
+                end_margin: (config.performance.npc_visibility_distance * 0.9)
+                    ..(config.performance.npc_visibility_distance * 1.1),
                 use_aabb: false,
             },
             movement_tracker: MovementTracker::new(self.position, 8.0), // Track NPC movement with 8m threshold
@@ -381,7 +389,8 @@ impl BundleSpec for BuildingBundleSpec {
             collision_groups: CollisionGroups::new(config.physics.static_group, Group::ALL),
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 350.0..400.0,
+                end_margin: (config.performance.building_visibility_distance * 0.9)
+                    ..(config.performance.building_visibility_distance * 1.1),
                 use_aabb: false,
             },
         }
@@ -718,8 +727,9 @@ impl GenericBundleFactory {
     pub fn dynamic_content(
         content_type: ContentType,
         position: Vec3,
-        _max_distance: f32,
+        config: &GameConfig,
     ) -> DynamicContentBundle {
+        let visibility_distance = config.performance.vehicle_visibility_distance;
         DynamicContentBundle {
             dynamic_content: DynamicContent { content_type },
             transform: Transform::from_translation(position),
@@ -728,7 +738,7 @@ impl GenericBundleFactory {
             view_visibility: ViewVisibility::default(),
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 250.0..300.0,
+                end_margin: (visibility_distance * 0.9)..(visibility_distance * 1.1),
                 use_aabb: false,
             },
         }
@@ -740,8 +750,9 @@ impl GenericBundleFactory {
         position: Vec3,
         collider: Collider,
         collision_groups: CollisionGroups,
-        _max_distance: f32,
+        config: &GameConfig,
     ) -> DynamicPhysicsBundle {
+        let visibility_distance = config.performance.vehicle_visibility_distance;
         DynamicPhysicsBundle {
             dynamic_content: DynamicContent { content_type },
             transform: Transform::from_translation(position),
@@ -754,7 +765,7 @@ impl GenericBundleFactory {
             velocity: Velocity::zero(),
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 250.0..300.0,
+                end_margin: (visibility_distance * 0.9)..(visibility_distance * 1.1),
                 use_aabb: false,
             },
         }
@@ -765,7 +776,10 @@ impl GenericBundleFactory {
         position: Vec3,
         collision_groups: CollisionGroups,
         damping: Damping,
+        config: &GameConfig,
     ) -> DynamicVehicleBundle {
+        let visibility_distance = config.performance.vehicle_visibility_distance;
+        let cs = &config.vehicles.super_car.collider_size;
         DynamicVehicleBundle {
             dynamic_content: DynamicContent {
                 content_type: ContentType::Vehicle,
@@ -776,7 +790,7 @@ impl GenericBundleFactory {
             inherited_visibility: InheritedVisibility::VISIBLE,
             view_visibility: ViewVisibility::default(),
             rigid_body: RigidBody::Dynamic,
-            collider: Collider::cuboid(1.0, 0.5, 2.0),
+            collider: Collider::cuboid(cs.x, cs.y, cs.z),
             collision_groups,
             velocity: Velocity::zero(),
             damping,
@@ -784,7 +798,7 @@ impl GenericBundleFactory {
             sleeping: Sleeping::default(),
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 450.0..500.0,
+                end_margin: (visibility_distance * 0.9)..(visibility_distance * 1.1),
                 use_aabb: false,
             },
         }
@@ -812,8 +826,9 @@ impl GenericBundleFactory {
         layer: crate::systems::world::unified_world::ContentLayer,
         content_type: ContentType,
         position: Vec3,
-        _max_distance: f32,
+        config: &GameConfig,
     ) -> UnifiedChunkBundle {
+        let visibility_distance = config.performance.vehicle_visibility_distance;
         UnifiedChunkBundle {
             chunk_entity: UnifiedChunkEntity {
                 coord: crate::systems::world::unified_world::ChunkCoord::new(
@@ -829,7 +844,7 @@ impl GenericBundleFactory {
             view_visibility: ViewVisibility::default(),
             visibility_range: VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 250.0..300.0,
+                end_margin: (visibility_distance * 0.9)..(visibility_distance * 1.1),
                 use_aabb: false,
             },
         }

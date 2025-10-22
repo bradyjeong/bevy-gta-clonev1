@@ -75,8 +75,6 @@ fn spawn_road_entity(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     config: &GameConfig,
 ) {
-    use crate::constants::{STATIC_GROUP, VEHICLE_GROUP};
-
     let start_pos = road.evaluate(0.0);
 
     let road_material = create_road_material(&road.road_type, materials);
@@ -93,7 +91,7 @@ fn spawn_road_entity(
             },
             RigidBody::Fixed,
             create_road_collider(road, config),
-            CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP),
+            CollisionGroups::new(config.physics.static_group, config.physics.vehicle_group),
         ))
         .id();
 

@@ -711,7 +711,7 @@ impl Default for WorldObjectsConfig {
             // Palm tree - from setup/environment.rs:109
             // Total capsule height = 2*half_height + 2*radius = 2*3.7 + 2*0.3 = 8.0m (matches mesh)
             palm_tree: WorldObjectConfig {
-                mesh_size: Vec3::new(0.6, 8.0, 0.6),     // Visual trunk size (8m tall)
+                mesh_size: Vec3::new(0.6, 8.0, 0.6), // Visual trunk size (8m tall)
                 collider_size: Vec3::new(0.3, 3.7, 0.3), // Cylinder params (radius, half_height)
                 collider_type: ColliderType::Cylinder {
                     half_height: 3.7, // Adjusted from 4.0 to match 8m visual height
@@ -771,6 +771,9 @@ impl GameConfig {
         self.camera.validate_and_clamp();
         self.ui.validate_and_clamp();
         self.world_objects.validate_and_clamp();
+        // Validate additional config sections
+        // Note: world_bounds, world_physics, character_dimensions, world_streaming
+        // don't have validate_and_clamp yet - add if needed
     }
 }
 

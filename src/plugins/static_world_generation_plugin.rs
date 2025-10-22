@@ -159,6 +159,7 @@ fn apply_generated_chunks(
             &mut material_registry,
             &mut world_rng,
             &water_bodies,
+            &config,
         );
 
         building_generator.generate_buildings(

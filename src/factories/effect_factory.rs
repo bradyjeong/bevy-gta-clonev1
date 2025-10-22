@@ -74,7 +74,7 @@ impl EffectFactory {
                     lifetime: 1.0,
                     age: 0.0,
                 },
-                VisibilityRange::abrupt(0.0, 100.0),
+                VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance),
                 Name::new("Explosion"),
             ))
             .id();
@@ -160,15 +160,7 @@ impl EffectFactory {
                     age: 0.0,
                 },
                 ExhaustFlame,
-                VisibilityRange::abrupt(
-                    0.0,
-                    self.config
-                        .world
-                        .lod_distances
-                        .first()
-                        .copied()
-                        .unwrap_or(50.0),
-                ),
+                VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance),
                 Name::new(format!("Effect_{effect_type:?}")),
             ))
             .id();

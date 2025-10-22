@@ -37,9 +37,14 @@ impl VehicleFactory {
         Self { config }
     }
 
-    /// Get visibility range for vehicles based on config
+    /// Get visibility range for vehicles based on config with ±10% variance
     fn visibility_range(&self) -> VisibilityRange {
-        VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance)
+        let distance = self.config.performance.vehicle_visibility_distance;
+        VisibilityRange {
+            start_margin: 0.0..0.0,
+            end_margin: (distance * 0.9)..(distance * 1.1),
+            use_aabb: false,
+        }
     }
 
     /// Spawn SuperCar with multi-part realistic geometry
@@ -707,7 +712,8 @@ impl VehicleFactory {
         let yacht_config = &self.config.vehicles.yacht;
         let hull_color = color.unwrap_or(yacht_config.default_color);
         let yacht_specs_handle: Handle<YachtSpecs> = asset_server.load("config/simple_yacht.ron");
-        let yacht_visibility = || VisibilityRange::abrupt(0.0, 2000.0);
+        let yacht_visibility =
+            || VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance);
 
         // Use yacht config collider_size as base (10.0, 3.0, 30.0)
         let hull_collider = Collider::compound(vec![

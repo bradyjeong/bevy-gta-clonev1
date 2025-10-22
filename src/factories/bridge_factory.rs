@@ -1,7 +1,5 @@
-use crate::constants::{
-    CHARACTER_GROUP, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, STATIC_GROUP,
-    TERRAIN_HALF_SIZE, VEHICLE_GROUP,
-};
+use crate::config::GameConfig;
+use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -9,6 +7,7 @@ pub fn spawn_bridge(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    config: &GameConfig,
 ) {
     let end_clearance = 1.0;
     let gap_len = (RIGHT_ISLAND_X - TERRAIN_HALF_SIZE) - (LEFT_ISLAND_X + TERRAIN_HALF_SIZE);
@@ -40,7 +39,10 @@ pub fn spawn_bridge(
             Transform::from_translation(Vec3::new(0.0, center_y, bridge_z_offset)),
             RigidBody::Fixed,
             Collider::cuboid(half_len_x, half_thickness_y, collider_width_z),
-            CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+            CollisionGroups::new(
+                config.physics.static_group,
+                config.physics.vehicle_group | config.physics.character_group,
+            ),
             Friction {
                 coefficient: 0.8,
                 combine_rule: CoefficientCombineRule::Average,
@@ -100,7 +102,10 @@ pub fn spawn_bridge(
                 parent.spawn((
                     Collider::cuboid(rail_length * 0.5, barrier_h * 0.5, barrier_t * 0.5),
                     Transform::from_translation(Vec3::new(barrier_x, barrier_y, barrier_z)),
-                    CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
+                    CollisionGroups::new(
+                        config.physics.static_group,
+                        config.physics.vehicle_group | config.physics.character_group,
+                    ),
                     Name::new("Side Barrier"),
                 ));
             }

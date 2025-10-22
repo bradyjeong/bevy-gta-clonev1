@@ -1,6 +1,7 @@
 use crate::bundles::VisibleChildBundle;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
+use crate::config::GameConfig;
 use crate::constants::LAND_ELEVATION;
 use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
 use crate::systems::world::road_mesh::{
@@ -27,6 +28,7 @@ impl RoadGenerator {
         material_registry: &mut MaterialRegistry,
         _world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
+        config: &GameConfig,
     ) {
         // Skip if chunk is not on a terrain island
         let chunk_center = coord.to_world_pos();
@@ -52,6 +54,7 @@ impl RoadGenerator {
                     meshes,
                     materials,
                     material_registry,
+                    config,
                 );
 
                 // Add road to placement grid
@@ -92,6 +95,7 @@ impl RoadGenerator {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         material_registry: &mut MaterialRegistry,
+        config: &GameConfig,
     ) -> Entity {
         // Get road center position and set correct height
         let mut center_pos = road.evaluate(0.5);
@@ -130,7 +134,8 @@ impl RoadGenerator {
             VisibleChildBundle::default(),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: 450.0..550.0,
+                end_margin: (config.performance.road_visibility_distance * 0.9)
+                    ..(config.performance.road_visibility_distance * 1.1),
                 use_aabb: false,
             },
         ));
@@ -146,7 +151,8 @@ impl RoadGenerator {
                 VisibleChildBundle::default(),
                 VisibilityRange {
                     start_margin: 0.0..0.0,
-                    end_margin: 3000.0..3500.0,
+                    end_margin: (config.performance.road_visibility_distance * 0.9)
+                        ..(config.performance.road_visibility_distance * 1.1),
                     use_aabb: true, // Use AABB for accurate culling of long roads
                 },
             ));

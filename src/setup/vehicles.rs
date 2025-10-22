@@ -1,5 +1,5 @@
 use crate::components::Car;
-use crate::constants::{CHARACTER_GROUP, STATIC_GROUP, VEHICLE_GROUP};
+use crate::config::GameConfig;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -81,6 +81,7 @@ pub fn setup_luxury_bugatti_chiron(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    config: Res<GameConfig>,
     color_scheme: BugattiColorScheme,
     position: Vec3,
 ) {
@@ -97,10 +98,12 @@ pub fn setup_luxury_bugatti_chiron(
                 linear_damping: 1.0,
                 angular_damping: 5.0,
             },
-            VisibilityRange::abrupt(0.0, 1000.0),
+            VisibilityRange::abrupt(0.0, config.performance.vehicle_visibility_distance),
             CollisionGroups::new(
-                VEHICLE_GROUP,
-                STATIC_GROUP | VEHICLE_GROUP | CHARACTER_GROUP,
+                config.physics.vehicle_group,
+                config.physics.static_group
+                    | config.physics.vehicle_group
+                    | config.physics.character_group,
             ),
         ))
         .id();
