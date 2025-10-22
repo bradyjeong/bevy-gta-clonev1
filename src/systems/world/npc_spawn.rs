@@ -12,6 +12,7 @@ use rand::prelude::*;
 /// Spawn NPCs using the new architecture while maintaining compatibility
 /// This system replaces the old spawn_dynamic_npc function
 /// CONSOLIDATED: Now uses spawn validation from UnifiedEntityFactory
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_new_npc_system(
     mut commands: Commands,
     mut spawn_timer: Local<Timer>,
