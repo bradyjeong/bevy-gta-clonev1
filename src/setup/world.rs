@@ -128,14 +128,23 @@ pub fn setup_basic_world(
 
     // Ocean floor collider - derive from ocean_size to match visual bounds
     // ocean_size is derived from world_bounds, so collider scales with world
+    // Collider center at -10.05 so top surface is exactly -10.0 (matches beach slope bottom)
     commands.spawn((
-        Transform::from_xyz(0.0, -10.2, 0.0),
+        Transform::from_xyz(0.0, -10.05, 0.0),
         RigidBody::Fixed,
         Collider::cuboid(ocean_size * 0.5, 0.05, ocean_size * 0.5),
         CollisionGroups::new(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Name::new("Ocean Floor Collision"),
     ));
 
@@ -390,6 +399,14 @@ fn spawn_terrain_island(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Name::new(format!("{name} Terrain Island")),
     ));
 }
@@ -472,6 +489,14 @@ fn spawn_terrain_beaches(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Name::new(format!("{name} East Beach Collider")),
     ));
 
@@ -518,6 +543,14 @@ fn spawn_terrain_beaches(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Name::new(format!("{name} West Beach Collider")),
     ));
 
@@ -564,6 +597,14 @@ fn spawn_terrain_beaches(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Name::new(format!("{name} North Beach Collider")),
     ));
 
@@ -610,6 +651,14 @@ fn spawn_terrain_beaches(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Name::new(format!("{name} South Beach Collider")),
     ));
 
@@ -660,6 +709,14 @@ fn spawn_terrain_beaches(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Ccd::enabled(),
         Name::new(format!("{name} NE Corner Collider")),
     ));
@@ -706,6 +763,14 @@ fn spawn_terrain_beaches(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Ccd::enabled(),
         Name::new(format!("{name} NW Corner Collider")),
     ));
@@ -752,6 +817,14 @@ fn spawn_terrain_beaches(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Ccd::enabled(),
         Name::new(format!("{name} SE Corner Collider")),
     ));
@@ -798,6 +871,14 @@ fn spawn_terrain_beaches(
             config.physics.static_group,
             config.physics.vehicle_group | config.physics.character_group,
         ),
+        Friction {
+            coefficient: 1.0,
+            combine_rule: CoefficientCombineRule::Max,
+        },
+        Restitution {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        },
         Ccd::enabled(),
         Name::new(format!("{name} SW Corner Collider")),
     ));

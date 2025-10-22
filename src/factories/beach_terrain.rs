@@ -203,8 +203,8 @@ pub fn create_beach_slope_collider(
     start_height: f32,
     end_height: f32,
 ) -> Mesh {
-    // Use 8 subdivisions to match smoothstep curve (balance between accuracy and performance)
-    let subdivisions = 8u32;
+    // Use 12 subdivisions to match smoothstep curve (smoother transitions for player movement)
+    let subdivisions = 12u32;
 
     let num_vertices = (subdivisions + 1) * 2;
     let num_indices = subdivisions * 6;
@@ -269,14 +269,14 @@ pub fn create_beach_slope_collider(
 }
 
 /// Create low-polygon collider for corner beach slope
-/// Uses same Chebyshev distance formula but with fewer subdivisions for performance
+/// Uses same Chebyshev distance formula for smooth transitions
 pub fn create_corner_beach_slope_collider(
     size: f32,
     start_height: f32,
     end_height: f32,
     corner_type: CornerType,
 ) -> Mesh {
-    let subdivisions = 8u32;
+    let subdivisions = 12u32;
 
     let num_vertices = (subdivisions + 1) * (subdivisions + 1);
     let num_indices = subdivisions * subdivisions * 6;
