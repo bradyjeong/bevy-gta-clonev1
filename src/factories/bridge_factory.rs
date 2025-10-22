@@ -16,6 +16,7 @@ pub fn spawn_bridge(
     let half_width_z = 12.0;
     let half_thickness_y = 1.0;
     let center_y = LAND_ELEVATION - half_thickness_y;
+    let bridge_z_offset = -300.0;
 
     let mesh_size_x = 2.0 * half_len_x;
     let mesh_size_y = 2.0 * half_thickness_y;
@@ -33,7 +34,7 @@ pub fn spawn_bridge(
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(mesh_size_x, mesh_size_y, mesh_size_z))),
         MeshMaterial3d(concrete_material),
-        Transform::from_translation(Vec3::new(0.0, center_y, 0.0)),
+        Transform::from_translation(Vec3::new(0.0, center_y, bridge_z_offset)),
         RigidBody::Fixed,
         Collider::cuboid(half_len_x, half_thickness_y, collider_width_z),
         CollisionGroups::new(STATIC_GROUP, VEHICLE_GROUP | CHARACTER_GROUP),
@@ -49,7 +50,7 @@ pub fn spawn_bridge(
     ));
 
     info!(
-        "Bridge spawned: {:.1}m long × {:.1}m wide, deck top at Y={:.1}",
-        mesh_size_x, mesh_size_z, LAND_ELEVATION
+        "Bridge spawned: {:.1}m long × {:.1}m wide at Z={:.1}, deck top at Y={:.1}",
+        mesh_size_x, mesh_size_z, bridge_z_offset, LAND_ELEVATION
     );
 }
