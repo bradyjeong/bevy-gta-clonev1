@@ -1,10 +1,8 @@
-#![allow(deprecated)]
-
 use bevy::prelude::*;
 use rand::prelude::*;
 
 use crate::GameConfig;
-use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, SPAWN_DROP_HEIGHT, TERRAIN_HALF_SIZE};
+use crate::constants::WorldEnvConfig;
 use crate::factories::NPCFactory;
 use crate::resources::NPCAssetCache;
 
@@ -21,7 +19,7 @@ pub fn setup_initial_npcs_unified(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut cache: ResMut<NPCAssetCache>,
-
+    env: Res<WorldEnvConfig>,
     _game_config: Res<GameConfig>,
 ) {
     // Initialize focused NPCFactory for consistent spawning following AGENT.md principles
@@ -39,20 +37,21 @@ pub fn setup_initial_npcs_unified(
         attempts += 1;
         // Randomly choose left or right island
         let island_x = if rng.gen_bool(0.5) {
-            LEFT_ISLAND_X
+            env.islands.left_x
         } else {
-            crate::constants::RIGHT_ISLAND_X
+            env.islands.right_x
         };
 
         // Use polar coordinates to spawn uniformly within circular flat terrain
         let angle = rng.gen_range(0.0..std::f32::consts::TAU);
-        let radius_squared: f32 = rng.gen_range(0.0..(TERRAIN_HALF_SIZE * TERRAIN_HALF_SIZE));
+        let radius_squared: f32 =
+            rng.gen_range(0.0..(env.terrain.half_size * env.terrain.half_size));
         let radius = radius_squared.sqrt(); // sqrt for uniform distribution
         let x = island_x + radius * angle.cos();
         let z = radius * angle.sin();
 
         // Spawn NPCs above terrain, let gravity drop them
-        let spawn_position = Vec3::new(x, LAND_ELEVATION + SPAWN_DROP_HEIGHT, z);
+        let spawn_position = Vec3::new(x, env.land_elevation + env.spawn_drop_height, z);
 
         // Use focused NPCFactory for consistent spawning
         match npc_factory.spawn_npc(

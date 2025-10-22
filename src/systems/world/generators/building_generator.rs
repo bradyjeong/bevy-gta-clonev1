@@ -1,9 +1,7 @@
-#![allow(deprecated)]
-
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
-use crate::constants::LAND_ELEVATION;
+use crate::constants::WorldEnvConfig;
 use crate::factories::BuildingFactory;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
@@ -26,6 +24,7 @@ impl BuildingGenerator {
         world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
         config: &GameConfig,
+        env: &WorldEnvConfig,
     ) {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
@@ -62,7 +61,7 @@ impl BuildingGenerator {
             let local_z = world_rng.global().gen_range(-half_size..half_size);
             let position = Vec3::new(
                 chunk_center.x + local_x,
-                LAND_ELEVATION,
+                env.land_elevation,
                 chunk_center.z + local_z,
             );
 

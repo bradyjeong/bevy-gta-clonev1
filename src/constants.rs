@@ -35,61 +35,6 @@ pub struct TerrainConfig {
     pub beach_width: f32,
 }
 
-// Legacy constants for backwards compatibility - DEPRECATED, use WorldEnvConfig resource instead
-#[deprecated(since = "0.2.0", note = "Use WorldEnvConfig resource: env.sea_level")]
-pub const SEA_LEVEL: f32 = 0.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.land_elevation"
-)]
-pub const LAND_ELEVATION: f32 = 3.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.spawn_drop_height"
-)]
-pub const SPAWN_DROP_HEIGHT: f32 = 10.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.ocean_floor_depth"
-)]
-pub const OCEAN_FLOOR_DEPTH: f32 = -10.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.islands.left_x"
-)]
-pub const LEFT_ISLAND_X: f32 = -1500.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.islands.right_x"
-)]
-pub const RIGHT_ISLAND_X: f32 = 1500.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.islands.grid_x"
-)]
-pub const GRID_ISLAND_X: f32 = 0.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.islands.grid_z"
-)]
-pub const GRID_ISLAND_Z: f32 = 1800.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.terrain.size"
-)]
-pub const TERRAIN_SIZE: f32 = 1200.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.terrain.half_size"
-)]
-pub const TERRAIN_HALF_SIZE: f32 = 600.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.terrain.beach_width"
-)]
-pub const BEACH_WIDTH: f32 = 100.0;
-#[deprecated(
-    since = "0.2.0",
-    note = "Use WorldEnvConfig resource: env.max_world_coordinate"
-)]
-pub const MAX_WORLD_COORDINATE: f32 = 3000.0;
+// All world environment constants have been migrated to WorldEnvConfig resource.
+// Load from assets/config/world_config.ron at runtime.
+// Access via: env: Res<WorldEnvConfig> or &config.world_env

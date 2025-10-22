@@ -5,6 +5,7 @@ use rand::Rng;
 use crate::components::player::ActiveEntity;
 use crate::components::vehicles::{VehicleHealth, VehicleState};
 use crate::components::world::{BoundaryEffects, BoundaryVehicleType, BoundaryZone, WorldBounds};
+use crate::config::GameConfig;
 use crate::resources::WorldRng;
 
 /// GTA-style context-aware boundary system
@@ -12,6 +13,7 @@ use crate::resources::WorldRng;
 pub fn boundary_effects_system(
     mut commands: Commands,
     world_bounds: Res<WorldBounds>,
+    config: Res<GameConfig>,
     mut vehicle_query: Query<
         (
             Entity,
@@ -114,7 +116,7 @@ pub fn boundary_effects_system(
         // Handle out-of-bounds teleport as last resort
         if matches!(boundary_zone, BoundaryZone::OutOfBounds) {
             // Emergency teleport to safe zone
-            let safe_pos = world_bounds.safe_respawn_position();
+            let safe_pos = world_bounds.safe_respawn_position(config.world_env.land_elevation);
             transform.translation = safe_pos;
             info!(
                 "Emergency teleport: {} moved from {:?} to safe zone {:?}",

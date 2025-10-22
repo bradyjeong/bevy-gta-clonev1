@@ -1,8 +1,5 @@
-#![allow(deprecated)]
-
 use crate::components::{ContentType, VehicleType};
 use crate::config::GameConfig;
-use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};
 use crate::factories::VehicleFactory;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
@@ -56,7 +53,7 @@ impl VehicleGenerator {
             let local_z = world_rng.global().gen_range(-half_size..half_size);
             let position = Vec3::new(
                 chunk_center.x + local_x,
-                LAND_ELEVATION,
+                config.world_env.land_elevation,
                 chunk_center.z + local_z,
             );
 
@@ -94,7 +91,7 @@ impl VehicleGenerator {
             let local_z = world_rng.global().gen_range(-half_size..half_size);
             let position = Vec3::new(
                 chunk_center.x + local_x,
-                LAND_ELEVATION + SPAWN_DROP_HEIGHT,
+                config.world_env.land_elevation + config.world_env.spawn_drop_height,
                 chunk_center.z + local_z,
             );
 

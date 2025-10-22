@@ -230,7 +230,7 @@ pub fn setup_basic_world(
     );
 
     // BRIDGE CONNECTING ISLANDS
-    spawn_bridge(&mut commands, &mut meshes, &mut materials, &config);
+    spawn_bridge(&mut commands, &mut meshes, &mut materials, &config, &env);
 
     // Spawn player above terrain, let gravity drop them
     let player_y = env.land_elevation + env.spawn_drop_height;

@@ -1,6 +1,4 @@
-#![allow(deprecated)]
-
-use crate::constants::LAND_ELEVATION;
+use crate::constants::WorldEnvConfig;
 use bevy::prelude::*;
 
 /// Unified Transform Factory - Eliminates 100+ Transform::from_xyz patterns  
@@ -13,8 +11,8 @@ impl TransformFactory {
         Transform::from_xyz(0.0, 0.0, 0.0)
     }
 
-    pub fn at_ground_level(x: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, LAND_ELEVATION, z)
+    pub fn at_ground_level(x: f32, z: f32, env: &WorldEnvConfig) -> Transform {
+        Transform::from_xyz(x, env.land_elevation, z)
     }
 
     pub fn at_position(x: f32, y: f32, z: f32) -> Transform {
@@ -22,8 +20,8 @@ impl TransformFactory {
     }
 
     // VEHICLE POSITIONING
-    pub fn vehicle_spawn(x: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, LAND_ELEVATION + 0.5, z)
+    pub fn vehicle_spawn(x: f32, z: f32, env: &WorldEnvConfig) -> Transform {
+        Transform::from_xyz(x, env.land_elevation + 0.5, z)
     }
 
     pub fn vehicle_elevated(x: f32, y: f32, z: f32) -> Transform {
@@ -243,16 +241,16 @@ impl TransformFactory {
     }
 
     // WORLD STRUCTURES
-    pub fn lamp_post(x: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, LAND_ELEVATION, z)
+    pub fn lamp_post(x: f32, z: f32, env: &WorldEnvConfig) -> Transform {
+        Transform::from_xyz(x, env.land_elevation, z)
     }
 
     pub fn lamp_light() -> Transform {
         Transform::from_xyz(0.0, 4.0, 0.0)
     }
 
-    pub fn tree_position(x: f32, z: f32) -> Transform {
-        Transform::from_xyz(x, LAND_ELEVATION, z)
+    pub fn tree_position(x: f32, z: f32, env: &WorldEnvConfig) -> Transform {
+        Transform::from_xyz(x, env.land_elevation, z)
     }
 
     pub fn tree_fronds(frond_x: f32, frond_z: f32) -> Transform {

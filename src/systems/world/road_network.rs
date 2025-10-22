@@ -1,10 +1,7 @@
 use crate::config::GameConfig;
-#[allow(deprecated, unused_imports)]
-use crate::constants::LAND_ELEVATION;
 use crate::util::safe_math::safe_lerp;
 use bevy::prelude::*;
 use std::collections::HashMap;
-
 
 fn zigzag32(n: i32) -> u32 {
     ((n << 1) ^ (n >> 31)) as u32
@@ -629,13 +626,23 @@ impl RoadNetwork {
     }
 
     #[deprecated(note = "Use generate_roads_for_cell")]
-    pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32, config: &GameConfig) -> Vec<u64> {
+    pub fn generate_chunk_roads(
+        &mut self,
+        chunk_x: i32,
+        chunk_z: i32,
+        config: &GameConfig,
+    ) -> Vec<u64> {
         use rand::{Rng, SeedableRng};
 
         let cell = IVec2::new(chunk_x, chunk_z);
         let seed = ((chunk_x as u64) << 32) | ((chunk_z as u64) & 0xFFFFFFFF);
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        let mut roads = self.generate_roads_for_cell(cell, config.world_streaming.road_cell_size, &mut rng, config);
+        let mut roads = self.generate_roads_for_cell(
+            cell,
+            config.world_streaming.road_cell_size,
+            &mut rng,
+            config,
+        );
 
         // Generate local roads for island chunks
         const CHUNK_SIZE: f32 = 200.0; // Default chunk size

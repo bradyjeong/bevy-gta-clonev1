@@ -31,7 +31,7 @@ pub fn player_collision_resolution_system(
         );
         let safe_position = world_bounds
             .as_ref()
-            .map(|wb| wb.safe_respawn_position())
+            .map(|wb| wb.safe_respawn_position(env.land_elevation))
             .unwrap_or(Vec3::new(
                 player_position.x,
                 env.land_elevation + 0.5,
@@ -54,7 +54,7 @@ pub fn player_collision_resolution_system(
         );
         let safe_position = world_bounds
             .as_ref()
-            .map(|wb| wb.safe_respawn_position())
+            .map(|wb| wb.safe_respawn_position(env.land_elevation))
             .unwrap_or(Vec3::new(0.0, env.land_elevation + 0.5, 0.0));
         player_transform.translation = safe_position;
         commands

@@ -1,10 +1,8 @@
-#![allow(deprecated)]
-
 use crate::bundles::VisibleChildBundle;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
 use crate::config::GameConfig;
-use crate::constants::LAND_ELEVATION;
+use crate::constants::WorldEnvConfig;
 use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
 use crate::systems::world::road_mesh::{
     generate_road_markings_mesh_local, generate_road_mesh_local,
@@ -19,7 +17,7 @@ use bevy::render::view::visibility::VisibilityRange;
 pub struct RoadGenerator;
 
 impl RoadGenerator {
-    #[allow(clippy::too_many_arguments, deprecated)]
+    #[allow(clippy::too_many_arguments)]
     pub fn generate_roads(
         &self,
         commands: &mut Commands,
@@ -31,6 +29,7 @@ impl RoadGenerator {
         _world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
         config: &GameConfig,
+        env: &WorldEnvConfig,
     ) {
         // Skip if chunk is not on a terrain island
         let chunk_center = coord.to_world_pos();
@@ -44,7 +43,9 @@ impl RoadGenerator {
                 .road_network
                 .generate_grid_chunk_roads(coord.x, coord.z, config)
         } else {
-            world.road_network.generate_chunk_roads(coord.x, coord.z, config)
+            world
+                .road_network
+                .generate_chunk_roads(coord.x, coord.z, config)
         };
 
         // Create road entities and add to placement grid
@@ -64,6 +65,7 @@ impl RoadGenerator {
                     materials,
                     material_registry,
                     config,
+                    env,
                 );
 
                 // Add road to placement grid
@@ -105,10 +107,11 @@ impl RoadGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         material_registry: &mut MaterialRegistry,
         config: &GameConfig,
+        env: &WorldEnvConfig,
     ) -> Entity {
         // Get road center position and set correct height
         let mut center_pos = road.evaluate(0.5);
-        let base_y = LAND_ELEVATION + road.road_type.height();
+        let base_y = env.land_elevation + road.road_type.height();
         center_pos.y = base_y;
 
         let road_material =

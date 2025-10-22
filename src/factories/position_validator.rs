@@ -1,7 +1,6 @@
-#![allow(deprecated)]
-
 use crate::components::ContentType;
 use crate::config::GameConfig;
+use crate::constants::WorldEnvConfig;
 
 use crate::factories::generic_bundle::BundleError;
 use crate::systems::world::road_generation::is_on_road_spline;
@@ -58,7 +57,7 @@ impl PositionValidator {
     /// - Clear caching strategy: 10m grid resolution
     /// - Explicit behavior: Shows exactly how height is calculated
     /// - Matches island terrain curve: plateau, beach slope, ocean floor
-    pub fn get_ground_height(&mut self, position: Vec2) -> f32 {
+    pub fn get_ground_height(&mut self, position: Vec2, env: &WorldEnvConfig) -> f32 {
         let grid_x = (position.x / 10.0) as i32; // 10m grid resolution
         let grid_z = (position.y / 10.0) as i32;
 
@@ -66,19 +65,18 @@ impl PositionValidator {
             return cached_height;
         }
 
-        use crate::constants::{LAND_ELEVATION, OCEAN_FLOOR_DEPTH};
         use crate::systems::world::unified_world::UnifiedWorldManager;
 
-        // Simplified: terrain islands are at LAND_ELEVATION, ocean at OCEAN_FLOOR_DEPTH
+        // Simplified: terrain islands are at land_elevation, ocean at ocean_floor_depth
         // Beach slopes handled by visual meshes only
         let ground_height = if UnifiedWorldManager::default().is_on_terrain_island(Vec3::new(
             position.x,
-            LAND_ELEVATION,
+            env.land_elevation,
             position.y,
         )) {
-            LAND_ELEVATION
+            env.land_elevation
         } else {
-            OCEAN_FLOOR_DEPTH
+            env.ocean_floor_depth
         };
 
         // Cache for future use (following AGENT.MD performance guidelines)

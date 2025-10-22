@@ -1,7 +1,5 @@
-#![allow(deprecated)]
-
 // HighSpeed component removed - no longer needed for finite world
-use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, SPAWN_DROP_HEIGHT};
+use crate::constants::WorldEnvConfig;
 use crate::factories::VehicleFactory;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnValidator, SpawnableType};
@@ -33,59 +31,34 @@ pub fn setup_initial_aircraft_unified(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     world: Res<UnifiedWorldManager>,
+    env: Res<WorldEnvConfig>,
     _config: Res<GameConfig>,
 ) {
     // Aircraft spawn positions on left terrain island (within 600m radius flat terrain)
     // Max distance from island center: ~500m to stay safely on plateau
+    let left_x = env.islands.left_x;
     let aircraft_spawns = [
         (
-            Vec3::new(LEFT_ISLAND_X + 15.0, 0.0, 15.0),
+            Vec3::new(left_x + 15.0, 0.0, 15.0),
             AircraftType::Helicopter,
         ),
+        (Vec3::new(left_x + 80.0, 0.0, 120.0), AircraftType::F16),
+        (Vec3::new(left_x - 150.0, 0.0, 200.0), AircraftType::F16),
+        (Vec3::new(left_x + 250.0, 0.0, -180.0), AircraftType::F16),
+        (Vec3::new(left_x - 300.0, 0.0, -250.0), AircraftType::F16),
+        (Vec3::new(left_x + 350.0, 0.0, 250.0), AircraftType::F16),
         (
-            Vec3::new(LEFT_ISLAND_X + 80.0, 0.0, 120.0),
-            AircraftType::F16,
-        ),
-        (
-            Vec3::new(LEFT_ISLAND_X - 150.0, 0.0, 200.0),
-            AircraftType::F16,
-        ),
-        (
-            Vec3::new(LEFT_ISLAND_X + 250.0, 0.0, -180.0),
-            AircraftType::F16,
-        ),
-        (
-            Vec3::new(LEFT_ISLAND_X - 300.0, 0.0, -250.0),
-            AircraftType::F16,
-        ),
-        (
-            Vec3::new(LEFT_ISLAND_X + 350.0, 0.0, 250.0),
-            AircraftType::F16,
-        ),
-        (
-            Vec3::new(LEFT_ISLAND_X - 400.0, 0.0, 100.0),
+            Vec3::new(left_x - 400.0, 0.0, 100.0),
             AircraftType::Helicopter,
         ),
+        (Vec3::new(left_x + 450.0, 0.0, -350.0), AircraftType::F16),
+        (Vec3::new(left_x - 200.0, 0.0, -400.0), AircraftType::F16),
+        (Vec3::new(left_x + 480.0, 0.0, 150.0), AircraftType::F16),
         (
-            Vec3::new(LEFT_ISLAND_X + 450.0, 0.0, -350.0),
-            AircraftType::F16,
-        ),
-        (
-            Vec3::new(LEFT_ISLAND_X - 200.0, 0.0, -400.0),
-            AircraftType::F16,
-        ),
-        (
-            Vec3::new(LEFT_ISLAND_X + 480.0, 0.0, 150.0),
-            AircraftType::F16,
-        ),
-        (
-            Vec3::new(LEFT_ISLAND_X - 500.0, 0.0, 200.0),
+            Vec3::new(left_x - 500.0, 0.0, 200.0),
             AircraftType::Helicopter,
         ),
-        (
-            Vec3::new(LEFT_ISLAND_X + 300.0, 0.0, -450.0),
-            AircraftType::F16,
-        ),
+        (Vec3::new(left_x + 300.0, 0.0, -450.0), AircraftType::F16),
     ];
 
     let mut spawned_aircraft = Vec::new();
@@ -107,6 +80,7 @@ pub fn setup_initial_aircraft_unified(
             &mut spawn_registry,
             preferred_pos,
             aircraft_type,
+            &env,
         ) {
             spawned_aircraft.push(aircraft_entity);
         }
@@ -126,11 +100,12 @@ fn spawn_aircraft_unified(
     spawn_registry: &mut ResMut<SpawnRegistry>,
     preferred_position: Vec3,
     aircraft_type: AircraftType,
+    env: &WorldEnvConfig,
 ) -> Option<Entity> {
     // Spawn above terrain, let gravity drop aircraft
     let spawn_position = Vec3::new(
         preferred_position.x,
-        LAND_ELEVATION + SPAWN_DROP_HEIGHT,
+        env.land_elevation + env.spawn_drop_height,
         preferred_position.z,
     );
 

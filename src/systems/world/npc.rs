@@ -1,7 +1,5 @@
-#![allow(deprecated)]
-
 use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, NPC};
-use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
+use crate::constants::WorldEnvConfig;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -11,6 +9,7 @@ use rand::Rng;
 #[allow(clippy::type_complexity)]
 pub fn simple_npc_movement(
     time: Res<Time>,
+    env: Res<WorldEnvConfig>,
     mut npc_query: Query<
         (
             Entity,
@@ -67,15 +66,16 @@ pub fn simple_npc_movement(
         if distance < 5.0 {
             // Determine which island NPC is on
             let island_x = if current_pos.x < 0.0 {
-                LEFT_ISLAND_X
+                env.islands.left_x
             } else {
-                RIGHT_ISLAND_X
+                env.islands.right_x
             };
 
             npc.target_position = Vec3::new(
-                island_x + rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
+                island_x
+                    + rand::thread_rng().gen_range(-env.terrain.half_size..env.terrain.half_size),
                 current_pos.y,
-                rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
+                rand::thread_rng().gen_range(-env.terrain.half_size..env.terrain.half_size),
             );
         } else {
             // Simple, direct NPC movement (XZ plane only)
@@ -105,6 +105,7 @@ pub fn simple_npc_movement(
 #[allow(dead_code)]
 pub fn optimized_npc_movement(
     time: Res<Time>,
+    env: Res<WorldEnvConfig>,
     mut npc_query: Query<(&mut Transform, &mut Velocity, &mut NPC), With<VisibilityRange>>,
     active_query: Query<&Transform, (With<ActiveEntity>, Without<NPC>)>,
 ) {
@@ -146,15 +147,16 @@ pub fn optimized_npc_movement(
         if distance < 5.0 {
             // Determine which island NPC is on
             let island_x = if current_pos.x < 0.0 {
-                LEFT_ISLAND_X
+                env.islands.left_x
             } else {
-                RIGHT_ISLAND_X
+                env.islands.right_x
             };
 
             npc.target_position = Vec3::new(
-                island_x + rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
+                island_x
+                    + rand::thread_rng().gen_range(-env.terrain.half_size..env.terrain.half_size),
                 1.0,
-                rand::thread_rng().gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE),
+                rand::thread_rng().gen_range(-env.terrain.half_size..env.terrain.half_size),
             );
         } else {
             // Move towards target (legacy implementation)
