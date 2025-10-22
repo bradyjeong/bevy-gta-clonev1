@@ -26,7 +26,7 @@ impl RoadGenerator {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         material_registry: &mut MaterialRegistry,
-        _world_rng: &mut WorldRng,
+        world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
         config: &GameConfig,
         env: &WorldEnvConfig,
@@ -43,9 +43,12 @@ impl RoadGenerator {
                 .road_network
                 .generate_grid_chunk_roads(coord.x, coord.z, config)
         } else {
-            world
-                .road_network
-                .generate_chunk_roads(coord.x, coord.z, config)
+            world.road_network.generate_roads_for_cell(
+                IVec2::new(coord.x, coord.z),
+                config.world_streaming.road_cell_size,
+                world_rng.global(),
+                config,
+            )
         };
 
         // Create road entities and add to placement grid
