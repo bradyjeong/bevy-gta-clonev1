@@ -66,6 +66,7 @@ pub mod collision_detector;
 pub mod position_validator;
 
 // Domain-specific factories with single responsibilities (following AGENT.md principles)
+pub mod bridge_factory;
 pub mod building_factory;
 pub mod effect_factory;
 pub mod entity_limit;
@@ -87,6 +88,7 @@ pub use collision_detector::CollisionDetector;
 pub use position_validator::PositionValidator;
 
 // Domain-specific factory exports with explicit imports (no wildcards)
+pub use bridge_factory::spawn_bridge;
 pub use building_factory::{BuildingFactory, BuildingType};
 pub use effect_factory::{EffectFactory, ParticleEffect};
 pub use entity_limit::{EntityLimit, EntityLimitManager, EntityType};

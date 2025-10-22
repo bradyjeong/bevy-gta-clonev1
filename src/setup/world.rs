@@ -10,7 +10,7 @@ use crate::constants::{
     CHARACTER_GROUP, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL, SPAWN_DROP_HEIGHT,
     STATIC_GROUP, TERRAIN_SIZE, VEHICLE_GROUP,
 };
-
+use crate::factories::spawn_bridge;
 use crate::systems::audio::FootstepTimer;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
@@ -185,6 +185,9 @@ pub fn setup_basic_world(
         TERRAIN_SIZE,
         "Right",
     );
+
+    // BRIDGE CONNECTING ISLANDS
+    spawn_bridge(&mut commands, &mut meshes, &mut materials);
 
     // Spawn player above terrain, let gravity drop them
     let player_y = LAND_ELEVATION + SPAWN_DROP_HEIGHT;
