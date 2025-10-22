@@ -73,6 +73,7 @@ impl VehicleGenerator {
                     materials,
                     asset_server,
                     world_rng,
+                    config,
                 ) {
                     world
                         .placement_grid
@@ -112,6 +113,7 @@ impl VehicleGenerator {
                     materials,
                     asset_server,
                     world_rng,
+                    config,
                 ) {
                     world
                         .placement_grid
@@ -140,8 +142,9 @@ impl VehicleGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         asset_server: &AssetServer,
         world_rng: &mut WorldRng,
+        config: &GameConfig,
     ) -> Result<Entity, String> {
-        let factory = VehicleFactory::new();
+        let factory = VehicleFactory::with_config(config.clone());
         let vehicle_types = [VehicleType::SuperCar];
         let vehicle_type = vehicle_types[world_rng.global().gen_range(0..vehicle_types.len())];
 
@@ -175,8 +178,9 @@ impl VehicleGenerator {
         materials: &mut ResMut<Assets<StandardMaterial>>,
         asset_server: &AssetServer,
         world_rng: &mut WorldRng,
+        config: &GameConfig,
     ) -> Result<Entity, String> {
-        let factory = VehicleFactory::new();
+        let factory = VehicleFactory::with_config(config.clone());
         let aircraft_types = [VehicleType::Helicopter, VehicleType::F16];
         let vehicle_type = aircraft_types[world_rng.global().gen_range(0..aircraft_types.len())];
 

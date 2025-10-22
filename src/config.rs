@@ -709,19 +709,21 @@ impl Default for WorldObjectsConfig {
     fn default() -> Self {
         Self {
             // Palm tree - from setup/environment.rs:109
+            // Total capsule height = 2*half_height + 2*radius = 2*3.7 + 2*0.3 = 8.0m (matches mesh)
             palm_tree: WorldObjectConfig {
-                mesh_size: Vec3::new(0.6, 8.0, 0.6),     // Visual trunk size
-                collider_size: Vec3::new(0.3, 4.0, 0.3), // Cylinder params
+                mesh_size: Vec3::new(0.6, 8.0, 0.6),     // Visual trunk size (8m tall)
+                collider_size: Vec3::new(0.3, 3.7, 0.3), // Cylinder params (radius, half_height)
                 collider_type: ColliderType::Cylinder {
-                    half_height: 4.0,
+                    half_height: 3.7, // Adjusted from 4.0 to match 8m visual height
                     radius: 0.3,
                 },
             },
 
             // Ocean floor - from setup/world.rs:127
+            // Original: ocean_size = 6400.0, Collider::cuboid(ocean_size / 2.0, 0.05, ocean_size / 2.0)
             ocean_floor: WorldObjectConfig {
                 mesh_size: Vec3::new(10000.0, 0.1, 10000.0), // Visual ocean size
-                collider_size: Vec3::new(5000.0, 0.05, 5000.0), // Half-extents
+                collider_size: Vec3::new(3200.0, 0.05, 3200.0), // Half-extents (6400 / 2)
                 collider_type: ColliderType::Cuboid,
             },
 
@@ -868,15 +870,16 @@ impl VehicleConfig {
 
 impl VehicleTypeConfig {
     pub fn validate_and_clamp(&mut self) {
-        // Clamp body size to reasonable vehicle dimensions
+        // Clamp body size to reasonable vehicle dimensions (expanded for boats and large aircraft)
         self.body_size.x = self.body_size.x.clamp(0.5, 20.0);
-        self.body_size.y = self.body_size.y.clamp(0.2, 5.0);
-        self.body_size.z = self.body_size.z.clamp(1.0, 25.0);
+        self.body_size.y = self.body_size.y.clamp(0.2, 10.0); // Raised from 5.0 to accommodate yacht height 8.0
+        self.body_size.z = self.body_size.z.clamp(1.0, 100.0); // Raised from 25.0 to accommodate yacht length 60.0
 
-        // Clamp collider size to be smaller than body size
-        self.collider_size.x = self.collider_size.x.clamp(0.25, self.body_size.x);
-        self.collider_size.y = self.collider_size.y.clamp(0.1, self.body_size.y);
-        self.collider_size.z = self.collider_size.z.clamp(0.5, self.body_size.z);
+        // Clamp collider size to half-extents (collider_size represents HALF-EXTENTS for Rapier cuboids)
+        let half_body = self.body_size * 0.5;
+        self.collider_size.x = self.collider_size.x.clamp(0.25, half_body.x);
+        self.collider_size.y = self.collider_size.y.clamp(0.1, half_body.y);
+        self.collider_size.z = self.collider_size.z.clamp(0.5, half_body.z);
 
         // Clamp performance parameters
         self.max_speed = self.max_speed.clamp(10.0, 800.0);
@@ -985,8 +988,8 @@ impl FootstepConfig {
 impl CameraConfig {
     pub fn validate_and_clamp(&mut self) {
         self.distance = self.distance.clamp(5.0, 100.0);
-        self.height = self.height.clamp(2.0, 50.0);
-        self.lerp_speed = self.lerp_speed.clamp(0.001, 0.5);
+        self.height = self.height.clamp(1.0, 50.0); // Lowered min from 2.0 to accommodate default 1.5
+        self.lerp_speed = self.lerp_speed.clamp(0.001, 5.0); // Raised max from 0.5 to accommodate default 2.5
         self.look_ahead_distance = self.look_ahead_distance.clamp(2.0, 50.0);
         self.look_ahead_height = self.look_ahead_height.clamp(0.5, 20.0);
     }
