@@ -36,7 +36,14 @@ impl RoadGenerator {
             return;
         }
 
-        let new_road_ids = world.road_network.generate_chunk_roads(coord.x, coord.z);
+        // Use grid generator for grid island, organic generator for other islands
+        let new_road_ids = if world.is_on_grid_island(chunk_center) {
+            world
+                .road_network
+                .generate_grid_chunk_roads(coord.x, coord.z)
+        } else {
+            world.road_network.generate_chunk_roads(coord.x, coord.z)
+        };
 
         // Create road entities and add to placement grid
         for road_id in new_road_ids {

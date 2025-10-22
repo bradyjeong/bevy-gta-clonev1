@@ -2,7 +2,10 @@ use crate::bundles::VisibleChildBundle;
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
-use crate::constants::LAND_ELEVATION;
+use crate::constants::{
+    BEACH_WIDTH, GRID_ISLAND_X, GRID_ISLAND_Z, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X,
+    TERRAIN_HALF_SIZE,
+};
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
@@ -30,8 +33,8 @@ impl VegetationGenerator {
         let chunk_center = coord.to_world_pos();
         let half_size = world.chunk_size * 0.5;
 
-        // Skip if chunk is not on a terrain island
-        if !world.is_on_terrain_island(chunk_center) {
+        // Skip if chunk is not on a terrain island (including beach margin for beach vegetation)
+        if !world.is_on_terrain_island_with_margin(chunk_center, BEACH_WIDTH) {
             if let Some(chunk) = world.get_chunk_mut(coord) {
                 chunk.vegetation_generated = true;
             }
@@ -55,8 +58,8 @@ impl VegetationGenerator {
                 chunk_center.z + local_z,
             );
 
-            // Check if position is valid (on island, not on road, not overlapping, not in water)
-            if world.is_on_terrain_island(position)
+            // Check if position is valid (on beach band only, not on road, not overlapping, not in water)
+            if self.is_on_beach_band(position)
                 && !self.is_on_road(position, world)
                 && !self.is_in_water_area(position, water_bodies)
                 && world
@@ -236,5 +239,29 @@ impl VegetationGenerator {
             }
         }
         false
+    }
+
+    /// Check if position is in beach band (0-100m outside terrain edge) for any island
+    fn is_on_beach_band(&self, position: Vec3) -> bool {
+        self.is_in_island_beach_band(position, LEFT_ISLAND_X, 0.0)
+            || self.is_in_island_beach_band(position, RIGHT_ISLAND_X, 0.0)
+            || self.is_in_island_beach_band(position, GRID_ISLAND_X, GRID_ISLAND_Z)
+    }
+
+    /// Check if position is in beach band for a specific island
+    fn is_in_island_beach_band(&self, position: Vec3, center_x: f32, center_z: f32) -> bool {
+        let dx = (position.x - center_x).abs();
+        let dz = (position.z - center_z).abs();
+        let half = TERRAIN_HALF_SIZE;
+
+        // Side bands (outside terrain edge but within beach width)
+        let on_side_band = ((dx > half && dx <= half + BEACH_WIDTH) && dz <= half)
+            || ((dz > half && dz <= half + BEACH_WIDTH) && dx <= half);
+
+        // Corner bands (diagonal corners using Chebyshev distance)
+        let on_corner_band =
+            (dx > half && dz > half) && ((dx - half).max(dz - half) <= BEACH_WIDTH);
+
+        on_side_band || on_corner_band
     }
 }

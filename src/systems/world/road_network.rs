@@ -314,6 +314,57 @@ impl RoadNetwork {
 }
 
 impl RoadNetwork {
+    /// Generate Manhattan-style orthogonal grid roads for a single cell (grid island only)
+    /// Creates straight N-S and E-W roads at 400m spacing without curves
+    pub fn generate_grid_roads_for_cell(&mut self, cell_coord: IVec2, cell_size: f32) -> Vec<u64> {
+        // Prevent duplicate generation (same guard as organic generator)
+        if self.generated_cells.contains(&cell_coord) {
+            return Vec::new();
+        }
+        self.generated_cells.insert(cell_coord);
+
+        let base_x = cell_coord.x as f32 * cell_size;
+        let base_z = cell_coord.y as f32 * cell_size;
+        let mut local_index: u16 = 0;
+        let mut new_roads = Vec::new();
+        let y = LAND_ELEVATION + RoadType::MainStreet.height();
+
+        // Vertical segment (N-S) along cell center
+        let v_start = Vec3::new(base_x + cell_size * 0.5, y, base_z);
+        let v_end = Vec3::new(base_x + cell_size * 0.5, y, base_z + cell_size);
+        if self.segment_on_island(v_start, v_end) {
+            let road_id = generate_unique_road_id(cell_coord, local_index);
+            local_index += 1;
+            self.roads.insert(
+                road_id,
+                RoadSpline::new(road_id, v_start, v_end, RoadType::MainStreet),
+            );
+            new_roads.push(road_id);
+        }
+
+        // Horizontal segment (E-W) along cell center
+        let h_start = Vec3::new(base_x, y, base_z + cell_size * 0.5);
+        let h_end = Vec3::new(base_x + cell_size, y, base_z + cell_size * 0.5);
+        if self.segment_on_island(h_start, h_end) {
+            let road_id = generate_unique_road_id(cell_coord, local_index);
+            self.roads.insert(
+                road_id,
+                RoadSpline::new(road_id, h_start, h_end, RoadType::MainStreet),
+            );
+            new_roads.push(road_id);
+        }
+
+        self.track_boundary_points(cell_coord, cell_size, &new_roads);
+        self.connect_to_neighbors(cell_coord);
+        new_roads
+    }
+
+    /// Generate grid roads for a chunk (wrapper for chunk-based workflow)
+    pub fn generate_grid_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u64> {
+        let cell_coord = IVec2::new(chunk_x, chunk_z);
+        self.generate_grid_roads_for_cell(cell_coord, ROAD_CELL_SIZE)
+    }
+
     pub fn add_road(&mut self, start: Vec3, end: Vec3, road_type: RoadType) -> u64 {
         let id = self.next_road_id;
         self.next_road_id += 1;
@@ -375,24 +426,31 @@ impl RoadNetwork {
         id
     }
 
-    /// Check if position is on a rectangular terrain island
+    /// Check if position is on a rectangular terrain island (left, right, or grid)
     fn is_position_on_island(&self, position: Vec3) -> bool {
-        use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
+        use crate::constants::{
+            GRID_ISLAND_X, GRID_ISLAND_Z, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE,
+        };
 
-        // Check Z bounds (shared by both islands)
-        if position.z < -TERRAIN_HALF_SIZE || position.z > TERRAIN_HALF_SIZE {
-            return false;
-        }
-
-        // Check left island X bounds
+        // Check left island (X=-1500, Z centered at 0)
         let on_left = position.x >= (LEFT_ISLAND_X - TERRAIN_HALF_SIZE)
-            && position.x <= (LEFT_ISLAND_X + TERRAIN_HALF_SIZE);
+            && position.x <= (LEFT_ISLAND_X + TERRAIN_HALF_SIZE)
+            && position.z >= -TERRAIN_HALF_SIZE
+            && position.z <= TERRAIN_HALF_SIZE;
 
-        // Check right island X bounds
+        // Check right island (X=1500, Z centered at 0)
         let on_right = position.x >= (RIGHT_ISLAND_X - TERRAIN_HALF_SIZE)
-            && position.x <= (RIGHT_ISLAND_X + TERRAIN_HALF_SIZE);
+            && position.x <= (RIGHT_ISLAND_X + TERRAIN_HALF_SIZE)
+            && position.z >= -TERRAIN_HALF_SIZE
+            && position.z <= TERRAIN_HALF_SIZE;
 
-        on_left || on_right
+        // Check grid island (X=0, Z=1800)
+        let on_grid = position.x >= (GRID_ISLAND_X - TERRAIN_HALF_SIZE)
+            && position.x <= (GRID_ISLAND_X + TERRAIN_HALF_SIZE)
+            && position.z >= (GRID_ISLAND_Z - TERRAIN_HALF_SIZE)
+            && position.z <= (GRID_ISLAND_Z + TERRAIN_HALF_SIZE);
+
+        on_left || on_right || on_grid
     }
 
     /// Check if entire road segment (both endpoints) is on island

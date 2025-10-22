@@ -1,4 +1,6 @@
-use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
+use crate::constants::{
+    GRID_ISLAND_X, GRID_ISLAND_Z, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE,
+};
 use bevy::prelude::*;
 
 /// Test that player spawn position is within island boundaries
@@ -18,9 +20,41 @@ fn test_player_spawn_within_island() {
     );
 }
 
-/// Test that island boundaries are correctly defined
+/// Test that all three island boundaries are correctly defined and don't overlap
 #[test]
 fn test_island_boundaries() {
+    // Left island: X ∈ [-2100, -900], Z ∈ [-600, 600]
+    let left_min_x = LEFT_ISLAND_X - TERRAIN_HALF_SIZE;
+    let left_max_x = LEFT_ISLAND_X + TERRAIN_HALF_SIZE;
+
+    // Right island: X ∈ [900, 2100], Z ∈ [-600, 600]
+    let right_min_x = RIGHT_ISLAND_X - TERRAIN_HALF_SIZE;
+    let right_max_x = RIGHT_ISLAND_X + TERRAIN_HALF_SIZE;
+
+    // Grid island: X ∈ [-600, 600], Z ∈ [1200, 2400]
+    let grid_min_x = GRID_ISLAND_X - TERRAIN_HALF_SIZE;
+    let grid_max_x = GRID_ISLAND_X + TERRAIN_HALF_SIZE;
+    let grid_min_z = GRID_ISLAND_Z - TERRAIN_HALF_SIZE;
+    let grid_max_z = GRID_ISLAND_Z + TERRAIN_HALF_SIZE;
+
+    // Verify islands don't overlap in X-Z plane
+    assert!(
+        left_max_x < right_min_x,
+        "Left and right islands overlap in X axis"
+    );
+    assert!(
+        left_max_x < grid_min_x || left_min_x > grid_max_x || grid_min_z > TERRAIN_HALF_SIZE,
+        "Left and grid islands overlap"
+    );
+    assert!(
+        right_min_x > grid_max_x || right_max_x < grid_min_x || grid_min_z > TERRAIN_HALF_SIZE,
+        "Right and grid islands overlap"
+    );
+}
+
+/// Test that the old test name still works
+#[test]
+fn test_old_island_boundaries() {
     // Test positions on left island
     let left_positions = vec![
         Vec3::new(LEFT_ISLAND_X, 0.0, 0.0),         // Center

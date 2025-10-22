@@ -8,7 +8,8 @@ use crate::components::{
 };
 use crate::config::GameConfig;
 use crate::constants::{
-    LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL, SPAWN_DROP_HEIGHT, TERRAIN_SIZE,
+    GRID_ISLAND_X, GRID_ISLAND_Z, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL,
+    SPAWN_DROP_HEIGHT, TERRAIN_SIZE,
 };
 use crate::factories::spawn_bridge;
 use crate::systems::audio::FootstepTimer;
@@ -205,6 +206,28 @@ pub fn setup_basic_world(
         Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
         TERRAIN_SIZE,
         "Right",
+        &config,
+    );
+
+    // GRID TERRAIN ISLAND (Manhattan-style grid roads)
+    spawn_terrain_island(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(GRID_ISLAND_X, LAND_ELEVATION, GRID_ISLAND_Z),
+        TERRAIN_SIZE,
+        "Grid",
+        &config,
+    );
+
+    // GRID TERRAIN BEACHES (all 4 edges with corners filled)
+    spawn_terrain_beaches(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(GRID_ISLAND_X, LAND_ELEVATION, GRID_ISLAND_Z),
+        TERRAIN_SIZE,
+        "Grid",
         &config,
     );
 

@@ -347,10 +347,10 @@ impl UnifiedWorldManager {
         self.chunk_coord_to_index(coord).is_some()
     }
 
-    /// Check if a world position is on a terrain island (left or right)
+    /// Check if a world position is on a terrain island (left, right, or grid)
     /// Left terrain: X=-1500, size=1200m (range: -2100 to -900)
     /// Right terrain: X=1500, size=1200m (range: 900 to 2100)
-    /// Terrain Z range: -600 to 600
+    /// Grid terrain: X=0, Z=1800, size=1200m (range: X=-600 to 600, Z=1200 to 2400)
     pub fn is_on_terrain_island(&self, position: Vec3) -> bool {
         self.is_on_terrain_island_with_margin(position, 0.0)
     }
@@ -358,23 +358,41 @@ impl UnifiedWorldManager {
     /// Check if a world position is on a terrain island with optional margin
     /// Margin extends the island bounds (useful for beaches, piers, nearshore chunks)
     pub fn is_on_terrain_island_with_margin(&self, position: Vec3, margin: f32) -> bool {
-        use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
+        use crate::constants::{
+            GRID_ISLAND_X, GRID_ISLAND_Z, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE,
+        };
 
         let half = TERRAIN_HALF_SIZE + margin;
-        let z_in_bounds = position.z >= -half && position.z <= half;
 
-        if !z_in_bounds {
-            return false;
-        }
+        // Check left terrain with margin (Z centered at 0)
+        let on_left = position.x >= (LEFT_ISLAND_X - half)
+            && position.x <= (LEFT_ISLAND_X + half)
+            && position.z >= -half
+            && position.z <= half;
 
-        // Check left terrain with margin
-        let on_left = position.x >= (LEFT_ISLAND_X - half) && position.x <= (LEFT_ISLAND_X + half);
+        // Check right terrain with margin (Z centered at 0)
+        let on_right = position.x >= (RIGHT_ISLAND_X - half)
+            && position.x <= (RIGHT_ISLAND_X + half)
+            && position.z >= -half
+            && position.z <= half;
 
-        // Check right terrain with margin
-        let on_right =
-            position.x >= (RIGHT_ISLAND_X - half) && position.x <= (RIGHT_ISLAND_X + half);
+        // Check grid terrain with margin (X centered at 0, Z centered at 1800)
+        let on_grid = position.x >= (GRID_ISLAND_X - half)
+            && position.x <= (GRID_ISLAND_X + half)
+            && position.z >= (GRID_ISLAND_Z - half)
+            && position.z <= (GRID_ISLAND_Z + half);
 
-        on_left || on_right
+        on_left || on_right || on_grid
+    }
+
+    /// Check if a world position is specifically on the grid island
+    pub fn is_on_grid_island(&self, position: Vec3) -> bool {
+        use crate::constants::{GRID_ISLAND_X, GRID_ISLAND_Z, TERRAIN_HALF_SIZE};
+
+        let dx = (position.x - GRID_ISLAND_X).abs();
+        let dz = (position.z - GRID_ISLAND_Z).abs();
+
+        dx <= TERRAIN_HALF_SIZE && dz <= TERRAIN_HALF_SIZE
     }
 }
 
