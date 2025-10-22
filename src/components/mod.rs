@@ -95,10 +95,10 @@ pub use vehicles::{
 pub use world::{
     BoundaryEffects, Buildable, Building, BuildingType, ContentType, CullingSettings,
     DynamicContent, DynamicTerrain, IntersectionEntity, Landmark, MainCamera, MaterialCache,
-    MovementController, NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorComponent,
-    NPCBehaviorType, NPCBodyPart, NPCGender, NPCHead, NPCLOD, NPCLeftArm, NPCLeftFoot, NPCLeftLeg,
-    NPCRendering, NPCRightArm, NPCRightFoot, NPCRightLeg, NPCState, NPCTorso, NPCType,
-    PerformanceCritical, PerformanceStats, RoadEntity, WorldBounds,
+    MovementController, NPC, NPCAppearance, NPCBehaviorComponent, NPCBehaviorType, NPCBodyPart,
+    NPCGender, NPCHead, NPCLOD, NPCLeftArm, NPCLeftFoot, NPCLeftLeg, NPCRendering, NPCRightArm,
+    NPCRightFoot, NPCRightLeg, NPCState, NPCTorso, NPCType, PerformanceCritical, PerformanceStats,
+    RoadEntity, WorldBounds,
 };
 
 pub use unified_water::{UnifiedWaterAsset, UnifiedWaterBody, WaterSurface};

@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, NPC};
 use crate::constants::{LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
 use bevy::prelude::*;

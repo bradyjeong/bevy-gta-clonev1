@@ -1,6 +1,6 @@
 use crate::GameConfig;
 use crate::components::vehicles::VehicleType;
-use crate::constants::SEA_LEVEL;
+use crate::constants::WorldEnvConfig;
 use crate::factories::VehicleFactory;
 use bevy::prelude::*;
 
@@ -11,11 +11,13 @@ pub fn spawn_test_yacht(
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
     config: Res<GameConfig>,
+    env: Res<WorldEnvConfig>,
 ) {
-    use crate::constants::{BEACH_WIDTH, LEFT_ISLAND_X, TERRAIN_HALF_SIZE};
     let yacht_position = Vec3::new(
-        LEFT_ISLAND_X + TERRAIN_HALF_SIZE + BEACH_WIDTH,
-        SEA_LEVEL,
+        config.world_env.islands.left_x
+            + config.world_env.terrain.half_size
+            + config.world_env.terrain.beach_width,
+        env.sea_level,
         0.0,
     );
 

@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::bundles::VisibleChildBundle;
 use crate::config::GameConfig;
 use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X};

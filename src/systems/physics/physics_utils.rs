@@ -16,10 +16,18 @@ impl PhysicsUtilities {
             warn!("Detected and fixed corrupted velocity");
         }
 
-        // Apply game-specific limits using safe clamp extension
-        velocity.linvel = Vec3SafeExt::clamp_length(velocity.linvel, config.physics.max_velocity);
-        velocity.angvel =
-            Vec3SafeExt::clamp_length(velocity.angvel, config.physics.max_angular_velocity);
+        // Apply game-specific limits using safe clamp extension from world_physics config
+        velocity.linvel = Vec3SafeExt::clamp_length(
+            velocity.linvel,
+            config.world_physics.emergency_thresholds.max_velocity,
+        );
+        velocity.angvel = Vec3SafeExt::clamp_length(
+            velocity.angvel,
+            config
+                .world_physics
+                .emergency_thresholds
+                .max_angular_velocity,
+        );
     }
 
     /// Fixed delta-time for physics systems running in FixedUpdate
@@ -35,11 +43,12 @@ impl PhysicsUtilities {
         transform: &mut Transform,
         entity: Entity,
         commands: &mut Commands,
+        config: &GameConfig,
     ) -> bool {
-        const EMERGENCY_THRESHOLD: f32 = 100_000.0; // 100km - truly extreme
+        let emergency_threshold = config.world_physics.emergency_thresholds.max_coordinate;
 
         let distance = transform.translation.length();
-        if distance > EMERGENCY_THRESHOLD {
+        if distance > emergency_threshold {
             error!(
                 "Entity {:?} at extreme distance {:.1}km - disabling for safety",
                 entity,
@@ -107,7 +116,12 @@ pub fn apply_universal_physics_safeguards(
         }
 
         // Emergency failsafe only - no hard boundaries anymore
-        PhysicsUtilities::emergency_coordinate_failsafe(&mut transform, entity, &mut commands);
+        PhysicsUtilities::emergency_coordinate_failsafe(
+            &mut transform,
+            entity,
+            &mut commands,
+            &config,
+        );
 
         // Clamp velocity to prevent physics explosions (but allow free movement)
         PhysicsUtilities::clamp_velocity(&mut velocity, &config);

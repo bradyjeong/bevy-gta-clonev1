@@ -7,10 +7,7 @@ use crate::components::{
     VehicleControlType,
 };
 use crate::config::GameConfig;
-use crate::constants::{
-    GRID_ISLAND_X, GRID_ISLAND_Z, LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL,
-    SPAWN_DROP_HEIGHT, TERRAIN_SIZE,
-};
+use crate::constants::WorldEnvConfig;
 use crate::factories::spawn_bridge;
 use crate::systems::audio::FootstepTimer;
 
@@ -25,6 +22,7 @@ pub fn setup_basic_world(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     config: Res<GameConfig>,
+    env: Res<WorldEnvConfig>,
 ) {
     // No longer need WorldRoot - spawn entities directly in world space
 
@@ -41,7 +39,7 @@ pub fn setup_basic_world(
         }),
         Transform::from_xyz(0.0, 15.0, 25.0).looking_at(Vec3::ZERO, Vec3::Y),
         UnderwaterSettings {
-            sea_level: SEA_LEVEL,
+            sea_level: env.sea_level,
             // Research-based realistic ocean parameters:
             // - Red light absorbed in top 10m
             // - Blue/green penetrate deepest
@@ -96,8 +94,8 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.left_x, env.land_elevation, 0.0),
+        env.terrain.size,
         "Left",
         &config,
     );
@@ -107,8 +105,8 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.right_x, env.land_elevation, 0.0),
+        env.terrain.size,
         "Right",
         &config,
     );
@@ -123,15 +121,15 @@ pub fn setup_basic_world(
             perceptual_roughness: 0.9,
             ..default()
         })),
-        Transform::from_xyz(0.0, -10.0, 0.0),
+        Transform::from_xyz(0.0, env.ocean_floor_depth, 0.0),
         Name::new("Ocean Floor Visual"),
     ));
 
     // Ocean floor collider - derive from ocean_size to match visual bounds
     // ocean_size is derived from world_bounds, so collider scales with world
-    // Collider center at -10.05 so top surface is exactly -10.0 (matches beach slope bottom)
+    // Collider center at ocean_floor_depth - 0.05 so top surface is exactly ocean_floor_depth (matches beach slope bottom)
     commands.spawn((
-        Transform::from_xyz(0.0, -10.05, 0.0),
+        Transform::from_xyz(0.0, env.ocean_floor_depth - 0.05, 0.0),
         RigidBody::Fixed,
         Collider::cuboid(ocean_size * 0.5, 0.05, ocean_size * 0.5),
         CollisionGroups::new(
@@ -192,8 +190,8 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.left_x, env.land_elevation, 0.0),
+        env.terrain.size,
         "Left",
         &config,
     );
@@ -203,8 +201,8 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.right_x, env.land_elevation, 0.0),
+        env.terrain.size,
         "Right",
         &config,
     );
@@ -214,8 +212,8 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(GRID_ISLAND_X, LAND_ELEVATION, GRID_ISLAND_Z),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.grid_x, env.land_elevation, env.islands.grid_z),
+        env.terrain.size,
         "Grid",
         &config,
     );
@@ -225,8 +223,8 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(GRID_ISLAND_X, LAND_ELEVATION, GRID_ISLAND_Z),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.grid_x, env.land_elevation, env.islands.grid_z),
+        env.terrain.size,
         "Grid",
         &config,
     );
@@ -235,7 +233,7 @@ pub fn setup_basic_world(
     spawn_bridge(&mut commands, &mut meshes, &mut materials, &config);
 
     // Spawn player above terrain, let gravity drop them
-    let player_y = LAND_ELEVATION + SPAWN_DROP_HEIGHT;
+    let player_y = env.land_elevation + env.spawn_drop_height;
 
     // Player character with human-like components in world coordinates
     // Use player dimensions from config
@@ -253,7 +251,7 @@ pub fn setup_basic_world(
             ),
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             Velocity::zero(),
-            Transform::from_xyz(LEFT_ISLAND_X, player_y, 0.0),
+            Transform::from_xyz(env.islands.left_x, player_y, 0.0),
             Visibility::Visible,
             InheritedVisibility::VISIBLE,
             ViewVisibility::default(),
@@ -274,7 +272,7 @@ pub fn setup_basic_world(
         HumanAnimation::default(),
         PlayerBody::default(),
         FootstepTimer::default(),
-        MovementTracker::new(Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0), 5.0),
+        MovementTracker::new(Vec3::new(env.islands.left_x, env.land_elevation, 0.0), 5.0),
         ControlState::default(),
         PlayerControlled,
         VehicleControlType::Walking,
@@ -282,7 +280,7 @@ pub fn setup_basic_world(
 
     spawn_registry.register_entity(
         player_entity,
-        Vec3::new(LEFT_ISLAND_X, player_y, 0.0),
+        Vec3::new(env.islands.left_x, player_y, 0.0),
         SpawnableType::Player,
     );
 
@@ -450,8 +448,8 @@ fn spawn_terrain_beaches(
 
     let collider_half_height = 0.05; // Match terrain collider
     let land_elevation_phys = terrain_center.y; // Physics top surface
-    let ocean_floor_y = -10.0;
-    let beach_width = 100.0;
+    let ocean_floor_y = config.world_env.ocean_floor_depth;
+    let beach_width = config.world_env.terrain.beach_width;
     let half_size = terrain_size / 2.0;
 
     // Beach center Y for physics (collider alignment)

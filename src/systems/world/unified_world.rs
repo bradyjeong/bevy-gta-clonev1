@@ -39,15 +39,6 @@ pub fn chunk_coord_to_index(
     }
 }
 
-/// Standard chunk size used across all world systems
-pub const UNIFIED_CHUNK_SIZE: f32 = 200.0;
-
-/// Maximum streaming radius around active entity
-pub const UNIFIED_STREAMING_RADIUS: f32 = 800.0;
-
-/// LOD transition distances - optimized for 60+ FPS target
-pub const LOD_DISTANCES: [f32; 3] = [150.0, 300.0, 500.0];
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ChunkCoord {
     pub x: i32,
@@ -68,7 +59,7 @@ impl ChunkCoord {
 
     // Backwards compatibility with old UNIFIED_CHUNK_SIZE
     pub fn from_world_pos_legacy(world_pos: Vec3) -> Self {
-        Self::from_world_pos(world_pos, UNIFIED_CHUNK_SIZE)
+        Self::from_world_pos(world_pos, 200.0) // Default chunk size
     }
 
     pub fn to_world_pos_with_size(&self, chunk_size: f32) -> Vec3 {
@@ -81,7 +72,7 @@ impl ChunkCoord {
 
     // Backwards compatibility
     pub fn to_world_pos(&self) -> Vec3 {
-        self.to_world_pos_with_size(UNIFIED_CHUNK_SIZE)
+        self.to_world_pos_with_size(200.0) // Default chunk size
     }
 
     pub fn distance_to(&self, other: ChunkCoord) -> f32 {
@@ -312,6 +303,16 @@ pub struct UnifiedWorldManager {
     pub chunks_loaded_this_frame: usize,
     pub chunks_unloaded_this_frame: usize,
     pub max_chunks_per_frame: usize,
+
+    // LOD configuration
+    pub lod_distances: [f32; 3],
+
+    // Island and terrain configuration from WorldEnvConfig
+    pub left_island_x: f32,
+    pub right_island_x: f32,
+    pub grid_island_x: f32,
+    pub grid_island_z: f32,
+    pub terrain_half_size: f32,
 }
 
 impl UnifiedWorldManager {
@@ -333,7 +334,13 @@ impl UnifiedWorldManager {
             last_update: 0.0,
             chunks_loaded_this_frame: 0,
             chunks_unloaded_this_frame: 0,
-            max_chunks_per_frame: 4, // Prevent frame drops
+            max_chunks_per_frame: 4,
+            lod_distances: config.world.lod_distances,
+            left_island_x: config.world_env.islands.left_x,
+            right_island_x: config.world_env.islands.right_x,
+            grid_island_x: config.world_env.islands.grid_x,
+            grid_island_z: config.world_env.islands.grid_z,
+            terrain_half_size: config.world_env.terrain.half_size,
         }
     }
 
@@ -358,41 +365,35 @@ impl UnifiedWorldManager {
     /// Check if a world position is on a terrain island with optional margin
     /// Margin extends the island bounds (useful for beaches, piers, nearshore chunks)
     pub fn is_on_terrain_island_with_margin(&self, position: Vec3, margin: f32) -> bool {
-        use crate::constants::{
-            GRID_ISLAND_X, GRID_ISLAND_Z, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE,
-        };
-
-        let half = TERRAIN_HALF_SIZE + margin;
+        let half = self.terrain_half_size + margin;
 
         // Check left terrain with margin (Z centered at 0)
-        let on_left = position.x >= (LEFT_ISLAND_X - half)
-            && position.x <= (LEFT_ISLAND_X + half)
+        let on_left = position.x >= (self.left_island_x - half)
+            && position.x <= (self.left_island_x + half)
             && position.z >= -half
             && position.z <= half;
 
         // Check right terrain with margin (Z centered at 0)
-        let on_right = position.x >= (RIGHT_ISLAND_X - half)
-            && position.x <= (RIGHT_ISLAND_X + half)
+        let on_right = position.x >= (self.right_island_x - half)
+            && position.x <= (self.right_island_x + half)
             && position.z >= -half
             && position.z <= half;
 
         // Check grid terrain with margin (X centered at 0, Z centered at 1800)
-        let on_grid = position.x >= (GRID_ISLAND_X - half)
-            && position.x <= (GRID_ISLAND_X + half)
-            && position.z >= (GRID_ISLAND_Z - half)
-            && position.z <= (GRID_ISLAND_Z + half);
+        let on_grid = position.x >= (self.grid_island_x - half)
+            && position.x <= (self.grid_island_x + half)
+            && position.z >= (self.grid_island_z - half)
+            && position.z <= (self.grid_island_z + half);
 
         on_left || on_right || on_grid
     }
 
     /// Check if a world position is specifically on the grid island
     pub fn is_on_grid_island(&self, position: Vec3) -> bool {
-        use crate::constants::{GRID_ISLAND_X, GRID_ISLAND_Z, TERRAIN_HALF_SIZE};
+        let dx = (position.x - self.grid_island_x).abs();
+        let dz = (position.z - self.grid_island_z).abs();
 
-        let dx = (position.x - GRID_ISLAND_X).abs();
-        let dz = (position.z - GRID_ISLAND_Z).abs();
-
-        dx <= TERRAIN_HALF_SIZE && dz <= TERRAIN_HALF_SIZE
+        dx <= self.terrain_half_size && dz <= self.terrain_half_size
     }
 }
 
@@ -401,21 +402,29 @@ impl Default for UnifiedWorldManager {
         // Default uses small world for backwards compatibility
         let total_chunks = 32; // 32x32 = 1024 chunks
         let total_chunk_count = total_chunks * total_chunks;
+        let chunk_size = 200.0; // Default chunk size
+        let streaming_radius = 800.0; // Default streaming radius
 
         Self {
             chunks: vec![None; total_chunk_count],
             total_chunks_x: total_chunks,
             total_chunks_z: total_chunks,
-            chunk_size: UNIFIED_CHUNK_SIZE,
+            chunk_size,
             world_bounds: (-3200.0, 3200.0, -3200.0, 3200.0), // 6.4km x 6.4km default
             placement_grid: PlacementGrid::new(),
             road_network: RoadNetwork::default(),
             active_chunk: None,
-            streaming_radius_chunks: (UNIFIED_STREAMING_RADIUS / UNIFIED_CHUNK_SIZE).ceil() as i32,
+            streaming_radius_chunks: (streaming_radius / chunk_size).ceil() as i32,
             last_update: 0.0,
             chunks_loaded_this_frame: 0,
             chunks_unloaded_this_frame: 0,
-            max_chunks_per_frame: 4, // Prevent frame drops
+            max_chunks_per_frame: 4,
+            lod_distances: [150.0, 300.0, 500.0],
+            left_island_x: -1500.0,
+            right_island_x: 1500.0,
+            grid_island_x: 0.0,
+            grid_island_z: 1800.0,
+            terrain_half_size: 600.0,
         }
     }
 }
@@ -446,23 +455,24 @@ impl UnifiedWorldManager {
     }
 
     pub fn calculate_lod_level(&self, distance: f32) -> usize {
-        for (i, &max_distance) in LOD_DISTANCES.iter().enumerate() {
+        for (i, &max_distance) in self.lod_distances.iter().enumerate() {
             if distance <= max_distance {
                 return i;
             }
         }
-        LOD_DISTANCES.len() - 1
+        self.lod_distances.len() - 1
     }
 
     pub fn cleanup_distant_chunks(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
         let mut to_unload = Vec::new();
-        let max_distance_squared = (UNIFIED_STREAMING_RADIUS + self.chunk_size).powi(2);
+        let streaming_radius = (self.streaming_radius_chunks as f32) * self.chunk_size;
+        let max_distance_squared = (streaming_radius + self.chunk_size).powi(2);
 
         for chunk_opt in &mut self.chunks {
             if let Some(chunk) = chunk_opt {
                 let chunk_pos = chunk.coord.to_world_pos_with_size(self.chunk_size);
                 let distance_squared = active_pos.distance_squared(chunk_pos);
-                chunk.distance_to_player = distance_squared.sqrt(); // Only calculate sqrt when needed
+                chunk.distance_to_player = distance_squared.sqrt();
 
                 if distance_squared > max_distance_squared {
                     if !matches!(chunk.state, ChunkState::Unloaded | ChunkState::Unloading) {
@@ -479,7 +489,8 @@ impl UnifiedWorldManager {
     pub fn get_chunks_to_load(&mut self, active_pos: Vec3) -> Vec<ChunkCoord> {
         let active_chunk = ChunkCoord::from_world_pos(active_pos, self.chunk_size);
         let mut to_load = Vec::new();
-        let max_distance_squared = UNIFIED_STREAMING_RADIUS.powi(2);
+        let streaming_radius = (self.streaming_radius_chunks as f32) * self.chunk_size;
+        let max_distance_squared = streaming_radius.powi(2);
 
         // PERFORMANCE: Use ring pattern instead of nested loops for better cache locality
         for ring in 0..=self.streaming_radius_chunks {

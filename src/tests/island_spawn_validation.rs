@@ -35,7 +35,7 @@ fn test_island_boundaries() {
     let grid_min_x = GRID_ISLAND_X - TERRAIN_HALF_SIZE;
     let grid_max_x = GRID_ISLAND_X + TERRAIN_HALF_SIZE;
     let grid_min_z = GRID_ISLAND_Z - TERRAIN_HALF_SIZE;
-    let grid_max_z = GRID_ISLAND_Z + TERRAIN_HALF_SIZE;
+    let _grid_max_z = GRID_ISLAND_Z + TERRAIN_HALF_SIZE;
 
     // Verify islands don't overlap in X-Z plane
     assert!(

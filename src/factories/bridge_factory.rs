@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::config::GameConfig;
 use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
 use bevy::prelude::*;

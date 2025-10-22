@@ -45,6 +45,9 @@ pub struct GameConfig {
 
     // World Object Configuration
     pub world_objects: WorldObjectsConfig,
+
+    // World Environment Configuration (from world_config.ron)
+    pub world_env: crate::constants::WorldEnvConfig,
 }
 
 #[derive(Debug, Clone)]

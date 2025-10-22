@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::bundles::VisibleChildBundle;
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
@@ -130,8 +132,8 @@ impl VegetationGenerator {
             VisibleChildBundle::default(),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: (config.performance.tree_visibility_distance * 0.9)
-                    ..(config.performance.tree_visibility_distance * 1.1),
+                end_margin: (config.world_streaming.vegetation_cull_distance * 0.9)
+                    ..(config.world_streaming.vegetation_cull_distance * 1.1),
                 use_aabb: false,
             },
         ));
@@ -150,8 +152,8 @@ impl VegetationGenerator {
                 VisibleChildBundle::default(),
                 VisibilityRange {
                     start_margin: 0.0..0.0,
-                    end_margin: (config.performance.tree_visibility_distance * 0.9)
-                        ..(config.performance.tree_visibility_distance * 1.1),
+                    end_margin: (config.world_streaming.vegetation_cull_distance * 0.9)
+                        ..(config.world_streaming.vegetation_cull_distance * 1.1),
                     use_aabb: true, // Use AABB for accurate culling
                 },
             ));

@@ -1,0 +1,25 @@
+(
+    // World elevation constants
+    sea_level: 0.0,
+    land_elevation: 3.0,
+    spawn_drop_height: 10.0,
+    ocean_floor_depth: -10.0,
+    
+    // Island configuration (triple island setup)
+    islands: (
+        left_x: -1500.0,
+        right_x: 1500.0,
+        grid_x: 0.0,
+        grid_z: 1800.0,
+    ),
+    
+    // Terrain dimensions
+    terrain: (
+        size: 1200.0,
+        half_size: 600.0,
+        beach_width: 100.0,
+    ),
+    
+    // World boundary failsafe
+    max_world_coordinate: 3000.0,
+)

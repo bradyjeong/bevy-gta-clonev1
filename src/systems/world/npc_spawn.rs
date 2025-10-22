@@ -1,7 +1,4 @@
-use crate::components::{NPC_LOD_CULL_DISTANCE, NPCState, NPCType};
-use crate::constants::{
-    LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SPAWN_DROP_HEIGHT, TERRAIN_HALF_SIZE,
-};
+use crate::components::{NPCState, NPCType};
 use crate::systems::world::unified_world::UnifiedWorldManager;
 use bevy::{prelude::*, render::view::visibility::VisibilityRange};
 use bevy_rapier3d::prelude::*;
@@ -21,7 +18,7 @@ pub fn spawn_new_npc_system(
     npc_query: Query<Entity, With<NPCState>>,
     world: Res<UnifiedWorldManager>,
     mut world_rng: ResMut<WorldRng>,
-    _config: Res<GameConfig>,
+    config: Res<GameConfig>,
 ) {
     // Initialize timer on first run
     if spawn_timer.duration().as_secs_f32() == 0.0 {
@@ -40,20 +37,21 @@ pub fn spawn_new_npc_system(
     // Spawn new NPCs on both islands (randomly choose left or right)
     if spawn_timer.just_finished() {
         let island_x = if world_rng.global().gen_bool(0.5) {
-            LEFT_ISLAND_X
+            config.world_env.islands.left_x
         } else {
-            RIGHT_ISLAND_X
+            config.world_env.islands.right_x
         };
 
+        let terrain_half_size = config.world_env.terrain.half_size;
         let x = island_x
             + world_rng
                 .global()
-                .gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE);
+                .gen_range(-terrain_half_size..terrain_half_size);
         let z = world_rng
             .global()
-            .gen_range(-TERRAIN_HALF_SIZE..TERRAIN_HALF_SIZE);
+            .gen_range(-terrain_half_size..terrain_half_size);
 
-        let test_position = Vec3::new(x, LAND_ELEVATION, z);
+        let test_position = Vec3::new(x, config.world_env.land_elevation, z);
 
         // Validate spawn position is on terrain island
         if !world.is_on_terrain_island(test_position) {
@@ -61,10 +59,14 @@ pub fn spawn_new_npc_system(
         }
 
         // Spawn above terrain, let gravity drop NPCs
-        let spawn_position = Vec3::new(x, LAND_ELEVATION + SPAWN_DROP_HEIGHT, z);
+        let spawn_position = Vec3::new(
+            x,
+            config.world_env.land_elevation + config.world_env.spawn_drop_height,
+            z,
+        );
 
         // Use spawn_simple_npc which adds ALL required components
-        spawn_simple_npc(&mut commands, spawn_position, &mut world_rng);
+        spawn_simple_npc(&mut commands, spawn_position, &mut world_rng, &config);
 
         println!("DEBUG: Spawned NPC at {spawn_position:?}");
     }
@@ -75,6 +77,7 @@ pub fn spawn_simple_npc(
     commands: &mut Commands,
     position: Vec3,
     world_rng: &mut WorldRng,
+    config: &GameConfig,
 ) -> Entity {
     // Create NPC with new state-based architecture
     let npc_type = match world_rng.global().gen_range(0..4) {
@@ -102,13 +105,13 @@ pub fn spawn_simple_npc(
             Collider::capsule(
                 Vec3::new(0.0, -height / 2.0, 0.0),
                 Vec3::new(0.0, height / 2.0, 0.0),
-                0.3, // TODO: Migrate to config.npc.capsule_radius (currently 0.4 in config but 0.3 historically)
+                0.3,
             ),
             Velocity::zero(),
             Transform::from_translation(position),
             Visibility::Visible,
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
+            VisibilityRange::abrupt(0.0, config.world_streaming.npc_lod.cull),
         ))
         .id()
 }
@@ -118,6 +121,7 @@ pub fn spawn_npc_with_new_architecture(
     commands: &mut Commands,
     position: Vec3,
     world_rng: &mut WorldRng,
+    config: &GameConfig,
 ) -> Entity {
     // Create NPC with new state-based architecture
     let npc_type = match world_rng.global().gen_range(0..4) {
@@ -140,13 +144,13 @@ pub fn spawn_npc_with_new_architecture(
             Collider::capsule(
                 Vec3::new(0.0, -height / 2.0, 0.0),
                 Vec3::new(0.0, height / 2.0, 0.0),
-                0.3, // TODO: Migrate to config.npc.capsule_radius (currently 0.4 in config but 0.3 historically)
+                0.3,
             ),
             Velocity::zero(),
             Transform::from_translation(position),
             Visibility::Visible,
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
-            VisibilityRange::abrupt(0.0, NPC_LOD_CULL_DISTANCE),
+            VisibilityRange::abrupt(0.0, config.world_streaming.npc_lod.cull),
         ))
         .id()
 }

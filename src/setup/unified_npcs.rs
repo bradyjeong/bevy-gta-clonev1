@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use bevy::prelude::*;
 use rand::prelude::*;
 

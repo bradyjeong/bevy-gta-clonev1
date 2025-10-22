@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::bundles::VisibleChildBundle;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
@@ -40,9 +42,9 @@ impl RoadGenerator {
         let new_road_ids = if world.is_on_grid_island(chunk_center) {
             world
                 .road_network
-                .generate_grid_chunk_roads(coord.x, coord.z)
+                .generate_grid_chunk_roads(coord.x, coord.z, config)
         } else {
-            world.road_network.generate_chunk_roads(coord.x, coord.z)
+            world.road_network.generate_chunk_roads(coord.x, coord.z, config)
         };
 
         // Create road entities and add to placement grid

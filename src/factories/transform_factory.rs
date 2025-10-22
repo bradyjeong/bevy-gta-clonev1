@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::constants::LAND_ELEVATION;
 use bevy::prelude::*;
 

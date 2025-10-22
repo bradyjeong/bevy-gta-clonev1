@@ -43,15 +43,7 @@ impl Plugin for GameCorePlugin {
                         ..default()
                     })
                     .set(AssetPlugin {
-                        file_path: if cfg!(target_os = "macos")
-                            && std::env::current_exe()
-                                .map(|exe| exe.to_string_lossy().contains(".app/Contents/MacOS"))
-                                .unwrap_or(false)
-                        {
-                            "../Resources/assets".to_string()
-                        } else {
-                            "assets".to_string()
-                        },
+                        file_path: crate::util::asset_path::get_assets_base_path(),
                         ..default()
                     }),
             )
@@ -63,7 +55,6 @@ impl Plugin for GameCorePlugin {
             // Game State and Resources
             .init_state::<GameState>()
             .init_resource::<GameConfig>()
-            .add_systems(PreStartup, load_world_configs)
             .init_resource::<CullingSettings>()
             .init_resource::<PerformanceStats>()
             .init_resource::<DirtyFlagsMetrics>()
@@ -72,9 +63,11 @@ impl Plugin for GameCorePlugin {
             .init_resource::<WorldRng>()
             // Coordinate safety resources
             // World boundary system - initialize from config (runs before validation)
+            // Chain load_world_configs BEFORE systems that depend on it
             .add_systems(
                 PreStartup,
                 (
+                    load_world_configs,
                     |mut commands: Commands, config: Res<GameConfig>| {
                         let bounds = WorldBounds::from_config(&config.world);
                         commands.insert_resource(bounds);
@@ -83,7 +76,8 @@ impl Plugin for GameCorePlugin {
                         let material_cache = MaterialCache::new(&mut materials);
                         commands.insert_resource(material_cache);
                     },
-                ),
+                )
+                    .chain(),
             )
             // No world origin shift events needed
             .insert_resource(ClearColor(Color::srgb(0.2, 0.8, 1.0)))
@@ -162,10 +156,25 @@ impl Plugin for GameCorePlugin {
     }
 }
 
-fn load_world_configs(mut config: ResMut<GameConfig>) {
+fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
     use std::fs;
+    use std::path::Path;
+
+    let assets_base = crate::util::asset_path::get_assets_base_path();
+    info!("📁 Assets base path: {}", assets_base);
+
+    // Check if assets base path exists
+    if !Path::new(&assets_base).exists() {
+        warn!("⚠️ Assets base path does not exist: {}", assets_base);
+    }
+
+    // Check if config directory exists
+    if !Path::new(&format!("{assets_base}/config")).exists() {
+        warn!("⚠️ Config directory does not exist: {assets_base}/config");
+    }
 
     let configs = [
+        ("world_config.ron", "world environment"),
         ("world_streaming.ron", "world streaming"),
         ("world_physics.ron", "world physics"),
         ("character_dimensions.ron", "character dimensions"),
@@ -173,12 +182,29 @@ fn load_world_configs(mut config: ResMut<GameConfig>) {
     ];
 
     for (filename, description) in configs.iter() {
-        let path = format!("assets/config/{filename}");
+        let path = format!("{assets_base}/config/{filename}");
         match fs::read_to_string(&path) {
             Ok(contents) => match *filename {
+                "world_config.ron" => {
+                    match ron::from_str::<crate::constants::WorldEnvConfig>(&contents) {
+                        Ok(world_env_config) => {
+                            config.world_env = world_env_config.clone();
+                            commands.insert_resource(world_env_config);
+                            info!("✅ Loaded {} config", description);
+                        }
+                        Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
+                    }
+                }
                 "world_streaming.ron" => {
                     match ron::from_str::<crate::config::WorldStreamingConfig>(&contents) {
                         Ok(streaming_config) => {
+                            config.world.chunk_size = streaming_config.chunk_size;
+                            config.world.streaming_radius = streaming_config.streaming_radius;
+                            config.world.lod_distances = [
+                                streaming_config.lod_distances.full,
+                                streaming_config.lod_distances.medium,
+                                streaming_config.lod_distances.far,
+                            ];
                             config.world_streaming = streaming_config;
                             info!("✅ Loaded {} config", description);
                         }
@@ -198,7 +224,12 @@ fn load_world_configs(mut config: ResMut<GameConfig>) {
                     match ron::from_str::<crate::config::WorldBoundsConfig>(&contents) {
                         Ok(bounds_config) => {
                             config.world_bounds = bounds_config;
+                            config.world.map_size = config.world_bounds.world_half_size * 2.0;
                             info!("✅ Loaded {} config", description);
+                            info!(
+                                "🔗 Unified world bounds: map_size = {}",
+                                config.world.map_size
+                            );
                         }
                         Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
                     }
@@ -223,4 +254,15 @@ fn load_world_configs(mut config: ResMut<GameConfig>) {
     // Validate and clamp all loaded config values
     config.validate_and_clamp();
     info!("✅ Validated and clamped all configuration values");
+
+    let expected_map_size = config.world_bounds.world_half_size * 2.0;
+    let actual_map_size = config.world.map_size;
+    if (expected_map_size - actual_map_size).abs() > 0.01 {
+        warn!(
+            "⚠️ World bounds drift detected! config.world.map_size ({}) != config.world_bounds.world_half_size * 2.0 ({})",
+            actual_map_size, expected_map_size
+        );
+    } else {
+        info!("✅ World bounds unified: single source of truth confirmed");
+    }
 }

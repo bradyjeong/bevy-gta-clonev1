@@ -80,8 +80,8 @@ pub fn aircraft_boundary_system(
         }
 
         // Altitude limits for aircraft
-        if transform.translation.y > 3000.0 {
-            velocity.linvel.y -= 50.0; // Push down from max altitude
+        if transform.translation.y > config.world_bounds.world_half_size {
+            velocity.linvel.y -= config.world_physics.boundaries.altitude_pushback; // Push down from max altitude
         }
     }
 }

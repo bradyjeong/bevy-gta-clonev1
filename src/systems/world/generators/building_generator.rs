@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;

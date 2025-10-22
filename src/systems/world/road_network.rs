@@ -1,10 +1,10 @@
+use crate::config::GameConfig;
+#[allow(deprecated, unused_imports)]
 use crate::constants::LAND_ELEVATION;
-use crate::systems::world::unified_world::UNIFIED_CHUNK_SIZE;
 use crate::util::safe_math::safe_lerp;
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-pub const ROAD_CELL_SIZE: f32 = 400.0;
 
 fn zigzag32(n: i32) -> u32 {
     ((n << 1) ^ (n >> 31)) as u32
@@ -316,7 +316,12 @@ impl RoadNetwork {
 impl RoadNetwork {
     /// Generate Manhattan-style orthogonal grid roads for a single cell (grid island only)
     /// Creates straight N-S and E-W roads at 400m spacing without curves
-    pub fn generate_grid_roads_for_cell(&mut self, cell_coord: IVec2, cell_size: f32) -> Vec<u64> {
+    pub fn generate_grid_roads_for_cell(
+        &mut self,
+        cell_coord: IVec2,
+        cell_size: f32,
+        config: &GameConfig,
+    ) -> Vec<u64> {
         // Prevent duplicate generation (same guard as organic generator)
         if self.generated_cells.contains(&cell_coord) {
             return Vec::new();
@@ -327,12 +332,12 @@ impl RoadNetwork {
         let base_z = cell_coord.y as f32 * cell_size;
         let mut local_index: u16 = 0;
         let mut new_roads = Vec::new();
-        let y = LAND_ELEVATION + RoadType::MainStreet.height();
+        let y = config.world_env.land_elevation + RoadType::MainStreet.height();
 
         // Vertical segment (N-S) along cell center
         let v_start = Vec3::new(base_x + cell_size * 0.5, y, base_z);
         let v_end = Vec3::new(base_x + cell_size * 0.5, y, base_z + cell_size);
-        if self.segment_on_island(v_start, v_end) {
+        if self.segment_on_island(v_start, v_end, config) {
             let road_id = generate_unique_road_id(cell_coord, local_index);
             local_index += 1;
             self.roads.insert(
@@ -345,7 +350,7 @@ impl RoadNetwork {
         // Horizontal segment (E-W) along cell center
         let h_start = Vec3::new(base_x, y, base_z + cell_size * 0.5);
         let h_end = Vec3::new(base_x + cell_size, y, base_z + cell_size * 0.5);
-        if self.segment_on_island(h_start, h_end) {
+        if self.segment_on_island(h_start, h_end, config) {
             let road_id = generate_unique_road_id(cell_coord, local_index);
             self.roads.insert(
                 road_id,
@@ -360,9 +365,14 @@ impl RoadNetwork {
     }
 
     /// Generate grid roads for a chunk (wrapper for chunk-based workflow)
-    pub fn generate_grid_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u64> {
+    pub fn generate_grid_chunk_roads(
+        &mut self,
+        chunk_x: i32,
+        chunk_z: i32,
+        config: &GameConfig,
+    ) -> Vec<u64> {
         let cell_coord = IVec2::new(chunk_x, chunk_z);
-        self.generate_grid_roads_for_cell(cell_coord, ROAD_CELL_SIZE)
+        self.generate_grid_roads_for_cell(cell_coord, config.world_streaming.road_cell_size, config)
     }
 
     pub fn add_road(&mut self, start: Vec3, end: Vec3, road_type: RoadType) -> u64 {
@@ -427,35 +437,37 @@ impl RoadNetwork {
     }
 
     /// Check if position is on a rectangular terrain island (left, right, or grid)
-    fn is_position_on_island(&self, position: Vec3) -> bool {
-        use crate::constants::{
-            GRID_ISLAND_X, GRID_ISLAND_Z, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE,
-        };
+    fn is_position_on_island(&self, position: Vec3, config: &GameConfig) -> bool {
+        let left_island_x = config.world_env.islands.left_x;
+        let right_island_x = config.world_env.islands.right_x;
+        let grid_island_x = config.world_env.islands.grid_x;
+        let grid_island_z = config.world_env.islands.grid_z;
+        let terrain_half_size = config.world_env.terrain.half_size;
 
         // Check left island (X=-1500, Z centered at 0)
-        let on_left = position.x >= (LEFT_ISLAND_X - TERRAIN_HALF_SIZE)
-            && position.x <= (LEFT_ISLAND_X + TERRAIN_HALF_SIZE)
-            && position.z >= -TERRAIN_HALF_SIZE
-            && position.z <= TERRAIN_HALF_SIZE;
+        let on_left = position.x >= (left_island_x - terrain_half_size)
+            && position.x <= (left_island_x + terrain_half_size)
+            && position.z >= -terrain_half_size
+            && position.z <= terrain_half_size;
 
         // Check right island (X=1500, Z centered at 0)
-        let on_right = position.x >= (RIGHT_ISLAND_X - TERRAIN_HALF_SIZE)
-            && position.x <= (RIGHT_ISLAND_X + TERRAIN_HALF_SIZE)
-            && position.z >= -TERRAIN_HALF_SIZE
-            && position.z <= TERRAIN_HALF_SIZE;
+        let on_right = position.x >= (right_island_x - terrain_half_size)
+            && position.x <= (right_island_x + terrain_half_size)
+            && position.z >= -terrain_half_size
+            && position.z <= terrain_half_size;
 
         // Check grid island (X=0, Z=1800)
-        let on_grid = position.x >= (GRID_ISLAND_X - TERRAIN_HALF_SIZE)
-            && position.x <= (GRID_ISLAND_X + TERRAIN_HALF_SIZE)
-            && position.z >= (GRID_ISLAND_Z - TERRAIN_HALF_SIZE)
-            && position.z <= (GRID_ISLAND_Z + TERRAIN_HALF_SIZE);
+        let on_grid = position.x >= (grid_island_x - terrain_half_size)
+            && position.x <= (grid_island_x + terrain_half_size)
+            && position.z >= (grid_island_z - terrain_half_size)
+            && position.z <= (grid_island_z + terrain_half_size);
 
         on_left || on_right || on_grid
     }
 
     /// Check if entire road segment (both endpoints) is on island
-    fn segment_on_island(&self, start: Vec3, end: Vec3) -> bool {
-        self.is_position_on_island(start) && self.is_position_on_island(end)
+    fn segment_on_island(&self, start: Vec3, end: Vec3, config: &GameConfig) -> bool {
+        self.is_position_on_island(start, config) && self.is_position_on_island(end, config)
     }
 
     pub fn generate_roads_for_cell(
@@ -463,6 +475,7 @@ impl RoadNetwork {
         cell_coord: IVec2,
         cell_size: f32,
         _rng: &mut impl rand::Rng,
+        config: &GameConfig,
     ) -> Vec<u64> {
         use rand::SeedableRng;
         let cell_seed = ((cell_coord.x as u64) << 32) | ((cell_coord.y as u64) & 0xFFFFFFFF);
@@ -475,9 +488,9 @@ impl RoadNetwork {
         let base_x = cell_coord.x as f32 * cell_size;
         let base_z = cell_coord.y as f32 * cell_size;
 
-        const WORLD_HALF_SIZE: f32 = 3000.0;
+        let world_half_size = config.world_bounds.world_half_size;
         let buffer = cell_size;
-        if base_x.abs() > (WORLD_HALF_SIZE - buffer) || base_z.abs() > (WORLD_HALF_SIZE - buffer) {
+        if base_x.abs() > (world_half_size - buffer) || base_z.abs() > (world_half_size - buffer) {
             return Vec::new();
         }
 
@@ -492,6 +505,7 @@ impl RoadNetwork {
                 cell_coord,
                 &mut rng,
                 &mut local_index,
+                config,
             );
             self.track_boundary_points(cell_coord, cell_size, &roads);
             self.connect_to_neighbors(cell_coord);
@@ -508,13 +522,13 @@ impl RoadNetwork {
             } else {
                 RoadType::MainStreet
             };
-            let y = LAND_ELEVATION + road_type.height();
+            let y = config.world_env.land_elevation + road_type.height();
             let x_pos = base_x + cell_size * 0.5;
             let start = Vec3::new(x_pos, y, base_z);
             let end = Vec3::new(x_pos, y, base_z + cell_size);
 
             // Only generate if BOTH endpoints are on island (prevents ocean roads)
-            if self.segment_on_island(start, end) {
+            if self.segment_on_island(start, end, config) {
                 let road_id = generate_unique_road_id(cell_coord, local_index);
                 local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, road_type);
@@ -533,13 +547,13 @@ impl RoadNetwork {
             } else {
                 RoadType::MainStreet
             };
-            let y = LAND_ELEVATION + road_type.height();
+            let y = config.world_env.land_elevation + road_type.height();
             let z_pos = base_z + cell_size * 0.5;
             let start = Vec3::new(base_x, y, z_pos);
             let end = Vec3::new(base_x + cell_size, y, z_pos);
 
             // Only generate if BOTH endpoints are on island (prevents ocean roads)
-            if self.segment_on_island(start, end) {
+            if self.segment_on_island(start, end, config) {
                 let road_id = generate_unique_road_id(cell_coord, local_index);
                 local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, road_type);
@@ -554,12 +568,12 @@ impl RoadNetwork {
 
         if !is_vertical_arterial && !is_horizontal_arterial {
             let road_type = RoadType::SideStreet;
-            let y = LAND_ELEVATION + road_type.height();
+            let y = config.world_env.land_elevation + road_type.height();
             let start = Vec3::new(base_x + cell_size * 0.2, y, base_z + cell_size * 0.2);
             let end = Vec3::new(base_x + cell_size * 0.8, y, base_z + cell_size * 0.8);
 
             // Only generate if BOTH endpoints are on island (prevents ocean roads)
-            if self.segment_on_island(start, end) {
+            if self.segment_on_island(start, end, config) {
                 let road_id = generate_unique_road_id(cell_coord, local_index);
                 local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, road_type);
@@ -574,7 +588,7 @@ impl RoadNetwork {
 
         if !is_vertical_arterial && !is_horizontal_arterial {
             let road_type = RoadType::SideStreet;
-            let y = LAND_ELEVATION + road_type.height();
+            let y = config.world_env.land_elevation + road_type.height();
 
             let nearest_vertical = ((cell_coord.x as f32 / arterial_spacing as f32).round()
                 * arterial_spacing as f32)
@@ -590,7 +604,7 @@ impl RoadNetwork {
             let end_h = Vec3::new(base_x + cell_size * 0.5, y, nearest_horizontal);
 
             // Only generate connectors if BOTH endpoints are on island (prevents ocean roads)
-            if self.segment_on_island(start, end_v) {
+            if self.segment_on_island(start, end_v, config) {
                 let road_id_v = generate_unique_road_id(cell_coord, local_index);
                 local_index += 1;
                 let connector_v = RoadSpline::new(road_id_v, start, end_v, road_type);
@@ -598,7 +612,7 @@ impl RoadNetwork {
                 new_roads.push(road_id_v);
             }
 
-            if self.segment_on_island(start, end_h) {
+            if self.segment_on_island(start, end_h, config) {
                 let road_id_h = generate_unique_road_id(cell_coord, local_index);
                 let connector_h = RoadSpline::new(road_id_h, start, end_h, road_type);
                 self.roads.insert(road_id_h, connector_h);
@@ -615,24 +629,25 @@ impl RoadNetwork {
     }
 
     #[deprecated(note = "Use generate_roads_for_cell")]
-    pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32) -> Vec<u64> {
+    pub fn generate_chunk_roads(&mut self, chunk_x: i32, chunk_z: i32, config: &GameConfig) -> Vec<u64> {
         use rand::{Rng, SeedableRng};
 
         let cell = IVec2::new(chunk_x, chunk_z);
         let seed = ((chunk_x as u64) << 32) | ((chunk_z as u64) & 0xFFFFFFFF);
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        let mut roads = self.generate_roads_for_cell(cell, ROAD_CELL_SIZE, &mut rng);
+        let mut roads = self.generate_roads_for_cell(cell, config.world_streaming.road_cell_size, &mut rng, config);
 
         // Generate local roads for island chunks
-        let chunk_center_x = chunk_x as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5;
-        let chunk_center_z = chunk_z as f32 * UNIFIED_CHUNK_SIZE + UNIFIED_CHUNK_SIZE * 0.5;
+        const CHUNK_SIZE: f32 = 200.0; // Default chunk size
+        let chunk_center_x = chunk_x as f32 * CHUNK_SIZE + CHUNK_SIZE * 0.5;
+        let chunk_center_z = chunk_z as f32 * CHUNK_SIZE + CHUNK_SIZE * 0.5;
         let chunk_center = Vec3::new(chunk_center_x, 0.0, chunk_center_z);
 
-        if self.is_position_on_island(chunk_center) {
+        if self.is_position_on_island(chunk_center, config) {
             // Generate 1-2 local roads per island chunk
             let num_local_roads = rng.gen_range(1..=2);
             for _ in 0..num_local_roads {
-                let y = LAND_ELEVATION + RoadType::SideStreet.height();
+                let y = config.world_env.land_elevation + RoadType::SideStreet.height();
                 let offset1_x = rng.gen_range(-80.0..80.0);
                 let offset1_z = rng.gen_range(-80.0..80.0);
                 let offset2_x = rng.gen_range(-80.0..80.0);
@@ -642,7 +657,7 @@ impl RoadNetwork {
                 let end = Vec3::new(chunk_center_x + offset2_x, y, chunk_center_z + offset2_z);
 
                 // Verify both ends are on island (prevents ocean roads)
-                if self.segment_on_island(start, end) {
+                if self.segment_on_island(start, end, config) {
                     let road_id = self.next_road_id;
                     self.next_road_id += 1;
                     let road = RoadSpline::new(road_id, start, end, RoadType::SideStreet);
@@ -655,6 +670,7 @@ impl RoadNetwork {
         roads
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn generate_premium_spawn_roads(
         &mut self,
         base_x: f32,
@@ -663,17 +679,18 @@ impl RoadNetwork {
         cell_coord: IVec2,
         _rng: &mut impl rand::Rng,
         local_index: &mut u16,
+        config: &GameConfig,
     ) -> Vec<u64> {
         // GUARD: Don't generate premium roads in ocean cells (between islands)
         let cell_center = Vec3::new(base_x + cell_size * 0.5, 0.0, base_z + cell_size * 0.5);
-        if !self.is_position_on_island(cell_center) {
+        if !self.is_position_on_island(cell_center, config) {
             return Vec::new();
         }
 
         let mut spawn_roads = Vec::new();
-        let highway_y = LAND_ELEVATION + RoadType::Highway.height();
-        let main_y = LAND_ELEVATION + RoadType::MainStreet.height();
-        let side_y = LAND_ELEVATION + RoadType::SideStreet.height();
+        let highway_y = config.world_env.land_elevation + RoadType::Highway.height();
+        let main_y = config.world_env.land_elevation + RoadType::MainStreet.height();
+        let side_y = config.world_env.land_elevation + RoadType::SideStreet.height();
 
         let cell_min_x = base_x;
         let cell_max_x = base_x + cell_size;

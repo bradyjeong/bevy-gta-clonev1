@@ -1,4 +1,5 @@
-#![allow(clippy::too_many_arguments, clippy::type_complexity)]
+#![allow(clippy::too_many_arguments, clippy::type_complexity, deprecated)]
+
 use crate::components::ContentType;
 use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, SPAWN_DROP_HEIGHT};
 use crate::factories::VehicleFactory;

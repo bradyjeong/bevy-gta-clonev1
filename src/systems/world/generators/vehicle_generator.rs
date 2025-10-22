@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use crate::components::{ContentType, VehicleType};
 use crate::config::GameConfig;
 use crate::constants::{LAND_ELEVATION, SPAWN_DROP_HEIGHT};

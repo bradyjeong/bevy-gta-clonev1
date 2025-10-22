@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 // HighSpeed component removed - no longer needed for finite world
 use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, SPAWN_DROP_HEIGHT};
 use crate::factories::VehicleFactory;
