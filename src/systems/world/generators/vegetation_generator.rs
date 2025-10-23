@@ -57,8 +57,8 @@ impl VegetationGenerator {
                 chunk_center.z + local_z,
             );
 
-            // Check if position is valid (on beach band only, not on road, not overlapping, not in water)
-            if self.is_on_beach_band(position, env)
+            // Check if position is valid (on terrain edge band, not on road, not overlapping, not in water)
+            if self.is_on_terrain_edge_band(position, env)
                 && !self.is_on_road(position, world)
                 && !self.is_in_water_area(position, water_bodies)
                 && world
@@ -240,15 +240,15 @@ impl VegetationGenerator {
         false
     }
 
-    /// Check if position is in beach band (0-100m outside terrain edge) for any island
-    fn is_on_beach_band(&self, position: Vec3, env: &WorldEnvConfig) -> bool {
-        self.is_in_island_beach_band(position, env.islands.left_x, 0.0, env)
-            || self.is_in_island_beach_band(position, env.islands.right_x, 0.0, env)
-            || self.is_in_island_beach_band(position, env.islands.grid_x, env.islands.grid_z, env)
+    /// Check if position is on terrain edge band (just inside terrain boundary, before slope)
+    fn is_on_terrain_edge_band(&self, position: Vec3, env: &WorldEnvConfig) -> bool {
+        self.is_in_island_edge_band(position, env.islands.left_x, 0.0, env)
+            || self.is_in_island_edge_band(position, env.islands.right_x, 0.0, env)
+            || self.is_in_island_edge_band(position, env.islands.grid_x, env.islands.grid_z, env)
     }
 
-    /// Check if position is in beach band for a specific island
-    fn is_in_island_beach_band(
+    /// Check if position is on terrain edge band for a specific island (inner edge, before slope)
+    fn is_in_island_edge_band(
         &self,
         position: Vec3,
         center_x: f32,
@@ -258,14 +258,15 @@ impl VegetationGenerator {
         let dx = (position.x - center_x).abs();
         let dz = (position.z - center_z).abs();
         let half = env.terrain.half_size;
+        let edge_band_width = 50.0; // 50m band inside terrain edge
 
-        // Side bands (outside terrain edge but within beach width)
-        let on_side_band = ((dx > half && dx <= half + env.terrain.beach_width) && dz <= half)
-            || ((dz > half && dz <= half + env.terrain.beach_width) && dx <= half);
+        // Side bands (inside terrain edge, before the slope begins)
+        let on_side_band = ((dx > half - edge_band_width && dx <= half) && dz <= half)
+            || ((dz > half - edge_band_width && dz <= half) && dx <= half);
 
         // Corner bands (diagonal corners using Chebyshev distance)
-        let on_corner_band =
-            (dx > half && dz > half) && ((dx - half).max(dz - half) <= env.terrain.beach_width);
+        let on_corner_band = (dx > half - edge_band_width && dz > half - edge_band_width)
+            && (dx <= half && dz <= half);
 
         on_side_band || on_corner_band
     }
