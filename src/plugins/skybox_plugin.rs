@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use bevy::pbr::NotShadowCaster;
+use bevy::prelude::*;
 
 pub struct SkyboxPlugin;
 
@@ -17,8 +17,13 @@ fn setup_skybox(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let skybox_mesh = meshes.add(Sphere::new(5000.0).mesh().ico(5).expect("Failed to create skybox sphere"));
-    
+    let skybox_mesh = meshes.add(
+        Sphere::new(9500.0)
+            .mesh()
+            .ico(5)
+            .expect("Failed to create skybox sphere"),
+    );
+
     let sky_color = Color::srgb(0.4, 0.7, 1.0);
     let skybox_material = materials.add(StandardMaterial {
         base_color: sky_color,

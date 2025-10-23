@@ -80,7 +80,7 @@ impl Plugin for GameCorePlugin {
                     .chain(),
             )
             // No world origin shift events needed
-            .insert_resource(ClearColor(Color::srgb(0.4, 0.7, 1.0)))
+            .insert_resource(ClearColor(Color::WHITE))
             .insert_resource(AmbientLight {
                 color: Color::srgb(1.0, 0.9, 0.7),
                 brightness: 1800.0,
@@ -91,7 +91,12 @@ impl Plugin for GameCorePlugin {
             // Vehicle Systems
             .add_plugins(VehiclePlugin)
             // World and Environment Systems
-            .add_plugins((WaterPlugin, UnifiedWorldPlugin, UnderwaterPlugin, SkyboxPlugin))
+            .add_plugins((
+                WaterPlugin,
+                UnifiedWorldPlugin,
+                UnderwaterPlugin,
+                SkyboxPlugin,
+            ))
             // Performance and Validation Systems
             .add_plugins((
                 SpawnValidationPlugin,

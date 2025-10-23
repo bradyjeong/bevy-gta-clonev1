@@ -33,8 +33,8 @@ pub fn setup_basic_world(
         Msaa::Off,
         DepthPrepass,
         Projection::Perspective(PerspectiveProjection {
-            // Derived from config: world_half_size (3000.0) + 500m buffer = 3500.0
-            far: config.world_bounds.world_half_size + 500.0,
+            // Extended for proper horizon/skybox rendering (skybox at 9500 units)
+            far: 10000.0,
             ..default()
         }),
         Transform::from_xyz(0.0, 15.0, 25.0).looking_at(Vec3::ZERO, Vec3::Y),
@@ -111,9 +111,9 @@ pub fn setup_basic_world(
         &config,
     );
 
-    // OCEAN FLOOR - Fills entire world
-    // Derived from config: (world_half_size * 2.0) + 400m margin = 6400.0
-    let ocean_size = config.world_bounds.world_half_size * 2.0 + 400.0;
+    // OCEAN FLOOR - Extended to horizon for proper water depth rendering
+    // Matches water surface bounds (18000x18000) to prevent see-through at distance
+    let ocean_size = 18000.0;
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(ocean_size, ocean_size))),
         MeshMaterial3d(materials.add(StandardMaterial {

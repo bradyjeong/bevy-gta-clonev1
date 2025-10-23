@@ -1,6 +1,6 @@
 (
     name: "Global Ocean",
-    bounds: (-3200.0, -3200.0, 3200.0, 3200.0),  // Covers entire world, surrounds both islands
+    bounds: (-9000.0, -9000.0, 9000.0, 9000.0),  // Extended to horizon for seamless sky-water blend
     surface_level: 0.0,
     depth: 50.0,
     tide: (
