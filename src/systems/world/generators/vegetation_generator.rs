@@ -261,8 +261,9 @@ impl VegetationGenerator {
         let edge_band_width = 50.0; // 50m band inside terrain edge
 
         // Side bands (inside terrain edge, before the slope begins)
-        let on_side_band = ((dx > half - edge_band_width && dx <= half) && dz <= half)
-            || ((dz > half - edge_band_width && dz <= half) && dx <= half);
+        let on_side_band = (dz > half - edge_band_width || dx > half - edge_band_width)
+            && dz <= half
+            && dx <= half;
 
         // Corner bands (diagonal corners using Chebyshev distance)
         let on_corner_band = (dx > half - edge_band_width && dz > half - edge_band_width)
