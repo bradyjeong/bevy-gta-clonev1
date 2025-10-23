@@ -594,8 +594,8 @@ impl VehicleFactory {
         // Part 4: Canopy (transparent cockpit bubble) - Forward position for sleek look
         let canopy_mesh = MeshFactory::create_f16_canopy(meshes);
         let canopy_material = materials.add(StandardMaterial {
-            base_color: Color::srgba(0.1, 0.15, 0.2, 0.6), // Dark tinted blue
-            alpha_mode: AlphaMode::Blend,
+            base_color: Color::srgb(0.1, 0.15, 0.2), // Dark tinted blue
+            alpha_mode: AlphaMode::Opaque,
             metallic: 0.9,
             perceptual_roughness: 0.1,
             reflectance: 0.8,
@@ -673,7 +673,7 @@ impl VehicleFactory {
         let flame_material = materials.add(StandardMaterial {
             base_color: Color::srgb(1.0, 0.5, 0.2),
             emissive: LinearRgba::rgb(1.0, 0.3, 0.0),
-            alpha_mode: AlphaMode::Blend,
+            alpha_mode: AlphaMode::Opaque,
             ..default()
         });
 
