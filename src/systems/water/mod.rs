@@ -1,6 +1,7 @@
 pub mod buoyancy;
 pub mod drag;
 pub mod loader;
+pub mod merged_physics;
 pub mod simple_yacht_buoyancy;
 pub mod surface_render;
 pub mod unified_loader;
@@ -11,6 +12,7 @@ pub mod yacht_wake_effects;
 pub use buoyancy::*;
 pub use drag::*;
 pub use loader::*;
+pub use merged_physics::*;
 pub use simple_yacht_buoyancy::*;
 pub use surface_render::*;
 pub use unified_loader::*;

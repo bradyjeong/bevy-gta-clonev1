@@ -101,10 +101,10 @@ pub use world::{
     RoadEntity, WorldBounds,
 };
 
-pub use unified_water::{UnifiedWaterAsset, UnifiedWaterBody, WaterSurface};
+pub use unified_water::{CurrentWaterRegion, UnifiedWaterAsset, UnifiedWaterBody, WaterSurface};
 pub use water::{Boat, WaterBody, WaterWave, Yacht};
 pub use water_material::WaterMaterial;
-pub use water_new::{TideConfig, WaterBodyId, WaterRegion, WaterRegionAsset, WaveParams};
+pub use water_new::{TideConfig, WaterRegion, WaterRegionAsset, WaveParams};
 
 // Visual and rendering components
 pub use effects::{
