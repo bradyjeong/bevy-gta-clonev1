@@ -32,10 +32,10 @@ pub enum RoadType {
 impl RoadType {
     pub fn width(&self) -> f32 {
         match self {
-            RoadType::Highway => 16.0,    // 4 lanes + shoulders (typical US highway)
-            RoadType::MainStreet => 12.0, // 3-4 lanes (main city street)
-            RoadType::SideStreet => 8.0,  // 2 lanes (residential street)
-            RoadType::Alley => 4.0,       // 1 lane (narrow alley)
+            RoadType::Highway => 30.0,    // Manhattan highways
+            RoadType::MainStreet => 34.0, // Manhattan avenues (wide)
+            RoadType::SideStreet => 19.0, // Manhattan cross streets
+            RoadType::Alley => 8.0,       // Manhattan alleys/service roads
         }
     }
 

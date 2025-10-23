@@ -2,7 +2,7 @@ use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
 use crate::constants::WorldEnvConfig;
-use crate::factories::BuildingFactory;
+use crate::factories::{BuildingFactory, BuildingType};
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
@@ -13,6 +13,138 @@ use rand::Rng;
 pub struct BuildingGenerator;
 
 impl BuildingGenerator {
+    fn choose_manhattan_building(
+        &self,
+        grid_center: Vec3,
+        position: Vec3,
+        rng: &mut impl rand::Rng,
+    ) -> (f32, f32, f32, Color) {
+        let distance_from_center =
+            Vec2::new(position.x - grid_center.x, position.z - grid_center.z).length();
+
+        let normalized_distance = (distance_from_center / 900.0).min(1.0);
+
+        let roll: f32 = rng.gen_range(0.0..1.0);
+
+        // Supertall (glass 80%, stone 20%)
+        if roll < 0.05 * (1.0 - normalized_distance * 0.8) {
+            let color_roll: f32 = rng.gen_range(0.0..1.0);
+            let color = if color_roll < 0.8 {
+                // Glass/steel
+                Color::srgb(
+                    rng.gen_range(0.15..0.3),
+                    rng.gen_range(0.2..0.35),
+                    rng.gen_range(0.35..0.55),
+                )
+            } else {
+                // Dark stone
+                Color::srgb(
+                    rng.gen_range(0.4..0.6),
+                    rng.gen_range(0.4..0.55),
+                    rng.gen_range(0.38..0.52),
+                )
+            };
+
+            (
+                rng.gen_range(25.0..44.0), // Max 44m to ensure conservative margin
+                rng.gen_range(25.0..51.0), // Max 51m: guaranteed fit in 80m blocks with 5m margins
+                rng.gen_range(200.0..320.0),
+                color,
+            )
+        }
+        // High-rise (glass 60%, stone 30%, brick 10%)
+        else if roll < 0.35 * (1.0 - normalized_distance * 0.5) {
+            let color_roll: f32 = rng.gen_range(0.0..1.0);
+            let color = if color_roll < 0.6 {
+                // Glass/steel
+                Color::srgb(
+                    rng.gen_range(0.15..0.3),
+                    rng.gen_range(0.2..0.35),
+                    rng.gen_range(0.35..0.55),
+                )
+            } else if color_roll < 0.9 {
+                // Stone
+                Color::srgb(
+                    rng.gen_range(0.4..0.6),
+                    rng.gen_range(0.4..0.55),
+                    rng.gen_range(0.38..0.52),
+                )
+            } else {
+                // Brick
+                Color::srgb(
+                    rng.gen_range(0.45..0.6),
+                    rng.gen_range(0.25..0.4),
+                    rng.gen_range(0.2..0.3),
+                )
+            };
+
+            (
+                rng.gen_range(18.0..34.0), // Max 34m to ensure conservative margin
+                rng.gen_range(18.0..39.0), // Max 39m to ensure conservative margin
+                rng.gen_range(80.0..180.0),
+                color,
+            )
+        }
+        // Mid-rise (brick 50%, stone 40%, glass 10%)
+        else if roll < 0.85 {
+            let color_roll: f32 = rng.gen_range(0.0..1.0);
+            let color = if color_roll < 0.5 {
+                // Brick
+                Color::srgb(
+                    rng.gen_range(0.45..0.6),
+                    rng.gen_range(0.25..0.4),
+                    rng.gen_range(0.2..0.3),
+                )
+            } else if color_roll < 0.9 {
+                // Stone
+                Color::srgb(
+                    rng.gen_range(0.4..0.6),
+                    rng.gen_range(0.4..0.55),
+                    rng.gen_range(0.38..0.52),
+                )
+            } else {
+                // Glass
+                Color::srgb(
+                    rng.gen_range(0.15..0.3),
+                    rng.gen_range(0.2..0.35),
+                    rng.gen_range(0.35..0.55),
+                )
+            };
+
+            (
+                rng.gen_range(12.0..25.0),
+                rng.gen_range(15.0..30.0),
+                rng.gen_range(25.0..60.0),
+                color,
+            )
+        }
+        // Brownstone (brick 70%, stone 30%, no glass)
+        else {
+            let color_roll: f32 = rng.gen_range(0.0..1.0);
+            let color = if color_roll < 0.7 {
+                // Brick
+                Color::srgb(
+                    rng.gen_range(0.45..0.6),
+                    rng.gen_range(0.25..0.4),
+                    rng.gen_range(0.2..0.3),
+                )
+            } else {
+                // Stone
+                Color::srgb(
+                    rng.gen_range(0.4..0.6),
+                    rng.gen_range(0.4..0.55),
+                    rng.gen_range(0.38..0.52),
+                )
+            };
+
+            (
+                rng.gen_range(8.0..12.0),
+                rng.gen_range(12.0..20.0),
+                rng.gen_range(12.0..20.0),
+                color,
+            )
+        }
+    }
     #[allow(clippy::too_many_arguments)]
     pub fn generate_buildings(
         &self,
@@ -51,10 +183,23 @@ impl BuildingGenerator {
 
         // Determine building density based on distance from center
         let distance_from_center = Vec2::new(chunk_center.x, chunk_center.z).length();
-        let building_density = (1.0 - (distance_from_center / world_half_size).min(0.8)).max(0.1);
+        let mut building_density =
+            (1.0 - (distance_from_center / world_half_size).min(0.8)).max(0.1);
+
+        // Override density for Grid Island (Manhattan-style urban density)
+        if world.is_on_grid_island(chunk_center) {
+            building_density = 1.0;
+        }
 
         // Generate building positions - reduced for simplicity
-        let building_attempts = (building_density * 8.0) as usize;
+        let building_attempts = if world.is_on_grid_island(chunk_center) {
+            60 // Dense Manhattan packing
+        } else {
+            (building_density * 8.0) as usize
+        };
+
+        // Calculate grid center from environment config for Manhattan building selection
+        let grid_center = Vec3::new(env.islands.grid_x, 0.0, env.islands.grid_z);
 
         for _ in 0..building_attempts {
             let local_x = world_rng.global().gen_range(-half_size..half_size);
@@ -65,27 +210,51 @@ impl BuildingGenerator {
                 chunk_center.z + local_z,
             );
 
-            // Check if position is valid (on island, not on road, not overlapping, not in water)
+            // Check on_grid per position
+            let on_grid = world.is_on_grid_island(position);
+
+            let (footprint_x, footprint_z, height, color, radius) = if on_grid {
+                let (fx, fz, h, c) =
+                    self.choose_manhattan_building(grid_center, position, world_rng.global());
+                let r = fx.max(fz) * 0.5;
+                (fx, fz, h, Some(c), r)
+            } else {
+                let size = world_rng.global().gen_range(8.0..15.0);
+                let h = world_rng.global().gen_range(8.0..30.0);
+                (size, size, h, None, size * 0.5)
+            };
+
+            // Check if position is valid (on island, not on road with radius, not overlapping, not in water)
             if world.is_on_terrain_island(position)
-                && !self.is_on_road(position, world)
+                && !self.is_on_road(position, world, radius)
                 && !self.is_in_water_area(position, water_bodies)
             {
-                let building_size = world_rng.global().gen_range(8.0..15.0);
+                let min_distance = if on_grid {
+                    1.0 // True zero-lot-line Manhattan (reduced from 2.0)
+                } else {
+                    footprint_x.max(footprint_z) // Suburban spacing
+                };
+
                 if world.placement_grid.can_place(
                     position,
                     ContentType::Building,
-                    building_size * 0.5,
-                    building_size,
+                    radius,
+                    min_distance,
                 ) {
-                    if let Ok(building_entity) =
-                        self.spawn_building(commands, coord, position, meshes, materials)
-                    {
+                    if let Ok(building_entity) = self.spawn_building(
+                        commands,
+                        coord,
+                        position,
+                        Vec3::new(footprint_x, height, footprint_z),
+                        color,
+                        meshes,
+                        materials,
+                        config,
+                    ) {
                         // Add to placement grid
-                        world.placement_grid.add_entity(
-                            position,
-                            ContentType::Building,
-                            building_size * 0.5,
-                        );
+                        world
+                            .placement_grid
+                            .add_entity(position, ContentType::Building, radius);
 
                         // Add entity to chunk
                         if let Some(chunk) = world.get_chunk_mut(coord) {
@@ -102,20 +271,36 @@ impl BuildingGenerator {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn spawn_building(
         &self,
         commands: &mut Commands,
         chunk_coord: ChunkCoord,
         position: Vec3,
+        size: Vec3,
+        color: Option<Color>,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        config: &GameConfig,
     ) -> Result<Entity, String> {
-        // Use focused BuildingFactory for clean, single-responsibility design
-        let factory = BuildingFactory::new();
+        let factory = BuildingFactory::with_config(config.clone());
 
-        match factory.spawn_building(commands, meshes, materials, position, None) {
+        let entity = if let Some(c) = color {
+            factory.spawn_building_with_size(
+                commands,
+                meshes,
+                materials,
+                position,
+                size,
+                BuildingType::Commercial,
+                c,
+            )
+        } else {
+            factory.spawn_building(commands, meshes, materials, position, None)
+        };
+
+        match entity {
             Ok(entity) => {
-                // Add chunk-specific components to maintain compatibility
                 commands.entity(entity).insert(UnifiedChunkEntity {
                     coord: chunk_coord,
                     layer: ContentLayer::Buildings,
@@ -126,9 +311,15 @@ impl BuildingGenerator {
         }
     }
 
-    fn is_on_road(&self, position: Vec3, world: &UnifiedWorldManager) -> bool {
+    fn is_on_road(&self, position: Vec3, world: &UnifiedWorldManager, radius: f32) -> bool {
+        let tolerance = if world.is_on_grid_island(position) {
+            5.0 // Conservative margin - buildings NEVER touch roads
+        } else {
+            25.0 // Suburban spacing elsewhere
+        };
+
         for road in world.road_network.roads.values() {
-            if self.is_point_on_road_spline(position, road, 25.0) {
+            if self.is_point_on_road_spline(position, road, tolerance, radius) {
                 return true;
             }
         }
@@ -140,17 +331,50 @@ impl BuildingGenerator {
         position: Vec3,
         road: &crate::systems::world::road_network::RoadSpline,
         tolerance: f32,
+        radius: f32,
     ) -> bool {
-        let samples = 20;
         let width = road.road_type.width();
 
+        // For straight roads (2 control points), use exact point-to-segment distance
+        if road.control_points.len() == 2 {
+            let a = road.control_points[0];
+            let b = road.control_points[road.control_points.len() - 1];
+
+            // Project point onto line segment
+            let vx = b.x - a.x;
+            let vz = b.z - a.z;
+            let wx = position.x - a.x;
+            let wz = position.z - a.z;
+
+            let len_sq = vx * vx + vz * vz;
+            let t = if len_sq > 0.0 {
+                ((wx * vx + wz * vz) / len_sq).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+
+            // Closest point on segment
+            let closest_x = a.x + t * vx;
+            let closest_z = a.z + t * vz;
+
+            // Distance from position to closest point
+            let dx = position.x - closest_x;
+            let dz = position.z - closest_z;
+            let distance = (dx * dx + dz * dz).sqrt();
+
+            return distance <= width * 0.5 + tolerance + radius;
+        }
+
+        // For curved roads, fall back to sampling
+        let samples = 20;
         for i in 0..samples {
             let t = i as f32 / (samples - 1) as f32;
             let road_point = road.evaluate(t);
             let distance =
                 Vec3::new(position.x - road_point.x, 0.0, position.z - road_point.z).length();
 
-            if distance <= width * 0.5 + tolerance {
+            // Include building radius in overlap check
+            if distance <= width * 0.5 + tolerance + radius {
                 return true;
             }
         }

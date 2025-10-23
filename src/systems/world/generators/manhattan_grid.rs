@@ -38,50 +38,51 @@ impl ManhattanGridGenerator {
         let min_z = grid_z - half_size; // 1200
         let max_z = grid_z + half_size; // 2400
 
-        // Block size (configurable - makes 12x12 blocks for 1200m island)
-        let block_size = 100.0;
-
-        let road_y = env.land_elevation + RoadType::MainStreet.height();
+        // Manhattan-realistic block dimensions
+        let avenue_spacing = 260.0; // North-South avenues (wide spacing)
+        let street_spacing = 80.0; // East-West streets (narrow spacing)
 
         info!(
-            "Generating Manhattan grid for island at ({}, {}) with block_size={}m",
-            grid_x, grid_z, block_size
+            "Generating Manhattan grid for island at ({}, {}) with avenue_spacing={}m, street_spacing={}m",
+            grid_x, grid_z, avenue_spacing, street_spacing
         );
 
-        // Generate VERTICAL roads (North-South)
+        // Generate VERTICAL roads (North-South avenues) - wide MainStreet (34m)
         let mut x = min_x;
         let mut road_count = 0;
         while x <= max_x {
-            let start = Vec3::new(x, road_y, min_z);
-            let end = Vec3::new(x, road_y, max_z);
+            let y = env.land_elevation + RoadType::MainStreet.height();
+            let start = Vec3::new(x, y, min_z);
+            let end = Vec3::new(x, y, max_z);
 
             let road_id = road_network.add_road(start, end, RoadType::MainStreet);
             road_ids.push(road_id);
             road_count += 1;
 
-            x += block_size;
+            x += avenue_spacing;
         }
 
-        info!("Generated {} vertical roads", road_count);
+        info!("Generated {} vertical avenues", road_count);
 
-        // Generate HORIZONTAL roads (East-West)
+        // Generate HORIZONTAL roads (East-West streets) - narrow SideStreet (19m)
         let mut z = min_z;
         road_count = 0;
         while z <= max_z {
-            let start = Vec3::new(min_x, road_y, z);
-            let end = Vec3::new(max_x, road_y, z);
+            let y = env.land_elevation + RoadType::SideStreet.height();
+            let start = Vec3::new(min_x, y, z);
+            let end = Vec3::new(max_x, y, z);
 
-            let road_id = road_network.add_road(start, end, RoadType::MainStreet);
+            let road_id = road_network.add_road(start, end, RoadType::SideStreet);
             road_ids.push(road_id);
             road_count += 1;
 
-            z += block_size;
+            z += street_spacing;
         }
 
         info!(
-            "✓ Manhattan grid generation complete: {} vertical + {} horizontal = {} total roads for grid island at ({}, {})",
-            (max_x - min_x) / block_size + 1.0,
-            (max_z - min_z) / block_size + 1.0,
+            "✓ Manhattan grid generation complete: {} vertical avenues + {} horizontal streets = {} total roads for grid island at ({}, {})",
+            ((max_x - min_x) / avenue_spacing + 1.0) as u32,
+            ((max_z - min_z) / street_spacing + 1.0) as u32,
             road_ids.len(),
             grid_x,
             grid_z

@@ -3,6 +3,7 @@ use crate::components::{Building, ContentType, DynamicContent};
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use rand::Rng;
 
 /// Building Factory - Focused factory for building spawning only
@@ -66,7 +67,7 @@ impl BuildingFactory {
                 Visibility::default(),
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
-                // Removed VisibilityRange - let physics_activation control culling
+                VisibilityRange::abrupt(0.0, self.config.performance.building_visibility_distance),
                 Building {
                     building_type: building_type.to_world_building_type(),
                     height,
@@ -102,7 +103,6 @@ impl BuildingFactory {
         });
 
         // NO PHYSICS AT SPAWN - added dynamically by physics activation system
-        // NO PARENT VISIBILITY RANGE - mesh visibility controlled by physics_activation radius
         let building_entity = commands
             .spawn((
                 DynamicContent {
@@ -112,7 +112,7 @@ impl BuildingFactory {
                 Visibility::default(),
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),
-                // Removed VisibilityRange - let physics_activation control culling
+                VisibilityRange::abrupt(0.0, self.config.performance.building_visibility_distance),
                 Building {
                     building_type: building_type.to_world_building_type(),
                     height: size.y,
