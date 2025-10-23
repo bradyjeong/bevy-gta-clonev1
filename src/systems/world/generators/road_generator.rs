@@ -13,7 +13,6 @@ use crate::systems::world::unified_world::{
 };
 use bevy::prelude::*;
 
-
 pub struct RoadGenerator;
 
 impl RoadGenerator {
