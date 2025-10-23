@@ -62,11 +62,7 @@ pub fn spawn_new_npc_system(
         }
 
         // Spawn above terrain, let gravity drop NPCs
-        let spawn_position = Vec3::new(
-            x,
-            env.land_elevation + env.spawn_drop_height,
-            z,
-        );
+        let spawn_position = Vec3::new(x, env.land_elevation + env.spawn_drop_height, z);
 
         // Use spawn_simple_npc which adds ALL required components
         spawn_simple_npc(&mut commands, spawn_position, &mut world_rng, &config);

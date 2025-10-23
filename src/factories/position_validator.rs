@@ -73,15 +73,12 @@ impl PositionValidator {
 
         // Simplified: terrain islands are at land_elevation, ocean at ocean_floor_depth
         // Beach slopes handled by visual meshes only
-        let ground_height = if world.is_on_terrain_island(Vec3::new(
-            position.x,
-            env.land_elevation,
-            position.y,
-        )) {
-            env.land_elevation
-        } else {
-            env.ocean_floor_depth
-        };
+        let ground_height =
+            if world.is_on_terrain_island(Vec3::new(position.x, env.land_elevation, position.y)) {
+                env.land_elevation
+            } else {
+                env.ocean_floor_depth
+            };
 
         // Cache for future use (following AGENT.MD performance guidelines)
         self.position_cache.insert((grid_x, grid_z), ground_height);
@@ -129,8 +126,7 @@ impl PositionValidator {
         }
 
         // Check if in water area
-        if self.is_in_water_area(position, world) && !matches!(content_type, ContentType::Vehicle)
-        {
+        if self.is_in_water_area(position, world) && !matches!(content_type, ContentType::Vehicle) {
             return false;
         }
 
