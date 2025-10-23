@@ -207,7 +207,8 @@ impl RoadNetwork {
     ) -> Option<CellEdge> {
         let base_x = cell_coord.x as f32 * cell_size;
         let base_z = cell_coord.y as f32 * cell_size;
-        let tolerance = 5.0;
+        // Relative tolerance: 1% of cell size, clamped between 0.5m (small cells) and 5m (large cells)
+        let tolerance = (0.01 * cell_size).clamp(0.5, 5.0);
 
         if (position.z - base_z).abs() < tolerance {
             Some(CellEdge::South)
@@ -327,6 +328,13 @@ impl RoadNetwork {
 
         let base_x = cell_coord.x as f32 * cell_size;
         let base_z = cell_coord.y as f32 * cell_size;
+
+        // GUARD: Only generate grid roads on grid island (prevents spillover to left/right islands)
+        let cell_center = Vec3::new(base_x + 0.5 * cell_size, 0.0, base_z + 0.5 * cell_size);
+        if !self.is_on_grid_island(cell_center, config) {
+            return Vec::new();
+        }
+
         let mut local_index: u16 = 0;
         let mut new_roads = Vec::new();
         let y = config.world_env.land_elevation + RoadType::MainStreet.height();
@@ -467,6 +475,18 @@ impl RoadNetwork {
         self.is_position_on_island(start, config) && self.is_position_on_island(end, config)
     }
 
+    /// Check if position is on the grid island (X=0, Z=1800)
+    fn is_on_grid_island(&self, position: Vec3, config: &GameConfig) -> bool {
+        let grid_x = config.world_env.islands.grid_x;
+        let grid_z = config.world_env.islands.grid_z;
+        let half_size = config.world_env.terrain.half_size;
+
+        position.x >= (grid_x - half_size)
+            && position.x <= (grid_x + half_size)
+            && position.z >= (grid_z - half_size)
+            && position.z <= (grid_z + half_size)
+    }
+
     pub fn generate_roads_for_cell(
         &mut self,
         cell_coord: IVec2,
@@ -529,6 +549,16 @@ impl RoadNetwork {
                 let road_id = generate_unique_road_id(cell_coord, local_index);
                 local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, road_type);
+
+                // DEBUG ASSERTION: Verify vertical road is axis-aligned (same X coordinate)
+                debug_assert!(
+                    (start.x - end.x).abs() < 1e-3,
+                    "VERTICAL road must be axis-aligned: start.x={} end.x={} diff={}",
+                    start.x,
+                    end.x,
+                    (start.x - end.x).abs()
+                );
+
                 self.roads.insert(road_id, road);
                 new_roads.push(road_id);
                 debug!(
@@ -554,31 +584,21 @@ impl RoadNetwork {
                 let road_id = generate_unique_road_id(cell_coord, local_index);
                 local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, road_type);
+
+                // DEBUG ASSERTION: Verify horizontal road is axis-aligned (same Z coordinate)
+                debug_assert!(
+                    (start.z - end.z).abs() < 1e-3,
+                    "HORIZONTAL road must be axis-aligned: start.z={} end.z={} diff={}",
+                    start.z,
+                    end.z,
+                    (start.z - end.z).abs()
+                );
+
                 self.roads.insert(road_id, road);
                 new_roads.push(road_id);
                 debug!(
                     "Generated HORIZONTAL arterial {:?} in cell {:?}",
                     road_type, cell_coord
-                );
-            }
-        }
-
-        if !is_vertical_arterial && !is_horizontal_arterial {
-            let road_type = RoadType::SideStreet;
-            let y = config.world_env.land_elevation + road_type.height();
-            let start = Vec3::new(base_x + cell_size * 0.2, y, base_z + cell_size * 0.2);
-            let end = Vec3::new(base_x + cell_size * 0.8, y, base_z + cell_size * 0.8);
-
-            // Only generate if BOTH endpoints are on island (prevents ocean roads)
-            if self.segment_on_island(start, end, config) {
-                let road_id = generate_unique_road_id(cell_coord, local_index);
-                local_index += 1;
-                let road = RoadSpline::new(road_id, start, end, road_type);
-                self.roads.insert(road_id, road);
-                new_roads.push(road_id);
-                debug!(
-                    "Generated SideStreet in cell {:?} - no main roads",
-                    cell_coord
                 );
             }
         }
@@ -626,6 +646,7 @@ impl RoadNetwork {
     }
 
     #[deprecated(note = "Use generate_roads_for_cell")]
+    #[allow(unreachable_code)]
     pub fn generate_chunk_roads(
         &mut self,
         chunk_x: i32,
@@ -637,12 +658,17 @@ impl RoadNetwork {
         let cell = IVec2::new(chunk_x, chunk_z);
         let seed = ((chunk_x as u64) << 32) | ((chunk_z as u64) & 0xFFFFFFFF);
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        let mut roads = self.generate_roads_for_cell(
+        let roads = self.generate_roads_for_cell(
             cell,
             config.world_streaming.road_cell_size,
             &mut rng,
             config,
         );
+
+        // SAFETY GUARD: Return early to prevent legacy diagonal road generation
+        // The generate_roads_for_cell function already creates proper axis-aligned roads
+        // All code below this point is deprecated legacy logic that could create diagonal roads
+        return roads;
 
         // Generate local roads for island chunks
         const CHUNK_SIZE: f32 = 200.0; // Default chunk size

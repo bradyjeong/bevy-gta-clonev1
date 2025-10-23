@@ -26,7 +26,7 @@ impl BuildingGenerator {
         config: &GameConfig,
         env: &WorldEnvConfig,
     ) {
-        let chunk_center = coord.to_world_pos();
+        let chunk_center = coord.to_world_pos_with_size(world.chunk_size);
         let half_size = world.chunk_size * 0.5;
 
         // Skip building generation for chunks near world edge

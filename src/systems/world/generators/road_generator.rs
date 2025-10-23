@@ -32,16 +32,17 @@ impl RoadGenerator {
         env: &WorldEnvConfig,
     ) {
         // Skip if chunk is not on a terrain island
-        let chunk_center = coord.to_world_pos();
+        let chunk_center = coord.to_world_pos_with_size(world.chunk_size);
         if !world.is_on_terrain_island(chunk_center) {
             return;
         }
 
-        // Use grid generator for grid island, organic generator for other islands
+        // Use simple Manhattan grid generator for grid island, organic generator for other islands
         let new_road_ids = if world.is_on_grid_island(chunk_center) {
+            // Generate entire Manhattan grid on first chunk (subsequent chunks skip)
             world
-                .road_network
-                .generate_grid_chunk_roads(coord.x, coord.z, config)
+                .manhattan_generator
+                .generate_grid(&mut world.road_network, config, env)
         } else {
             world.road_network.generate_roads_for_cell(
                 IVec2::new(coord.x, coord.z),
@@ -182,7 +183,7 @@ impl RoadGenerator {
         world: &mut UnifiedWorldManager,
         coord: ChunkCoord,
     ) {
-        let chunk_center = coord.to_world_pos();
+        let chunk_center = coord.to_world_pos_with_size(world.chunk_size);
         let chunk_size = world.chunk_size;
         let half_size = chunk_size * 0.5;
 

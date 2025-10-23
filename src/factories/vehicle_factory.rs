@@ -1,7 +1,7 @@
 use crate::bundles::{DynamicPhysicsBundle, VisibleChildBundle};
 use crate::components::MovementTracker;
-use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::unified_water::WaterBodyId;
+use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::{
     AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, JetFlame, LandingLight,
     MainRotor, NavigationLight, NavigationLightType, RotorBlurDisk, RotorWash, SimpleCarSpecs,

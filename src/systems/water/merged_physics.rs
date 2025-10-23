@@ -83,17 +83,11 @@ pub fn water_physics_system(
     let current_time = time.elapsed_secs();
     let delta = time.delta_secs();
 
-    for (
-        entity,
-        global_transform,
-        mut external_force,
-        mut velocity,
-        collider,
-        mut cached_region,
-    ) in query.iter_mut()
+    for (entity, global_transform, mut external_force, mut velocity, collider, mut cached_region) in
+        query.iter_mut()
     {
         let position = global_transform.translation();
-        
+
         // Initialize buoyancy force (will be set based on submersion, or remain 0.0)
         let mut buoyancy_y = 0.0;
 
@@ -160,7 +154,7 @@ pub fn water_physics_system(
                 }
             }
         }
-        
+
         // Set buoyancy force (assign, not accumulate) - clears stale forces when out of water
         // Keep X/Z unchanged so other systems can influence horizontal forces
         external_force.force.y = buoyancy_y;

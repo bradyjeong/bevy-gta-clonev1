@@ -24,6 +24,46 @@ pub fn setup_basic_world(
     config: Res<GameConfig>,
     env: Res<WorldEnvConfig>,
 ) {
+    // Config drift guards: Verify consistency between WorldEnvConfig and GameConfig
+    // These assertions prevent bugs where road_network.rs and world.rs disagree on island boundaries
+    debug_assert!(
+        (config.world_env.islands.grid_x - env.islands.grid_x).abs() < 0.001,
+        "Config drift detected: grid_x mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.islands.grid_x,
+        env.islands.grid_x
+    );
+    debug_assert!(
+        (config.world_env.islands.grid_z - env.islands.grid_z).abs() < 0.001,
+        "Config drift detected: grid_z mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.islands.grid_z,
+        env.islands.grid_z
+    );
+    debug_assert!(
+        (config.world_env.terrain.half_size * 2.0 - env.terrain.size).abs() < 0.001,
+        "Config drift detected: terrain size mismatch between GameConfig (half_size {} -> {}) and WorldEnvConfig (size {})",
+        config.world_env.terrain.half_size,
+        config.world_env.terrain.half_size * 2.0,
+        env.terrain.size
+    );
+    debug_assert!(
+        (config.world_env.islands.left_x - env.islands.left_x).abs() < 0.001,
+        "Config drift detected: left_x mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.islands.left_x,
+        env.islands.left_x
+    );
+    debug_assert!(
+        (config.world_env.islands.right_x - env.islands.right_x).abs() < 0.001,
+        "Config drift detected: right_x mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.islands.right_x,
+        env.islands.right_x
+    );
+    debug_assert!(
+        (config.world_env.terrain.half_size - env.terrain.half_size).abs() < 0.001,
+        "Config drift detected: terrain half_size mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.terrain.half_size,
+        env.terrain.half_size
+    );
+
     // No longer need WorldRoot - spawn entities directly in world space
 
     // Camera (stays outside WorldRoot - doesn't move with world shifts)

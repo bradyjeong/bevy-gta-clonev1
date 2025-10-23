@@ -5,6 +5,7 @@
 )]
 use crate::components::ContentType;
 use crate::config::GameConfig;
+use crate::systems::world::generators::ManhattanGridGenerator;
 use crate::systems::world::road_network::RoadNetwork;
 use bevy::prelude::*;
 use std::collections::HashMap;
@@ -293,6 +294,7 @@ pub struct UnifiedWorldManager {
 
     pub placement_grid: PlacementGrid,
     pub road_network: RoadNetwork,
+    pub manhattan_generator: ManhattanGridGenerator,
 
     // Streaming state
     pub active_chunk: Option<ChunkCoord>,
@@ -328,6 +330,7 @@ impl UnifiedWorldManager {
             world_bounds: config.world.world_bounds(),
             placement_grid: PlacementGrid::new(),
             road_network: RoadNetwork::default(),
+            manhattan_generator: ManhattanGridGenerator::default(),
             active_chunk: None,
             streaming_radius_chunks: (config.world.streaming_radius / config.world.chunk_size)
                 .ceil() as i32,
@@ -413,6 +416,7 @@ impl Default for UnifiedWorldManager {
             world_bounds: (-3200.0, 3200.0, -3200.0, 3200.0), // 6.4km x 6.4km default
             placement_grid: PlacementGrid::new(),
             road_network: RoadNetwork::default(),
+            manhattan_generator: ManhattanGridGenerator::default(),
             active_chunk: None,
             streaming_radius_chunks: (streaming_radius / chunk_size).ceil() as i32,
             last_update: 0.0,

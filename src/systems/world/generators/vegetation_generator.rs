@@ -28,7 +28,7 @@ impl VegetationGenerator {
         config: &GameConfig,
         env: &WorldEnvConfig,
     ) {
-        let chunk_center = coord.to_world_pos();
+        let chunk_center = coord.to_world_pos_with_size(world.chunk_size);
         let half_size = world.chunk_size * 0.5;
 
         // Skip if chunk is not on a terrain island (including beach margin for beach vegetation)
