@@ -81,6 +81,7 @@ pub fn water_physics_system(
     water_regions: Query<(Entity, &UnifiedWaterBody)>,
 ) {
     let current_time = time.elapsed_secs();
+    let delta = time.delta_secs();
 
     for (
         entity,
@@ -92,6 +93,9 @@ pub fn water_physics_system(
     ) in query.iter_mut()
     {
         let position = global_transform.translation();
+        
+        // Initialize buoyancy force (will be set based on submersion, or remain 0.0)
+        let mut buoyancy_y = 0.0;
 
         // O(1) lookup using cached region with fallback to O(n) scan
         let region = match cached_region.region_entity {
@@ -132,16 +136,15 @@ pub fn water_physics_system(
                 );
 
                 if submersion_ratio > 0.0 {
-                    // BUOYANCY: Apply upward force based on submerged volume
-                    let buoyancy_force = 9.81 * 1000.0 * submersion_ratio * half_extents.volume();
-                    external_force.force.y += buoyancy_force;
+                    // BUOYANCY: Calculate upward force based on submerged volume
+                    buoyancy_y = 9.81 * 1000.0 * submersion_ratio * half_extents.volume();
 
                     // DRAG: Apply resistance forces
                     let drag_coefficient: f32 = 0.9 + (submersion_ratio * 0.08);
-                    velocity.linvel *= drag_coefficient.powf(time.delta_secs());
+                    velocity.linvel *= drag_coefficient.powf(delta);
 
                     let angular_drag_coefficient: f32 = 0.85 + (submersion_ratio * 0.12);
-                    velocity.angvel *= angular_drag_coefficient.powf(time.delta_secs());
+                    velocity.angvel *= angular_drag_coefficient.powf(delta);
 
                     // Debug logging for development
                     if submersion_ratio > 0.1 {
@@ -149,7 +152,7 @@ pub fn water_physics_system(
                             "Entity {:?} submersion: {:.2}, buoyancy: {:.2}, drag: {:.3}/{:.3}",
                             entity,
                             submersion_ratio,
-                            buoyancy_force,
+                            buoyancy_y,
                             drag_coefficient,
                             angular_drag_coefficient
                         );
@@ -157,6 +160,10 @@ pub fn water_physics_system(
                 }
             }
         }
+        
+        // Set buoyancy force (assign, not accumulate) - clears stale forces when out of water
+        // Keep X/Z unchanged so other systems can influence horizontal forces
+        external_force.force.y = buoyancy_y;
     }
 }
 

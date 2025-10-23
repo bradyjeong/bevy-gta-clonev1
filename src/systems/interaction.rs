@@ -18,7 +18,6 @@ fn transfer_to_vehicle(
     control_state: Option<&ControlState>,
     player_controlled: Option<&PlayerControlled>,
     vehicle_type: VehicleControlType,
-    _new_game_state: GameState,
     vehicle_name: &str,
 ) {
     // Queue atomic ActiveEntity transfer
@@ -187,7 +186,6 @@ pub fn interaction_system(
                     control_state,
                     player_controlled,
                     VehicleControlType::Car,
-                    GameState::Driving,
                     "Car",
                 );
                 state.set(GameState::Driving);
@@ -200,7 +198,6 @@ pub fn interaction_system(
                     control_state,
                     player_controlled,
                     VehicleControlType::Helicopter,
-                    GameState::Flying,
                     "Helicopter",
                 );
                 state.set(GameState::Flying);
@@ -213,7 +210,6 @@ pub fn interaction_system(
                     control_state,
                     player_controlled,
                     VehicleControlType::F16,
-                    GameState::Jetting,
                     "F16",
                 );
                 state.set(GameState::Jetting);
@@ -236,7 +232,6 @@ pub fn interaction_system(
                     control_state,
                     player_controlled,
                     VehicleControlType::Yacht,
-                    GameState::Driving,
                     "Yacht",
                 );
                 state.set(GameState::Driving);
