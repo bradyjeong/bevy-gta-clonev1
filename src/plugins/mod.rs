@@ -54,6 +54,7 @@ pub mod inspector_plugin;
 pub mod map_plugin;
 pub mod particle_plugin;
 pub mod player_plugin;
+pub mod skybox_plugin;
 pub mod ui_plugin;
 pub mod underwater_plugin;
 pub mod unified_world_plugin;
@@ -74,6 +75,7 @@ pub use inspector_plugin::InspectorPlugin;
 pub use map_plugin::MapPlugin;
 pub use particle_plugin::ParticlePlugin;
 pub use player_plugin::PlayerPlugin;
+pub use skybox_plugin::SkyboxPlugin;
 pub use ui_plugin::UIPlugin;
 pub use underwater_plugin::UnderwaterPlugin;
 
