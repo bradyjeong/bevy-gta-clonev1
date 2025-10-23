@@ -77,9 +77,9 @@ impl Default for WaterMaterial {
             // Format: (dir.x, dir.y, amplitude, wavelength)
             // NOTE: Directions are normalized in shader
             wave_data0: [
-                Vec4::new(1.0, 0.2, 0.8, 120.0),   // Large ocean swells (visible at horizon)
-                Vec4::new(-0.6, 1.0, 0.5, 80.0),   // Medium swells
-                Vec4::new(0.2, -1.0, 0.3, 50.0),   // Smaller waves
+                Vec4::new(1.0, 0.2, 0.8, 120.0), // Large ocean swells (visible at horizon)
+                Vec4::new(-0.6, 1.0, 0.5, 80.0), // Medium swells
+                Vec4::new(0.2, -1.0, 0.3, 50.0), // Smaller waves
                 Vec4::new(-1.0, -0.3, 0.15, 25.0), // Detail waves
             ],
 
