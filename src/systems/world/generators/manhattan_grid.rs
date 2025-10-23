@@ -79,9 +79,12 @@ impl ManhattanGridGenerator {
         }
 
         info!(
-            "Generated {} horizontal roads - Total {} Manhattan grid roads",
-            road_count,
-            road_ids.len()
+            "✓ Manhattan grid generation complete: {} vertical + {} horizontal = {} total roads for grid island at ({}, {})",
+            (max_x - min_x) / block_size + 1.0,
+            (max_z - min_z) / block_size + 1.0,
+            road_ids.len(),
+            grid_x,
+            grid_z
         );
 
         road_ids

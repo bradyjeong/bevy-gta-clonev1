@@ -12,7 +12,7 @@ use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
 };
 use bevy::prelude::*;
-use bevy::render::view::visibility::VisibilityRange;
+
 
 pub struct RoadGenerator;
 
@@ -110,7 +110,7 @@ impl RoadGenerator {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         material_registry: &mut MaterialRegistry,
-        config: &GameConfig,
+        _config: &GameConfig,
         env: &WorldEnvConfig,
     ) -> Entity {
         // Get road center position and set correct height
@@ -140,7 +140,7 @@ impl RoadGenerator {
             ))
             .id();
 
-        // Road surface mesh - local coordinates with proper VisibilityRange
+        // Road surface mesh - local coordinates, uses default frustum culling
         let road_mesh = generate_road_mesh_local(road, center_pos);
         commands.spawn((
             Mesh3d(meshes.add(road_mesh)),
@@ -148,15 +148,9 @@ impl RoadGenerator {
             Transform::from_translation(Vec3::new(0.0, 0.05, 0.0)),
             ChildOf(road_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: (config.performance.road_visibility_distance * 0.9)
-                    ..(config.performance.road_visibility_distance * 1.1),
-                use_aabb: false,
-            },
         ));
 
-        // Road markings - local coordinates with proper VisibilityRange
+        // Road markings - local coordinates, uses default frustum culling
         let marking_meshes = generate_road_markings_mesh_local(road, center_pos);
         for marking_mesh in marking_meshes {
             commands.spawn((
@@ -165,12 +159,6 @@ impl RoadGenerator {
                 Transform::from_translation(Vec3::new(0.0, 0.06, 0.0)),
                 ChildOf(road_entity),
                 VisibleChildBundle::default(),
-                VisibilityRange {
-                    start_margin: 0.0..0.0,
-                    end_margin: (config.performance.road_visibility_distance * 0.9)
-                        ..(config.performance.road_visibility_distance * 1.1),
-                    use_aabb: true, // Use AABB for accurate culling of long roads
-                },
             ));
         }
 

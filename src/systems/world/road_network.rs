@@ -15,6 +15,11 @@ pub fn generate_unique_road_id(cell_coord: IVec2, local_index: u16) -> u64 {
 }
 
 // NEW GTA-STYLE ROAD NETWORK SYSTEM
+//
+// ROAD ID ALLOCATION STRATEGY:
+// - Cell-based roads (organic): use generate_unique_road_id() → packs cell coords in lower bits (0 to ~2^48)
+// - Manhattan grid roads: use add_road() → sequential IDs starting from 1 << 56 (~7e16)
+// - ID spaces are separated by design to prevent collision
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RoadType {
@@ -169,7 +174,7 @@ pub struct BoundaryPoint {
     pub edge: CellEdge,
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct RoadNetwork {
     pub roads: HashMap<u64, RoadSpline>,
     pub intersections: HashMap<u32, RoadIntersection>,
@@ -181,6 +186,21 @@ pub struct RoadNetwork {
 
 // NOTE: RoadOwnership removed - it was only used for streaming, which is no longer active.
 // If streaming is reintroduced, add this back under a "streaming" feature flag.
+
+impl Default for RoadNetwork {
+    fn default() -> Self {
+        Self {
+            roads: HashMap::default(),
+            intersections: HashMap::default(),
+            // Start Manhattan grid IDs at 1 << 56 to avoid collision with cell-based IDs
+            // generate_unique_road_id() uses packed cell coordinates in lower bits
+            next_road_id: 1 << 56,
+            next_intersection_id: 0,
+            generated_cells: std::collections::HashSet::default(),
+            boundary_points: HashMap::default(),
+        }
+    }
+}
 
 impl RoadNetwork {
     pub fn clear_cache(&mut self) {
@@ -194,7 +214,9 @@ impl RoadNetwork {
         self.intersections.clear();
         self.generated_cells.clear();
         self.boundary_points.clear();
-        self.next_road_id = 0;
+        // Start Manhattan grid IDs at 1 << 56 to avoid collision with cell-based IDs
+        // generate_unique_road_id() uses packed cell coordinates in lower bits
+        self.next_road_id = 1 << 56;
         self.next_intersection_id = 0;
         debug!("Road network completely reset");
     }
@@ -487,6 +509,20 @@ impl RoadNetwork {
             && position.z <= (grid_z + half_size)
     }
 
+    /// Check if a cell coordinate falls within the grid island bounds
+    /// Used to prevent per-chunk road generation from duplicating Manhattan grid roads
+    fn is_cell_on_grid_island(
+        &self,
+        cell_coord: IVec2,
+        cell_size: f32,
+        config: &GameConfig,
+    ) -> bool {
+        let base_x = cell_coord.x as f32 * cell_size;
+        let base_z = cell_coord.y as f32 * cell_size;
+        let cell_center = Vec3::new(base_x + 0.5 * cell_size, 0.0, base_z + 0.5 * cell_size);
+        self.is_on_grid_island(cell_center, config)
+    }
+
     pub fn generate_roads_for_cell(
         &mut self,
         cell_coord: IVec2,
@@ -497,6 +533,18 @@ impl RoadNetwork {
         use rand::SeedableRng;
         let cell_seed = ((cell_coord.x as u64) << 32) | ((cell_coord.y as u64) & 0xFFFFFFFF);
         let mut rng = rand::rngs::StdRng::seed_from_u64(cell_seed ^ 0x524F414453);
+
+        // GUARD: Prevent duplication with Manhattan grid generator
+        // If this cell is on the grid island, ManhattanGridGenerator handles all roads
+        if self.is_cell_on_grid_island(cell_coord, cell_size, config) {
+            self.generated_cells.insert(cell_coord);
+            debug!(
+                "Skipping per-chunk road generation for cell ({}, {}) - on grid island (Manhattan grid handles this)",
+                cell_coord.x, cell_coord.y
+            );
+            return Vec::new();
+        }
+
         if self.generated_cells.contains(&cell_coord) {
             return Vec::new();
         }
