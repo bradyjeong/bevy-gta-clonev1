@@ -10,8 +10,19 @@ fn zigzag32(n: i32) -> u32 {
 pub fn generate_unique_road_id(cell_coord: IVec2, local_index: u16) -> u64 {
     let zx = zigzag32(cell_coord.x) as u64;
     let zy = zigzag32(cell_coord.y) as u64;
-    let cell_key = (zx << 32) | zy;
-    (cell_key << 16) | (local_index as u64)
+    // 20/20/16 bit packing: [x:20 bits][y:20 bits][index:16 bits]
+    // Ensures all cell-based IDs are < 1<<56 to avoid collision with Manhattan IDs
+    debug_assert!(
+        (zx >> 20) == 0,
+        "Cell X coordinate {} out of 20-bit range (max ±524287)",
+        cell_coord.x
+    );
+    debug_assert!(
+        (zy >> 20) == 0,
+        "Cell Y coordinate {} out of 20-bit range (max ±524287)",
+        cell_coord.y
+    );
+    ((zx & 0xFFFFF) << 36) | ((zy & 0xFFFFF) << 16) | (local_index as u64)
 }
 
 // NEW GTA-STYLE ROAD NETWORK SYSTEM
@@ -367,10 +378,8 @@ impl RoadNetwork {
         if self.segment_on_island(v_start, v_end, config) {
             let road_id = generate_unique_road_id(cell_coord, local_index);
             local_index += 1;
-            self.roads.insert(
-                road_id,
-                RoadSpline::new(road_id, v_start, v_end, RoadType::MainStreet),
-            );
+            let road = RoadSpline::new(road_id, v_start, v_end, RoadType::MainStreet);
+            self.insert_road_checked(road);
             new_roads.push(road_id);
         }
 
@@ -379,10 +388,8 @@ impl RoadNetwork {
         let h_end = Vec3::new(base_x + cell_size, y, base_z + cell_size * 0.5);
         if self.segment_on_island(h_start, h_end, config) {
             let road_id = generate_unique_road_id(cell_coord, local_index);
-            self.roads.insert(
-                road_id,
-                RoadSpline::new(road_id, h_start, h_end, RoadType::MainStreet),
-            );
+            let road = RoadSpline::new(road_id, h_start, h_end, RoadType::MainStreet);
+            self.insert_road_checked(road);
             new_roads.push(road_id);
         }
 
@@ -433,6 +440,21 @@ impl RoadNetwork {
         }
         if let Some(road2) = self.roads.get_mut(&road2_id) {
             road2.connections.push(road1_id);
+        }
+    }
+
+    /// Insert a road with collision detection to catch ID conflicts
+    fn insert_road_checked(&mut self, road: RoadSpline) {
+        let road_id = road.id;
+        if let Some(prev) = self.roads.insert(road_id, road.clone()) {
+            warn!(
+                "⚠️ Road ID collision detected: ID {} overwrote existing road (start {:?} -> {:?})",
+                road_id, prev.control_points[0], road.control_points[0]
+            );
+            debug_assert!(
+                false,
+                "Road ID collision - this indicates a bug in ID generation"
+            );
         }
     }
 
@@ -598,16 +620,23 @@ impl RoadNetwork {
                 local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, road_type);
 
-                // DEBUG ASSERTION: Verify vertical road is axis-aligned (same X coordinate)
+                // DEBUG ASSERTION: Verify vertical road is axis-aligned (same X, different Z)
                 debug_assert!(
                     (start.x - end.x).abs() < 1e-3,
-                    "VERTICAL road must be axis-aligned: start.x={} end.x={} diff={}",
+                    "VERTICAL road must be axis-aligned in X: start.x={} end.x={} diff={}",
                     start.x,
                     end.x,
                     (start.x - end.x).abs()
                 );
+                debug_assert!(
+                    (start.z - end.z).abs() > 1e-3,
+                    "VERTICAL road must differ in Z: start.z={} end.z={} diff={}",
+                    start.z,
+                    end.z,
+                    (start.z - end.z).abs()
+                );
 
-                self.roads.insert(road_id, road);
+                self.insert_road_checked(road);
                 new_roads.push(road_id);
                 debug!(
                     "Generated VERTICAL arterial {:?} in cell {:?}",
@@ -633,16 +662,23 @@ impl RoadNetwork {
                 local_index += 1;
                 let road = RoadSpline::new(road_id, start, end, road_type);
 
-                // DEBUG ASSERTION: Verify horizontal road is axis-aligned (same Z coordinate)
+                // DEBUG ASSERTION: Verify horizontal road is axis-aligned (same Z, different X)
                 debug_assert!(
                     (start.z - end.z).abs() < 1e-3,
-                    "HORIZONTAL road must be axis-aligned: start.z={} end.z={} diff={}",
+                    "HORIZONTAL road must be axis-aligned in Z: start.z={} end.z={} diff={}",
                     start.z,
                     end.z,
                     (start.z - end.z).abs()
                 );
+                debug_assert!(
+                    (start.x - end.x).abs() > 1e-3,
+                    "HORIZONTAL road must differ in X: start.x={} end.x={} diff={}",
+                    start.x,
+                    end.x,
+                    (start.x - end.x).abs()
+                );
 
-                self.roads.insert(road_id, road);
+                self.insert_road_checked(road);
                 new_roads.push(road_id);
                 debug!(
                     "Generated HORIZONTAL arterial {:?} in cell {:?}",
