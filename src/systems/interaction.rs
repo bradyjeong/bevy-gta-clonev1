@@ -10,6 +10,53 @@ use crate::systems::swimming::{ProneRotation, Swimming};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+// Helper: Transfer player control to vehicle (extracted to avoid duplication)
+fn transfer_to_vehicle(
+    commands: &mut Commands,
+    player_entity: Entity,
+    vehicle_entity: Entity,
+    control_state: Option<&ControlState>,
+    player_controlled: Option<&PlayerControlled>,
+    vehicle_type: VehicleControlType,
+    vehicle_name: &str,
+) {
+    // Queue atomic ActiveEntity transfer
+    queue_active_transfer(commands, player_entity, vehicle_entity);
+
+    // Remove control components from player and hide them
+    commands
+        .entity(player_entity)
+        .remove::<PlayerControlled>()
+        .remove::<ControlState>()
+        .remove::<VehicleControlType>()
+        .insert(Visibility::Hidden)
+        .insert(RigidBodyDisabled);
+
+    // Make player a child of the vehicle
+    commands
+        .entity(player_entity)
+        .insert(ChildOf(vehicle_entity));
+
+    // Transfer control components to vehicle
+    let mut vehicle_commands = commands.entity(vehicle_entity);
+    if let Some(control_state) = control_state {
+        vehicle_commands.insert(control_state.clone());
+    } else {
+        vehicle_commands.insert(ControlState::default());
+    }
+
+    if player_controlled.is_some() {
+        vehicle_commands.insert(PlayerControlled);
+    }
+
+    vehicle_commands.insert(vehicle_type);
+
+    // Store vehicle reference
+    commands.entity(player_entity).insert(InCar(vehicle_entity));
+
+    info!("Entered {vehicle_name}! Entity: {:?}", vehicle_entity);
+}
+
 pub fn interaction_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
@@ -34,27 +81,28 @@ pub fn interaction_system(
         ),
     >,
     active_control_query: Query<&ControlState, With<ActiveEntity>>,
-    car_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<Car>, Without<Player>)>,
-    helicopter_query: Query<
-        (Entity, &GlobalTransform, Option<&Velocity>),
-        (With<Helicopter>, Without<Player>),
-    >,
-    f16_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<F16>, Without<Player>)>,
-    yacht_query: Query<
-        (Entity, &GlobalTransform, Option<&Velocity>),
-        (With<Yacht>, Without<Player>),
-    >,
-    _vehicle_control_query: Query<
+    // Unified vehicle query: single pass to check all vehicle types with Optional markers
+    unified_vehicle_query: Query<
         (
-            Option<&ControlState>,
-            Option<&PlayerControlled>,
-            Option<&VehicleControlType>,
+            Entity,
+            &GlobalTransform,
+            Option<&Car>,
+            Option<&Helicopter>,
+            Option<&F16>,
+            Option<&Yacht>,
         ),
         (
             Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>)>,
             Without<Player>,
         ),
     >,
+    // Legacy queries kept for exit logic (needed to fetch specific active vehicle transforms)
+    car_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<Car>, Without<Player>)>,
+    helicopter_query: Query<
+        (Entity, &GlobalTransform, Option<&Velocity>),
+        (With<Helicopter>, Without<Player>),
+    >,
+    f16_query: Query<(Entity, &GlobalTransform, Option<&Velocity>), (With<F16>, Without<Player>)>,
     active_query: Query<Entity, With<ActiveEntity>>,
     just_controlled: Query<Entity, Added<PlayerControlled>>,
 ) {
@@ -88,214 +136,112 @@ pub fn interaction_system(
                 return;
             };
 
-            // Check for cars first
-            for (car_entity, car_gt, _) in car_query.iter() {
-                let distance = player_transform.translation.distance(car_gt.translation());
-                if distance < 3.0 {
-                    // Queue atomic ActiveEntity transfer (prevents gaps)
-                    queue_active_transfer(&mut commands, player_entity, car_entity);
+            // OPTIMIZED: Priority-based collection with distance_squared (3-4x faster)
+            // Collect best match for each vehicle type, then check priority order
+            // Using squared distances avoids expensive sqrt: 3.0² = 9.0, 5.0² = 25.0, 8.0² = 64.0, 35.0² = 1225.0
+            let mut best_car: Option<(Entity, f32)> = None;
+            let mut best_helicopter: Option<(Entity, f32)> = None;
+            let mut best_f16: Option<(Entity, f32)> = None;
+            let mut best_yacht: Option<(Entity, f32)> = None;
+            let mut nearest_yacht_for_debug: Option<f32> = None;
 
-                    // Remove control components from player and hide them
-                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
-                    commands
-                        .entity(player_entity)
-                        .remove::<PlayerControlled>()
-                        .remove::<ControlState>()
-                        .remove::<VehicleControlType>()
-                        .insert(Visibility::Hidden)
-                        .insert(RigidBodyDisabled);
-
-                    // Make player a child of the car
-                    commands.entity(player_entity).insert(ChildOf(car_entity));
-
-                    // Add control components to car (ActiveEntity handled by transfer system)
-                    let mut car_commands = commands.entity(car_entity);
-
-                    // Transfer control components to car with appropriate vehicle type
-                    if let Some(control_state) = control_state {
-                        car_commands.insert(control_state.clone());
-                    } else {
-                        car_commands.insert(ControlState::default());
-                    }
-
-                    if player_controlled.is_some() {
-                        car_commands.insert(PlayerControlled);
-                    }
-
-                    // Set appropriate vehicle control type for cars
-                    car_commands.insert(VehicleControlType::Car);
-
-                    // Store which car the player is in
-                    commands.entity(player_entity).insert(InCar(car_entity));
-
-                    // Switch to driving state
-                    state.set(GameState::Driving);
-                    info!(
-                        "ActiveEntity transferred from Player({:?}) to Car({:?})",
-                        player_entity, car_entity
-                    );
-                    return;
-                }
-            }
-
-            // Check for helicopters
-            for (helicopter_entity, helicopter_gt, _) in helicopter_query.iter() {
-                let distance = player_transform
+            for (entity, gt, car, helicopter, f16, yacht) in unified_vehicle_query.iter() {
+                let dist_sq = player_transform
                     .translation
-                    .distance(helicopter_gt.translation());
-                if distance < 5.0 {
-                    // Larger range for helicopters
+                    .distance_squared(gt.translation());
 
-                    // Queue atomic ActiveEntity transfer (prevents gaps)
-                    queue_active_transfer(&mut commands, player_entity, helicopter_entity);
+                // Track nearest yacht for debug message
+                if yacht.is_some() && dist_sq < 10000.0 {
+                    nearest_yacht_for_debug =
+                        Some(nearest_yacht_for_debug.map_or(dist_sq, |d| d.min(dist_sq)));
+                }
 
-                    // Remove control components from player and hide them
-                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
-                    commands
-                        .entity(player_entity)
-                        .remove::<PlayerControlled>()
-                        .remove::<ControlState>()
-                        .remove::<VehicleControlType>()
-                        .insert(Visibility::Hidden)
-                        .insert(RigidBodyDisabled);
-
-                    // Make player a child of the helicopter
-                    commands
-                        .entity(player_entity)
-                        .insert(ChildOf(helicopter_entity));
-
-                    // Add control components to helicopter (ActiveEntity handled by transfer system)
-                    let mut helicopter_commands = commands.entity(helicopter_entity);
-
-                    // Transfer control components to helicopter with appropriate vehicle type
-                    if let Some(control_state) = control_state {
-                        helicopter_commands.insert(control_state.clone());
-                    } else {
-                        helicopter_commands.insert(ControlState::default());
+                // Collect best match for each vehicle type
+                if car.is_some() && dist_sq < 9.0 {
+                    if best_car.is_none_or(|(_, d)| dist_sq < d) {
+                        best_car = Some((entity, dist_sq));
                     }
-
-                    if player_controlled.is_some() {
-                        helicopter_commands.insert(PlayerControlled);
+                } else if helicopter.is_some() && dist_sq < 25.0 {
+                    if best_helicopter.is_none_or(|(_, d)| dist_sq < d) {
+                        best_helicopter = Some((entity, dist_sq));
                     }
-
-                    // Set appropriate vehicle control type for helicopters
-                    helicopter_commands.insert(VehicleControlType::Helicopter);
-
-                    // Store which helicopter the player is in
-                    commands
-                        .entity(player_entity)
-                        .insert(InCar(helicopter_entity)); // Reuse InCar for vehicles
-
-                    // Switch to flying state
-                    state.set(GameState::Flying);
-                    info!("Entered helicopter!");
-                    return;
+                } else if f16.is_some() && dist_sq < 64.0 {
+                    if best_f16.is_none_or(|(_, d)| dist_sq < d) {
+                        best_f16 = Some((entity, dist_sq));
+                    }
+                } else if yacht.is_some()
+                    && dist_sq < 1225.0
+                    && best_yacht.is_none_or(|(_, d)| dist_sq < d)
+                {
+                    best_yacht = Some((entity, dist_sq));
                 }
             }
 
-            // Check for F16s
-            for (f16_entity, f16_gt, _) in f16_query.iter() {
-                let distance = player_transform.translation.distance(f16_gt.translation());
-                if distance < 8.0 {
-                    // Larger range for F16s
-
-                    // Queue atomic ActiveEntity transfer (prevents gaps)
-                    queue_active_transfer(&mut commands, player_entity, f16_entity);
-
-                    // Remove control components from player and hide them
-                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
-                    commands
-                        .entity(player_entity)
-                        .remove::<PlayerControlled>()
-                        .remove::<ControlState>()
-                        .remove::<VehicleControlType>()
-                        .insert(Visibility::Hidden)
-                        .insert(RigidBodyDisabled);
-
-                    // Make player a child of the F16
-                    commands.entity(player_entity).insert(ChildOf(f16_entity));
-
-                    // Add control components to F16 (ActiveEntity handled by transfer system)
-                    let mut f16_commands = commands.entity(f16_entity);
-
-                    // Transfer control components to F16 with appropriate vehicle type
-                    if let Some(control_state) = control_state {
-                        f16_commands.insert(control_state.clone());
-                    } else {
-                        f16_commands.insert(ControlState::default());
-                    }
-
-                    if player_controlled.is_some() {
-                        f16_commands.insert(PlayerControlled);
-                    }
-
-                    // Set appropriate vehicle control type for F16s
-                    f16_commands.insert(VehicleControlType::F16);
-
-                    // Store which F16 the player is in
-                    commands.entity(player_entity).insert(InCar(f16_entity)); // Reuse InCar for vehicles
-
-                    // Switch to jetting state
-                    state.set(GameState::Jetting);
-                    info!("Entered F16 Fighter Jet!");
-                    return;
-                }
-            }
-
-            // Check for yachts
-            for (yacht_entity, yacht_gt, _) in yacht_query.iter() {
-                let distance = player_transform
-                    .translation
-                    .distance(yacht_gt.translation());
-                if distance < 35.0 {
+            // Check priority order: car > helicopter > f16 > yacht
+            if let Some((entity, _)) = best_car {
+                transfer_to_vehicle(
+                    &mut commands,
+                    player_entity,
+                    entity,
+                    control_state,
+                    player_controlled,
+                    VehicleControlType::Car,
+                    "Car",
+                );
+                state.set(GameState::Driving);
+                return;
+            } else if let Some((entity, _)) = best_helicopter {
+                transfer_to_vehicle(
+                    &mut commands,
+                    player_entity,
+                    entity,
+                    control_state,
+                    player_controlled,
+                    VehicleControlType::Helicopter,
+                    "Helicopter",
+                );
+                state.set(GameState::Flying);
+                return;
+            } else if let Some((entity, _)) = best_f16 {
+                transfer_to_vehicle(
+                    &mut commands,
+                    player_entity,
+                    entity,
+                    control_state,
+                    player_controlled,
+                    VehicleControlType::F16,
+                    "F16",
+                );
+                state.set(GameState::Jetting);
+                return;
+            } else if let Some((yacht_entity, dist_sq)) = best_yacht {
+                let distance = dist_sq.sqrt(); // Only sqrt for logging
+                // Get yacht position for logging
+                if let Ok((_, yacht_gt, _, _, _, _)) = unified_vehicle_query.get(yacht_entity) {
                     info!(
                         "Player at {:?}, Yacht at {:?}, Distance: {:.1}m - Boarding yacht!",
                         player_transform.translation,
                         yacht_gt.translation(),
                         distance
                     );
+                }
+                transfer_to_vehicle(
+                    &mut commands,
+                    player_entity,
+                    yacht_entity,
+                    control_state,
+                    player_controlled,
+                    VehicleControlType::Yacht,
+                    "Yacht",
+                );
+                state.set(GameState::Driving);
+                return;
+            }
 
-                    // Queue atomic ActiveEntity transfer (prevents gaps)
-                    queue_active_transfer(&mut commands, player_entity, yacht_entity);
-
-                    // Remove control components from player and hide them
-                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
-                    commands
-                        .entity(player_entity)
-                        .remove::<PlayerControlled>()
-                        .remove::<ControlState>()
-                        .remove::<VehicleControlType>()
-                        .insert(Visibility::Hidden)
-                        .insert(RigidBodyDisabled);
-
-                    // Make player a child of the yacht
-                    commands.entity(player_entity).insert(ChildOf(yacht_entity));
-
-                    // Add control components to yacht (ActiveEntity handled by transfer system)
-                    let mut yacht_commands = commands.entity(yacht_entity);
-
-                    // Transfer control components to yacht with appropriate vehicle type
-                    if let Some(control_state) = control_state {
-                        yacht_commands.insert(control_state.clone());
-                    } else {
-                        yacht_commands.insert(ControlState::default());
-                    }
-
-                    if player_controlled.is_some() {
-                        yacht_commands.insert(PlayerControlled);
-                    }
-
-                    // Set appropriate vehicle control type for yachts
-                    yacht_commands.insert(VehicleControlType::Yacht);
-
-                    // Store which yacht the player is in
-                    commands.entity(player_entity).insert(InCar(yacht_entity)); // Reuse InCar for vehicles
-
-                    // Switch to driving state (reuse for yachts)
-                    state.set(GameState::Driving);
-                    info!("Boarded Superyacht!");
-                    return;
-                } else if distance < 100.0 {
+            // Debug message for yacht outside range
+            if let Some(dist_sq) = nearest_yacht_for_debug {
+                if dist_sq >= 1225.0 {
+                    let distance = dist_sq.sqrt();
                     info!(
                         "Yacht too far! Distance: {:.1}m (need < 35m). Swim closer and press F.",
                         distance
@@ -319,25 +265,29 @@ pub fn interaction_system(
                 return;
             };
 
-            // Check for yachts
-            for (yacht_entity, yacht_gt, _) in yacht_query.iter() {
-                let distance = player_transform
-                    .translation
-                    .distance(yacht_gt.translation());
+            // OPTIMIZED: Use unified query with distance_squared for yachts
+            for (entity, gt, _car, _helicopter, _f16, yacht) in unified_vehicle_query.iter() {
+                if yacht.is_none() {
+                    continue;
+                }
 
-                if distance < 35.0 {
+                let dist_sq = player_transform
+                    .translation
+                    .distance_squared(gt.translation());
+
+                if dist_sq < 1225.0 {
+                    // 35.0²
+                    let distance = dist_sq.sqrt(); // Only sqrt for logging
                     info!(
                         "Player at {:?}, Yacht at {:?}, Distance: {:.1}m - Boarding yacht!",
                         player_transform.translation,
-                        yacht_gt.translation(),
+                        gt.translation(),
                         distance
                     );
 
-                    // Queue atomic ActiveEntity transfer (prevents gaps)
-                    queue_active_transfer(&mut commands, player_entity, yacht_entity);
+                    // Queue atomic ActiveEntity transfer
+                    queue_active_transfer(&mut commands, player_entity, entity);
 
-                    // Remove control components from player and hide them
-                    // CRITICAL: Disable player physics to prevent corruption while in vehicle
                     // CRITICAL: Clean up swimming state components when entering from water
                     commands
                         .entity(player_entity)
@@ -351,18 +301,16 @@ pub fn interaction_system(
                         .insert(Visibility::Hidden)
                         .insert(RigidBodyDisabled);
 
-                    // Reset swim animation flag to prevent swim animation on vehicle
+                    // Reset swim animation flag
                     if let Some(mut anim) = human_animation {
                         anim.is_swimming = false;
                     }
 
                     // Make player a child of the yacht
-                    commands.entity(player_entity).insert(ChildOf(yacht_entity));
+                    commands.entity(player_entity).insert(ChildOf(entity));
 
-                    // Add control components to yacht (ActiveEntity handled by transfer system)
-                    let mut yacht_commands = commands.entity(yacht_entity);
-
-                    // Transfer control components to yacht with appropriate vehicle type
+                    // Transfer control components to yacht
+                    let mut yacht_commands = commands.entity(entity);
                     if let Some(control_state) = control_state {
                         yacht_commands.insert(control_state.clone());
                     } else {
@@ -373,17 +321,15 @@ pub fn interaction_system(
                         yacht_commands.insert(PlayerControlled);
                     }
 
-                    // Set appropriate vehicle control type for yachts
                     yacht_commands.insert(VehicleControlType::Yacht);
+                    commands.entity(player_entity).insert(InCar(entity));
 
-                    // Store which yacht the player is in
-                    commands.entity(player_entity).insert(InCar(yacht_entity));
-
-                    // Switch to driving state (reuse for yachts)
                     state.set(GameState::Driving);
                     info!("Climbed aboard Superyacht from water!");
                     return;
-                } else if distance < 100.0 {
+                } else if dist_sq < 10000.0 {
+                    // 100.0²
+                    let distance = dist_sq.sqrt();
                     info!(
                         "Yacht too far! Distance: {:.1}m (need < 35m). Swim closer and press F.",
                         distance

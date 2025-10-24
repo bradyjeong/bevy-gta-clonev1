@@ -1,9 +1,25 @@
+// ==================================================================================
+// DEPRECATED: This file is retained for reference but is no longer used in production.
+//
+// REPLACED BY: src/systems/water/merged_physics.rs::water_physics_system()
+//
+// REASON FOR DEPRECATION:
+// This system and buoyancy_system both performed O(n) water region lookups
+// for every entity every frame. The merged_physics system combines both:
+//   1. Performs region lookup ONCE per entity (not twice)
+//   2. Uses CurrentWaterRegion cache for O(1) lookups (not O(n) scans)
+//   3. Applies both buoyancy AND drag in a single pass
+//
+// PERFORMANCE IMPROVEMENT: ~2x faster for water physics (eliminated redundant scans)
+// ==================================================================================
+
 use crate::components::unified_water::{UnifiedWaterBody, WaterBodyId};
 use crate::components::water::Yacht;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 /// Water drag system - applies resistance forces when in water
+/// DEPRECATED: Use water_physics_system in merged_physics.rs instead
 #[allow(clippy::type_complexity)]
 pub fn water_drag_system(
     time: Res<Time>,

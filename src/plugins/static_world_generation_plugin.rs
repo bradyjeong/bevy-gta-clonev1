@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
+use crate::constants::WorldEnvConfig;
 use crate::resources::{MaterialRegistry, WorldRng};
 use crate::states::AppState;
 
@@ -115,6 +116,7 @@ fn apply_generated_chunks(
     water_bodies: Query<&UnifiedWaterBody>,
     asset_server: Res<AssetServer>,
     config: Res<GameConfig>,
+    env: Res<WorldEnvConfig>,
 ) {
     // Increased from 10 to 200 - no need to maintain 60 FPS during loading
     const CHUNKS_PER_FRAME: usize = 200;
@@ -160,6 +162,7 @@ fn apply_generated_chunks(
             &mut world_rng,
             &water_bodies,
             &config,
+            &env,
         );
 
         building_generator.generate_buildings(
@@ -171,6 +174,7 @@ fn apply_generated_chunks(
             &mut world_rng,
             &water_bodies,
             &config,
+            &env,
         );
 
         vehicle_generator.generate_vehicles(
@@ -193,6 +197,7 @@ fn apply_generated_chunks(
             &mut world_rng,
             &water_bodies,
             &config,
+            &env,
         );
 
         // Mark chunk as complete

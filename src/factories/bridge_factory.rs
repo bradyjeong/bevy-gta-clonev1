@@ -1,5 +1,5 @@
 use crate::config::GameConfig;
-use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
+use crate::constants::WorldEnvConfig;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -8,13 +8,25 @@ pub fn spawn_bridge(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     config: &GameConfig,
+    env: &WorldEnvConfig,
 ) {
     let end_clearance = 1.0;
-    let gap_len = (RIGHT_ISLAND_X - TERRAIN_HALF_SIZE) - (LEFT_ISLAND_X + TERRAIN_HALF_SIZE);
+    let gap_len = (env.islands.right_x - env.terrain.half_size)
+        - (env.islands.left_x + env.terrain.half_size);
+
+    let min_gap = end_clearance * 2.0;
+    if gap_len <= min_gap {
+        warn!(
+            "Islands too close to spawn bridge: gap={:.1}m, min_required={:.1}m. Skipping bridge spawn.",
+            gap_len, min_gap
+        );
+        return;
+    }
+
     let half_len_x = 0.5 * gap_len - end_clearance;
     let half_width_z = 12.0;
     let half_thickness_y = 1.0;
-    let center_y = LAND_ELEVATION - half_thickness_y;
+    let center_y = env.land_elevation - half_thickness_y;
     let bridge_z_offset = -300.0;
 
     let mesh_size_x = 2.0 * half_len_x;
@@ -113,6 +125,6 @@ pub fn spawn_bridge(
 
     info!(
         "Bridge spawned: {:.1}m long × {:.1}m wide at Z={:.1}, deck top at Y={:.1}",
-        mesh_size_x, mesh_size_z, bridge_z_offset, LAND_ELEVATION
+        mesh_size_x, mesh_size_z, bridge_z_offset, env.land_elevation
     );
 }

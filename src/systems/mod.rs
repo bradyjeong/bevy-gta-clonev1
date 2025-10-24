@@ -51,6 +51,9 @@
 
 pub mod audio;
 pub mod camera;
+pub mod camera_car;
+pub mod camera_f16;
+pub mod camera_helicopter;
 pub mod camera_yacht;
 pub mod effects;
 

@@ -1,9 +1,11 @@
 use crate::components::ContentType;
 use crate::config::GameConfig;
+use crate::constants::WorldEnvConfig;
 
 use crate::factories::generic_bundle::BundleError;
 use crate::systems::world::road_generation::is_on_road_spline;
 use crate::systems::world::road_network::RoadNetwork;
+use crate::systems::world::unified_world::UnifiedWorldManager;
 use bevy::prelude::*;
 use std::collections::HashMap;
 
@@ -56,28 +58,27 @@ impl PositionValidator {
     /// - Clear caching strategy: 10m grid resolution
     /// - Explicit behavior: Shows exactly how height is calculated
     /// - Matches island terrain curve: plateau, beach slope, ocean floor
-    pub fn get_ground_height(&mut self, position: Vec2) -> f32 {
-        let grid_x = (position.x / 10.0) as i32; // 10m grid resolution
-        let grid_z = (position.y / 10.0) as i32;
+    pub fn get_ground_height(
+        &mut self,
+        position: Vec2,
+        env: &WorldEnvConfig,
+        world: &UnifiedWorldManager,
+    ) -> f32 {
+        let grid_x = (position.x / 10.0).floor() as i32; // 10m grid resolution
+        let grid_z = (position.y / 10.0).floor() as i32;
 
         if let Some(&cached_height) = self.position_cache.get(&(grid_x, grid_z)) {
             return cached_height;
         }
 
-        use crate::constants::{LAND_ELEVATION, OCEAN_FLOOR_DEPTH};
-        use crate::systems::world::unified_world::UnifiedWorldManager;
-
-        // Simplified: terrain islands are at LAND_ELEVATION, ocean at OCEAN_FLOOR_DEPTH
+        // Simplified: terrain islands are at land_elevation, ocean at ocean_floor_depth
         // Beach slopes handled by visual meshes only
-        let ground_height = if UnifiedWorldManager::default().is_on_terrain_island(Vec3::new(
-            position.x,
-            LAND_ELEVATION,
-            position.y,
-        )) {
-            LAND_ELEVATION
-        } else {
-            OCEAN_FLOOR_DEPTH
-        };
+        let ground_height =
+            if world.is_on_terrain_island(Vec3::new(position.x, env.land_elevation, position.y)) {
+                env.land_elevation
+            } else {
+                env.ocean_floor_depth
+            };
 
         // Cache for future use (following AGENT.MD performance guidelines)
         self.position_cache.insert((grid_x, grid_z), ground_height);
@@ -95,6 +96,7 @@ impl PositionValidator {
         position: Vec3,
         content_type: ContentType,
         road_network: Option<&RoadNetwork>,
+        world: &UnifiedWorldManager,
     ) -> bool {
         // Check if on road (invalid for buildings and trees)
         if let Some(roads) = road_network {
@@ -124,7 +126,7 @@ impl PositionValidator {
         }
 
         // Check if in water area
-        if self.is_in_water_area(position) && !matches!(content_type, ContentType::Vehicle) {
+        if self.is_in_water_area(position, world) && !matches!(content_type, ContentType::Vehicle) {
             return false;
         }
 
@@ -137,10 +139,8 @@ impl PositionValidator {
     /// - Explicit coordinates: No hidden magic values
     /// - Clear algorithm: Rectangular island detection
     /// - Focused responsibility: Only water area checking
-    fn is_in_water_area(&self, position: Vec3) -> bool {
-        use crate::systems::world::unified_world::UnifiedWorldManager;
-
+    fn is_in_water_area(&self, position: Vec3, world: &UnifiedWorldManager) -> bool {
         // In water if not on terrain island
-        !UnifiedWorldManager::default().is_on_terrain_island(position)
+        !world.is_on_terrain_island(position)
     }
 }

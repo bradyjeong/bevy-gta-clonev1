@@ -106,6 +106,13 @@ pub struct WaterSurface {
     pub region_entity: Entity,
 }
 
+/// Cached water region reference for O(1) lookup performance
+/// Only updated when entity moves out of current region (rare)
+#[derive(Component, Clone, Debug)]
+pub struct CurrentWaterRegion {
+    pub region_entity: Option<Entity>,
+}
+
 // GlobalOcean removed - using only lake water bodies now
 
 impl Default for UnifiedWaterBody {

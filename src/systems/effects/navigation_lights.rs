@@ -1,6 +1,8 @@
+#![allow(clippy::type_complexity)]
 use crate::components::{Helicopter, LandingLight, NavigationLight, NavigationLightType};
 use bevy::prelude::*;
 
+/// OPTIMIZATION: Timer needs to tick every frame, but we can early-exit if nothing needs updating
 pub fn update_navigation_lights(
     time: Res<Time>,
     mut light_query: Query<(&mut NavigationLight, &mut PointLight)>,
@@ -34,8 +36,16 @@ pub fn update_navigation_lights(
     }
 }
 
+/// OPTIMIZATION: Or<Changed<Children>> handles initialization path for newly spawned lights
+/// OPTIMIZATION: Only writes SpotLight.intensity when value differs meaningfully (>1e-3)
 pub fn update_landing_lights(
-    helicopter_query: Query<(&Transform, &Children), With<Helicopter>>,
+    helicopter_query: Query<
+        (&Transform, &Children),
+        (
+            With<Helicopter>,
+            Or<(Changed<Transform>, Changed<Children>)>,
+        ),
+    >,
     mut landing_light_query: Query<(&LandingLight, &mut SpotLight)>,
 ) {
     for (helicopter_transform, children) in helicopter_query.iter() {
@@ -43,11 +53,15 @@ pub fn update_landing_lights(
 
         for child in children.iter() {
             if let Ok((landing_light, mut spot_light)) = landing_light_query.get_mut(child) {
-                if altitude < landing_light.activation_altitude {
+                let new_intensity = if altitude < landing_light.activation_altitude {
                     let intensity_factor = 1.0 - (altitude / landing_light.activation_altitude);
-                    spot_light.intensity = 200000.0 * intensity_factor.max(0.3);
+                    200000.0 * intensity_factor.max(0.3)
                 } else {
-                    spot_light.intensity = 0.0;
+                    0.0
+                };
+
+                if (spot_light.intensity - new_intensity).abs() > 1e-3 {
+                    spot_light.intensity = new_intensity;
                 }
             }
         }

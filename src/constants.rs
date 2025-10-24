@@ -1,26 +1,76 @@
+use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use serde::Deserialize;
 
-// Collision groups for proper physics separation
+// Collision groups for proper physics separation (implementation constant - not data-driven)
 pub const STATIC_GROUP: Group = Group::GROUP_1; // Buildings, terrain, trees
 pub const VEHICLE_GROUP: Group = Group::GROUP_2; // Cars, helicopters, jets
 pub const CHARACTER_GROUP: Group = Group::GROUP_3; // Player, NPCs
 
-// World elevation constants
-pub const SEA_LEVEL: f32 = 0.0; // Ocean surface height (animated water level)
-pub const LAND_ELEVATION: f32 = 3.0; // Terrain height above sea level
-pub const SPAWN_DROP_HEIGHT: f32 = 10.0; // Height above terrain to spawn entities for gravity drop
-pub const OCEAN_FLOOR_DEPTH: f32 = -10.0; // Ocean floor Y position
+// World environment configuration loaded from assets/config/world_config.ron
+// Renamed to WorldEnvConfig to avoid collision with config::WorldConfig
+#[derive(Debug, Clone, Resource, Deserialize)]
+pub struct WorldEnvConfig {
+    pub sea_level: f32,
+    pub land_elevation: f32,
+    pub spawn_drop_height: f32,
+    pub ocean_floor_depth: f32,
+    pub islands: IslandConfig,
+    pub terrain: TerrainConfig,
+    pub max_world_coordinate: f32,
+}
 
-// Rectangular island configuration (dual island setup)
-pub const LEFT_ISLAND_X: f32 = -1500.0; // Left island center X position
-pub const RIGHT_ISLAND_X: f32 = 1500.0; // Right island center X position
-pub const TERRAIN_SIZE: f32 = 1200.0; // Terrain square size (1200m x 1200m)
-pub const TERRAIN_HALF_SIZE: f32 = TERRAIN_SIZE / 2.0; // 600m from center to edge
-pub const BEACH_WIDTH: f32 = 100.0; // Beach slope width extending from terrain edge
+#[derive(Debug, Clone, Deserialize)]
+pub struct IslandConfig {
+    pub left_x: f32,
+    pub right_x: f32,
+    pub grid_x: f32,
+    pub grid_z: f32,
+}
 
-// Island boundaries for validation
-// Left island: X ∈ [-2100, -900], Z ∈ [-600, 600]
-// Right island: X ∈ [900, 2100], Z ∈ [-600, 600]
+#[derive(Debug, Clone, Deserialize)]
+pub struct TerrainConfig {
+    pub size: f32,
+    pub half_size: f32,
+    pub beach_width: f32,
+}
 
-// World boundary failsafe (prevents falling into void)
-pub const MAX_WORLD_COORDINATE: f32 = 3000.0; // Extreme boundary for safety teleport
+// Manual Default implementation matching assets/config/world_config.ron
+impl Default for WorldEnvConfig {
+    fn default() -> Self {
+        Self {
+            sea_level: 0.0,
+            land_elevation: 3.0,
+            spawn_drop_height: 10.0,
+            ocean_floor_depth: -10.0,
+            islands: IslandConfig::default(),
+            terrain: TerrainConfig::default(),
+            max_world_coordinate: 3000.0,
+        }
+    }
+}
+
+impl Default for IslandConfig {
+    fn default() -> Self {
+        Self {
+            left_x: -1500.0,
+            right_x: 1500.0,
+            grid_x: 0.0,
+            grid_z: 1800.0,
+        }
+    }
+}
+
+impl Default for TerrainConfig {
+    fn default() -> Self {
+        Self {
+            size: 1200.0,
+            half_size: 600.0,
+            beach_width: 100.0,
+        }
+    }
+}
+
+// All world environment constants have been migrated to WorldEnvConfig resource.
+// Load from assets/config/world_config.ron at runtime.
+// Access via: env: Res<WorldEnvConfig> or &config.world_env

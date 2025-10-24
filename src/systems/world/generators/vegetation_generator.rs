@@ -2,7 +2,7 @@ use crate::bundles::VisibleChildBundle;
 use crate::components::ContentType;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
-use crate::constants::LAND_ELEVATION;
+use crate::constants::WorldEnvConfig;
 use crate::resources::WorldRng;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
@@ -26,12 +26,13 @@ impl VegetationGenerator {
         world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
         config: &GameConfig,
+        env: &WorldEnvConfig,
     ) {
-        let chunk_center = coord.to_world_pos();
+        let chunk_center = coord.to_world_pos_with_size(world.chunk_size);
         let half_size = world.chunk_size * 0.5;
 
-        // Skip if chunk is not on a terrain island
-        if !world.is_on_terrain_island(chunk_center) {
+        // Skip if chunk is not on a terrain island (including beach margin for beach vegetation)
+        if !world.is_on_terrain_island_with_margin(chunk_center, env.terrain.beach_width) {
             if let Some(chunk) = world.get_chunk_mut(coord) {
                 chunk.vegetation_generated = true;
             }
@@ -40,7 +41,8 @@ impl VegetationGenerator {
 
         // Determine vegetation density based on distance from center
         let distance_from_center = Vec2::new(chunk_center.x, chunk_center.z).length();
-        let vegetation_density = (1.0 - (distance_from_center / 3000.0).min(0.7)).max(0.2);
+        let radius = env.max_world_coordinate.max(1.0);
+        let vegetation_density = (1.0 - (distance_from_center / radius).min(0.7)).max(0.2);
 
         // Generate palm tree positions - scaled by density
         let tree_attempts = (vegetation_density * 5.0) as usize;
@@ -51,12 +53,12 @@ impl VegetationGenerator {
             let local_z = world_rng.global().gen_range(-half_size..half_size);
             let position = Vec3::new(
                 chunk_center.x + local_x,
-                LAND_ELEVATION,
+                env.land_elevation,
                 chunk_center.z + local_z,
             );
 
-            // Check if position is valid (on island, not on road, not overlapping, not in water)
-            if world.is_on_terrain_island(position)
+            // Check if position is valid (on terrain edge band, not on road, not overlapping, not in water)
+            if self.is_on_terrain_edge_band(position, env)
                 && !self.is_on_road(position, world)
                 && !self.is_in_water_area(position, water_bodies)
                 && world
@@ -127,8 +129,8 @@ impl VegetationGenerator {
             VisibleChildBundle::default(),
             VisibilityRange {
                 start_margin: 0.0..0.0,
-                end_margin: (config.performance.tree_visibility_distance * 0.9)
-                    ..(config.performance.tree_visibility_distance * 1.1),
+                end_margin: (config.world_streaming.vegetation_cull_distance * 0.9)
+                    ..(config.world_streaming.vegetation_cull_distance * 1.1),
                 use_aabb: false,
             },
         ));
@@ -147,8 +149,8 @@ impl VegetationGenerator {
                 VisibleChildBundle::default(),
                 VisibilityRange {
                     start_margin: 0.0..0.0,
-                    end_margin: (config.performance.tree_visibility_distance * 0.9)
-                        ..(config.performance.tree_visibility_distance * 1.1),
+                    end_margin: (config.world_streaming.vegetation_cull_distance * 0.9)
+                        ..(config.world_streaming.vegetation_cull_distance * 1.1),
                     use_aabb: true, // Use AABB for accurate culling
                 },
             ));
@@ -236,5 +238,37 @@ impl VegetationGenerator {
             }
         }
         false
+    }
+
+    /// Check if position is on terrain edge band (just inside terrain boundary, before slope)
+    fn is_on_terrain_edge_band(&self, position: Vec3, env: &WorldEnvConfig) -> bool {
+        self.is_in_island_edge_band(position, env.islands.left_x, 0.0, env)
+            || self.is_in_island_edge_band(position, env.islands.right_x, 0.0, env)
+            || self.is_in_island_edge_band(position, env.islands.grid_x, env.islands.grid_z, env)
+    }
+
+    /// Check if position is on terrain edge band for a specific island (inner edge, before slope)
+    fn is_in_island_edge_band(
+        &self,
+        position: Vec3,
+        center_x: f32,
+        center_z: f32,
+        env: &WorldEnvConfig,
+    ) -> bool {
+        let dx = (position.x - center_x).abs();
+        let dz = (position.z - center_z).abs();
+        let half = env.terrain.half_size;
+        let edge_band_width = 50.0; // 50m band inside terrain edge
+
+        // Side bands (inside terrain edge, before the slope begins)
+        let on_side_band = (dz > half - edge_band_width || dx > half - edge_band_width)
+            && dz <= half
+            && dx <= half;
+
+        // Corner bands (diagonal corners using Chebyshev distance)
+        let on_corner_band = (dx > half - edge_band_width && dz > half - edge_band_width)
+            && (dx <= half && dz <= half);
+
+        on_side_band || on_corner_band
     }
 }

@@ -1,13 +1,19 @@
+use crate::systems::camera_car::car_camera_system;
+use crate::systems::camera_f16::f16_camera_system;
+use crate::systems::camera_helicopter::helicopter_camera_system;
+use crate::systems::camera_yacht::yacht_camera_system;
 use crate::systems::movement::rotate_helicopter_rotors;
 use crate::systems::setup::on_f16_spawned;
 use bevy::prelude::*;
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
 use crate::systems::effects::{
+    RotorWashEffect, cleanup_rotor_wash_on_helicopter_despawn, create_rotor_wash_effect,
     exhaust_effects_system, spawn_rotor_wash_particles, update_jet_flames_unified,
     update_landing_lights, update_navigation_lights, update_rotor_blur_visibility,
     update_rotor_wash_position_and_intensity,
 };
 use crate::systems::safety::validate_physics_config;
+use bevy_hanabi::prelude::*;
 // LOD system replaced with Bevy's VisibilityRange + simulation_lod
 // use crate::systems::configuration_validation_system; // DISABLED - conflicts with Rapier
 
@@ -17,7 +23,7 @@ impl Plugin for VehiclePlugin {
     fn build(&self, app: &mut App) {
         app
             // CRITICAL SAFEGUARDS: Run configuration validation at startup
-            .add_systems(Startup, validate_physics_config)
+            .add_systems(Startup, (validate_physics_config, init_rotor_wash_effect))
             // Observer for F16 setup when specs are added
             .add_observer(on_f16_spawned)
             .add_systems(
@@ -31,6 +37,11 @@ impl Plugin for VehiclePlugin {
                     // car_movement.run_if(in_state(GameState::Driving)),
                     // simple_helicopter_movement.run_if(in_state(GameState::Flying)),
                     // simple_f16_movement.run_if(in_state(GameState::Jetting)),
+                    // Camera systems for smooth vehicle following
+                    car_camera_system,
+                    helicopter_camera_system,
+                    f16_camera_system,
+                    yacht_camera_system,
                     // Visual rotor animation for helicopters
                     rotate_helicopter_rotors,
                     exhaust_effects_system,
@@ -43,6 +54,7 @@ impl Plugin for VehiclePlugin {
                     update_rotor_wash_position_and_intensity,
                 ),
             )
+            .add_systems(PostUpdate, cleanup_rotor_wash_on_helicopter_despawn)
             .add_systems(
                 Update,
                 (
@@ -54,4 +66,11 @@ impl Plugin for VehiclePlugin {
                 ),
             );
     }
+}
+
+/// Initializes the rotor wash effect resource at startup.
+/// Creates the effect once and caches the handle for reuse across all helicopters.
+fn init_rotor_wash_effect(mut commands: Commands, mut effects: ResMut<Assets<EffectAsset>>) {
+    let handle = create_rotor_wash_effect(&mut effects);
+    commands.insert_resource(RotorWashEffect { handle });
 }

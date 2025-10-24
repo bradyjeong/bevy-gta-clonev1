@@ -210,12 +210,6 @@ pub struct VehicleRendering {
     pub mesh_entities: Vec<Entity>, // Child entities with meshes
 }
 
-// LOD distances - optimized for 60+ FPS target
-pub const LOD_FULL_DISTANCE: f32 = 50.0;
-pub const LOD_MEDIUM_DISTANCE: f32 = 100.0;
-pub const LOD_LOW_DISTANCE: f32 = 125.0;
-pub const LOD_CULL_DISTANCE: f32 = 150.0;
-
 // Simple vehicle physics configurations (asset-driven)
 #[derive(Component, Debug, Clone, serde::Deserialize)]
 pub struct SimpleCarSpecs {

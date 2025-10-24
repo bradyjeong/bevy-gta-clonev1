@@ -1,40 +1,79 @@
-use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, TERRAIN_HALF_SIZE};
+use crate::constants::WorldEnvConfig;
 use bevy::prelude::*;
 
 /// Test that player spawn position is within island boundaries
 #[test]
 fn test_player_spawn_within_island() {
-    let player_spawn = Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION + 10.0, 0.0);
+    let env = WorldEnvConfig::default();
+    let player_spawn = Vec3::new(env.islands.left_x, env.land_elevation + 10.0, 0.0);
 
     // Check player is within left island rectangular bounds
     assert!(
-        player_spawn.x >= LEFT_ISLAND_X - TERRAIN_HALF_SIZE
-            && player_spawn.x <= LEFT_ISLAND_X + TERRAIN_HALF_SIZE
-            && player_spawn.z >= -TERRAIN_HALF_SIZE
-            && player_spawn.z <= TERRAIN_HALF_SIZE,
+        player_spawn.x >= env.islands.left_x - env.terrain.half_size
+            && player_spawn.x <= env.islands.left_x + env.terrain.half_size
+            && player_spawn.z >= -env.terrain.half_size
+            && player_spawn.z <= env.terrain.half_size,
         "Player spawn at ({}, {}) is outside left island bounds",
         player_spawn.x,
         player_spawn.z
     );
 }
 
-/// Test that island boundaries are correctly defined
+/// Test that all three island boundaries are correctly defined and don't overlap
 #[test]
 fn test_island_boundaries() {
+    let env = WorldEnvConfig::default();
+
+    // Left island: X ∈ [-2100, -900], Z ∈ [-600, 600]
+    let left_max_x = env.islands.left_x + env.terrain.half_size;
+
+    // Right island: X ∈ [900, 2100], Z ∈ [-600, 600]
+    let right_min_x = env.islands.right_x - env.terrain.half_size;
+
+    // Grid island: X ∈ [-600, 600], Z ∈ [1200, 2400]
+    let grid_min_z = env.islands.grid_z - env.terrain.half_size;
+
+    // Verify islands don't overlap in X-Z plane
+    // Left and Right islands: same Z range [-600, 600], different X ranges
+    assert!(
+        left_max_x < right_min_x,
+        "Left and right islands overlap in X axis"
+    );
+
+    // Left and Grid islands: Left Z ∈ [-600, 600], Grid Z ∈ [1200, 2400]
+    // Z ranges don't overlap: 600 < 1200, so no overlap possible
+    assert!(
+        env.terrain.half_size < grid_min_z,
+        "Left and grid islands overlap in Z axis"
+    );
+
+    // Right and Grid islands: Right Z ∈ [-600, 600], Grid Z ∈ [1200, 2400]
+    // Z ranges don't overlap: 600 < 1200, so no overlap possible
+    assert!(
+        env.terrain.half_size < grid_min_z,
+        "Right and grid islands overlap in Z axis"
+    );
+}
+
+/// Test that the old test name still works
+#[test]
+fn test_old_island_boundaries() {
+    let env = WorldEnvConfig::default();
+
     // Test positions on left island
     let left_positions = vec![
-        Vec3::new(LEFT_ISLAND_X, 0.0, 0.0),         // Center
-        Vec3::new(LEFT_ISLAND_X + 500.0, 0.0, 0.0), // East side
-        Vec3::new(LEFT_ISLAND_X - 500.0, 0.0, 0.0), // West side
-        Vec3::new(LEFT_ISLAND_X, 0.0, 500.0),       // North side
-        Vec3::new(LEFT_ISLAND_X, 0.0, -500.0),      // South side
+        Vec3::new(env.islands.left_x, 0.0, 0.0),         // Center
+        Vec3::new(env.islands.left_x + 500.0, 0.0, 0.0), // East side
+        Vec3::new(env.islands.left_x - 500.0, 0.0, 0.0), // West side
+        Vec3::new(env.islands.left_x, 0.0, 500.0),       // North side
+        Vec3::new(env.islands.left_x, 0.0, -500.0),      // South side
     ];
 
     for pos in left_positions {
-        let on_left_island = pos.x >= LEFT_ISLAND_X - TERRAIN_HALF_SIZE
-            && pos.x <= LEFT_ISLAND_X + TERRAIN_HALF_SIZE
-            && pos.z >= -TERRAIN_HALF_SIZE
-            && pos.z <= TERRAIN_HALF_SIZE;
+        let on_left_island = pos.x >= env.islands.left_x - env.terrain.half_size
+            && pos.x <= env.islands.left_x + env.terrain.half_size
+            && pos.z >= -env.terrain.half_size
+            && pos.z <= env.terrain.half_size;
 
         assert!(
             on_left_island,
@@ -47,35 +86,37 @@ fn test_island_boundaries() {
 /// Test that rectangular islands work correctly
 #[test]
 fn test_rectangular_island_shape() {
+    let env = WorldEnvConfig::default();
+
     // Test corners of left island (should be within bounds)
     let left_corners = vec![
         Vec3::new(
-            LEFT_ISLAND_X - TERRAIN_HALF_SIZE + 1.0,
+            env.islands.left_x - env.terrain.half_size + 1.0,
             0.0,
-            -TERRAIN_HALF_SIZE + 1.0,
+            -env.terrain.half_size + 1.0,
         ),
         Vec3::new(
-            LEFT_ISLAND_X + TERRAIN_HALF_SIZE - 1.0,
+            env.islands.left_x + env.terrain.half_size - 1.0,
             0.0,
-            -TERRAIN_HALF_SIZE + 1.0,
+            -env.terrain.half_size + 1.0,
         ),
         Vec3::new(
-            LEFT_ISLAND_X - TERRAIN_HALF_SIZE + 1.0,
+            env.islands.left_x - env.terrain.half_size + 1.0,
             0.0,
-            TERRAIN_HALF_SIZE - 1.0,
+            env.terrain.half_size - 1.0,
         ),
         Vec3::new(
-            LEFT_ISLAND_X + TERRAIN_HALF_SIZE - 1.0,
+            env.islands.left_x + env.terrain.half_size - 1.0,
             0.0,
-            TERRAIN_HALF_SIZE - 1.0,
+            env.terrain.half_size - 1.0,
         ),
     ];
 
     for pos in left_corners {
-        let on_island = pos.x >= LEFT_ISLAND_X - TERRAIN_HALF_SIZE
-            && pos.x <= LEFT_ISLAND_X + TERRAIN_HALF_SIZE
-            && pos.z >= -TERRAIN_HALF_SIZE
-            && pos.z <= TERRAIN_HALF_SIZE;
+        let on_island = pos.x >= env.islands.left_x - env.terrain.half_size
+            && pos.x <= env.islands.left_x + env.terrain.half_size
+            && pos.z >= -env.terrain.half_size
+            && pos.z <= env.terrain.half_size;
 
         assert!(
             on_island,
@@ -88,26 +129,33 @@ fn test_rectangular_island_shape() {
 /// Test that ocean positions are correctly excluded
 #[test]
 fn test_ocean_exclusion() {
+    let env = WorldEnvConfig::default();
+
     let ocean_positions = vec![
-        Vec3::new(0.0, 0.0, 0.0),                     // Between islands
-        Vec3::new(LEFT_ISLAND_X - 1000.0, 0.0, 0.0),  // Far west
-        Vec3::new(RIGHT_ISLAND_X + 1000.0, 0.0, 0.0), // Far east
-        Vec3::new(LEFT_ISLAND_X, 0.0, 1000.0),        // Far north
+        Vec3::new(0.0, 0.0, 0.0),                          // Between islands
+        Vec3::new(env.islands.left_x - 1000.0, 0.0, 0.0),  // Far west
+        Vec3::new(env.islands.right_x + 1000.0, 0.0, 0.0), // Far east
+        Vec3::new(env.islands.left_x, 0.0, 1000.0),        // Far north
     ];
 
     for pos in ocean_positions {
-        let on_left = pos.x >= LEFT_ISLAND_X - TERRAIN_HALF_SIZE
-            && pos.x <= LEFT_ISLAND_X + TERRAIN_HALF_SIZE
-            && pos.z >= -TERRAIN_HALF_SIZE
-            && pos.z <= TERRAIN_HALF_SIZE;
+        let on_left = pos.x >= env.islands.left_x - env.terrain.half_size
+            && pos.x <= env.islands.left_x + env.terrain.half_size
+            && pos.z >= -env.terrain.half_size
+            && pos.z <= env.terrain.half_size;
 
-        let on_right = pos.x >= RIGHT_ISLAND_X - TERRAIN_HALF_SIZE
-            && pos.x <= RIGHT_ISLAND_X + TERRAIN_HALF_SIZE
-            && pos.z >= -TERRAIN_HALF_SIZE
-            && pos.z <= TERRAIN_HALF_SIZE;
+        let on_right = pos.x >= env.islands.right_x - env.terrain.half_size
+            && pos.x <= env.islands.right_x + env.terrain.half_size
+            && pos.z >= -env.terrain.half_size
+            && pos.z <= env.terrain.half_size;
+
+        let on_grid = pos.x >= env.islands.grid_x - env.terrain.half_size
+            && pos.x <= env.islands.grid_x + env.terrain.half_size
+            && pos.z >= env.islands.grid_z - env.terrain.half_size
+            && pos.z <= env.islands.grid_z + env.terrain.half_size;
 
         assert!(
-            !on_left && !on_right,
+            !on_left && !on_right && !on_grid,
             "Ocean position ({}, {}) incorrectly detected as on island",
             pos.x,
             pos.z
@@ -118,21 +166,23 @@ fn test_ocean_exclusion() {
 /// Test symmetric island layout
 #[test]
 fn test_island_symmetry() {
+    let env = WorldEnvConfig::default();
+
     assert_eq!(
-        -LEFT_ISLAND_X, RIGHT_ISLAND_X,
+        -env.islands.left_x, env.islands.right_x,
         "Islands should be symmetrically positioned"
     );
 
     // Test equivalent positions on both islands
     let offset = 500.0;
-    let left_test = Vec3::new(LEFT_ISLAND_X + offset, 0.0, 200.0);
-    let right_test = Vec3::new(RIGHT_ISLAND_X + offset, 0.0, 200.0);
+    let left_test = Vec3::new(env.islands.left_x + offset, 0.0, 200.0);
+    let right_test = Vec3::new(env.islands.right_x + offset, 0.0, 200.0);
 
-    let dx_left = left_test.x - LEFT_ISLAND_X;
+    let dx_left = left_test.x - env.islands.left_x;
     let dz_left = left_test.z;
     let left_dist = (dx_left * dx_left + dz_left * dz_left).sqrt();
 
-    let dx_right = right_test.x - RIGHT_ISLAND_X;
+    let dx_right = right_test.x - env.islands.right_x;
     let dz_right = right_test.z;
     let right_dist = (dx_right * dx_right + dz_right * dz_right).sqrt();
 

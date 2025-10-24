@@ -21,8 +21,12 @@ pub fn surface_render_system(
         // Calculate subdivisions based on region size
         // Target: ~20-30m per vertex (balanced detail vs performance)
         let max_dimension = width.max(depth);
-        let subdivisions = if max_dimension > 1000.0 {
-            256 // Large ocean: ~23m per vertex
+        let subdivisions = if max_dimension > 10000.0 {
+            512 // Horizon ocean: ~35m per vertex (performance limit)
+        } else if max_dimension > 5000.0 {
+            384 // Very large ocean: ~26m per vertex
+        } else if max_dimension > 1000.0 {
+            256 // Large ocean: ~8m per vertex
         } else if max_dimension > 500.0 {
             128 // Medium water: ~4-8m per vertex
         } else {

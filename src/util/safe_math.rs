@@ -95,7 +95,8 @@ impl Vec3SafeExt for Vec3 {
     }
 }
 
-/// Constants for coordinate safety
+/// Constants for coordinate safety - DEPRECATED, use WorldPhysicsConfig resource instead
+/// These are kept for backwards compatibility
 pub const MAX_SAFE_COORDINATE: f32 = 100_000.0; // 100km
 pub const MAX_SAFE_VELOCITY: f32 = 600.0; // 600 m/s  
 pub const MAX_SAFE_ANGULAR_VEL: f32 = 20.0; // 20 rad/s

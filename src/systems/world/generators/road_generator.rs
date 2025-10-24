@@ -2,7 +2,7 @@ use crate::bundles::VisibleChildBundle;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::{ContentType, DynamicContent, IntersectionEntity, RoadEntity};
 use crate::config::GameConfig;
-use crate::constants::LAND_ELEVATION;
+use crate::constants::WorldEnvConfig;
 use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
 use crate::systems::world::road_mesh::{
     generate_road_markings_mesh_local, generate_road_mesh_local,
@@ -12,12 +12,11 @@ use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
 };
 use bevy::prelude::*;
-use bevy::render::view::visibility::VisibilityRange;
 
 pub struct RoadGenerator;
 
 impl RoadGenerator {
-    #[allow(clippy::too_many_arguments, deprecated)]
+    #[allow(clippy::too_many_arguments)]
     pub fn generate_roads(
         &self,
         commands: &mut Commands,
@@ -26,17 +25,31 @@ impl RoadGenerator {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         material_registry: &mut MaterialRegistry,
-        _world_rng: &mut WorldRng,
+        world_rng: &mut WorldRng,
         water_bodies: &Query<&UnifiedWaterBody>,
         config: &GameConfig,
+        env: &WorldEnvConfig,
     ) {
         // Skip if chunk is not on a terrain island
-        let chunk_center = coord.to_world_pos();
+        let chunk_center = coord.to_world_pos_with_size(world.chunk_size);
         if !world.is_on_terrain_island(chunk_center) {
             return;
         }
 
-        let new_road_ids = world.road_network.generate_chunk_roads(coord.x, coord.z);
+        // Use simple Manhattan grid generator for grid island, organic generator for other islands
+        let new_road_ids = if world.is_on_grid_island(chunk_center) {
+            // Generate entire Manhattan grid on first chunk (subsequent chunks skip)
+            world
+                .manhattan_generator
+                .generate_grid(&mut world.road_network, config, env)
+        } else {
+            world.road_network.generate_roads_for_cell(
+                IVec2::new(coord.x, coord.z),
+                config.world_streaming.road_cell_size,
+                world_rng.global(),
+                config,
+            )
+        };
 
         // Create road entities and add to placement grid
         for road_id in new_road_ids {
@@ -55,6 +68,7 @@ impl RoadGenerator {
                     materials,
                     material_registry,
                     config,
+                    env,
                 );
 
                 // Add road to placement grid
@@ -95,11 +109,12 @@ impl RoadGenerator {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         material_registry: &mut MaterialRegistry,
-        config: &GameConfig,
+        _config: &GameConfig,
+        env: &WorldEnvConfig,
     ) -> Entity {
         // Get road center position and set correct height
         let mut center_pos = road.evaluate(0.5);
-        let base_y = LAND_ELEVATION + road.road_type.height();
+        let base_y = env.land_elevation + road.road_type.height();
         center_pos.y = base_y;
 
         let road_material =
@@ -124,7 +139,7 @@ impl RoadGenerator {
             ))
             .id();
 
-        // Road surface mesh - local coordinates with proper VisibilityRange
+        // Road surface mesh - local coordinates, uses default frustum culling
         let road_mesh = generate_road_mesh_local(road, center_pos);
         commands.spawn((
             Mesh3d(meshes.add(road_mesh)),
@@ -132,15 +147,9 @@ impl RoadGenerator {
             Transform::from_translation(Vec3::new(0.0, 0.05, 0.0)),
             ChildOf(road_entity),
             VisibleChildBundle::default(),
-            VisibilityRange {
-                start_margin: 0.0..0.0,
-                end_margin: (config.performance.road_visibility_distance * 0.9)
-                    ..(config.performance.road_visibility_distance * 1.1),
-                use_aabb: false,
-            },
         ));
 
-        // Road markings - local coordinates with proper VisibilityRange
+        // Road markings - local coordinates, uses default frustum culling
         let marking_meshes = generate_road_markings_mesh_local(road, center_pos);
         for marking_mesh in marking_meshes {
             commands.spawn((
@@ -149,12 +158,6 @@ impl RoadGenerator {
                 Transform::from_translation(Vec3::new(0.0, 0.06, 0.0)),
                 ChildOf(road_entity),
                 VisibleChildBundle::default(),
-                VisibilityRange {
-                    start_margin: 0.0..0.0,
-                    end_margin: (config.performance.road_visibility_distance * 0.9)
-                        ..(config.performance.road_visibility_distance * 1.1),
-                    use_aabb: true, // Use AABB for accurate culling of long roads
-                },
             ));
         }
 
@@ -167,7 +170,7 @@ impl RoadGenerator {
         world: &mut UnifiedWorldManager,
         coord: ChunkCoord,
     ) {
-        let chunk_center = coord.to_world_pos();
+        let chunk_center = coord.to_world_pos_with_size(world.chunk_size);
         let chunk_size = world.chunk_size;
         let half_size = chunk_size * 0.5;
 

@@ -72,25 +72,25 @@ impl Default for WaterMaterial {
             wave_count: 4,
             _pad: Vec2::ZERO,
 
-            // 4 Gerstner wave octaves with realistic calm ocean parameters
-            // Reduced amplitudes to prevent surface gaps
+            // 4 Gerstner wave octaves for horizon-scale ocean
+            // Larger wavelengths and amplitudes for visibility at distance
             // Format: (dir.x, dir.y, amplitude, wavelength)
             // NOTE: Directions are normalized in shader
             wave_data0: [
-                Vec4::new(1.0, 0.2, 0.25, 60.0),  // Large waves
-                Vec4::new(-0.6, 1.0, 0.15, 30.0), // Medium waves
-                Vec4::new(0.2, -1.0, 0.08, 15.0), // Small waves
-                Vec4::new(-1.0, -0.3, 0.04, 8.0), // Ripples
+                Vec4::new(1.0, 0.2, 0.8, 120.0), // Large ocean swells (visible at horizon)
+                Vec4::new(-0.6, 1.0, 0.5, 80.0), // Medium swells
+                Vec4::new(0.2, -1.0, 0.3, 50.0), // Smaller waves
+                Vec4::new(-1.0, -0.3, 0.15, 25.0), // Detail waves
             ],
 
             // Format: (speed_override, steepness, _pad, _pad)
-            // Reduced steepness for smoother, more continuous waves
+            // Moderate steepness for visible rolling swells
             // speed=0.0 means use deep-water dispersion: w = sqrt(g*k)
             wave_data1: [
-                Vec4::new(0.0, 0.4, 0.0, 0.0),  // Gentle slopes (was 0.8)
-                Vec4::new(0.0, 0.35, 0.0, 0.0), // (was 0.7)
-                Vec4::new(0.0, 0.3, 0.0, 0.0),  // (was 0.6)
-                Vec4::new(0.0, 0.25, 0.0, 0.0), // (was 0.5)
+                Vec4::new(0.0, 0.5, 0.0, 0.0),  // Rolling ocean swells
+                Vec4::new(0.0, 0.45, 0.0, 0.0), // Medium steepness
+                Vec4::new(0.0, 0.4, 0.0, 0.0),  // Gentle waves
+                Vec4::new(0.0, 0.35, 0.0, 0.0), // Detail ripples
             ],
         }
     }

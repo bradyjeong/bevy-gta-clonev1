@@ -71,6 +71,7 @@ pub mod world;
 
 pub mod control_state;
 pub mod dirty_flags;
+pub mod input_smoother;
 pub mod yacht_exit;
 
 pub mod unified_vehicle;
@@ -95,16 +96,16 @@ pub use vehicles::{
 pub use world::{
     BoundaryEffects, Buildable, Building, BuildingType, ContentType, CullingSettings,
     DynamicContent, DynamicTerrain, IntersectionEntity, Landmark, MainCamera, MaterialCache,
-    MovementController, NPC, NPC_LOD_CULL_DISTANCE, NPCAppearance, NPCBehaviorComponent,
-    NPCBehaviorType, NPCBodyPart, NPCGender, NPCHead, NPCLOD, NPCLeftArm, NPCLeftFoot, NPCLeftLeg,
-    NPCRendering, NPCRightArm, NPCRightFoot, NPCRightLeg, NPCState, NPCTorso, NPCType,
-    PerformanceCritical, PerformanceStats, RoadEntity, WorldBounds,
+    MovementController, NPC, NPCAppearance, NPCBehaviorComponent, NPCBehaviorType, NPCBodyPart,
+    NPCGender, NPCHead, NPCLOD, NPCLeftArm, NPCLeftFoot, NPCLeftLeg, NPCRendering, NPCRightArm,
+    NPCRightFoot, NPCRightLeg, NPCState, NPCTorso, NPCType, PerformanceCritical, PerformanceStats,
+    RoadEntity, WorldBounds,
 };
 
-pub use unified_water::{UnifiedWaterAsset, UnifiedWaterBody, WaterSurface};
+pub use unified_water::{CurrentWaterRegion, UnifiedWaterAsset, UnifiedWaterBody, WaterSurface};
 pub use water::{Boat, WaterBody, WaterWave, Yacht};
 pub use water_material::WaterMaterial;
-pub use water_new::{TideConfig, WaterBodyId, WaterRegion, WaterRegionAsset, WaveParams};
+pub use water_new::{TideConfig, WaterRegion, WaterRegionAsset, WaveParams};
 
 // Visual and rendering components
 pub use effects::{
@@ -116,6 +117,7 @@ pub use control_state::{
     AIControlled, ControlState, PendingPhysicsEnable, PlayerControlled, VehicleControlType,
 };
 pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility};
+pub use input_smoother::InputSmoother;
 pub use map::{MapCamera, MapConfig, MinimapUI, PlayerMapIcon};
 pub use movement_tracker::MovementTracker;
 pub use underwater_settings::UnderwaterSettings;

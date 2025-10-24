@@ -1,6 +1,6 @@
 use crate::bundles::VisibleChildBundle;
 use crate::config::GameConfig;
-use crate::constants::{LAND_ELEVATION, LEFT_ISLAND_X};
+use crate::constants::WorldEnvConfig;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 use bevy_rapier3d::prelude::*;
@@ -13,6 +13,7 @@ pub fn setup_palm_trees(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     config: Res<GameConfig>,
+    env: Res<WorldEnvConfig>,
 ) {
     // Palm trees on left terrain island
     let palm_positions = [
@@ -69,11 +70,11 @@ pub fn setup_palm_trees(
 
     for &(x, z) in palm_positions.iter() {
         // Offset palm positions to left terrain island
-        let world_x = LEFT_ISLAND_X + x;
+        let world_x = env.islands.left_x + x;
         // Simple palm tree - single trunk + simple crown
         let palm_entity = commands
             .spawn((
-                Transform::from_xyz(world_x, LAND_ELEVATION, z),
+                Transform::from_xyz(world_x, env.land_elevation, z),
                 Visibility::Visible,
                 InheritedVisibility::VISIBLE,
                 ViewVisibility::default(),

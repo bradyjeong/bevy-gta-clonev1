@@ -1,4 +1,3 @@
-use crate::constants::LAND_ELEVATION;
 use bevy::prelude::*;
 
 /// NPC Behavior Component - replaces old NPCBehavior
@@ -204,12 +203,6 @@ pub struct NPCBodyPart {
     pub animation_offset: Vec3,
     pub animation_rotation: Quat,
 }
-
-// LOD distances for NPCs - optimized for 60+ FPS target
-pub const NPC_LOD_FULL_DISTANCE: f32 = 25.0;
-pub const NPC_LOD_MEDIUM_DISTANCE: f32 = 50.0;
-pub const NPC_LOD_LOW_DISTANCE: f32 = 75.0;
-pub const NPC_LOD_CULL_DISTANCE: f32 = 100.0;
 
 // DEPRECATED: Use VisibilityRange from Bevy instead
 // This is kept for legacy compatibility during migration
@@ -569,12 +562,12 @@ impl WorldBounds {
     }
 
     /// Get safe respawn position near world center
-    pub fn safe_respawn_position(&self) -> Vec3 {
+    pub fn safe_respawn_position(&self, land_elevation: f32) -> Vec3 {
         let center_x = (self.min_x + self.max_x) / 2.0;
         let center_z = (self.min_z + self.max_z) / 2.0;
 
         // Spawn slightly offset from exact center at terrain elevation
-        Vec3::new(center_x + 10.0, LAND_ELEVATION + 0.5, center_z + 10.0)
+        Vec3::new(center_x + 10.0, land_elevation + 0.5, center_z + 10.0)
     }
 }
 

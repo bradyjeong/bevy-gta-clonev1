@@ -7,9 +7,7 @@ use crate::components::{
     VehicleControlType,
 };
 use crate::config::GameConfig;
-use crate::constants::{
-    LAND_ELEVATION, LEFT_ISLAND_X, RIGHT_ISLAND_X, SEA_LEVEL, SPAWN_DROP_HEIGHT, TERRAIN_SIZE,
-};
+use crate::constants::WorldEnvConfig;
 use crate::factories::spawn_bridge;
 use crate::systems::audio::FootstepTimer;
 
@@ -24,7 +22,48 @@ pub fn setup_basic_world(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     config: Res<GameConfig>,
+    env: Res<WorldEnvConfig>,
 ) {
+    // Config drift guards: Verify consistency between WorldEnvConfig and GameConfig
+    // These assertions prevent bugs where road_network.rs and world.rs disagree on island boundaries
+    debug_assert!(
+        (config.world_env.islands.grid_x - env.islands.grid_x).abs() < 0.001,
+        "Config drift detected: grid_x mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.islands.grid_x,
+        env.islands.grid_x
+    );
+    debug_assert!(
+        (config.world_env.islands.grid_z - env.islands.grid_z).abs() < 0.001,
+        "Config drift detected: grid_z mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.islands.grid_z,
+        env.islands.grid_z
+    );
+    debug_assert!(
+        (config.world_env.terrain.half_size * 2.0 - env.terrain.size).abs() < 0.001,
+        "Config drift detected: terrain size mismatch between GameConfig (half_size {} -> {}) and WorldEnvConfig (size {})",
+        config.world_env.terrain.half_size,
+        config.world_env.terrain.half_size * 2.0,
+        env.terrain.size
+    );
+    debug_assert!(
+        (config.world_env.islands.left_x - env.islands.left_x).abs() < 0.001,
+        "Config drift detected: left_x mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.islands.left_x,
+        env.islands.left_x
+    );
+    debug_assert!(
+        (config.world_env.islands.right_x - env.islands.right_x).abs() < 0.001,
+        "Config drift detected: right_x mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.islands.right_x,
+        env.islands.right_x
+    );
+    debug_assert!(
+        (config.world_env.terrain.half_size - env.terrain.half_size).abs() < 0.001,
+        "Config drift detected: terrain half_size mismatch between GameConfig ({}) and WorldEnvConfig ({})",
+        config.world_env.terrain.half_size,
+        env.terrain.half_size
+    );
+
     // No longer need WorldRoot - spawn entities directly in world space
 
     // Camera (stays outside WorldRoot - doesn't move with world shifts)
@@ -34,13 +73,13 @@ pub fn setup_basic_world(
         Msaa::Off,
         DepthPrepass,
         Projection::Perspective(PerspectiveProjection {
-            // Derived from config: world_half_size (3000.0) + 500m buffer = 3500.0
-            far: config.world_bounds.world_half_size + 500.0,
+            // Extended for proper horizon/skybox rendering (skybox at 9500 units)
+            far: 10000.0,
             ..default()
         }),
         Transform::from_xyz(0.0, 15.0, 25.0).looking_at(Vec3::ZERO, Vec3::Y),
         UnderwaterSettings {
-            sea_level: SEA_LEVEL,
+            sea_level: env.sea_level,
             // Research-based realistic ocean parameters:
             // - Red light absorbed in top 10m
             // - Blue/green penetrate deepest
@@ -95,8 +134,8 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.left_x, env.land_elevation, 0.0),
+        env.terrain.size,
         "Left",
         &config,
     );
@@ -106,15 +145,15 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.right_x, env.land_elevation, 0.0),
+        env.terrain.size,
         "Right",
         &config,
     );
 
-    // OCEAN FLOOR - Fills entire world
-    // Derived from config: (world_half_size * 2.0) + 400m margin = 6400.0
-    let ocean_size = config.world_bounds.world_half_size * 2.0 + 400.0;
+    // OCEAN FLOOR - Extended to horizon for proper water depth rendering
+    // Matches water surface bounds (18000x18000) to prevent see-through at distance
+    let ocean_size = 18000.0;
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(ocean_size, ocean_size))),
         MeshMaterial3d(materials.add(StandardMaterial {
@@ -122,15 +161,15 @@ pub fn setup_basic_world(
             perceptual_roughness: 0.9,
             ..default()
         })),
-        Transform::from_xyz(0.0, -10.0, 0.0),
+        Transform::from_xyz(0.0, env.ocean_floor_depth, 0.0),
         Name::new("Ocean Floor Visual"),
     ));
 
     // Ocean floor collider - derive from ocean_size to match visual bounds
     // ocean_size is derived from world_bounds, so collider scales with world
-    // Collider center at -10.05 so top surface is exactly -10.0 (matches beach slope bottom)
+    // Collider center at ocean_floor_depth - 0.05 so top surface is exactly ocean_floor_depth (matches beach slope bottom)
     commands.spawn((
-        Transform::from_xyz(0.0, -10.05, 0.0),
+        Transform::from_xyz(0.0, env.ocean_floor_depth - 0.05, 0.0),
         RigidBody::Fixed,
         Collider::cuboid(ocean_size * 0.5, 0.05, ocean_size * 0.5),
         CollisionGroups::new(
@@ -191,8 +230,8 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.left_x, env.land_elevation, 0.0),
+        env.terrain.size,
         "Left",
         &config,
     );
@@ -202,17 +241,39 @@ pub fn setup_basic_world(
         &mut commands,
         &mut meshes,
         &mut materials,
-        Vec3::new(RIGHT_ISLAND_X, LAND_ELEVATION, 0.0),
-        TERRAIN_SIZE,
+        Vec3::new(env.islands.right_x, env.land_elevation, 0.0),
+        env.terrain.size,
         "Right",
         &config,
     );
 
+    // GRID TERRAIN ISLAND (Manhattan-style grid roads)
+    spawn_terrain_island(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(env.islands.grid_x, env.land_elevation, env.islands.grid_z),
+        env.terrain.size,
+        "Grid",
+        &config,
+    );
+
+    // GRID TERRAIN BEACHES (all 4 edges with corners filled)
+    spawn_terrain_beaches(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Vec3::new(env.islands.grid_x, env.land_elevation, env.islands.grid_z),
+        env.terrain.size,
+        "Grid",
+        &config,
+    );
+
     // BRIDGE CONNECTING ISLANDS
-    spawn_bridge(&mut commands, &mut meshes, &mut materials, &config);
+    spawn_bridge(&mut commands, &mut meshes, &mut materials, &config, &env);
 
     // Spawn player above terrain, let gravity drop them
-    let player_y = LAND_ELEVATION + SPAWN_DROP_HEIGHT;
+    let player_y = env.land_elevation + env.spawn_drop_height;
 
     // Player character with human-like components in world coordinates
     // Use player dimensions from config
@@ -230,7 +291,7 @@ pub fn setup_basic_world(
             ),
             LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
             Velocity::zero(),
-            Transform::from_xyz(LEFT_ISLAND_X, player_y, 0.0),
+            Transform::from_xyz(env.islands.left_x, player_y, 0.0),
             Visibility::Visible,
             InheritedVisibility::VISIBLE,
             ViewVisibility::default(),
@@ -251,7 +312,7 @@ pub fn setup_basic_world(
         HumanAnimation::default(),
         PlayerBody::default(),
         FootstepTimer::default(),
-        MovementTracker::new(Vec3::new(LEFT_ISLAND_X, LAND_ELEVATION, 0.0), 5.0),
+        MovementTracker::new(Vec3::new(env.islands.left_x, env.land_elevation, 0.0), 5.0),
         ControlState::default(),
         PlayerControlled,
         VehicleControlType::Walking,
@@ -259,7 +320,7 @@ pub fn setup_basic_world(
 
     spawn_registry.register_entity(
         player_entity,
-        Vec3::new(LEFT_ISLAND_X, player_y, 0.0),
+        Vec3::new(env.islands.left_x, player_y, 0.0),
         SpawnableType::Player,
     );
 
@@ -427,8 +488,8 @@ fn spawn_terrain_beaches(
 
     let collider_half_height = 0.05; // Match terrain collider
     let land_elevation_phys = terrain_center.y; // Physics top surface
-    let ocean_floor_y = -10.0;
-    let beach_width = 100.0;
+    let ocean_floor_y = config.world_env.ocean_floor_depth;
+    let beach_width = config.world_env.terrain.beach_width;
     let half_size = terrain_size / 2.0;
 
     // Beach center Y for physics (collider alignment)

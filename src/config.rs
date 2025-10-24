@@ -45,6 +45,9 @@ pub struct GameConfig {
 
     // World Object Configuration
     pub world_objects: WorldObjectsConfig,
+
+    // World Environment Configuration (from world_config.ron)
+    pub world_env: crate::constants::WorldEnvConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -207,7 +210,7 @@ pub struct PerformanceConfig {
     pub npc_visibility_distance: f32, // 125.0 - NPCs visible range
     pub vehicle_visibility_distance: f32, // 250.0 - Vehicles visible range
     pub tree_visibility_distance: f32, // 300.0 - Trees visible range
-    pub building_visibility_distance: f32, // 500.0 - Buildings visible range
+    pub building_visibility_distance: f32, // 1500.0 - High for Manhattan skyline visibility
     pub road_visibility_distance: f32, // 400.0 - Roads visible range
 }
 
@@ -550,7 +553,7 @@ impl Default for PerformanceConfig {
             npc_visibility_distance: 125.0,
             vehicle_visibility_distance: 250.0,
             tree_visibility_distance: 300.0,
-            building_visibility_distance: 500.0,
+            building_visibility_distance: 1500.0, // High for Manhattan skyline visibility
             road_visibility_distance: 400.0,
         }
     }
