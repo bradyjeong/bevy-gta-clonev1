@@ -9,7 +9,7 @@ pub const CHARACTER_GROUP: Group = Group::GROUP_3; // Player, NPCs
 
 // World environment configuration loaded from assets/config/world_config.ron
 // Renamed to WorldEnvConfig to avoid collision with config::WorldConfig
-#[derive(Debug, Clone, Resource, Deserialize, Default)]
+#[derive(Debug, Clone, Resource, Deserialize)]
 pub struct WorldEnvConfig {
     pub sea_level: f32,
     pub land_elevation: f32,
@@ -20,7 +20,7 @@ pub struct WorldEnvConfig {
     pub max_world_coordinate: f32,
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct IslandConfig {
     pub left_x: f32,
     pub right_x: f32,
@@ -28,11 +28,47 @@ pub struct IslandConfig {
     pub grid_z: f32,
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct TerrainConfig {
     pub size: f32,
     pub half_size: f32,
     pub beach_width: f32,
+}
+
+// Manual Default implementation matching assets/config/world_config.ron
+impl Default for WorldEnvConfig {
+    fn default() -> Self {
+        Self {
+            sea_level: 0.0,
+            land_elevation: 3.0,
+            spawn_drop_height: 10.0,
+            ocean_floor_depth: -10.0,
+            islands: IslandConfig::default(),
+            terrain: TerrainConfig::default(),
+            max_world_coordinate: 3000.0,
+        }
+    }
+}
+
+impl Default for IslandConfig {
+    fn default() -> Self {
+        Self {
+            left_x: -1500.0,
+            right_x: 1500.0,
+            grid_x: 0.0,
+            grid_z: 1800.0,
+        }
+    }
+}
+
+impl Default for TerrainConfig {
+    fn default() -> Self {
+        Self {
+            size: 1200.0,
+            half_size: 600.0,
+            beach_width: 100.0,
+        }
+    }
 }
 
 // All world environment constants have been migrated to WorldEnvConfig resource.

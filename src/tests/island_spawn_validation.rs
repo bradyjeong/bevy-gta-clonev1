@@ -25,31 +25,33 @@ fn test_island_boundaries() {
     let env = WorldEnvConfig::default();
 
     // Left island: X ∈ [-2100, -900], Z ∈ [-600, 600]
-    let left_min_x = env.islands.left_x - env.terrain.half_size;
     let left_max_x = env.islands.left_x + env.terrain.half_size;
 
     // Right island: X ∈ [900, 2100], Z ∈ [-600, 600]
     let right_min_x = env.islands.right_x - env.terrain.half_size;
-    let right_max_x = env.islands.right_x + env.terrain.half_size;
 
     // Grid island: X ∈ [-600, 600], Z ∈ [1200, 2400]
-    let grid_min_x = env.islands.grid_x - env.terrain.half_size;
-    let grid_max_x = env.islands.grid_x + env.terrain.half_size;
     let grid_min_z = env.islands.grid_z - env.terrain.half_size;
-    let _grid_max_z = env.islands.grid_z + env.terrain.half_size;
 
     // Verify islands don't overlap in X-Z plane
+    // Left and Right islands: same Z range [-600, 600], different X ranges
     assert!(
         left_max_x < right_min_x,
         "Left and right islands overlap in X axis"
     );
+
+    // Left and Grid islands: Left Z ∈ [-600, 600], Grid Z ∈ [1200, 2400]
+    // Z ranges don't overlap: 600 < 1200, so no overlap possible
     assert!(
-        left_max_x < grid_min_x || left_min_x > grid_max_x || grid_min_z > env.terrain.half_size,
-        "Left and grid islands overlap"
+        env.terrain.half_size < grid_min_z,
+        "Left and grid islands overlap in Z axis"
     );
+
+    // Right and Grid islands: Right Z ∈ [-600, 600], Grid Z ∈ [1200, 2400]
+    // Z ranges don't overlap: 600 < 1200, so no overlap possible
     assert!(
-        right_min_x > grid_max_x || right_max_x < grid_min_x || grid_min_z > env.terrain.half_size,
-        "Right and grid islands overlap"
+        env.terrain.half_size < grid_min_z,
+        "Right and grid islands overlap in Z axis"
     );
 }
 
@@ -147,8 +149,13 @@ fn test_ocean_exclusion() {
             && pos.z >= -env.terrain.half_size
             && pos.z <= env.terrain.half_size;
 
+        let on_grid = pos.x >= env.islands.grid_x - env.terrain.half_size
+            && pos.x <= env.islands.grid_x + env.terrain.half_size
+            && pos.z >= env.islands.grid_z - env.terrain.half_size
+            && pos.z <= env.islands.grid_z + env.terrain.half_size;
+
         assert!(
-            !on_left && !on_right,
+            !on_left && !on_right && !on_grid,
             "Ocean position ({}, {}) incorrectly detected as on island",
             pos.x,
             pos.z
