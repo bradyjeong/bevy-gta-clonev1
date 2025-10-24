@@ -5,7 +5,8 @@ use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::{
     AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, JetFlame, LandingLight,
     MainRotor, NavigationLight, NavigationLightType, RotorBlurDisk, RotorWash, SimpleCarSpecs,
-    SimpleF16Specs, SimpleHelicopterSpecs, TailRotor, VehicleState, VehicleType,
+    SimpleCarSpecsHandle, SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs,
+    SimpleHelicopterSpecsHandle, TailRotor, VehicleState, VehicleType,
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
@@ -54,10 +55,14 @@ impl VehicleFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &Res<AssetServer>,
         position: Vec3,
         color: Option<Color>,
     ) -> Result<Entity, BundleError> {
         let color = color.unwrap_or_else(|| self.random_car_color());
+
+        // Load car specs asset following YachtSpecs pattern
+        let car_specs_handle: Handle<SimpleCarSpecs> = asset_server.load("config/simple_car.ron");
 
         let vehicle_entity = commands
             .spawn((
@@ -82,7 +87,7 @@ impl VehicleFactory {
                 },
                 Car,
                 VehicleState::new(VehicleType::SuperCar),
-                SimpleCarSpecs::default(),
+                SimpleCarSpecsHandle(car_specs_handle),
                 LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
                 Ccd::enabled(), // High-speed cars need continuous collision detection
                 Damping {
@@ -178,9 +183,14 @@ impl VehicleFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &Res<AssetServer>,
         position: Vec3,
         _color: Option<Color>,
     ) -> Result<Entity, BundleError> {
+        // Load helicopter specs asset following YachtSpecs pattern
+        let heli_specs_handle: Handle<SimpleHelicopterSpecs> =
+            asset_server.load("config/simple_helicopter.ron");
+
         let vehicle_entity = commands
             .spawn((
                 DynamicPhysicsBundle {
@@ -202,7 +212,7 @@ impl VehicleFactory {
                 },
                 Helicopter,
                 VehicleState::new(VehicleType::Helicopter),
-                SimpleHelicopterSpecs::default(),
+                SimpleHelicopterSpecsHandle(heli_specs_handle),
                 RotorWash,
                 Damping {
                     linear_damping: 2.0,
@@ -510,9 +520,13 @@ impl VehicleFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
+        asset_server: &Res<AssetServer>,
         position: Vec3,
         _color: Option<Color>,
     ) -> Result<Entity, BundleError> {
+        // Load F16 specs asset following YachtSpecs pattern
+        let f16_specs_handle: Handle<SimpleF16Specs> = asset_server.load("config/simple_f16.ron");
+
         let vehicle_entity = commands
             .spawn((
                 DynamicPhysicsBundle {
@@ -536,7 +550,7 @@ impl VehicleFactory {
                 F16,
                 VehicleState::new(VehicleType::F16),
                 AircraftFlight::default(),
-                SimpleF16Specs::default(),
+                SimpleF16SpecsHandle(f16_specs_handle),
                 Damping {
                     linear_damping: 0.5,
                     angular_damping: 3.0,
@@ -1194,19 +1208,21 @@ impl VehicleFactory {
         commands: &mut Commands,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
-        asset_server: &AssetServer,
+        asset_server: &Res<AssetServer>,
         vehicle_type: VehicleType,
         position: Vec3,
         color: Option<Color>,
     ) -> Result<Entity, BundleError> {
         match vehicle_type {
             VehicleType::SuperCar => {
-                self.spawn_super_car(commands, meshes, materials, position, color)
+                self.spawn_super_car(commands, meshes, materials, asset_server, position, color)
             }
             VehicleType::Helicopter => {
-                self.spawn_helicopter(commands, meshes, materials, position, color)
+                self.spawn_helicopter(commands, meshes, materials, asset_server, position, color)
             }
-            VehicleType::F16 => self.spawn_f16(commands, meshes, materials, position, color),
+            VehicleType::F16 => {
+                self.spawn_f16(commands, meshes, materials, asset_server, position, color)
+            }
             VehicleType::Yacht => {
                 self.spawn_yacht(commands, meshes, materials, asset_server, position, color)
             }

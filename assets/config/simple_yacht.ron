@@ -1,5 +1,5 @@
-(
-    max_speed: 20.0,
+YachtSpecs(
+    max_speed: 30.0,
     throttle_ramp: 3.5,
     linear_damping: 2.5,
     angular_damping: 9.0,

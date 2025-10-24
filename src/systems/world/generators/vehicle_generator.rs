@@ -19,7 +19,7 @@ impl VehicleGenerator {
         coord: ChunkCoord,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
-        asset_server: &AssetServer,
+        asset_server: &Res<AssetServer>,
         world_rng: &mut WorldRng,
         config: &GameConfig,
     ) {
@@ -139,7 +139,7 @@ impl VehicleGenerator {
         position: Vec3,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
-        asset_server: &AssetServer,
+        asset_server: &Res<AssetServer>,
         world_rng: &mut WorldRng,
         config: &GameConfig,
     ) -> Result<Entity, String> {
@@ -175,7 +175,7 @@ impl VehicleGenerator {
         position: Vec3,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
-        asset_server: &AssetServer,
+        asset_server: &Res<AssetServer>,
         world_rng: &mut WorldRng,
         config: &GameConfig,
     ) -> Result<Entity, String> {

@@ -1,6 +1,6 @@
 // Super Car Physics Configuration
 // Data-driven constants for super car movement (eliminates magic numbers)
-SimpleCarConfig(
+SimpleCarSpecs(
     // Core movement specs
     base_speed: 70.0,           // Base acceleration/movement speed (super car performance)
     rotation_speed: 3.0,        // Steering rotation rate (rad/s) - super cars turn faster
@@ -14,7 +14,7 @@ SimpleCarConfig(
     emergency_brake_angular: 0.5, // Angular velocity multiplier during emergency brake
 
     // Momentum physics (when no input)
-    drag_factor: 0.98,            // Momentum decay per second (cars have rolling resistance)
+    drag_factor: 0.92,            // Momentum decay per second (cars have rolling resistance)
 
     // Arcade physics tuning (ULTRA AGGRESSIVE)
     accel_lerp: 5.0,              // Acceleration smoothing rate

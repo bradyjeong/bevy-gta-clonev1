@@ -22,6 +22,7 @@
 //! - [`AircraftFlight`] - Minimal flight state for aircraft
 
 use bevy::prelude::*;
+use bevy::reflect::TypePath;
 
 // Essential marker components
 #[derive(Component)]
@@ -76,7 +77,8 @@ pub struct AircraftFlight {
 }
 
 // Simplified F16 specifications - all tuning constants data-driven
-#[derive(Component, Clone, serde::Deserialize)]
+// Asset-driven configuration following YachtSpecs pattern
+#[derive(Asset, TypePath, Component, Clone, serde::Deserialize)]
 pub struct SimpleF16Specs {
     pub max_forward_speed: f32, // Maximum forward velocity (m/s)
     pub roll_rate_max: f32,     // Maximum roll rate (rad/s)
@@ -96,23 +98,23 @@ pub struct SimpleF16Specs {
     pub throttle_deadzone: f32,      // Minimum throttle for lift activation
 
     // GTA-style input shaping and discrete step rates
-    pub input_deadzone: f32,      // Input threshold below which it's treated as zero
+    pub input_deadzone: f32, // Input threshold below which it's treated as zero
     pub input_step_threshold: f32, // Input magnitude threshold for min/max rate selection
-    pub roll_rate_min: f32,       // Minimum roll rate for small inputs
-    pub pitch_rate_min: f32,      // Minimum pitch rate for small inputs
-    pub yaw_rate_min: f32,        // Minimum yaw rate for small inputs
+    pub roll_rate_min: f32,  // Minimum roll rate for small inputs
+    pub pitch_rate_min: f32, // Minimum pitch rate for small inputs
+    pub yaw_rate_min: f32,   // Minimum yaw rate for small inputs
 
     // Speed-based control effectiveness
     pub control_full_speed: f32, // Speed at which control effectiveness reaches 1.0
     pub min_control_factor: f32, // Minimum control effectiveness at zero speed
 
     // GTA-style auto-stabilization
-    pub roll_stab: f32,  // Multiplicative angular velocity damping (0.9 = moderate)
+    pub roll_stab: f32, // Multiplicative angular velocity damping (0.9 = moderate)
     pub pitch_stab: f32, // Higher = more stable, lower = more agile
-    pub yaw_stab: f32,   // Usually highest for yaw stability
-    pub roll_auto_level_gain: f32,  // Additive horizon leveling (rad/s per unit tilt)
+    pub yaw_stab: f32,  // Usually highest for yaw stability
+    pub roll_auto_level_gain: f32, // Additive horizon leveling (rad/s per unit tilt)
     pub pitch_auto_level_gain: f32, // Auto pitch toward horizon
-    pub yaw_auto_level_gain: f32,   // Lateral slip correction gain
+    pub yaw_auto_level_gain: f32, // Lateral slip correction gain
 
     // Auto banking from lateral velocity
     pub auto_bank_gain: f32,     // Roll rate per m/s lateral velocity
@@ -239,7 +241,7 @@ impl VehicleState {
             VehicleType::SuperCar => (70.0, 40.0),
             VehicleType::Helicopter => (83.0, 30.0),
             VehicleType::F16 => (600.0, 80.0),
-            VehicleType::Yacht => (45.0, 25.0),
+            VehicleType::Yacht => (30.0, 25.0), // TODO: Read from loaded YachtSpecs asset in Phase 2
         };
 
         Self {
@@ -263,7 +265,8 @@ pub struct VehicleRendering {
 }
 
 // Simple vehicle physics configurations (asset-driven)
-#[derive(Component, Debug, Clone, serde::Deserialize)]
+// Asset-driven configuration following YachtSpecs pattern
+#[derive(Asset, TypePath, Component, Debug, Clone, serde::Deserialize)]
 pub struct SimpleCarSpecs {
     pub base_speed: f32,
     pub rotation_speed: f32,
@@ -310,7 +313,8 @@ impl Default for SimpleCarSpecs {
     }
 }
 
-#[derive(Component, Debug, Clone, serde::Deserialize)]
+// Asset-driven configuration following YachtSpecs pattern
+#[derive(Asset, TypePath, Component, Debug, Clone, serde::Deserialize)]
 pub struct SimpleHelicopterSpecs {
     pub lateral_speed: f32,
     pub vertical_speed: f32,
@@ -342,3 +346,14 @@ impl Default for SimpleHelicopterSpecs {
         }
     }
 }
+
+// Asset handle components for asset-driven vehicle specs
+// Following YachtSpecsHandle pattern from simple_yacht.rs
+#[derive(Component)]
+pub struct SimpleCarSpecsHandle(pub Handle<SimpleCarSpecs>);
+
+#[derive(Component)]
+pub struct SimpleHelicopterSpecsHandle(pub Handle<SimpleHelicopterSpecs>);
+
+#[derive(Component)]
+pub struct SimpleF16SpecsHandle(pub Handle<SimpleF16Specs>);

@@ -25,10 +25,12 @@ pub enum AircraftType {
 /// - Consistent bundle patterns similar to DynamicVehicleBundle
 /// - Far visibility culling distances for aircraft
 /// - Proper collision groups for aircraft physics
+#[allow(clippy::too_many_arguments)]
 pub fn setup_initial_aircraft_unified(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
     mut spawn_registry: ResMut<SpawnRegistry>,
     world: Res<UnifiedWorldManager>,
     env: Res<WorldEnvConfig>,
@@ -77,6 +79,7 @@ pub fn setup_initial_aircraft_unified(
             &mut commands,
             &mut meshes,
             &mut materials,
+            &asset_server,
             &mut spawn_registry,
             preferred_pos,
             aircraft_type,
@@ -93,10 +96,12 @@ pub fn setup_initial_aircraft_unified(
 }
 
 /// Spawn a single aircraft with validation using VehicleFactory
+#[allow(clippy::too_many_arguments)]
 fn spawn_aircraft_unified(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    asset_server: &Res<AssetServer>,
     spawn_registry: &mut ResMut<SpawnRegistry>,
     preferred_position: Vec3,
     aircraft_type: AircraftType,
@@ -123,10 +128,24 @@ fn spawn_aircraft_unified(
 
         let aircraft_entity = match aircraft_type {
             AircraftType::Helicopter => vehicle_factory
-                .spawn_helicopter(commands, meshes, materials, validated_position, None)
+                .spawn_helicopter(
+                    commands,
+                    meshes,
+                    materials,
+                    asset_server,
+                    validated_position,
+                    None,
+                )
                 .expect("Failed to spawn helicopter"),
             AircraftType::F16 => vehicle_factory
-                .spawn_f16(commands, meshes, materials, validated_position, None)
+                .spawn_f16(
+                    commands,
+                    meshes,
+                    materials,
+                    asset_server,
+                    validated_position,
+                    None,
+                )
                 .expect("Failed to spawn F16"),
         };
 

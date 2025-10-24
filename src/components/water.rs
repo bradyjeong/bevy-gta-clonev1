@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::reflect::TypePath;
 use serde::{Deserialize, Serialize};
 
-#[derive(Asset, TypePath, Serialize, Deserialize, Clone)]
+#[derive(Asset, TypePath, Serialize, Deserialize, Clone, Component)]
 pub struct YachtSpecs {
     pub max_speed: f32,
     pub throttle_ramp: f32,
@@ -12,6 +12,21 @@ pub struct YachtSpecs {
     pub buoyancy_strength: f32,
     pub boat_grip: f32,
     pub drag_factor: f32,
+}
+
+impl Default for YachtSpecs {
+    fn default() -> Self {
+        Self {
+            max_speed: 30.0,
+            throttle_ramp: 3.5,
+            linear_damping: 2.5,
+            angular_damping: 9.0,
+            draft: 0.6,
+            buoyancy_strength: 3.0,
+            boat_grip: 2.0,
+            drag_factor: 0.992,
+        }
+    }
 }
 
 #[derive(Component, Default)]

@@ -1,7 +1,7 @@
 use crate::components::control_state::ControlState;
 use crate::components::unified_water::UnifiedWaterBody;
 use crate::components::water::{Yacht, YachtSpecs};
-use crate::components::{ActiveEntity, PlayerControlled};
+use crate::components::{ActiveEntity, MissingSpecsWarned, PlayerControlled};
 use crate::config::GameConfig;
 use crate::systems::physics::PhysicsUtilities;
 use crate::util::safe_math::{safe_lerp, safe_lerp_f32};
@@ -17,17 +17,38 @@ pub fn simple_yacht_movement(
     config: Res<GameConfig>,
     yacht_specs: Res<Assets<YachtSpecs>>,
     water_regions: Query<&UnifiedWaterBody>,
+    mut commands: Commands,
+    warned_query: Query<(), With<MissingSpecsWarned>>,
     mut query: Query<
-        (&mut Velocity, &Transform, &ControlState, &YachtSpecsHandle),
+        (
+            Entity,
+            &mut Velocity,
+            &Transform,
+            &ControlState,
+            &YachtSpecsHandle,
+        ),
         (With<Yacht>, With<ActiveEntity>, With<PlayerControlled>),
     >,
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
 
-    for (mut velocity, transform, controls, specs_handle) in query.iter_mut() {
+    for (entity, mut velocity, transform, controls, specs_handle) in query.iter_mut() {
         let Some(specs) = yacht_specs.get(&specs_handle.0) else {
+            if !warned_query.contains(entity) {
+                warn!(
+                    "Yacht entity {:?} missing loaded specs - will skip until loaded",
+                    entity
+                );
+                commands.entity(entity).insert(MissingSpecsWarned);
+            }
             continue;
         };
+
+        // Safety: prevent NaN/physics issues from modded configs
+        let max_speed = specs.max_speed.clamp(1.0, 100.0);
+        let throttle_ramp = specs.throttle_ramp.clamp(0.1, 20.0);
+        let boat_grip = specs.boat_grip.clamp(0.1, 50.0);
+        let drag_factor = specs.drag_factor.clamp(0.9, 1.0);
 
         // Convert world velocity to local yacht space
         let inv_rotation = transform.rotation.inverse();
@@ -46,27 +67,27 @@ pub fn simple_yacht_movement(
             input_throttle = 0.0;
         }
 
-        let target_speed = specs.max_speed * input_throttle.clamp(-0.5, 1.0);
+        let target_speed = max_speed * input_throttle.clamp(-0.5, 1.0);
 
         // Smooth acceleration with frame-independent lerp
         let accel_rate = if input_throttle.abs() > 0.05 {
-            specs.throttle_ramp
+            throttle_ramp
         } else {
-            specs.throttle_ramp * 2.0 // Faster deceleration when no input
+            throttle_ramp * 2.0 // Faster deceleration when no input
         };
         v_local.z = safe_lerp_f32(v_local.z, -target_speed, dt * accel_rate);
 
         // Lateral grip: boats slide more than cars (tunable from specs)
-        v_local.x = safe_lerp_f32(v_local.x, 0.0, dt * specs.boat_grip);
+        v_local.x = safe_lerp_f32(v_local.x, 0.0, dt * boat_grip);
 
         // Coasting drag when no throttle input
         if input_throttle.abs() < 0.05 {
-            let frame_drag = specs.drag_factor.powf(dt);
+            let frame_drag = drag_factor.powf(dt);
             v_local.z *= frame_drag;
         }
 
         // Rudder control: yaw rate increases with speed (realistic boat behavior)
-        let speed_factor = (v_local.z.abs() / specs.max_speed).min(1.0);
+        let speed_factor = (v_local.z.abs() / max_speed).min(1.0);
         let rudder_effectiveness = 0.3 + 0.7 * speed_factor;
         let target_yaw = controls.steering * rudder_effectiveness * 0.6;
 

@@ -2,6 +2,7 @@
 // All tuning constants data-driven (eliminates magic numbers from code)
 SimpleF16Specs(
     // Core aircraft specs
+    // Max recommended: 500.0 (Default clamp limit). 600.0 is arcade override but may need post-load validation
     max_forward_speed: 600.0, // Max forward velocity (m/s) - Mach 2
     roll_rate_max: 6.3,      // rad/s
     pitch_rate_max: 3.5,     // rad/s  

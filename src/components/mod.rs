@@ -74,6 +74,7 @@ pub mod dirty_flags;
 pub mod input_smoother;
 pub mod yacht_exit;
 
+pub mod debug;
 pub mod unified_vehicle;
 
 // Core entity components
@@ -88,9 +89,10 @@ pub use propeller::PropellerHub;
 pub use rotor_wash::RotorWash;
 
 pub use vehicles::{
-    AircraftFlight, Car, F16, Helicopter, MainRotor, RotorBlurDisk, SimpleCarSpecs, SimpleF16Specs,
-    SimpleHelicopterSpecs, TailRotor, VehicleHealth, VehicleLOD, VehicleRendering, VehicleState,
-    VehicleType,
+    AircraftFlight, Car, F16, Helicopter, MainRotor, RotorBlurDisk, SimpleCarSpecs,
+    SimpleCarSpecsHandle, SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs,
+    SimpleHelicopterSpecsHandle, TailRotor, VehicleHealth, VehicleLOD, VehicleRendering,
+    VehicleState, VehicleType,
 };
 
 pub use world::{
@@ -116,6 +118,7 @@ pub use effects::{
 pub use control_state::{
     AIControlled, ControlState, PendingPhysicsEnable, PlayerControlled, VehicleControlType,
 };
+pub use debug::MissingSpecsWarned;
 pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility};
 pub use input_smoother::InputSmoother;
 pub use map::{MapCamera, MapConfig, MinimapUI, PlayerMapIcon};

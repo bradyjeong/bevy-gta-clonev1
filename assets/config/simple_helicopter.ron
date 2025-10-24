@@ -1,6 +1,6 @@
 // Simple Helicopter Physics Configuration  
 // Data-driven constants for helicopter movement (eliminates magic numbers)
-SimpleHelicopterConfig(
+SimpleHelicopterSpecs(
     // Movement speeds
     lateral_speed: 20.0,        // Side-to-side movement speed
     vertical_speed: 15.0,       // Up/down movement speed

@@ -58,6 +58,7 @@ pub mod camera_yacht;
 pub mod effects;
 
 pub mod interaction;
+pub mod loading;
 pub mod movement;
 pub mod world;
 

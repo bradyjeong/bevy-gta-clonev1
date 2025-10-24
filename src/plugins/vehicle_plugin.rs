@@ -1,3 +1,4 @@
+use crate::components::vehicles::{SimpleCarSpecs, SimpleF16Specs, SimpleHelicopterSpecs};
 use crate::systems::camera_car::car_camera_system;
 use crate::systems::camera_f16::f16_camera_system;
 use crate::systems::camera_helicopter::helicopter_camera_system;
@@ -5,6 +6,7 @@ use crate::systems::camera_yacht::yacht_camera_system;
 use crate::systems::movement::rotate_helicopter_rotors;
 use crate::systems::setup::on_f16_spawned;
 use bevy::prelude::*;
+use bevy_common_assets::ron::RonAssetPlugin;
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
 use crate::systems::effects::{
     RotorWashEffect, cleanup_rotor_wash_on_helicopter_despawn, create_rotor_wash_effect,
@@ -22,6 +24,13 @@ pub struct VehiclePlugin;
 impl Plugin for VehiclePlugin {
     fn build(&self, app: &mut App) {
         app
+            // Asset-driven vehicle specs (following YachtSpecs pattern)
+            .add_plugins(RonAssetPlugin::<SimpleCarSpecs>::new(&["ron"]))
+            .add_plugins(RonAssetPlugin::<SimpleHelicopterSpecs>::new(&["ron"]))
+            .add_plugins(RonAssetPlugin::<SimpleF16Specs>::new(&["ron"]))
+            .init_asset::<SimpleCarSpecs>()
+            .init_asset::<SimpleHelicopterSpecs>()
+            .init_asset::<SimpleF16Specs>()
             // CRITICAL SAFEGUARDS: Run configuration validation at startup
             .add_systems(Startup, (validate_physics_config, init_rotor_wash_effect))
             // Observer for F16 setup when specs are added
