@@ -1,6 +1,6 @@
 // Simple F16 Physics Configuration
 // All tuning constants data-driven (eliminates magic numbers from code)
-SimpleF16Config(
+SimpleF16Specs(
     // Core aircraft specs
     max_forward_speed: 600.0, // Max forward velocity (m/s) - Mach 2
     roll_rate_max: 6.3,      // rad/s
@@ -21,11 +21,35 @@ SimpleF16Config(
     // Gliding physics (engine off)
     drag_factor: 0.995, // Momentum decay per second (aircraft glide well)
     
-    // (Removed unused fields: min_altitude, emergency_pullup_force)
-    
     // Formerly magic numbers in code
     afterburner_multiplier: 1.5,   // Speed multiplier for afterburner
     linear_lerp_factor: 4.0,       // Linear velocity smoothing rate
     angular_lerp_factor: 8.0,      // Angular velocity smoothing rate
     throttle_deadzone: 0.1,        // Minimum throttle for lift activation
+
+    // GTA-style input shaping and discrete step rates
+    input_deadzone: 0.10,          // Input threshold below which it's treated as zero
+    input_step_threshold: 0.45,    // Input magnitude threshold for min/max rate selection
+    roll_rate_min: 3.0,            // Minimum roll rate for small inputs (rad/s)
+    pitch_rate_min: 1.6,           // Minimum pitch rate for small inputs (rad/s)
+    yaw_rate_min: 0.4,             // Minimum yaw rate for small inputs (rad/s)
+
+    // Speed-based control effectiveness
+    control_full_speed: 120.0,     // Speed at which control effectiveness reaches 1.0 (m/s)
+    min_control_factor: 0.40,      // Minimum control effectiveness at zero speed
+
+    // GTA-style auto-stabilization (multiplicative damping)
+    roll_stab: 0.90,               // Roll angular velocity damping (lower = more agile)
+    pitch_stab: 0.95,              // Pitch angular velocity damping (higher = more stable)
+    yaw_stab: 0.98,                // Yaw angular velocity damping (highest for stability)
+    roll_auto_level_gain: 3.0,     // Additive horizon leveling rate (rad/s per unit tilt)
+    pitch_auto_level_gain: 2.5,    // Auto pitch toward horizon (rad/s per unit tilt)
+    yaw_auto_level_gain: 0.8,      // Lateral slip correction gain
+
+    // Auto banking from lateral velocity (natural turn feel)
+    auto_bank_gain: 0.02,          // Roll rate per m/s lateral velocity
+    auto_bank_max_rate: 2.0,       // Maximum auto-bank contribution (rad/s)
+
+    // Banked-lift feedback (optional realistic feel)
+    bank_lift_scale: 0.7,          // How much lift reduces when banked (0-1)
 )

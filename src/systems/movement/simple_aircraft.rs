@@ -64,22 +64,123 @@ pub fn simple_f16_movement(
             1.0
         };
 
-        // === DIRECT ANGULAR CONTROL ===
+        // === GTA-STYLE ANGULAR CONTROL ===
 
-        // Read controls directly (no state duplication)
+        // Speed-based control effectiveness (once per frame)
+        let airspeed = velocity.linvel.length();
+        let control_eff = (airspeed / specs.control_full_speed).clamp(0.0, 1.0);
+        let control_eff = specs.min_control_factor + (1.0 - specs.min_control_factor) * control_eff;
+
+        // Discrete angular rates per axis (GTA-style input shaping)
+        let pitch_input_abs = control_state.pitch.abs();
+        let pitch_cmd = if pitch_input_abs < specs.input_deadzone {
+            0.0
+        } else {
+            let rate = if pitch_input_abs < specs.input_step_threshold {
+                specs.pitch_rate_min
+            } else {
+                specs.pitch_rate_max
+            };
+            control_state.pitch.signum() * rate * control_eff
+        };
+
+        let roll_input_abs = control_state.roll.abs();
+        let roll_cmd = if roll_input_abs < specs.input_deadzone {
+            0.0
+        } else {
+            let rate = if roll_input_abs < specs.input_step_threshold {
+                specs.roll_rate_min
+            } else {
+                specs.roll_rate_max
+            };
+            -control_state.roll.signum() * rate * control_eff
+        };
+
+        let yaw_input_abs = control_state.yaw.abs();
+        let yaw_cmd = if yaw_input_abs < specs.input_deadzone {
+            0.0
+        } else {
+            let rate = if yaw_input_abs < specs.input_step_threshold {
+                specs.yaw_rate_min
+            } else {
+                specs.yaw_rate_max
+            };
+            -control_state.yaw.signum() * rate * control_eff
+        };
+
+        // Auto-stabilization (horizon leveling) when input is in deadzone
+        // Only apply when airspeed > 5.0 to prevent ground jitter
+        let (pitch_auto, roll_auto, yaw_auto, roll_bank) = if airspeed > 5.0 {
+            let pitch = if pitch_input_abs < specs.input_deadzone {
+                transform.forward().dot(Vec3::Y) * -specs.pitch_auto_level_gain * control_eff
+            } else {
+                0.0
+            };
+
+            let roll = if roll_input_abs < specs.input_deadzone {
+                -(*transform.right()).dot(Vec3::Y) * specs.roll_auto_level_gain * control_eff
+            } else {
+                0.0
+            };
+
+            let lateral_speed = velocity.linvel.dot(*transform.right());
+            let yaw = if yaw_input_abs < specs.input_deadzone {
+                -(lateral_speed / airspeed.max(1.0)) * specs.yaw_auto_level_gain * control_eff
+            } else {
+                0.0
+            };
+
+            let bank = if roll_input_abs < specs.input_deadzone {
+                (-lateral_speed * specs.auto_bank_gain * control_eff).clamp(
+                    -specs.auto_bank_max_rate,
+                    specs.auto_bank_max_rate,
+                )
+            } else {
+                0.0
+            };
+
+            (pitch, roll, yaw, bank)
+        } else {
+            (0.0, 0.0, 0.0, 0.0)
+        };
+
+        // Combine all control inputs
         let local_target_ang = Vec3::new(
-            control_state.pitch * specs.pitch_rate_max, // +X pitch (up arrow = pitch up)
-            -control_state.yaw * specs.yaw_rate_max,    // -Y yaw (A = left, D = right)
-            -control_state.roll * specs.roll_rate_max,  // -Z roll (left arrow = roll left)
+            pitch_cmd + pitch_auto,
+            yaw_cmd + yaw_auto,
+            roll_cmd + roll_auto + roll_bank,
         );
         let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
 
-        // Apply angular velocity (lerp factor from specs)
+        // Apply angular velocity with lerp
         velocity.angvel = safe_lerp(
             velocity.angvel,
             world_target_ang,
             dt * specs.angular_lerp_factor,
         );
+
+        // GTA-style multiplicative damping (one pass)
+        let inv_rot = transform.rotation.inverse();
+        let mut local_ang = inv_rot.mul_vec3(velocity.angvel);
+        let pf = if pitch_input_abs < specs.input_deadzone {
+            specs.pitch_stab.powf(dt)
+        } else {
+            1.0
+        };
+        let rf = if roll_input_abs < specs.input_deadzone {
+            specs.roll_stab.powf(dt)
+        } else {
+            1.0
+        };
+        let yf = if yaw_input_abs < specs.input_deadzone {
+            specs.yaw_stab.powf(dt)
+        } else {
+            1.0
+        };
+        local_ang.x *= pf;
+        local_ang.y *= yf;
+        local_ang.z *= rf;
+        velocity.angvel = transform.rotation.mul_vec3(local_ang);
 
         // === ARCADE-REALISTIC VELOCITY CONTROL ===
 
@@ -88,9 +189,12 @@ pub fn simple_f16_movement(
             let target_forward_speed = specs.max_forward_speed * flight.throttle * boost_multiplier;
             let target_forward_velocity = transform.forward() * target_forward_speed;
 
-            // Add lift assistance when throttling
-            let target_linear_velocity = target_forward_velocity
-                + transform.up() * flight.throttle * specs.lift_per_throttle;
+            // Banked-lift feedback: reduce lift when wings are banked
+            let up_align = transform.up().dot(Vec3::Y).abs();
+            let lift_mult = 1.0 - specs.bank_lift_scale * (1.0 - up_align);
+            let lift_force = transform.up() * flight.throttle * specs.lift_per_throttle * lift_mult;
+
+            let target_linear_velocity = target_forward_velocity + lift_force;
 
             velocity.linvel = safe_lerp(
                 velocity.linvel,

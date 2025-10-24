@@ -76,7 +76,7 @@ pub struct AircraftFlight {
 }
 
 // Simplified F16 specifications - all tuning constants data-driven
-#[derive(Component, Clone)]
+#[derive(Component, Clone, serde::Deserialize)]
 pub struct SimpleF16Specs {
     pub max_forward_speed: f32, // Maximum forward velocity (m/s)
     pub roll_rate_max: f32,     // Maximum roll rate (rad/s)
@@ -94,6 +94,32 @@ pub struct SimpleF16Specs {
     pub linear_lerp_factor: f32,     // Linear velocity smoothing rate
     pub angular_lerp_factor: f32,    // Angular velocity smoothing rate
     pub throttle_deadzone: f32,      // Minimum throttle for lift activation
+
+    // GTA-style input shaping and discrete step rates
+    pub input_deadzone: f32,      // Input threshold below which it's treated as zero
+    pub input_step_threshold: f32, // Input magnitude threshold for min/max rate selection
+    pub roll_rate_min: f32,       // Minimum roll rate for small inputs
+    pub pitch_rate_min: f32,      // Minimum pitch rate for small inputs
+    pub yaw_rate_min: f32,        // Minimum yaw rate for small inputs
+
+    // Speed-based control effectiveness
+    pub control_full_speed: f32, // Speed at which control effectiveness reaches 1.0
+    pub min_control_factor: f32, // Minimum control effectiveness at zero speed
+
+    // GTA-style auto-stabilization
+    pub roll_stab: f32,  // Multiplicative angular velocity damping (0.9 = moderate)
+    pub pitch_stab: f32, // Higher = more stable, lower = more agile
+    pub yaw_stab: f32,   // Usually highest for yaw stability
+    pub roll_auto_level_gain: f32,  // Additive horizon leveling (rad/s per unit tilt)
+    pub pitch_auto_level_gain: f32, // Auto pitch toward horizon
+    pub yaw_auto_level_gain: f32,   // Lateral slip correction gain
+
+    // Auto banking from lateral velocity
+    pub auto_bank_gain: f32,     // Roll rate per m/s lateral velocity
+    pub auto_bank_max_rate: f32, // Maximum auto-bank contribution
+
+    // Optional banked-lift feedback
+    pub bank_lift_scale: f32, // How much lift reduces when banked (0-1)
 }
 
 impl Default for AircraftFlight {
@@ -125,6 +151,32 @@ impl Default for SimpleF16Specs {
             linear_lerp_factor: 4.0_f32.clamp(1.0, 20.0),    // Linear velocity smoothing
             angular_lerp_factor: 8.0_f32.clamp(1.0, 20.0),   // Angular velocity smoothing
             throttle_deadzone: 0.1_f32.clamp(0.0, 0.5),      // Minimum throttle for lift
+
+            // GTA-style input shaping
+            input_deadzone: 0.10_f32.clamp(0.0, 0.3),
+            input_step_threshold: 0.45_f32.clamp(0.0, 1.0),
+            roll_rate_min: 3.0_f32.clamp(0.1, 10.0),
+            pitch_rate_min: 1.6_f32.clamp(0.1, 10.0),
+            yaw_rate_min: 0.4_f32.clamp(0.1, 5.0),
+
+            // Speed-based control effectiveness
+            control_full_speed: 120.0_f32.clamp(10.0, 500.0),
+            min_control_factor: 0.40_f32.clamp(0.1, 1.0),
+
+            // GTA-style auto-stabilization
+            roll_stab: 0.90_f32.clamp(0.5, 1.0),
+            pitch_stab: 0.95_f32.clamp(0.5, 1.0),
+            yaw_stab: 0.98_f32.clamp(0.5, 1.0),
+            roll_auto_level_gain: 3.0_f32.clamp(0.0, 10.0),
+            pitch_auto_level_gain: 2.5_f32.clamp(0.0, 10.0),
+            yaw_auto_level_gain: 0.8_f32.clamp(0.0, 5.0),
+
+            // Auto banking
+            auto_bank_gain: 0.02_f32.clamp(0.0, 0.1),
+            auto_bank_max_rate: 2.0_f32.clamp(0.0, 10.0),
+
+            // Banked-lift feedback
+            bank_lift_scale: 0.7_f32.clamp(0.0, 1.0),
         }
     }
 }
