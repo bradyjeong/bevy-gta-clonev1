@@ -131,7 +131,7 @@ pub fn simple_f16_movement(
             };
 
             let bank = if roll_input_abs < specs.input_deadzone {
-                (-lateral_speed * specs.auto_bank_gain * control_eff).clamp(
+                (lateral_speed * specs.auto_bank_gain * control_eff).clamp(
                     -specs.auto_bank_max_rate,
                     specs.auto_bank_max_rate,
                 )
