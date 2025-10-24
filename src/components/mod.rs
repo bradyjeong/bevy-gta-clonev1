@@ -71,6 +71,7 @@ pub mod world;
 
 pub mod control_state;
 pub mod dirty_flags;
+pub mod input_smoother;
 pub mod yacht_exit;
 
 pub mod unified_vehicle;
@@ -116,6 +117,7 @@ pub use control_state::{
     AIControlled, ControlState, PendingPhysicsEnable, PlayerControlled, VehicleControlType,
 };
 pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility};
+pub use input_smoother::InputSmoother;
 pub use map::{MapCamera, MapConfig, MinimapUI, PlayerMapIcon};
 pub use movement_tracker::MovementTracker;
 pub use underwater_settings::UnderwaterSettings;

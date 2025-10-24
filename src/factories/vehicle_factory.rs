@@ -715,33 +715,11 @@ impl VehicleFactory {
         let yacht_visibility =
             || VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance);
 
-        // Use yacht config collider_size as base (10.0, 3.0, 30.0)
-        let hull_collider = Collider::compound(vec![
-            (
-                Vec3::ZERO,
-                Quat::IDENTITY,
-                Collider::cuboid(
-                    yacht_config.collider_size.x,
-                    yacht_config.collider_size.y,
-                    yacht_config.collider_size.z,
-                ),
-            ),
-            (
-                Vec3::new(0.0, 3.95, 0.0),
-                Quat::IDENTITY,
-                Collider::cuboid(9.0, 0.05, 20.0),
-            ),
-            (
-                Vec3::new(0.0, 3.95, 10.0),
-                Quat::IDENTITY,
-                Collider::cuboid(6.0, 0.05, 6.0),
-            ),
-            (
-                Vec3::new(0.0, 9.5, -5.0),
-                Quat::IDENTITY,
-                Collider::cuboid(4.0, 1.25, 7.0),
-            ),
-        ]);
+        let hull_collider = Collider::cuboid(
+            yacht_config.collider_size.x,
+            yacht_config.collider_size.y,
+            yacht_config.collider_size.z,
+        );
 
         let vehicle_entity = commands
             .spawn((
@@ -1006,7 +984,7 @@ impl VehicleFactory {
 
         commands.spawn((
             Transform::from_xyz(0.0, 4.0, 0.0),
-            Collider::cuboid(9.0, 0.02, 20.0),
+            Collider::cuboid(8.5, 0.02, 19.0),
             Sensor,
             CollisionGroups::new(
                 self.config.physics.vehicle_group,

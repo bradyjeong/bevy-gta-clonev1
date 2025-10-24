@@ -39,6 +39,7 @@ pub fn update_waypoint_system(
 }
 
 /// Update beacon visibility system - uses Timer for square wave instead of sine
+/// OPTIMIZATION: Beacons use time-based animation so no Changed filter applicable here
 pub fn update_beacon_visibility(
     mut beacon_query: Query<&mut Visibility, With<VehicleBeacon>>,
     time: Res<Time>,

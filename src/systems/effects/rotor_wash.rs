@@ -1,31 +1,41 @@
-use crate::components::{ActiveEntity, Helicopter, RotorWash};
+use crate::components::{Helicopter, RotorWash};
 use crate::constants::WorldEnvConfig;
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 use bevy_rapier3d::prelude::Velocity;
 
-type ActiveHelicopterQuery<'w, 's> = Query<
-    'w,
-    's,
-    Entity,
-    (
-        With<Helicopter>,
-        With<ActiveEntity>,
-        Without<ParticleEffect>,
-    ),
->;
+/// Resource that caches the rotor wash effect handle.
+/// Created once at startup and reused across all helicopters for optimal performance.
+#[derive(Resource)]
+pub struct RotorWashEffect {
+    pub handle: Handle<EffectAsset>,
+}
+
+/// Component linking a rotor wash particle effect to its helicopter.
+/// Used to maintain O(N) updates and proper cleanup.
+#[derive(Component, Debug, Clone, Copy)]
+pub struct RotorWashOf(pub Entity);
+
+type NewHelicopterQuery<'w, 's> = Query<'w, 's, Entity, Added<Helicopter>>;
 
 type ParticleTransformQuery<'w, 's> = Query<
     'w,
     's,
-    (&'static mut Transform, &'static mut EffectSpawner),
+    (
+        Entity,
+        &'static RotorWashOf,
+        &'static mut Transform,
+        &'static mut EffectSpawner,
+    ),
     (With<RotorWash>, Without<Helicopter>),
 >;
 
 type HelicopterStateQuery<'w, 's> =
-    Query<'w, 's, (&'static Transform, &'static Velocity), (With<Helicopter>, With<ActiveEntity>)>;
+    Query<'w, 's, (&'static Transform, &'static Velocity), With<Helicopter>>;
 
-fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAsset> {
+/// Creates the rotor wash particle effect asset.
+/// Called once at startup to initialize the cached effect handle.
+pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAsset> {
     let mut color_gradient = bevy_hanabi::Gradient::new();
     color_gradient.add_key(0.0, Vec4::new(0.91, 0.84, 0.68, 0.0));
     color_gradient.add_key(0.1, Vec4::new(0.89, 0.82, 0.66, 0.7));
@@ -73,7 +83,7 @@ fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
     let update_drag = LinearDragModifier::new(drag);
 
     let module = writer.finish();
-    let spawner = SpawnerSettings::rate(50.0.into());
+    let spawner = SpawnerSettings::burst(120.0.into(), 0.016.into());
 
     effects.add(
         EffectAsset::new(8192, spawner, module)
@@ -92,36 +102,43 @@ fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
     )
 }
 
+/// Spawns rotor wash particles for newly added helicopters.
+/// Uses Added<Helicopter> filter to only spawn once per helicopter.
+/// Clones the cached effect handle instead of creating a new effect asset.
 pub fn spawn_rotor_wash_particles(
     mut commands: Commands,
-    mut effects: ResMut<Assets<EffectAsset>>,
-    helicopter_query: ActiveHelicopterQuery,
+    helicopter_query: NewHelicopterQuery,
+    rotor_wash_effect: Res<RotorWashEffect>,
 ) {
-    for _entity in helicopter_query.iter() {
-        let effect_handle = create_rotor_wash_effect(&mut effects);
-
+    for entity in helicopter_query.iter() {
         commands.spawn((
             Name::new("rotor_wash_particles"),
-            ParticleEffect::new(effect_handle),
+            ParticleEffect::new(rotor_wash_effect.handle.clone()),
             Transform::from_xyz(0.0, 0.0, 0.0),
             RotorWash,
+            RotorWashOf(entity),
         ));
     }
 }
 
 pub fn update_rotor_wash_position_and_intensity(
+    mut commands: Commands,
     helicopter_query: HelicopterStateQuery,
     mut particle_query: ParticleTransformQuery,
     env: Res<WorldEnvConfig>,
 ) {
-    for (helicopter_transform, velocity) in helicopter_query.iter() {
-        let heli_pos = helicopter_transform.translation;
-        let vertical_velocity = velocity.linvel.y.abs();
+    for (rotor_wash_entity, rotor_wash_of, mut particle_transform, mut spawner) in
+        particle_query.iter_mut()
+    {
+        let heli_entity = rotor_wash_of.0;
 
-        let ground_height = env.land_elevation;
-        let altitude = (heli_pos.y - ground_height).max(0.0);
+        if let Ok((helicopter_transform, velocity)) = helicopter_query.get(heli_entity) {
+            let heli_pos = helicopter_transform.translation;
+            let vertical_velocity = velocity.linvel.y.abs();
 
-        for (mut particle_transform, mut spawner) in particle_query.iter_mut() {
+            let ground_height = env.land_elevation;
+            let altitude = (heli_pos.y - ground_height).max(0.0);
+
             particle_transform.translation.x = heli_pos.x;
             particle_transform.translation.z = heli_pos.z;
             particle_transform.translation.y = ground_height + 0.1;
@@ -132,9 +149,25 @@ pub fn update_rotor_wash_position_and_intensity(
                 let intensity = altitude_factor * 0.7 + velocity_factor * 0.3;
 
                 spawner.active = true;
-                spawner.settings.set_count((intensity * 120.0).into());
+                spawner.spawn_count = (intensity * 120.0) as u32;
             } else {
                 spawner.active = false;
+            }
+        } else {
+            commands.entity(rotor_wash_entity).despawn();
+        }
+    }
+}
+
+pub fn cleanup_rotor_wash_on_helicopter_despawn(
+    mut commands: Commands,
+    mut removed_helicopters: RemovedComponents<Helicopter>,
+    rotor_wash_query: Query<(Entity, &RotorWashOf), With<RotorWash>>,
+) {
+    for removed_heli_entity in removed_helicopters.read() {
+        for (rotor_wash_entity, rotor_wash_of) in rotor_wash_query.iter() {
+            if rotor_wash_of.0 == removed_heli_entity {
+                commands.entity(rotor_wash_entity).despawn();
             }
         }
     }

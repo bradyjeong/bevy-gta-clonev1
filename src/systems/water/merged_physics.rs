@@ -134,10 +134,13 @@ pub fn water_physics_system(
                     buoyancy_y = 9.81 * 1000.0 * submersion_ratio * half_extents.volume();
 
                     // DRAG: Apply resistance forces
-                    let drag_coefficient: f32 = 0.9 + (submersion_ratio * 0.08);
+                    // Damping coefficient physics: Values near 1.0 = low damping, near 0.0 = high damping
+                    // More submersion → LOWER coefficient → MORE resistance/damping
+                    let drag_coefficient: f32 = (0.98 - submersion_ratio * 0.08).clamp(0.6, 0.98);
                     velocity.linvel *= drag_coefficient.powf(delta);
 
-                    let angular_drag_coefficient: f32 = 0.85 + (submersion_ratio * 0.12);
+                    let angular_drag_coefficient: f32 =
+                        (0.97 - submersion_ratio * 0.12).clamp(0.5, 0.97);
                     velocity.angvel *= angular_drag_coefficient.powf(delta);
 
                     // Debug logging for development

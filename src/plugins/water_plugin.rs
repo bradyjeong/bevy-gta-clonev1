@@ -14,8 +14,8 @@ use crate::systems::water::{
     update_water_region_cache, update_water_surface_system, water_physics_system,
 };
 use crate::systems::yacht_exit::{
-    deck_walk_movement_system, heli_landing_detection_system, yacht_board_from_deck_system,
-    yacht_exit_system,
+    deck_walk_movement_system, heli_landing_detection_system, sync_landed_helicopter_with_yacht,
+    yacht_board_from_deck_system, yacht_exit_system,
 };
 
 use bevy::prelude::*;
@@ -46,17 +46,25 @@ impl Plugin for WaterPlugin {
                     simple_yacht_movement,
                     swim_state_transition_system,
                     swim_velocity_apply_system.run_if(in_state(GameState::Swimming)),
-                    update_water_region_cache,
+                    sync_landed_helicopter_with_yacht,
                 )
                     .chain()
                     .before(PhysicsSet::SyncBackend),
+            )
+            // CRITICAL ORDERING: Cache must run before physics
+            // update_water_region_cache populates CurrentWaterRegion component
+            // which water_physics_system depends on for O(1) region lookup
+            .add_systems(
+                FixedUpdate,
+                update_water_region_cache.before(PhysicsSet::SyncBackend),
             )
             .add_systems(
                 FixedUpdate,
                 (water_physics_system, simple_yacht_buoyancy)
                     .chain()
                     .in_set(PhysicsSet::SyncBackend)
-                    .before(PhysicsSet::StepSimulation),
+                    .before(PhysicsSet::StepSimulation)
+                    .after(update_water_region_cache),
             )
             .add_systems(
                 Update,
