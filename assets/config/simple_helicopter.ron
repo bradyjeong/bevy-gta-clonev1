@@ -1,24 +1,37 @@
 // Simple Helicopter Physics Configuration  
 // Data-driven constants for helicopter movement (eliminates magic numbers)
 SimpleHelicopterSpecs(
-    // Movement speeds
-    lateral_speed: 20.0,        // Side-to-side movement speed
-    vertical_speed: 15.0,       // Up/down movement speed
-    forward_speed: 83.0,        // Forward/backward movement speed
+    // Used for hover-hold vertical speed clamping
+    vertical_speed: 15.0,       // Up/down movement speed (m/s)
     
-    // Rotation rates
-    yaw_rate: 1.5,             // Rotation around Y axis (rad/s)
-    pitch_rate: 1.0,           // Forward/backward tilt (rad/s)
-    roll_rate: 1.0,            // Side tilt (rad/s)
+    // Rotation rates (direct angular velocity control)
+    yaw_rate: 2.2,             // Rotation around Y axis (rad/s) - snappier for keyboard
+    pitch_rate: 1.3,           // Forward/backward tilt (rad/s) - faster response
+    roll_rate: 1.3,            // Side tilt (rad/s) - faster response
     
     // Physics smoothing
-    angular_lerp_factor: 4.0,   // Angular velocity smoothing rate
-    linear_lerp_factor: 6.0,    // Linear velocity smoothing rate
-    
-    // Gliding physics (engine off)
-    drag_factor: 0.99,          // Momentum decay per second (helicopters have more drag than jets)
+    angular_lerp_factor: 12.0,  // Angular velocity smoothing rate - crisp keyboard feel (~0.08s)
     
     // Rotor animation speeds
     main_rotor_rpm: 20.0,       // Main rotor rotation speed (rad/s)
     tail_rotor_rpm: 35.0,       // Tail rotor rotation speed (rad/s)
+    
+    // Force-based physics parameters
+    spool_up_rate: 1.0,         // RPM increase rate per second - snappier lift response
+    spool_down_rate: 0.50,      // RPM decrease rate per second - less float after release
+    min_rpm_for_lift: 0.30,     // Minimum RPM required for lift
+    rpm_to_lift_exp: 1.5,       // Exponential curve for lift calculation
+    max_lift_margin_g: 1.7,     // Maximum lift in G-forces
+    cyclic_tilt_max_deg: 22.5,  // Maximum cyclic tilt angle (degrees) - arcade-y forward accel
+    horiz_drag: 0.40,           // Horizontal drag coefficient - shorter slide distance (~2.5s)
+    damage_authority_min: 0.3,  // Minimum control authority when damaged
+    rotor_wash_scale: 1.0,      // Rotor wash effect scale
+    hover_bias: 0.03,           // Lift bias above weight to ensure liftoff
+    collective_gain: 0.75,      // Collective control sensitivity - quicker altitude changes
+    input_deadzone: 0.10,       // Input deadzone for all axes
+    
+    // GTA SA-style per-axis stabilization (multiplicative damping applied per-frame when input neutral)
+    pitch_stab: 0.95,           // Pitch axis damping - faster auto-leveling for arcade feel
+    roll_stab: 0.94,            // Roll axis damping - even faster roll auto-level
+    yaw_stab: 0.98,             // Yaw axis damping - moderate, allows drift but prevents spin
 )

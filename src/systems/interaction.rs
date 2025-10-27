@@ -18,7 +18,7 @@ fn transfer_to_vehicle(
     control_state: Option<&ControlState>,
     player_controlled: Option<&PlayerControlled>,
     vehicle_type: VehicleControlType,
-    vehicle_name: &str,
+    _vehicle_name: &str,
 ) {
     // Queue atomic ActiveEntity transfer
     queue_active_transfer(commands, player_entity, vehicle_entity);
@@ -53,8 +53,6 @@ fn transfer_to_vehicle(
 
     // Store vehicle reference
     commands.entity(player_entity).insert(InCar(vehicle_entity));
-
-    info!("Entered {vehicle_name}! Entity: {:?}", vehicle_entity);
 }
 
 pub fn interaction_system(
@@ -132,7 +130,6 @@ pub fn interaction_system(
                 _human_animation,
             )) = player_query.single_mut()
             else {
-                warn!("Failed to get player entity!");
                 return;
             };
 
@@ -143,18 +140,11 @@ pub fn interaction_system(
             let mut best_helicopter: Option<(Entity, f32)> = None;
             let mut best_f16: Option<(Entity, f32)> = None;
             let mut best_yacht: Option<(Entity, f32)> = None;
-            let mut nearest_yacht_for_debug: Option<f32> = None;
 
             for (entity, gt, car, helicopter, f16, yacht) in unified_vehicle_query.iter() {
                 let dist_sq = player_transform
                     .translation
                     .distance_squared(gt.translation());
-
-                // Track nearest yacht for debug message
-                if yacht.is_some() && dist_sq < 10000.0 {
-                    nearest_yacht_for_debug =
-                        Some(nearest_yacht_for_debug.map_or(dist_sq, |d| d.min(dist_sq)));
-                }
 
                 // Collect best match for each vehicle type
                 if car.is_some() && dist_sq < 9.0 {
@@ -189,7 +179,6 @@ pub fn interaction_system(
                     "Car",
                 );
                 state.set(GameState::Driving);
-                return;
             } else if let Some((entity, _)) = best_helicopter {
                 transfer_to_vehicle(
                     &mut commands,
@@ -201,7 +190,6 @@ pub fn interaction_system(
                     "Helicopter",
                 );
                 state.set(GameState::Flying);
-                return;
             } else if let Some((entity, _)) = best_f16 {
                 transfer_to_vehicle(
                     &mut commands,
@@ -213,18 +201,7 @@ pub fn interaction_system(
                     "F16",
                 );
                 state.set(GameState::Jetting);
-                return;
-            } else if let Some((yacht_entity, dist_sq)) = best_yacht {
-                let distance = dist_sq.sqrt(); // Only sqrt for logging
-                // Get yacht position for logging
-                if let Ok((_, yacht_gt, _, _, _, _)) = unified_vehicle_query.get(yacht_entity) {
-                    info!(
-                        "Player at {:?}, Yacht at {:?}, Distance: {:.1}m - Boarding yacht!",
-                        player_transform.translation,
-                        yacht_gt.translation(),
-                        distance
-                    );
-                }
+            } else if let Some((yacht_entity, _)) = best_yacht {
                 transfer_to_vehicle(
                     &mut commands,
                     player_entity,
@@ -235,18 +212,6 @@ pub fn interaction_system(
                     "Yacht",
                 );
                 state.set(GameState::Driving);
-                return;
-            }
-
-            // Debug message for yacht outside range
-            if let Some(dist_sq) = nearest_yacht_for_debug {
-                if dist_sq >= 1225.0 {
-                    let distance = dist_sq.sqrt();
-                    info!(
-                        "Yacht too far! Distance: {:.1}m (need < 35m). Swim closer and press F.",
-                        distance
-                    );
-                }
             }
         }
         GameState::Swimming => {
@@ -261,7 +226,6 @@ pub fn interaction_system(
                 human_animation,
             )) = player_query.single_mut()
             else {
-                warn!("Failed to get player entity!");
                 return;
             };
 
@@ -277,13 +241,6 @@ pub fn interaction_system(
 
                 if dist_sq < 1225.0 {
                     // 35.0²
-                    let distance = dist_sq.sqrt(); // Only sqrt for logging
-                    info!(
-                        "Player at {:?}, Yacht at {:?}, Distance: {:.1}m - Boarding yacht!",
-                        player_transform.translation,
-                        gt.translation(),
-                        distance
-                    );
 
                     // Queue atomic ActiveEntity transfer
                     queue_active_transfer(&mut commands, player_entity, entity);
@@ -325,15 +282,7 @@ pub fn interaction_system(
                     commands.entity(player_entity).insert(InCar(entity));
 
                     state.set(GameState::Driving);
-                    info!("Climbed aboard Superyacht from water!");
-                    return;
-                } else if dist_sq < 10000.0 {
-                    // 100.0²
-                    let distance = dist_sq.sqrt();
-                    info!(
-                        "Yacht too far! Distance: {:.1}m (need < 35m). Swim closer and press F.",
-                        distance
-                    );
+                    break;
                 }
             }
         }
@@ -383,11 +332,6 @@ pub fn interaction_system(
                             .insert(Visibility::Visible)
                             .insert(PendingPhysicsEnable);
                         // DO NOT remove RigidBodyDisabled here; will be done next frame
-
-                        info!(
-                            "ActiveEntity transferred from Car({:?}) back to Player({:?})",
-                            active_car, player_entity
-                        );
 
                         // ONLY set Walking state if we actually exited a car
                         state.set(GameState::Walking);
@@ -450,13 +394,10 @@ pub fn interaction_system(
                             .insert(Visibility::Visible)
                             .insert(PendingPhysicsEnable);
                         // DO NOT remove RigidBodyDisabled here; will be done next frame
-
-                        info!("Exited helicopter at position: {:?}", exit_position);
                     }
 
                     // Switch to walking state
                     state.set(GameState::Walking);
-                    info!("Exited helicopter!");
                 }
             }
         }
@@ -510,13 +451,10 @@ pub fn interaction_system(
                             .insert(Visibility::Visible)
                             .insert(PendingPhysicsEnable);
                         // DO NOT remove RigidBodyDisabled here; will be done next frame
-
-                        info!("Exited F16 at position: {:?}", exit_position);
                     }
 
                     // Switch to walking state
                     state.set(GameState::Walking);
-                    info!("Exited F16!");
                 }
             }
         }

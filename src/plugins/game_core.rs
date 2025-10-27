@@ -121,6 +121,8 @@ impl Plugin for GameCorePlugin {
                     crate::systems::movement::car_movement.before(PhysicsSet::SyncBackend),
                     crate::systems::movement::simple_helicopter_movement
                         .before(PhysicsSet::SyncBackend),
+                    crate::systems::movement::spool_helicopter_rpm_idle
+                        .before(PhysicsSet::SyncBackend),
                     crate::systems::movement::simple_f16_movement.before(PhysicsSet::SyncBackend),
                 ),
             )
@@ -144,6 +146,7 @@ impl Plugin for GameCorePlugin {
                     // No position validation needed for finite world
 
                     // ActiveEntity safety ensures exactly one active entity
+                    // CRITICAL: Run executor before movement systems to ensure ActiveEntity is present
                     active_transfer_executor_system,
                     active_entity_integrity_check,
                     // Diagnostics and monitoring

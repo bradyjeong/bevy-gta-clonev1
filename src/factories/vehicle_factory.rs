@@ -3,10 +3,10 @@ use crate::components::MovementTracker;
 use crate::components::unified_water::WaterBodyId;
 use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::{
-    AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, JetFlame, LandingLight,
-    MainRotor, NavigationLight, NavigationLightType, RotorBlurDisk, RotorWash, SimpleCarSpecs,
-    SimpleCarSpecsHandle, SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs,
-    SimpleHelicopterSpecsHandle, TailRotor, VehicleState, VehicleType,
+    AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, HelicopterRuntime, JetFlame,
+    LandingLight, MainRotor, NavigationLight, NavigationLightType, RotorBlurDisk, RotorWash,
+    SimpleCarSpecs, SimpleCarSpecsHandle, SimpleF16Specs, SimpleF16SpecsHandle,
+    SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor, VehicleState, VehicleType,
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
@@ -14,6 +14,7 @@ use crate::factories::{MaterialFactory, MeshFactory};
 use crate::systems::movement::simple_yacht::YachtSpecsHandle;
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
+use bevy_rapier3d::dynamics::AdditionalMassProperties;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 
@@ -213,11 +214,14 @@ impl VehicleFactory {
                 Helicopter,
                 VehicleState::new(VehicleType::Helicopter),
                 SimpleHelicopterSpecsHandle(heli_specs_handle),
+                HelicopterRuntime::default(),
+                ExternalForce::default(),
                 RotorWash,
                 Damping {
-                    linear_damping: 2.0,
-                    angular_damping: 8.0,
+                    linear_damping: 0.1,
+                    angular_damping: 0.3,
                 },
+                AdditionalMassProperties::Mass(1500.0), // 1.5 ton helicopter
                 Sleeping::default(),
                 MovementTracker::new(position, 15.0),
                 crate::components::Enterable {

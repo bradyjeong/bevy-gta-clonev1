@@ -110,7 +110,6 @@ pub fn load_vehicle_controls_system(
     mut loaded_controls: ResMut<LoadedVehicleControls>,
 ) {
     if loaded_controls.config.is_none() && !loaded_controls.loading {
-        info!("Loading vehicle controls from assets/config/vehicle_controls.ron");
         let handle: Handle<VehicleControlsConfig> =
             asset_server.load("config/vehicle_controls.ron");
         commands.insert_resource(VehicleControlsHandle(handle));
@@ -128,7 +127,6 @@ pub fn process_loaded_controls_system(
         && let Some(config) = controls_assets.get(&handle.0)
         && loaded_controls.config.is_none()
     {
-        info!("Vehicle controls loaded successfully!");
         loaded_controls.config = Some(config.clone());
         loaded_controls.loading = false;
     }
@@ -296,29 +294,6 @@ pub fn get_vehicle_control_help(
     }
 
     Some(help_text.join("\n"))
-}
-
-/// Debug system to display loaded control configuration
-pub fn debug_loaded_controls_system(
-    loaded_controls: Res<LoadedVehicleControls>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    if !keyboard_input.just_pressed(KeyCode::F3) {
-        return;
-    }
-
-    if let Some(ref config) = loaded_controls.config {
-        info!("=== LOADED VEHICLE CONTROLS ===");
-        for (vehicle_type, controls) in &config.vehicle_types {
-            info!(
-                "{:?}: {} controls",
-                vehicle_type,
-                controls.get_all_bindings().len()
-            );
-        }
-    } else {
-        info!("Vehicle controls not yet loaded");
-    }
 }
 
 #[cfg(test)]

@@ -56,13 +56,10 @@ pub fn validate_physics_config(
     }
 
     for specs in helicopter_query.iter() {
-        let max_heli_vel = specs
-            .forward_speed
-            .max(specs.lateral_speed)
-            .max(specs.vertical_speed);
+        let max_heli_vel = specs.vertical_speed;
         if max_heli_vel > max_vel {
             panic!(
-                "Helicopter config error: movement speeds ({max_heli_vel:.1}) exceed max_velocity ({max_vel})",
+                "Helicopter config error: vertical_speed ({max_heli_vel:.1}) exceeds max_velocity ({max_vel})",
             );
         }
 

@@ -1,8 +1,8 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::{
-    ActiveEntity, AircraftFlight, ControlState, F16, Helicopter, MainRotor, MissingSpecsWarned,
-    PlayerControlled, SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs,
-    SimpleHelicopterSpecsHandle, TailRotor,
+    ActiveEntity, AircraftFlight, ControlState, F16, Helicopter, HelicopterRuntime, MainRotor,
+    MissingSpecsWarned, PlayerControlled, SimpleF16Specs, SimpleF16SpecsHandle,
+    SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor, VehicleHealth,
 };
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -252,9 +252,14 @@ pub fn simple_f16_movement(
     }
 }
 
-/// Simple helicopter controls that work alongside F16
-/// Uses similar simplified approach for consistency
-/// Asset-driven: prefers loaded specs, falls back to Default
+/// Force-based helicopter physics following oracle's realistic flight model
+///
+/// Replaces direct velocity manipulation with force/torque-based system:
+/// - RPM-based lift with realistic spool-up/down
+/// - Main rotor cyclic tilt for directional control
+/// - Tail rotor for yaw authority
+/// - Damage affects control authority
+/// - Proper physics integration via ExternalForce
 pub fn simple_helicopter_movement(
     time: Res<Time>,
     config: Res<GameConfig>,
@@ -268,14 +273,27 @@ pub fn simple_helicopter_movement(
             &Transform,
             &ControlState,
             &SimpleHelicopterSpecsHandle,
+            &mut HelicopterRuntime,
+            &mut ExternalForce,
+            &AdditionalMassProperties,
+            Option<&VehicleHealth>,
         ),
         (With<Helicopter>, With<ActiveEntity>, With<PlayerControlled>),
     >,
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
 
-    for (entity, mut velocity, transform, control_state, specs_handle) in
-        helicopter_query.iter_mut()
+    for (
+        entity,
+        mut velocity,
+        transform,
+        control_state,
+        specs_handle,
+        mut runtime,
+        mut external_force,
+        mass_props,
+        vehicle_health,
+    ) in helicopter_query.iter_mut()
     {
         let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
             if !warned_query.contains(entity) {
@@ -287,92 +305,178 @@ pub fn simple_helicopter_movement(
             }
             continue;
         };
-        // Early exit check for input, but always run lerp and safety checks
-        let has_input = control_state.pitch.abs() > 0.1
-            || control_state.yaw.abs() > 0.1
-            || control_state.vertical.abs() > 0.1
-            || control_state.roll.abs() > 0.1;
 
-        let mut target_linear_velocity = Vec3::ZERO;
-        let mut target_angular_velocity = Vec3::ZERO;
-
-        // Safety: prevent NaN/physics issues from modded configs
-        let lateral_speed = specs.lateral_speed.clamp(1.0, 100.0);
-        let vertical_speed = specs.vertical_speed.clamp(1.0, 50.0);
-        let forward_speed = specs.forward_speed.clamp(1.0, 100.0);
-        let yaw_rate = specs.yaw_rate.clamp(0.1, 5.0);
-        let roll_rate = specs.roll_rate.clamp(0.1, 5.0);
-
-        // Only calculate target velocities when there's meaningful input
-        if has_input {
-            // Forward/backward movement using pitch
-            if control_state.pitch > 0.1 {
-                target_linear_velocity += transform.forward() * forward_speed * control_state.pitch;
-            } else if control_state.pitch < -0.1 {
-                target_linear_velocity -=
-                    transform.forward() * forward_speed * control_state.pitch.abs();
-            }
-
-            // Rotation using yaw (invert sign for correct direction)
-            if control_state.yaw.abs() > 0.1 {
-                target_angular_velocity.y = -control_state.yaw * yaw_rate;
-            }
-
-            // Vertical movement (collective)
-            if control_state.vertical > 0.1 {
-                target_linear_velocity.y += vertical_speed * control_state.vertical;
-            } else if control_state.vertical < -0.1 {
-                target_linear_velocity.y -= vertical_speed * control_state.vertical.abs();
-            }
-
-            // Roll controls (Q/E keys) - banking and lateral movement
-            if control_state.roll.abs() > 0.1 {
-                // Roll angular velocity (banking around Z-axis)
-                target_angular_velocity.z = -control_state.roll * roll_rate;
-
-                // Lateral movement when rolling (helicopter banks into turn)
-                let lateral_force = transform.right() * -control_state.roll * lateral_speed;
-                target_linear_velocity += lateral_force;
-            }
-        }
-
-        // Apply movement with momentum decay when no input (GTA-style)
-        if has_input {
-            // Clamp to prevent modded configs from breaking physics
-            let linear_lerp_factor = specs.linear_lerp_factor.clamp(1.0, 20.0);
-            let lerped_velocity = safe_lerp(
-                velocity.linvel,
-                target_linear_velocity,
-                dt * linear_lerp_factor,
-            );
-
-            // Preserve gravity in Y-axis unless actively controlling vertical movement
-            velocity.linvel = if target_linear_velocity.y.abs() > 0.1 {
-                lerped_velocity // Full control including Y when actively moving vertically
-            } else {
-                Vec3::new(lerped_velocity.x, velocity.linvel.y, lerped_velocity.z) // Preserve gravity
-            };
+        // === 1. RPM UPDATE ===
+        // Keep rotors spooled while player-controlled (oracle recommendation)
+        // Only spool down when player exits or helicopter is destroyed
+        let target_rpm = 1.0;
+        let rate = if target_rpm > runtime.rpm {
+            specs.spool_up_rate.clamp(0.1, 2.0)
         } else {
-            // No input: Apply frame-rate independent momentum decay (helicopter keeps drifting like GTA V)
-            // Clamp to prevent modded configs from breaking physics
-            let drag_factor = specs.drag_factor.clamp(0.9, 1.0);
-            let frame_drag = drag_factor.powf(dt);
-            velocity.linvel = Vec3::new(
-                velocity.linvel.x * frame_drag,
-                velocity.linvel.y, // Preserve gravity
-                velocity.linvel.z * frame_drag,
-            );
-        }
-        // Clamp to prevent modded configs from breaking physics
-        let angular_lerp_factor = specs.angular_lerp_factor.clamp(1.0, 20.0);
+            specs.spool_down_rate.clamp(0.1, 2.0)
+        };
+        runtime.rpm =
+            (runtime.rpm + rate * dt * (target_rpm - runtime.rpm).signum()).clamp(0.0, 1.0);
+
+        // === 2. AUTHORITY SCALING (DAMAGE) ===
+        let health_pct = vehicle_health.map_or(1.0, |h| (h.current / h.max).clamp(0.0, 1.0));
+        let damage_authority_min = specs.damage_authority_min.clamp(0.0, 1.0);
+        let dmg_scale = damage_authority_min + (1.0 - damage_authority_min) * health_pct;
+
+        // === 3. RPM EFFECTIVENESS ===
+        let min_rpm_for_lift = specs.min_rpm_for_lift.clamp(0.0, 0.9);
+        let rpm_eff = if runtime.rpm < min_rpm_for_lift {
+            0.0
+        } else {
+            let rpm_to_lift_exp = specs.rpm_to_lift_exp.clamp(1.0, 3.0);
+            ((runtime.rpm - min_rpm_for_lift) / (1.0 - min_rpm_for_lift))
+                .clamp(0.0, 1.0)
+                .powf(rpm_to_lift_exp)
+        };
+
+        // === INPUT PROCESSING WITH DEADZONE ===
+        let dz = specs.input_deadzone.clamp(0.0, 0.3);
+        let pitch_input_abs = control_state.pitch.abs();
+        let roll_input_abs = control_state.roll.abs();
+        let yaw_input_abs = control_state.yaw.abs();
+
+        let pitch_cmd = if pitch_input_abs < dz {
+            0.0
+        } else {
+            control_state.pitch.signum() * specs.pitch_rate
+        };
+        let roll_cmd = if roll_input_abs < dz {
+            0.0
+        } else {
+            -control_state.roll.signum() * specs.roll_rate
+        };
+        let yaw_cmd = if yaw_input_abs < dz {
+            0.0
+        } else {
+            -control_state.yaw.signum() * specs.yaw_rate
+        };
+
+        // Vertical input (keep for lift control)
+        let vertical_input_abs = control_state.vertical.abs();
+        let vertical = if vertical_input_abs < dz {
+            0.0
+        } else {
+            control_state.vertical.signum() * ((vertical_input_abs - dz) / (1.0 - dz))
+        };
+
+        // === DIRECT ANGULAR VELOCITY CONTROL ===
+        let local_target_ang = Vec3::new(pitch_cmd, yaw_cmd, roll_cmd) * rpm_eff * dmg_scale;
+        let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
         velocity.angvel = safe_lerp(
             velocity.angvel,
-            target_angular_velocity,
-            dt * angular_lerp_factor,
+            world_target_ang,
+            dt * specs.angular_lerp_factor.clamp(1.0, 20.0),
         );
 
-        // Apply velocity validation every frame (critical for preventing physics panics)
+        // === PER-AXIS MULTIPLICATIVE DAMPING ===
+        let inv_rot = transform.rotation.inverse();
+        let mut local_ang = inv_rot.mul_vec3(velocity.angvel);
+
+        let pf = if pitch_input_abs < dz {
+            specs.pitch_stab.clamp(0.5, 1.0).powf(dt)
+        } else {
+            1.0
+        };
+        let rf = if roll_input_abs < dz {
+            specs.roll_stab.clamp(0.5, 1.0).powf(dt)
+        } else {
+            1.0
+        };
+        let yf = if yaw_input_abs < dz {
+            specs.yaw_stab.clamp(0.5, 1.0).powf(dt)
+        } else {
+            1.0
+        };
+
+        local_ang.x *= pf;
+        local_ang.y *= yf;
+        local_ang.z *= rf;
+        velocity.angvel = transform.rotation.mul_vec3(local_ang);
+
+        // === 4. LIFT CALCULATION ===
+        let mass = match mass_props {
+            AdditionalMassProperties::Mass(m) => m.max(1.0),
+            AdditionalMassProperties::MassProperties(mp) => mp.mass.max(1.0),
+        };
+        let hover_force = mass * 9.81;
+
+        let max_lift_margin_g = specs.max_lift_margin_g.clamp(1.0, 3.0);
+
+        // === VERTICAL HOVER HOLD ===
+        let auto_collective = if vertical_input_abs < dz {
+            let v_err = -velocity.linvel.y;
+            let kv = 0.6;
+            let vertical_speed = specs.vertical_speed.max(1.0);
+            (kv * v_err / vertical_speed).clamp(-0.2, 0.2)
+        } else {
+            0.0
+        };
+
+        let lift_g = (1.0 + specs.hover_bias + specs.collective_gain * vertical + auto_collective)
+            .clamp(0.0, max_lift_margin_g);
+        let lift_mag = hover_force * lift_g;
+
+        // Cyclic tilt direction
+        let cyclic_tilt_max_deg = specs.cyclic_tilt_max_deg.clamp(0.0, 30.0);
+        let tilt_rad = cyclic_tilt_max_deg.to_radians();
+        let pitch_tilt = if pitch_input_abs < dz {
+            0.0
+        } else {
+            control_state.pitch
+        };
+        let roll_tilt = if roll_input_abs < dz {
+            0.0
+        } else {
+            control_state.roll
+        };
+        let tilt_dir = *transform.up() - *transform.forward() * (pitch_tilt * tilt_rad.tan())
+            + *transform.right() * (-roll_tilt * tilt_rad.tan());
+
+        let main_force = tilt_dir.normalize_or_zero() * lift_mag * rpm_eff * dmg_scale;
+
+        // === 5. HORIZONTAL DRAG ===
+        let vel_horizontal = Vec3::new(velocity.linvel.x, 0.0, velocity.linvel.z);
+        let horiz_drag = specs.horiz_drag.clamp(0.0, 10.0);
+        let drag_force = -vel_horizontal * (horiz_drag * mass);
+
+        // === 6. APPLY FORCES ===
+        external_force.force = main_force + drag_force;
+        external_force.torque = Vec3::ZERO;
+
         PhysicsUtilities::clamp_velocity(&mut velocity, &config);
+    }
+}
+
+/// Spool down helicopter rotors when not controlled by player
+pub fn spool_helicopter_rpm_idle(
+    time: Res<Time>,
+    heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
+    mut helicopter_query: Query<
+        (
+            &SimpleHelicopterSpecsHandle,
+            &mut HelicopterRuntime,
+            Option<&VehicleHealth>,
+        ),
+        (With<Helicopter>, Without<PlayerControlled>),
+    >,
+) {
+    let dt = PhysicsUtilities::stable_dt(&time);
+
+    for (specs_handle, mut runtime, _vehicle_health) in helicopter_query.iter_mut() {
+        let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
+            continue;
+        };
+
+        let target_rpm = 0.0;
+
+        let rate = specs.spool_down_rate.clamp(0.1, 2.0);
+        runtime.rpm =
+            (runtime.rpm + rate * dt * (target_rpm - runtime.rpm).signum()).clamp(0.0, 1.0);
     }
 }
 
@@ -386,12 +490,12 @@ pub fn rotate_helicopter_rotors(
         Option<&TailRotor>,
         &ChildOf,
     )>,
-    helicopter_query: Query<&SimpleHelicopterSpecsHandle, With<Helicopter>>,
+    helicopter_query: Query<(&SimpleHelicopterSpecsHandle, &HelicopterRuntime), With<Helicopter>>,
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
 
     for (mut transform, main_rotor, tail_rotor, child_of) in rotor_query.iter_mut() {
-        let Ok(specs_handle) = helicopter_query.get(child_of.parent()) else {
+        let Ok((specs_handle, runtime)) = helicopter_query.get(child_of.parent()) else {
             continue;
         };
         let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
@@ -404,9 +508,11 @@ pub fn rotate_helicopter_rotors(
         );
 
         if main_rotor.is_some() {
-            transform.rotate_y(dt * main_rpm);
+            let main_rotation_speed = main_rpm * runtime.rpm;
+            transform.rotate_y(dt * main_rotation_speed);
         } else if tail_rotor.is_some() {
-            transform.rotate_z(dt * tail_rpm);
+            let tail_rotation_speed = tail_rpm * runtime.rpm;
+            transform.rotate_z(dt * tail_rotation_speed);
         }
     }
 }

@@ -1,4 +1,7 @@
-use crate::components::{Helicopter, RotorWash};
+use crate::components::{
+    ControlState, Helicopter, HelicopterRuntime, RotorWash, SimpleHelicopterSpecs,
+    SimpleHelicopterSpecsHandle,
+};
 use crate::constants::WorldEnvConfig;
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
@@ -30,8 +33,18 @@ type ParticleTransformQuery<'w, 's> = Query<
     (With<RotorWash>, Without<Helicopter>),
 >;
 
-type HelicopterStateQuery<'w, 's> =
-    Query<'w, 's, (&'static Transform, &'static Velocity), With<Helicopter>>;
+type HelicopterStateQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static Transform,
+        &'static Velocity,
+        &'static HelicopterRuntime,
+        &'static ControlState,
+        &'static SimpleHelicopterSpecsHandle,
+    ),
+    With<Helicopter>,
+>;
 
 /// Creates the rotor wash particle effect asset.
 /// Called once at startup to initialize the cached effect handle.
@@ -126,16 +139,22 @@ pub fn update_rotor_wash_position_and_intensity(
     helicopter_query: HelicopterStateQuery,
     mut particle_query: ParticleTransformQuery,
     env: Res<WorldEnvConfig>,
+    heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
 ) {
     for (rotor_wash_entity, rotor_wash_of, mut particle_transform, mut spawner) in
         particle_query.iter_mut()
     {
         let heli_entity = rotor_wash_of.0;
 
-        if let Ok((helicopter_transform, velocity)) = helicopter_query.get(heli_entity) {
-            let heli_pos = helicopter_transform.translation;
-            let vertical_velocity = velocity.linvel.y.abs();
+        if let Ok((helicopter_transform, _velocity, runtime, control_state, specs_handle)) =
+            helicopter_query.get(heli_entity)
+        {
+            let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
+                spawner.active = false;
+                continue;
+            };
 
+            let heli_pos = helicopter_transform.translation;
             let ground_height = env.land_elevation;
             let altitude = (heli_pos.y - ground_height).max(0.0);
 
@@ -143,13 +162,35 @@ pub fn update_rotor_wash_position_and_intensity(
             particle_transform.translation.z = heli_pos.z;
             particle_transform.translation.y = ground_height + 0.1;
 
-            if altitude < 10.0 && vertical_velocity > 0.5 {
-                let altitude_factor = (1.0 - (altitude / 10.0)).max(0.0);
-                let velocity_factor = (vertical_velocity / 10.0).min(1.0);
-                let intensity = altitude_factor * 0.7 + velocity_factor * 0.3;
+            // Calculate RPM effectiveness (matches movement system)
+            let rpm_eff = if runtime.rpm < specs.min_rpm_for_lift {
+                0.0
+            } else {
+                ((runtime.rpm - specs.min_rpm_for_lift) / (1.0 - specs.min_rpm_for_lift))
+                    .clamp(0.0, 1.0)
+                    .powf(specs.rpm_to_lift_exp)
+            };
 
+            // Calculate lift scalar from collective input
+            let collective_gain = 0.6;
+            let lift_scalar: f32 = 1.0 + collective_gain * control_state.vertical;
+
+            // Calculate intensity using oracle's formula
+            let base_intensity = specs.rotor_wash_scale * rpm_eff * lift_scalar.max(0.0);
+
+            // Apply altitude gating (only show near ground)
+            let altitude_gate: f32 = if altitude < 10.0 {
+                (1.0 - (altitude / 10.0)).max(0.0)
+            } else {
+                0.0
+            };
+
+            let final_intensity = base_intensity * altitude_gate;
+
+            // Apply intensity to particle system
+            if final_intensity > 0.05 {
                 spawner.active = true;
-                spawner.spawn_count = (intensity * 120.0) as u32;
+                spawner.spawn_count = (final_intensity * 120.0) as u32;
             } else {
                 spawner.active = false;
             }

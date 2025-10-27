@@ -189,6 +189,17 @@ pub struct MainRotor;
 #[derive(Component)]
 pub struct TailRotor;
 
+#[derive(Component, Reflect)]
+pub struct HelicopterRuntime {
+    pub rpm: f32,
+}
+
+impl Default for HelicopterRuntime {
+    fn default() -> Self {
+        Self { rpm: 0.0 }
+    }
+}
+
 #[derive(Component)]
 pub struct RotorBlurDisk {
     pub min_rpm_for_blur: f32,
@@ -316,33 +327,59 @@ impl Default for SimpleCarSpecs {
 // Asset-driven configuration following YachtSpecs pattern
 #[derive(Asset, TypePath, Component, Debug, Clone, serde::Deserialize)]
 pub struct SimpleHelicopterSpecs {
-    pub lateral_speed: f32,
     pub vertical_speed: f32,
-    pub forward_speed: f32,
     pub yaw_rate: f32,
     pub pitch_rate: f32,
     pub roll_rate: f32,
     pub angular_lerp_factor: f32,
-    pub linear_lerp_factor: f32,
-    pub drag_factor: f32, // Momentum decay when no input
     pub main_rotor_rpm: f32,
     pub tail_rotor_rpm: f32,
+    pub spool_up_rate: f32,
+    pub spool_down_rate: f32,
+    pub min_rpm_for_lift: f32,
+    pub rpm_to_lift_exp: f32,
+    pub max_lift_margin_g: f32,
+    pub cyclic_tilt_max_deg: f32,
+    pub horiz_drag: f32,
+    pub damage_authority_min: f32,
+    pub rotor_wash_scale: f32,
+    pub hover_bias: f32,      // Lift bias above weight to ensure liftoff
+    pub collective_gain: f32, // Collective control sensitivity
+    pub input_deadzone: f32,  // Input deadzone for all axes
+
+    // GTA SA-style per-axis stabilization damping (applied as stab.powf(dt) when input neutral)
+    pub pitch_stab: f32, // Pitch axis multiplicative damping (0.5-1.0, ~0.97 typical)
+    pub roll_stab: f32,  // Roll axis multiplicative damping (0.5-1.0, ~0.96 typical)
+    pub yaw_stab: f32,   // Yaw axis multiplicative damping (0.5-1.0, ~0.98 typical)
 }
 
 impl Default for SimpleHelicopterSpecs {
     fn default() -> Self {
         Self {
-            lateral_speed: 20.0_f32.clamp(1.0, 100.0), // m/s - reasonable helicopter speeds
             vertical_speed: 15.0_f32.clamp(1.0, 50.0), // m/s - vertical flight limits
-            forward_speed: 25.0_f32.clamp(1.0, 100.0), // m/s
             yaw_rate: 1.5_f32.clamp(0.1, 5.0),         // rad/s - prevent excessive rotation
             pitch_rate: 1.0_f32.clamp(0.1, 5.0),       // rad/s
             roll_rate: 1.0_f32.clamp(0.1, 5.0),        // rad/s
             angular_lerp_factor: 4.0_f32.clamp(1.0, 20.0), // Smooth control response
-            linear_lerp_factor: 6.0_f32.clamp(1.0, 20.0), // Smooth movement response
-            drag_factor: 0.99_f32.clamp(0.9, 1.0),     // Momentum decay per second when no input
             main_rotor_rpm: 20.0_f32.clamp(1.0, 100.0), // rad/s - main rotor speed
             tail_rotor_rpm: 35.0_f32.clamp(1.0, 100.0), // rad/s - tail rotor speed
+            spool_up_rate: 0.6,
+            spool_down_rate: 0.3,
+            min_rpm_for_lift: 0.35,
+            rpm_to_lift_exp: 1.7,
+            max_lift_margin_g: 1.8,
+            cyclic_tilt_max_deg: 18.0,
+            horiz_drag: 1.0,
+            damage_authority_min: 0.3,
+            rotor_wash_scale: 1.0,
+            hover_bias: 0.03,
+            collective_gain: 0.55,
+            input_deadzone: 0.10,
+
+            // GTA SA-style per-axis stabilization
+            pitch_stab: 0.97_f32.clamp(0.5, 1.0),
+            roll_stab: 0.96_f32.clamp(0.5, 1.0),
+            yaw_stab: 0.98_f32.clamp(0.5, 1.0),
         }
     }
 }

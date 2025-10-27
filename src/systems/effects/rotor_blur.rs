@@ -1,5 +1,8 @@
 #![allow(clippy::type_complexity)]
-use crate::components::{Helicopter, MainRotor, RotorBlurDisk, SimpleHelicopterSpecs, TailRotor};
+use crate::components::{
+    Helicopter, HelicopterRuntime, MainRotor, RotorBlurDisk, SimpleHelicopterSpecs,
+    SimpleHelicopterSpecsHandle, TailRotor,
+};
 use bevy::prelude::*;
 
 type MainBlurQuery<'w, 's> = Query<
@@ -21,11 +24,16 @@ type TailBlurQuery<'w, 's> = Query<
 /// OPTIMIZATION: Only writes Visibility when it actually changes
 /// CRITICAL FIX: Per-helicopter iteration prevents rotor blur cross-contamination
 pub fn update_rotor_blur_visibility(
+    heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
     helicopter_query: Query<
-        (&SimpleHelicopterSpecs, &Children),
+        (&SimpleHelicopterSpecsHandle, &HelicopterRuntime, &Children),
         (
             With<Helicopter>,
-            Or<(Changed<SimpleHelicopterSpecs>, Changed<Children>)>,
+            Or<(
+                Changed<SimpleHelicopterSpecsHandle>,
+                Changed<HelicopterRuntime>,
+                Changed<Children>,
+            )>,
         ),
     >,
     mut main_blur_query: MainBlurQuery,
@@ -33,9 +41,12 @@ pub fn update_rotor_blur_visibility(
     mut rotor_blade_query: Query<&mut Visibility, (With<MainRotor>, Without<RotorBlurDisk>)>,
     children_query: Query<&Children>,
 ) {
-    for (specs, helicopter_children) in helicopter_query.iter() {
-        let main_rpm = specs.main_rotor_rpm;
-        let tail_rpm = specs.tail_rotor_rpm;
+    for (specs_handle, runtime, helicopter_children) in helicopter_query.iter() {
+        let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
+            continue;
+        };
+        let main_rpm = specs.main_rotor_rpm * runtime.rpm;
+        let tail_rpm = specs.tail_rotor_rpm * runtime.rpm;
 
         for child in helicopter_children.iter() {
             if let Ok((blur_disk, mut visibility)) = main_blur_query.get_mut(child) {

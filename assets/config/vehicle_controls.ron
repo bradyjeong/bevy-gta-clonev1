@@ -70,10 +70,12 @@ VehicleControlsConfig(
             primary_controls: [
                 (action: PitchUp, key: ArrowUp, description: "Pitch forward / Move forward"),
                 (action: PitchDown, key: ArrowDown, description: "Pitch backward / Move backward"),
-                (action: YawLeft, key: ArrowLeft, description: "Yaw left / Turn left"),
-                (action: YawRight, key: ArrowRight, description: "Yaw right / Turn right"),
+                (action: RollLeft, key: KeyA, description: "Roll left / Bank left"),
+                (action: RollRight, key: KeyD, description: "Roll right / Bank right"),
             ],
             secondary_controls: [
+                (action: YawLeft, key: ArrowLeft, description: "Yaw left (hovering rotation)"),
+                (action: YawRight, key: ArrowRight, description: "Yaw right (hovering rotation)"),
                 (action: VerticalUp, key: ShiftLeft, description: "Collective up / Ascend"),
                 (action: VerticalDown, key: KeyC, description: "Collective down / Descend"),
             ],
