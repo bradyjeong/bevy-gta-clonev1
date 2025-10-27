@@ -34,6 +34,27 @@ pub struct Helicopter;
 #[derive(Component)]
 pub struct F16;
 
+// Phase 2: Ground detection for car stability
+#[derive(Component, Clone, Debug, Default)]
+pub struct Grounded {
+    pub is_grounded: bool,
+    pub ground_distance: f32,
+}
+
+// Phase 3: Visual-only body lean component (cosmetic rotation, no physics impact)
+#[derive(Component, Clone, Debug, Default)]
+pub struct VisualRig {
+    pub current_roll: f32,   // Current visual roll angle (radians)
+    pub current_pitch: f32,  // Current visual pitch angle (radians)
+    pub roll_velocity: f32,  // Roll angular velocity for spring-damper
+    pub pitch_velocity: f32, // Pitch angular velocity for spring-damper
+    pub last_velocity: Vec3, // Previous frame velocity for acceleration calculation
+}
+
+// Phase 3: Visual rig root - single child that receives visual rotation
+#[derive(Component)]
+pub struct VisualRigRoot;
+
 // Vehicle health component for boundary effects and damage
 #[derive(Component, Clone, Debug)]
 pub struct VehicleHealth {
@@ -276,6 +297,37 @@ pub struct VehicleRendering {
 }
 
 // Simple vehicle physics configurations (asset-driven)
+// Phase 1: Visual wheel system components
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WheelPos {
+    FL, // Front Left
+    FR, // Front Right
+    RL, // Rear Left
+    RR, // Rear Right
+}
+
+#[derive(Component)]
+pub struct WheelMesh {
+    pub pos: WheelPos,
+    pub radius: f32,
+    pub roll_angle: f32,
+    pub roll_dir: f32, // 1.0 or -1.0 for axis correction
+}
+
+#[derive(Component)]
+pub struct WheelSteerPivot {
+    pub pos: WheelPos,
+}
+
+#[derive(Component)]
+pub struct WheelsRoot;
+
+#[derive(Component)]
+pub struct CarWheelsConfig {
+    pub max_steer_rad: f32,
+    pub wheel_radius: f32,
+}
+
 // Asset-driven configuration following YachtSpecs pattern
 #[derive(Asset, TypePath, Component, Debug, Clone, serde::Deserialize)]
 pub struct SimpleCarSpecs {
@@ -297,6 +349,34 @@ pub struct SimpleCarSpecs {
     pub stability: f32,        // Auto-straightening torque (higher = more stable)
     pub ebrake_yaw_boost: f32, // Extra yaw when e-braking
     pub downforce_scale: f32,  // Grip increase at high speeds
+
+    // Phase 1 GTA-style helpers
+    pub auto_brake_gain: f32, // Auto-brake strength when throttle opposes velocity
+    pub slip_extremum: f32,   // Slip ratio for maximum grip
+    pub slip_asymptote: f32,  // Slip ratio for full slide
+    pub slip_stiffness: f32,  // Overall slip curve scale
+    pub brake_grip_loss: f32, // Lateral grip reduction during heavy braking
+
+    // Phase 2: Stability helpers
+    pub ground_ray_length: f32,    // Raycast distance for ground detection
+    pub air_gravity_scale: f32,    // Extra downward force when airborne
+    pub airborne_steer_scale: f32, // Steering reduction when airborne (0-1)
+    pub roll_kp: f32,              // Roll correction proportional gain
+    pub roll_kd: f32,              // Roll correction derivative gain
+    pub roll_torque_limit: f32,    // Maximum roll correction torque
+
+    // Phase 3: Drivability polish
+    pub reverse_steer_invert: bool, // Invert steering when reversing (realistic)
+    pub airborne_angular_scale: f32, // Angular velocity scale when airborne (0-1)
+    pub visual_roll_gain: f32,      // Visual body lean gain (radians per m/s² lateral)
+    pub visual_pitch_gain: f32,     // Visual body pitch gain (radians per m/s² longitudinal)
+    pub visual_spring: f32,         // Visual rig spring constant
+    pub visual_damper: f32,         // Visual rig damping constant
+
+    // Phase 1: Visual wheel system
+    pub max_steer_deg: f32,
+    pub wheel_radius: f32,
+    pub wheel_positions: [(f32, f32, f32); 4], // FL, FR, RL, RR positions
 }
 
 impl Default for SimpleCarSpecs {
@@ -320,6 +400,39 @@ impl Default for SimpleCarSpecs {
             stability: 0.3_f32.clamp(0.0, 5.0),   // Auto-straightening - VERY LOW
             ebrake_yaw_boost: 2.0_f32.clamp(0.0, 5.0), // E-brake yaw boost - MASSIVE
             downforce_scale: 0.3_f32.clamp(0.0, 2.0), // High-speed grip boost
+
+            // Phase 1 GTA-style helpers
+            auto_brake_gain: 12.0_f32.clamp(1.0, 50.0), // Auto-brake when throttle opposes velocity
+            slip_extremum: 0.5_f32.clamp(0.1, 5.0),     // Peak grip at 0.5 slip ratio
+            slip_asymptote: 20.0_f32.clamp(1.0, 50.0),  // Full slide at 20.0 slip
+            slip_stiffness: 1.0_f32.clamp(0.1, 5.0),    // Overall slip curve scale
+            brake_grip_loss: 0.25_f32.clamp(0.0, 1.0),  // 25% grip loss during heavy braking
+
+            // Phase 2: Stability helpers
+            ground_ray_length: 1.2_f32.clamp(0.5, 5.0),
+            air_gravity_scale: 1.5_f32.clamp(0.0, 10.0),
+            airborne_steer_scale: 0.3_f32.clamp(0.0, 1.0),
+            roll_kp: 6.0_f32.clamp(0.0, 20.0),
+            roll_kd: 1.5_f32.clamp(0.0, 10.0),
+            roll_torque_limit: 600.0_f32.clamp(0.0, 2000.0),
+
+            // Phase 3: Drivability polish defaults
+            reverse_steer_invert: true,
+            airborne_angular_scale: 0.5_f32.clamp(0.0, 1.0),
+            visual_roll_gain: 0.02_f32.clamp(0.0, 0.1),
+            visual_pitch_gain: 0.01_f32.clamp(0.0, 0.1),
+            visual_spring: 12.0_f32.clamp(1.0, 50.0),
+            visual_damper: 2.5_f32.clamp(0.1, 10.0),
+
+            // Phase 1: Visual wheel system defaults
+            max_steer_deg: 28.0_f32.clamp(10.0, 45.0),
+            wheel_radius: 0.33_f32.clamp(0.1, 1.0),
+            wheel_positions: [
+                (0.85, -0.32, 1.40),   // FL
+                (-0.85, -0.32, 1.40),  // FR
+                (0.85, -0.32, -1.40),  // RL
+                (-0.85, -0.32, -1.40), // RR
+            ],
         }
     }
 }

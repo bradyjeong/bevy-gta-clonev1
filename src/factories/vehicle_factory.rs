@@ -3,10 +3,12 @@ use crate::components::MovementTracker;
 use crate::components::unified_water::WaterBodyId;
 use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::{
-    AircraftFlight, Car, ContentType, DynamicContent, F16, Helicopter, HelicopterRuntime, JetFlame,
-    LandingLight, MainRotor, NavigationLight, NavigationLightType, RotorBlurDisk, RotorWash,
-    SimpleCarSpecs, SimpleCarSpecsHandle, SimpleF16Specs, SimpleF16SpecsHandle,
-    SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor, VehicleState, VehicleType,
+    AircraftFlight, Car, CarWheelsConfig, ContentType, DynamicContent, F16,
+    Grounded, Helicopter, HelicopterRuntime, JetFlame, LandingLight, MainRotor, NavigationLight,
+    NavigationLightType, RotorBlurDisk, RotorWash, SimpleCarSpecs, SimpleCarSpecsHandle,
+    SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle,
+    TailRotor, VehicleState, VehicleType, VisualRig, VisualRigRoot, WheelMesh, WheelPos,
+    WheelSteerPivot, WheelsRoot,
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
@@ -89,15 +91,38 @@ impl VehicleFactory {
                 Car,
                 VehicleState::new(VehicleType::SuperCar),
                 SimpleCarSpecsHandle(car_specs_handle),
-                LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+                AdditionalMassProperties::Mass(1200.0), // Realistic car mass for proper physics
                 Ccd::enabled(), // High-speed cars need continuous collision detection
                 Damping {
-                    linear_damping: 0.2,  // Reduced to avoid double-damping with custom grip
-                    angular_damping: 2.0, // Reduced for better steering responsiveness
+                    linear_damping: 0.25, // Increased to reduce jitter
+                    angular_damping: 2.5, // Phase 0: Moderate angular damping for better response
                 },
-                Friction::coefficient(0.2), // Low friction to avoid conflicting with custom lateral grip
+                Friction {
+                    coefficient: 0.15, // Phase 0: Reduced friction to prevent interference with custom grip (was 0.2)
+                    combine_rule: CoefficientCombineRule::Min, // Phase 0: Use min to prevent grip conflicts
+                },
+                Restitution {
+                    coefficient: 0.0, // Phase 0: No bounce for cars
+                    combine_rule: CoefficientCombineRule::Min,
+                },
                 MovementTracker::new(position, 10.0),
                 Name::new("SuperCar"),
+                Grounded::default(),         // Phase 2: Ground detection state
+                ExternalForce::default(),    // Phase 2: For stability forces and torques
+                VisualRig::default(),        // Phase 3: Visual-only body lean
+            ))
+            .id();
+
+        // Phase 3: Create VisualRigRoot as single child that receives visual rotation
+        let rig_root = commands
+            .spawn((
+                Transform::default(),
+                ChildOf(vehicle_entity),
+                VisualRigRoot,
+                Visibility::default(),
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
+                Name::new("CarRigRoot"),
             ))
             .id();
 
@@ -117,7 +142,7 @@ impl VehicleFactory {
             Mesh3d(meshes.add(Cuboid::new(1.8, 0.6, 4.2))),
             MeshMaterial3d(body_color.clone()),
             Transform::from_xyz(0.0, -0.2, 0.0), // Bottom at collider bottom: -0.5 + 0.3
-            ChildOf(vehicle_entity),
+            ChildOf(rig_root),
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
@@ -127,7 +152,7 @@ impl VehicleFactory {
             Mesh3d(meshes.add(Cuboid::new(1.6, 0.7, 2.0))),
             MeshMaterial3d(body_color.clone()),
             Transform::from_xyz(0.0, 0.275, -0.3), // Offset from collider center
-            ChildOf(vehicle_entity),
+            ChildOf(rig_root),
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
@@ -137,7 +162,7 @@ impl VehicleFactory {
             Mesh3d(meshes.add(Cuboid::new(1.5, 0.5, 0.1))),
             MeshMaterial3d(glass_color.clone()),
             Transform::from_xyz(0.0, 0.375, 0.7), // Offset from collider center
-            ChildOf(vehicle_entity),
+            ChildOf(rig_root),
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
@@ -147,30 +172,94 @@ impl VehicleFactory {
             Mesh3d(meshes.add(Cuboid::new(1.7, 0.3, 1.2))),
             MeshMaterial3d(body_color.clone()),
             Transform::from_xyz(0.0, -0.125, 1.5), // Front aligns with chassis front at 2.1
-            ChildOf(vehicle_entity),
+            ChildOf(rig_root),
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
 
-        // 4 Wheels (positioned at collider bottom: -0.5 + wheel_radius 0.25)
-        let wheel_mesh = MeshFactory::create_sports_wheel(meshes);
-        let wheel_y = -0.5 + 0.25; // collider_bottom (-half_height) + wheel_radius
-        let wheel_positions = [
-            Vec3::new(-0.9, wheel_y, 1.2),  // Front left
-            Vec3::new(0.9, wheel_y, 1.2),   // Front right
-            Vec3::new(-0.9, wheel_y, -1.2), // Rear left
-            Vec3::new(0.9, wheel_y, -1.2),  // Rear right
-        ];
+        // Phase 2: Create WheelsRoot group under VisualRigRoot
+        let wheels_root = commands
+            .spawn((
+                Transform::default(),
+                ChildOf(rig_root),
+                WheelsRoot,
+                Visibility::default(),
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
+                Name::new("WheelsRoot"),
+            ))
+            .id();
 
-        for pos in wheel_positions {
+        // Phase 2: Load wheel config from RON specs (will be available after asset loads)
+        // Attach to vehicle entity for wheel animation systems to use
+        let default_specs = SimpleCarSpecs::default();
+        let wheel_config = CarWheelsConfig {
+            max_steer_rad: default_specs.max_steer_deg.to_radians(),
+            wheel_radius: default_specs.wheel_radius,
+        };
+        commands.entity(vehicle_entity).insert(wheel_config);
+
+        // Phase 2: Spawn four wheels with proper hierarchy
+        let wheel_mesh = MeshFactory::create_sports_wheel(meshes);
+        let wheel_positions_data = default_specs.wheel_positions;
+
+        // Front wheels (steerable) - FL and FR
+        for (i, &(x, y, z)) in wheel_positions_data.iter().take(2).enumerate() {
+            let wheel_pos = if i == 0 { WheelPos::FL } else { WheelPos::FR };
+            let pos = Vec3::new(x, y, z);
+
+            // Create steer pivot for front wheels
+            let pivot = commands
+                .spawn((
+                    Transform::from_translation(pos),
+                    ChildOf(wheels_root),
+                    WheelSteerPivot { pos: wheel_pos },
+                    Visibility::default(),
+                    InheritedVisibility::VISIBLE,
+                    ViewVisibility::default(),
+                    Name::new(format!("{wheel_pos:?}_SteerPivot")),
+                ))
+                .id();
+
+            // Create wheel mesh under pivot
+            commands.spawn((
+                Mesh3d(wheel_mesh.clone()),
+                MeshMaterial3d(dark_color.clone()),
+                Transform::from_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+                ChildOf(pivot),
+                WheelMesh {
+                    pos: wheel_pos,
+                    radius: default_specs.wheel_radius,
+                    roll_angle: 0.0,
+                    roll_dir: 1.0,
+                },
+                VisibleChildBundle::default(),
+                self.visibility_range(),
+                Name::new(format!("{wheel_pos:?}_Wheel")),
+            ));
+        }
+
+        // Rear wheels (non-steerable) - RL and RR
+        for (i, &(x, y, z)) in wheel_positions_data.iter().skip(2).enumerate() {
+            let wheel_pos = if i == 0 { WheelPos::RL } else { WheelPos::RR };
+            let pos = Vec3::new(x, y, z);
+
+            // No pivot for rear wheels, attach directly to wheels_root
             commands.spawn((
                 Mesh3d(wheel_mesh.clone()),
                 MeshMaterial3d(dark_color.clone()),
                 Transform::from_translation(pos)
                     .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
-                ChildOf(vehicle_entity),
+                ChildOf(wheels_root),
+                WheelMesh {
+                    pos: wheel_pos,
+                    radius: default_specs.wheel_radius,
+                    roll_angle: 0.0,
+                    roll_dir: 1.0,
+                },
                 VisibleChildBundle::default(),
                 self.visibility_range(),
+                Name::new(format!("{wheel_pos:?}_Wheel")),
             ));
         }
 

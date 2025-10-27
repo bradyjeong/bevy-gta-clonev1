@@ -89,10 +89,11 @@ pub use propeller::PropellerHub;
 pub use rotor_wash::RotorWash;
 
 pub use vehicles::{
-    AircraftFlight, Car, F16, Helicopter, HelicopterRuntime, MainRotor, RotorBlurDisk,
-    SimpleCarSpecs, SimpleCarSpecsHandle, SimpleF16Specs, SimpleF16SpecsHandle,
-    SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor, VehicleHealth, VehicleLOD,
-    VehicleRendering, VehicleState, VehicleType,
+    AircraftFlight, Car, CarWheelsConfig, F16, Grounded, Helicopter,
+    HelicopterRuntime, MainRotor, RotorBlurDisk, SimpleCarSpecs, SimpleCarSpecsHandle,
+    SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle,
+    TailRotor, VehicleHealth, VehicleLOD, VehicleRendering, VehicleState, VehicleType, VisualRig,
+    VisualRigRoot, WheelMesh, WheelPos, WheelSteerPivot, WheelsRoot,
 };
 
 pub use world::{
