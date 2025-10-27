@@ -68,6 +68,7 @@ pub mod setup;
 pub mod debug;
 pub mod ui;
 pub mod vehicles;
+pub mod visual;
 pub mod water;
 // pub mod timing_service; // Moved to services/
 pub mod input;

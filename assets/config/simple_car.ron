@@ -26,4 +26,37 @@ SimpleCarSpecs(
     stability: 0.3,               // Auto-straightening torque (VERY LOW for sharp response)
     ebrake_yaw_boost: 2.0,        // Extra yaw when e-braking (MASSIVE boost for sharp drifts)
     downforce_scale: 0.3,         // Grip increase at high speeds
+    
+    // Phase 1 GTA-style helpers
+    auto_brake_gain: 12.0,        // Auto-brake strength when throttle opposes velocity
+    slip_extremum: 1.5,           // Slip ratio for maximum grip (peak at 1.5 m/s)
+    slip_asymptote: 12.0,         // Slip ratio for full slide (12.0 = quicker falloff)
+    slip_stiffness: 1.0,          // Overall slip curve scale (1.0 = standard)
+    brake_grip_loss: 0.25,        // Lateral grip reduction during heavy braking (25%)
+
+    // Phase 2: Stability helpers
+    ground_ray_length: 1.6,       // Raycast distance for ground detection (meters)
+    air_gravity_scale: 1.2,       // Extra downward force when airborne (multiplier)
+    airborne_steer_scale: 0.3,    // Steering reduction when airborne (30%)
+    roll_kp: 3.5,                 // Roll correction proportional gain
+    roll_kd: 1.2,                 // Roll correction derivative gain
+    roll_torque_limit: 400.0,     // Maximum roll correction torque (N⋅m)
+
+    // Phase 3: Drivability polish
+    reverse_steer_invert: true,   // Invert steering when reversing (realistic)
+    airborne_angular_scale: 0.5,  // Angular velocity scale when airborne (50%)
+    visual_roll_gain: 0.0,        // Disabled - no body lean
+    visual_pitch_gain: 0.0,       // Disabled - no body pitch
+    visual_spring: 14.0,          // Slightly stiffer spring
+    visual_damper: 7.5,           // Near-critical damping for smooth motion (was 2.5)
+
+    // Phase 1: Visual wheel system
+    max_steer_deg: 28.0,          // Maximum steering angle (degrees)
+    wheel_radius: 0.33,           // Wheel radius (meters)
+    wheel_positions: (            // Array of 4 wheel positions (X: left-, right+; Z: forward-, rear+)
+        (0.85, -0.32, -1.40),     // FL: Front Left (X+, Z- is forward)
+        (-0.85, -0.32, -1.40),    // FR: Front Right (X-, Z- is forward)
+        (0.85, -0.32, 1.40),      // RL: Rear Left (X+, Z+ is rear)
+        (-0.85, -0.32, 1.40),     // RR: Rear Right (X-, Z+ is rear)
+    ),
 )

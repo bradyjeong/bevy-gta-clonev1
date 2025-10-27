@@ -115,10 +115,26 @@ impl Plugin for GameCorePlugin {
                 enable_player_physics_next_frame.before(PhysicsSet::SyncBackend),
             )
             // Movement systems run BEFORE Rapier physics step (explicit per-system ordering)
+            // Phase 2: Ground detection runs first, then movement, then stability
             .add_systems(
                 FixedUpdate,
                 (
+                    crate::systems::physics::ground_detection_system
+                        .before(crate::systems::movement::car_movement)
+                        .before(PhysicsSet::SyncBackend),
                     crate::systems::movement::car_movement.before(PhysicsSet::SyncBackend),
+                    crate::systems::physics::car_stability_system
+                        .after(crate::systems::movement::car_movement)
+                        .before(PhysicsSet::SyncBackend),
+                    crate::systems::visual::visual_rig_system
+                        .after(crate::systems::movement::car_movement)
+                        .before(PhysicsSet::SyncBackend),
+                    crate::systems::visual::wheel_steering_system
+                        .after(crate::systems::visual::visual_rig_system)
+                        .before(PhysicsSet::SyncBackend),
+                    crate::systems::visual::wheel_rolling_system
+                        .after(crate::systems::visual::wheel_steering_system)
+                        .before(PhysicsSet::SyncBackend),
                     crate::systems::movement::simple_helicopter_movement
                         .before(PhysicsSet::SyncBackend),
                     crate::systems::movement::spool_helicopter_rpm_idle
