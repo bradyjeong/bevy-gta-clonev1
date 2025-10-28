@@ -110,15 +110,43 @@ pub fn validate_vehicle_consistency(config: Res<GameConfig>) {
 
         if ratio.min_element() < 0.5 {
             warn!(
-                "Vehicle {}: collider too small! Body: {:?}, Collider: {:?}",
-                name, body_size, collider_size
+                "Vehicle {}: Collider too small (ratio < 0.5).\n\
+                 Visual Mesh: {:.2} x {:.2} x {:.2}\n\
+                 Collider:    {:.2} x {:.2} x {:.2}\n\
+                 Ratio:       {:.2} x {:.2} x {:.2}\n\
+                 Fix: In config.rs, increase collider_size to ~0.8x of body_size.\n\
+                 Example: If body_size is Vec3(2.0, 1.0, 4.0), set collider_size to Vec3(1.6, 0.8, 3.2)",
+                name,
+                body_size.x,
+                body_size.y,
+                body_size.z,
+                collider_size.x,
+                collider_size.y,
+                collider_size.z,
+                ratio.x,
+                ratio.y,
+                ratio.z
             );
         }
 
         if ratio.max_element() > 1.0 {
             warn!(
-                "Vehicle {}: collider larger than mesh! Ratio: {:?}",
-                name, ratio
+                "Vehicle {}: Collider larger than visual mesh (physics bigger than visuals).\n\
+                 Visual Mesh: {:.2} x {:.2} x {:.2}\n\
+                 Collider:    {:.2} x {:.2} x {:.2}\n\
+                 Ratio:       {:.2} x {:.2} x {:.2}\n\
+                 Fix: In config.rs, reduce collider_size to be smaller than body_size.\n\
+                 GTA-style: collider should be 0.7-0.9x of mesh for forgiving collision.",
+                name,
+                body_size.x,
+                body_size.y,
+                body_size.z,
+                collider_size.x,
+                collider_size.y,
+                collider_size.z,
+                ratio.x,
+                ratio.y,
+                ratio.z
             );
         }
 
@@ -126,13 +154,26 @@ pub fn validate_vehicle_consistency(config: Res<GameConfig>) {
         let avg_ratio = (ratio.x + ratio.y + ratio.z) / 3.0;
         if (0.7..=0.9).contains(&avg_ratio) {
             info!(
-                "Vehicle {}: GTA-style forgiving collision OK ({:.1}x)",
+                "Vehicle {}: GTA-style forgiving collision OK ({:.2}x ratio)",
                 name, avg_ratio
             );
         } else {
             warn!(
-                "Vehicle {}: collision ratio not GTA-style! Average: {:.2}x (should be 0.7-0.9x)",
-                name, avg_ratio
+                "Vehicle {}: Collision ratio {:.2}x outside GTA-style range [0.7-0.9].\n\
+                 Current sizes:\n\
+                 - Visual Mesh: {:.2} x {:.2} x {:.2}\n\
+                 - Collider:    {:.2} x {:.2} x {:.2}\n\
+                 Target: Collider should be 70-90% of mesh size for arcade-style forgiving collision.\n\
+                 Fix: In config.rs, adjust collider_size = body_size * 0.8 (recommended).\n\
+                 See AGENTS.md section 'Mesh-Collider Consistency' for details.",
+                name,
+                avg_ratio,
+                body_size.x,
+                body_size.y,
+                body_size.z,
+                collider_size.x,
+                collider_size.y,
+                collider_size.z
             );
         }
     }

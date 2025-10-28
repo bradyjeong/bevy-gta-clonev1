@@ -31,7 +31,30 @@ SimpleHelicopterSpecs(
     input_deadzone: 0.10,       // Input deadzone for all axes
     
     // GTA SA-style per-axis stabilization (multiplicative damping applied per-frame when input neutral)
-    pitch_stab: 0.95,           // Pitch axis damping - faster auto-leveling for arcade feel
-    roll_stab: 0.94,            // Roll axis damping - even faster roll auto-level
-    yaw_stab: 0.98,             // Yaw axis damping - moderate, allows drift but prevents spin
+    // NOTE: Stabilization values are per-second residual factors (lower = stronger damping)
+    pitch_stab: 0.35,           // Pitch axis damping - faster auto-leveling for arcade feel
+    roll_stab: 0.30,            // Roll axis damping - even faster roll auto-level
+    yaw_stab: 0.63,             // Yaw axis damping - moderate, allows drift but prevents spin
+    
+    // P2 Ground probe and effects
+    ground_ray_length: 5.0,             // Ground detection ray length (m)
+    ground_effect_gain: 0.5,            // Lift multiplier near ground (50% extra at ground level)
+    ground_effect_max_altitude: 3.0,    // Max altitude for ground effect (m)
+    landed_alignment_kp: 1.0,           // Terrain alignment proportional gain (lower than cars)
+    landed_alignment_kd: 0.3,           // Terrain alignment derivative gain
+    landed_alignment_limit: 1.5,        // Max alignment correction rate (rad/s)
+    near_ground_drag: 2.0,              // Extra horizontal drag near ground
+    near_ground_max_altitude: 2.0,      // Max altitude for near-ground drag (m)
+
+    // P1: Helicopter Squat Drag
+    squat_drag_gain: 5.0,               // Extra horizontal damping near ground (kills skating on landing)
+
+    // Ground Idle Collective Control
+    collective_rate: 1.5,        // Collective accumulation rate (per second)
+    wow_on_height: 0.40,         // Enter WOW below this height (m)
+    wow_off_height: 0.80,        // Exit WOW above this height (m)
+    takeoff_collective: 0.18,    // Collective threshold to start lifting (0-1)
+    takeoff_blend: 0.10,         // Blend width for takeoff transition
+    ground_cyclic_scale: 0.3,    // Cyclic input scale when WOW (0-1)
+    ground_yaw_scale: 0.6,       // Yaw input scale when WOW (0-1)
 )

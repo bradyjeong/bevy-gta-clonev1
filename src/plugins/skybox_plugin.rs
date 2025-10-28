@@ -17,12 +17,15 @@ fn setup_skybox(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let skybox_mesh = meshes.add(
-        Sphere::new(9500.0)
-            .mesh()
-            .ico(5)
-            .expect("Failed to create skybox sphere"),
-    );
+    let skybox_mesh = meshes.add(Sphere::new(9500.0).mesh().ico(5).expect(
+        "Failed to create skybox icosphere mesh (subdivision level 5, radius 9500.0).\n\
+                 This is a Bevy mesh generation error, not an asset loading issue.\n\
+                 Troubleshooting:\n\
+                 1. Check system memory (large icosphere requires ~500MB RAM)\n\
+                 2. If running on low-end hardware, reduce subdivision in skybox_plugin.rs\n\
+                 3. Try lower .ico() value (3-4 instead of 5) for fewer triangles\n\
+                 4. Check Bevy version compatibility (requires 0.16+)",
+    ));
 
     let sky_color = Color::srgb(0.4, 0.7, 1.0);
     let skybox_material = materials.add(StandardMaterial {

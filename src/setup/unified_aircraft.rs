@@ -136,7 +136,16 @@ fn spawn_aircraft_unified(
                     validated_position,
                     None,
                 )
-                .expect("Failed to spawn helicopter"),
+                .unwrap_or_else(|_| {
+                    panic!(
+                        "Failed to spawn helicopter at position {validated_position:?}.\n\
+                         Troubleshooting:\n\
+                         1. Check RON config at 'assets/config/simple_helicopter.ron' exists and is valid\n\
+                         2. Verify position is within world bounds (max ±1,000,000)\n\
+                         3. Check vehicle factory has required assets loaded\n\
+                         4. Run 'cargo run --features debug-ui' to inspect entity hierarchy"
+                    )
+                }),
             AircraftType::F16 => vehicle_factory
                 .spawn_f16(
                     commands,
@@ -146,7 +155,16 @@ fn spawn_aircraft_unified(
                     validated_position,
                     None,
                 )
-                .expect("Failed to spawn F16"),
+                .unwrap_or_else(|_| {
+                    panic!(
+                        "Failed to spawn F16 at position {validated_position:?}.\n\
+                         Troubleshooting:\n\
+                         1. Check RON config at 'assets/config/simple_f16.ron' exists and is valid\n\
+                         2. Verify position is within world bounds (max ±1,000,000)\n\
+                         3. Check vehicle factory has required assets loaded\n\
+                         4. Run 'cargo run --features debug-ui' to inspect entity hierarchy"
+                    )
+                }),
         };
 
         // Update spawn registry with actual entity
