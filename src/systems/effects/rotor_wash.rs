@@ -20,8 +20,6 @@ pub struct RotorWashEffect {
 #[derive(Component, Debug, Clone, Copy)]
 pub struct RotorWashOf(pub Entity);
 
-type NewHelicopterQuery<'w, 's> = Query<'w, 's, Entity, Added<Helicopter>>;
-
 type ParticleTransformQuery<'w, 's> = Query<
     'w,
     's,
@@ -121,25 +119,32 @@ pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<Eff
 /// Clones the cached effect handle instead of creating a new effect asset.
 pub fn spawn_rotor_wash_particles(
     mut commands: Commands,
-    helicopter_query: NewHelicopterQuery,
+    helicopter_query: Query<Entity, (With<Helicopter>, Without<RotorWashOf>)>,
     rotor_wash_effect: Res<RotorWashEffect>,
 ) {
-    for entity in helicopter_query.iter() {
+    for heli_entity in helicopter_query.iter() {
+        info!(
+            "Spawning rotor wash particles for helicopter entity: {:?}",
+            heli_entity
+        );
+
         // Spawn as child of helicopter (Bug #44 fix)
-        commands.entity(entity).with_children(|parent| {
-            parent.spawn((
-                Name::new("rotor_wash_particles"),
-                ParticleEffect::new(rotor_wash_effect.handle.clone()),
-                Transform::from_xyz(0.0, 0.0, 0.0),
-                RotorWash,
-                RotorWashOf(entity),
-                // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
-                VisibilityRange {
-                    start_margin: 0.0..0.0,
-                    end_margin: 900.0..1100.0,
-                    use_aabb: false,
-                },
-            ));
+        commands.entity(heli_entity).with_children(|parent| {
+            let effect_entity = parent
+                .spawn((
+                    Name::new("rotor_wash_particles"),
+                    ParticleEffect::new(rotor_wash_effect.handle.clone()),
+                    Transform::from_xyz(0.0, 0.0, 0.0),
+                    RotorWash,
+                    RotorWashOf(heli_entity),
+                    // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
+                    VisibilityRange {
+                        start_margin: 0.0..0.0,
+                        end_margin: 900.0..1100.0,
+                        use_aabb: false,
+                    },
+                ))
+                .id();
         });
     }
 }
@@ -196,6 +201,21 @@ pub fn update_rotor_wash_position_and_intensity(
             };
 
             let final_intensity = base_intensity * altitude_gate;
+
+            // DEBUG: Log rotor wash status
+            if altitude < 15.0 {
+                info!(
+                    "Rotor Wash - Alt: {:.1}m, RPM: {:.2}, RPM_eff: {:.2}, Lift: {:.2}, Base: {:.2}, Gate: {:.2}, Final: {:.2}, Active: {}",
+                    altitude,
+                    runtime.rpm,
+                    rpm_eff,
+                    lift_scalar,
+                    base_intensity,
+                    altitude_gate,
+                    final_intensity,
+                    final_intensity > 0.05
+                );
+            }
 
             // Apply intensity to particle system
             if final_intensity > 0.05 {

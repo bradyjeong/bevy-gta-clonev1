@@ -2,9 +2,13 @@ use bevy::MinimalPlugins;
 use bevy::prelude::*;
 use std::fs;
 
+use crate::components::map::MapConfig;
+use crate::components::vehicles::{SimpleCarSpecs, SimpleF16Specs, SimpleHelicopterSpecs};
+use crate::components::water::YachtSpecs;
 use crate::components::world::WorldBounds;
-use crate::config::{GameConfig, WorldBoundsConfig, WorldStreamingConfig};
+use crate::config::{GameConfig, WorldBoundsConfig, WorldPhysicsConfig, WorldStreamingConfig};
 use crate::constants::WorldEnvConfig;
+use crate::systems::input::asset_based_controls::VehicleControlsConfig;
 
 #[test]
 fn test_world_streaming_config_propagation() {
@@ -406,5 +410,236 @@ fn test_config_consistency_across_resources() {
     assert_eq!(
         env.max_world_coordinate, world_half_size,
         "WorldEnvConfig should use consistent coordinate"
+    );
+}
+
+// RON File Validation Tests
+
+#[test]
+fn test_ron_file_parsing_simple_car() {
+    let assets_base =
+        if cfg!(target_os = "macos") && std::path::Path::new("../Resources/assets").exists() {
+            "../Resources/assets"
+        } else {
+            "assets"
+        };
+
+    let path = format!("{}/config/simple_car.ron", assets_base);
+    let contents = fs::read_to_string(&path).expect("simple_car.ron should exist and be readable");
+
+    let car_specs: SimpleCarSpecs =
+        ron::from_str(&contents).expect("simple_car.ron should parse correctly");
+
+    assert!(
+        car_specs.base_speed > 0.0,
+        "Car base_speed should be positive"
+    );
+    assert!(
+        car_specs.rotation_speed > 0.0,
+        "Car rotation_speed should be positive"
+    );
+    assert!(
+        car_specs.linear_lerp_factor >= 0.0 && car_specs.linear_lerp_factor <= 20.0,
+        "Linear lerp factor should be reasonable (0-20)"
+    );
+    assert!(
+        car_specs.angular_lerp_factor >= 0.0 && car_specs.angular_lerp_factor <= 20.0,
+        "Angular lerp factor should be reasonable (0-20)"
+    );
+}
+
+#[test]
+fn test_ron_file_parsing_simple_helicopter() {
+    let assets_base =
+        if cfg!(target_os = "macos") && std::path::Path::new("../Resources/assets").exists() {
+            "../Resources/assets"
+        } else {
+            "assets"
+        };
+
+    let path = format!("{}/config/simple_helicopter.ron", assets_base);
+    let contents =
+        fs::read_to_string(&path).expect("simple_helicopter.ron should exist and be readable");
+
+    let heli_specs: SimpleHelicopterSpecs =
+        ron::from_str(&contents).expect("simple_helicopter.ron should parse correctly");
+
+    assert!(
+        heli_specs.vertical_speed > 0.0,
+        "Helicopter vertical_speed should be positive"
+    );
+    assert!(
+        heli_specs.yaw_rate > 0.0,
+        "Helicopter yaw_rate should be positive"
+    );
+    assert!(
+        heli_specs.main_rotor_rpm > 0.0,
+        "Main rotor RPM should be positive"
+    );
+    assert!(
+        heli_specs.min_rpm_for_lift >= 0.0 && heli_specs.min_rpm_for_lift <= 1.0,
+        "Min RPM for lift should be normalized between 0 and 1"
+    );
+}
+
+#[test]
+fn test_ron_file_parsing_simple_f16() {
+    let assets_base =
+        if cfg!(target_os = "macos") && std::path::Path::new("../Resources/assets").exists() {
+            "../Resources/assets"
+        } else {
+            "assets"
+        };
+
+    let path = format!("{}/config/simple_f16.ron", assets_base);
+    let contents = fs::read_to_string(&path).expect("simple_f16.ron should exist and be readable");
+
+    let f16_specs: SimpleF16Specs =
+        ron::from_str(&contents).expect("simple_f16.ron should parse correctly");
+
+    assert!(
+        f16_specs.max_forward_speed > 0.0,
+        "F16 max_forward_speed should be positive"
+    );
+    assert!(
+        f16_specs.roll_rate_max > 0.0,
+        "F16 roll_rate_max should be positive"
+    );
+    assert!(
+        f16_specs.pitch_rate_max > 0.0,
+        "F16 pitch_rate_max should be positive"
+    );
+    assert!(
+        f16_specs.afterburner_multiplier >= 1.0,
+        "Afterburner multiplier should be at least 1.0"
+    );
+    assert!(
+        f16_specs.linear_damping >= 0.0,
+        "Linear damping should be non-negative"
+    );
+}
+
+#[test]
+fn test_ron_file_parsing_simple_yacht() {
+    let assets_base =
+        if cfg!(target_os = "macos") && std::path::Path::new("../Resources/assets").exists() {
+            "../Resources/assets"
+        } else {
+            "assets"
+        };
+
+    let path = format!("{}/config/simple_yacht.ron", assets_base);
+    let contents =
+        fs::read_to_string(&path).expect("simple_yacht.ron should exist and be readable");
+
+    let yacht_specs: YachtSpecs =
+        ron::from_str(&contents).expect("simple_yacht.ron should parse correctly");
+
+    assert!(
+        yacht_specs.max_speed > 0.0,
+        "Yacht max_speed should be positive"
+    );
+    assert!(
+        yacht_specs.throttle_ramp > 0.0,
+        "Yacht throttle_ramp should be positive"
+    );
+    assert!(
+        yacht_specs.linear_damping >= 0.0,
+        "Yacht linear_damping should be non-negative"
+    );
+    assert!(
+        yacht_specs.buoyancy_strength > 0.0,
+        "Buoyancy strength should be positive"
+    );
+}
+
+#[test]
+fn test_ron_file_parsing_vehicle_controls() {
+    let assets_base =
+        if cfg!(target_os = "macos") && std::path::Path::new("../Resources/assets").exists() {
+            "../Resources/assets"
+        } else {
+            "assets"
+        };
+
+    let path = format!("{}/config/vehicle_controls.ron", assets_base);
+    let contents =
+        fs::read_to_string(&path).expect("vehicle_controls.ron should exist and be readable");
+
+    let controls_config: VehicleControlsConfig =
+        ron::from_str(&contents).expect("vehicle_controls.ron should parse correctly");
+
+    assert!(
+        !controls_config.vehicle_types.is_empty(),
+        "Vehicle controls should define at least one vehicle type"
+    );
+
+    for (vehicle_type, controls) in &controls_config.vehicle_types {
+        assert!(
+            !controls.name.is_empty(),
+            "Vehicle {:?} should have a name",
+            vehicle_type
+        );
+        assert!(
+            !controls.get_all_bindings().is_empty(),
+            "Vehicle {:?} should have at least one control binding",
+            vehicle_type
+        );
+    }
+}
+
+#[test]
+fn test_ron_file_parsing_map_config() {
+    let assets_base =
+        if cfg!(target_os = "macos") && std::path::Path::new("../Resources/assets").exists() {
+            "../Resources/assets"
+        } else {
+            "assets"
+        };
+
+    let path = format!("{}/config/map.ron", assets_base);
+    let contents = fs::read_to_string(&path).expect("map.ron should exist and be readable");
+
+    let map_config: MapConfig = ron::from_str(&contents).expect("map.ron should parse correctly");
+
+    assert!(map_config.map_size > 0.0, "Map size should be positive");
+    assert!(map_config.zoom_level > 0.0, "Zoom level should be positive");
+    assert!(
+        map_config.background_alpha >= 0.0 && map_config.background_alpha <= 1.0,
+        "Background alpha should be between 0 and 1"
+    );
+}
+
+#[test]
+fn test_ron_file_parsing_world_physics() {
+    let assets_base =
+        if cfg!(target_os = "macos") && std::path::Path::new("../Resources/assets").exists() {
+            "../Resources/assets"
+        } else {
+            "assets"
+        };
+
+    let path = format!("{}/config/world_physics.ron", assets_base);
+    let contents =
+        fs::read_to_string(&path).expect("world_physics.ron should exist and be readable");
+
+    let physics_config: WorldPhysicsConfig =
+        ron::from_str(&contents).expect("world_physics.ron should parse correctly");
+
+    assert!(
+        physics_config.emergency_thresholds.max_velocity > 0.0,
+        "Max velocity should be positive"
+    );
+    assert!(
+        physics_config.emergency_thresholds.max_angular_velocity > 0.0,
+        "Max angular velocity should be positive"
+    );
+    assert!(
+        physics_config.emergency_thresholds.max_coordinate > 0.0,
+        "Max world coordinate should be positive"
+    );
+    assert!(
+        physics_config.building_activation.activation_radius > 0.0,
+        "Building activation radius should be positive"
     );
 }
