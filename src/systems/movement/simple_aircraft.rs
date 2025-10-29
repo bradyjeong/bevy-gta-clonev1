@@ -364,11 +364,20 @@ pub fn simple_helicopter_movement(
         };
 
         // === 3. RPM UPDATE (CONTINUOUS) ===
-        // GTA-style: Keep rotors at full speed while player-controlled
-        // Only spool down when grounded with no input
+        // Three-tier rotor speed based on input:
+        // - Throttle up (Shift): 2.0 → 40 rad/s (fastest with blur)
+        // - Hovering (neutral): 1.0 → 20 rad/s (medium with blur)
+        // - Descending (C key): 0.7 → 14 rad/s (slowest with blur)
         let target_rpm = if on_ground && vertical_input_abs < dz {
             0.0
+        } else if control_state.vertical < -0.1 {
+            // Descending with C key - 14 rad/s
+            0.7
+        } else if control_state.vertical > 0.1 {
+            // Throttling up with Shift - 40 rad/s
+            2.0
         } else {
+            // Hovering (neutral) - 20 rad/s
             1.0
         };
         let rate = if target_rpm > runtime.rpm {
@@ -376,8 +385,8 @@ pub fn simple_helicopter_movement(
         } else {
             specs.spool_down_rate.clamp(0.1, 2.0)
         };
-        runtime.rpm =
-            (runtime.rpm + rate * dt * (target_rpm - runtime.rpm).signum()).clamp(0.0, 1.0);
+        runtime.rpm += rate * dt * (target_rpm - runtime.rpm);
+        runtime.rpm = runtime.rpm.clamp(0.0, 2.0);
 
         // === YAW-ONLY PHYSICS ROTATION (GTA-STYLE) ===
         // Physics body only rotates for yaw, stays level for lift calculation
@@ -417,10 +426,10 @@ pub fn simple_helicopter_movement(
             0.0
         } else {
             // Direct vertical control (arcade):
-            // Shift (+1.0) → 1.0 + 0.75 = 1.75G → Climb
-            // Nothing (0.0) → 1.0 + 0.0 = 1.0G → Hover
-            // Ctrl (-1.0) → 1.0 - 0.75 = 0.25G → Descend
-            (1.0 + specs.collective_gain * vertical).clamp(0.0, max_lift_margin_g)
+            // Shift (+1.0) → 1.03 + 0.75 = 1.78G → Climb
+            // Nothing (0.0) → 1.03 + 0.0 = 1.03G → Stable hover
+            // Ctrl (-1.0) → 1.03 - 0.75 = 0.28G → Descend
+            (1.0 + specs.hover_bias + specs.collective_gain * vertical).clamp(0.0, max_lift_margin_g)
         };
         let lift_mag = hover_force * lift_g;
 
@@ -490,8 +499,8 @@ pub fn spool_helicopter_rpm_idle(
         let target_rpm = 0.0;
 
         let rate = specs.spool_down_rate.clamp(0.1, 2.0);
-        runtime.rpm =
-            (runtime.rpm + rate * dt * (target_rpm - runtime.rpm).signum()).clamp(0.0, 1.0);
+        runtime.rpm += rate * dt * (target_rpm - runtime.rpm);
+        runtime.rpm = runtime.rpm.clamp(0.0, 1.0);
     }
 }
 

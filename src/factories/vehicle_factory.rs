@@ -515,10 +515,9 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Circle::new(0.8))),
             MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgba(0.3, 0.3, 0.35, 0.5),
+                base_color: Color::srgb(0.3, 0.3, 0.35),
                 metallic: 0.0,
                 perceptual_roughness: 1.0,
-                alpha_mode: AlphaMode::Blend,
                 unlit: true,
                 ..default()
             })),

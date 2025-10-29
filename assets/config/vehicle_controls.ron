@@ -77,7 +77,7 @@ VehicleControlsConfig(
                 (action: YawLeft, key: KeyA, description: "Rotate left"),
                 (action: YawRight, key: KeyD, description: "Rotate right"),
                 (action: VerticalUp, key: ShiftLeft, description: "Ascend"),
-                (action: VerticalDown, key: ControlLeft, description: "Descend"),
+                (action: VerticalDown, key: KeyC, description: "Descend"),
             ],
             meta_controls: [
                 (action: Interact, key: KeyF, description: "Exit helicopter"),
