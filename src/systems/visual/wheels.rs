@@ -92,9 +92,9 @@ fn update_wheel_roll(wheel: &mut WheelMesh, transform: &mut Transform, velocity:
 
     wheel.roll_angle = wheel.roll_angle.rem_euclid(std::f32::consts::TAU);
 
-    // FIX: Combine base orientation (Z-axis 90°) with rolling rotation (X-axis)
-    // Base rotation aligns cylinder axis with axle (X-axis), roll rotates around axle
+    // FIX: Combine base orientation (Z-axis 90°) with rolling rotation (Y-axis)
+    // Base rotation aligns cylinder axis with axle (Y-axis), roll rotates around axle
     let base_rotation = Quat::from_rotation_z(std::f32::consts::FRAC_PI_2);
-    let roll_rotation = Quat::from_rotation_x(wheel.roll_angle);
+    let roll_rotation = Quat::from_rotation_y(wheel.roll_angle);
     transform.rotation = base_rotation * roll_rotation;
 }
