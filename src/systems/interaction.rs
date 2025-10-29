@@ -433,7 +433,7 @@ pub fn interaction_system(
                             Vec3::new(f16_gt.right().x, 0.0, f16_gt.right().z).normalize_or_zero();
                         let exit_position = f16_gt.translation()
                             + right_horizontal * 6.0  // Horizontal offset only
-                            + Vec3::new(0.0, -2.0, 0.0); // Drop to ground level
+                            + Vec3::new(0.0, 2.0, 0.0); // Raise above ground level
 
                         // Inherit only horizontal velocity for realistic free-fall
                         let mut inherited_vel = f16_vel.cloned().unwrap_or(Velocity::zero());
