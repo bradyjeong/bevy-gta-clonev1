@@ -428,10 +428,10 @@ impl Default for SimpleCarSpecs {
             max_steer_deg: 28.0_f32.clamp(10.0, 45.0),
             wheel_radius: 0.33_f32.clamp(0.1, 1.0),
             wheel_positions: [
-                (0.85, -0.32, 1.40),   // FL
-                (-0.85, -0.32, 1.40),  // FR
-                (0.85, -0.32, -1.40),  // RL
-                (-0.85, -0.32, -1.40), // RR
+                (0.85, -0.32, -1.40),  // FL (front = negative Z in Bevy Z-forward)
+                (-0.85, -0.32, -1.40), // FR
+                (0.85, -0.32, 1.40),   // RL (rear = positive Z)
+                (-0.85, -0.32, 1.40),  // RR
             ],
         }
     }

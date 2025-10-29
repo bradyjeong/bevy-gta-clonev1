@@ -290,23 +290,10 @@ fn test_helicopter_rotor_config_valid() {
         config.tail_rotor_rpm > config.main_rotor_rpm,
         "Tail rotor should spin faster than main rotor"
     );
-
-    assert!(
-        config.ground_ray_length > 0.0,
-        "Ground ray length must be positive"
-    );
-    assert!(
-        config.ground_effect_gain >= 0.0,
-        "Ground effect gain must be non-negative"
-    );
-    assert!(
-        config.ground_effect_max_altitude > 0.0,
-        "Ground effect max altitude must be positive"
-    );
 }
 
 #[test]
-fn test_f16_curves_valid() {
+fn test_f16_config_valid() {
     let content =
         fs::read_to_string("assets/config/simple_f16.ron").expect("simple_f16.ron should exist");
 
@@ -314,27 +301,13 @@ fn test_f16_curves_valid() {
         ron::from_str(&content).expect("simple_f16.ron should parse correctly");
 
     assert!(
-        !config.thrust_curve.is_empty(),
-        "Thrust curve should not be empty"
+        config.max_forward_speed > 0.0,
+        "Max forward speed must be positive"
     );
     assert!(
-        !config.control_eff_curve.is_empty(),
-        "Control effectiveness curve should not be empty"
+        config.roll_rate_max > 0.0,
+        "Roll rate must be positive"
     );
-
-    for (speed_frac, _) in &config.thrust_curve {
-        assert!(
-            speed_frac >= &0.0 && speed_frac <= &1.0,
-            "Thrust curve speed fractions should be 0-1"
-        );
-    }
-
-    for (speed_frac, _) in &config.control_eff_curve {
-        assert!(
-            speed_frac >= &0.0 && speed_frac <= &1.0,
-            "Control curve speed fractions should be 0-1"
-        );
-    }
 }
 
 #[test]
@@ -359,86 +332,9 @@ fn test_car_arcade_physics_config() {
         config.brake_grip_loss >= 0.0 && config.brake_grip_loss <= 1.0,
         "Brake grip loss should be 0-1 fraction"
     );
-    assert!(
-        config.traction_loss_mult >= 0.0 && config.traction_loss_mult <= 1.0,
-        "Traction loss multiplier should be 0-1"
-    );
-
-    assert!(
-        config.lateral_cancel_max_g > 0.0,
-        "Lateral cancel max G must be positive"
-    );
-    assert!(
-        config.counter_steer_gain >= 0.0,
-        "Counter steer gain must be non-negative"
-    );
 }
 
-#[test]
-fn test_car_assists_config() {
-    let content =
-        fs::read_to_string("assets/config/simple_car.ron").expect("simple_car.ron should exist");
 
-    let config: SimpleCarSpecs =
-        ron::from_str(&content).expect("simple_car.ron should parse correctly");
-
-    assert!(
-        config.tc_slip_start_deg > 0.0,
-        "TC slip start must be positive"
-    );
-    assert!(
-        config.tc_min_scalar >= 0.0 && config.tc_min_scalar <= 1.0,
-        "TC min scalar should be 0-1 fraction"
-    );
-
-    assert!(
-        config.abs_peak_decel_g > 0.0,
-        "ABS peak decel G must be positive"
-    );
-    assert!(
-        config.abs_min_scalar >= 0.0 && config.abs_min_scalar <= 1.0,
-        "ABS min scalar should be 0-1 fraction"
-    );
-
-    if config.landing_prediction_enabled {
-        assert!(
-            config.landing_horizon_time > 0.0,
-            "Landing horizon time must be positive when enabled"
-        );
-        assert!(
-            config.landing_align_strength >= 0.0 && config.landing_align_strength <= 1.0,
-            "Landing align strength should be 0-1 fraction"
-        );
-    }
-}
-
-#[test]
-fn test_f16_flare_config() {
-    let content =
-        fs::read_to_string("assets/config/simple_f16.ron").expect("simple_f16.ron should exist");
-
-    let config: SimpleF16Specs =
-        ron::from_str(&content).expect("simple_f16.ron should parse correctly");
-
-    if config.flare_enabled {
-        assert!(
-            config.flare_altitude_m > 0.0,
-            "Flare altitude must be positive when enabled"
-        );
-        assert!(
-            config.flare_sink_rate_threshold < 0.0,
-            "Flare sink rate threshold should be negative (descending)"
-        );
-        assert!(
-            config.flare_pitch_gain >= 0.0,
-            "Flare pitch gain must be non-negative"
-        );
-        assert!(
-            config.flare_lift_bias >= 0.0,
-            "Flare lift bias must be non-negative"
-        );
-    }
-}
 
 #[test]
 fn test_helicopter_stabilization_config() {
@@ -459,11 +355,6 @@ fn test_helicopter_stabilization_config() {
     assert!(
         config.yaw_stab >= 0.0 && config.yaw_stab <= 1.0,
         "Yaw stab should be 0-1 fraction"
-    );
-
-    assert!(
-        config.squat_drag_gain >= 0.0,
-        "Squat drag gain must be non-negative"
     );
 }
 

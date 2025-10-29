@@ -30,11 +30,11 @@ pub fn wheel_steering_system(
                     if let Ok(great_grandchildren) = children_query.get(grandchild) {
                         for ggchild in great_grandchildren.iter() {
                             if let Ok((pivot, mut pivot_transform)) = pivot_query.get_mut(ggchild) {
-                                // Only apply steering to FRONT wheels (RL, RR - negative Z in Bevy forward coords)
-                                if matches!(pivot.pos, WheelPos::RL | WheelPos::RR) {
+                                // Only apply steering to FRONT wheels (FL, FR)
+                                if matches!(pivot.pos, WheelPos::FL | WheelPos::FR) {
                                     pivot_transform.rotation = Quat::from_rotation_y(steer_angle);
                                 }
-                                // Rear wheels (FL, FR) stay fixed at 0 rotation
+                                // Rear wheels (RL, RR) stay fixed at 0 rotation
                             }
                         }
                     }
