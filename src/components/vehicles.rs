@@ -210,14 +210,30 @@ pub struct MainRotor;
 #[derive(Component)]
 pub struct TailRotor;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+pub enum HeliState {
+    Grounded,
+    Flying,
+}
+
+impl Default for HeliState {
+    fn default() -> Self {
+        Self::Grounded
+    }
+}
+
 #[derive(Component, Reflect)]
 pub struct HelicopterRuntime {
     pub rpm: f32,
+    pub state: HeliState,
 }
 
 impl Default for HelicopterRuntime {
     fn default() -> Self {
-        Self { rpm: 0.0 }
+        Self {
+            rpm: 0.0,
+            state: HeliState::Grounded,
+        }
     }
 }
 
@@ -464,6 +480,9 @@ pub struct SimpleHelicopterSpecs {
     pub pitch_stab: f32, // Pitch axis multiplicative damping (0.5-1.0, ~0.97 typical)
     pub roll_stab: f32,  // Roll axis multiplicative damping (0.5-1.0, ~0.96 typical)
     pub yaw_stab: f32,   // Yaw axis multiplicative damping (0.5-1.0, ~0.98 typical)
+
+    // Ground detection
+    pub ground_ray_length: f32, // Raycast length for ground detection (m)
 }
 
 impl Default for SimpleHelicopterSpecs {
@@ -493,6 +512,9 @@ impl Default for SimpleHelicopterSpecs {
             pitch_stab: 0.97_f32.clamp(0.5, 1.0),
             roll_stab: 0.96_f32.clamp(0.5, 1.0),
             yaw_stab: 0.98_f32.clamp(0.5, 1.0),
+
+            // Ground detection
+            ground_ray_length: 5.0,
         }
     }
 }

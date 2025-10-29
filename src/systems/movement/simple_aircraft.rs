@@ -265,6 +265,7 @@ pub fn simple_f16_movement(
 pub fn simple_helicopter_movement(
     time: Res<Time>,
     config: Res<GameConfig>,
+    rapier_context: ReadRapierContext,
     heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
     mut commands: Commands,
     warned_query: Query<(), With<MissingSpecsWarned>>,
@@ -284,6 +285,10 @@ pub fn simple_helicopter_movement(
     >,
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
+    
+    let Ok(context) = rapier_context.single() else {
+        return;
+    };
 
     for (
         entity,
@@ -308,24 +313,26 @@ pub fn simple_helicopter_movement(
             continue;
         };
 
-        // === 1. RPM UPDATE ===
-        // Keep rotors spooled while player-controlled (oracle recommendation)
-        // Only spool down when player exits or helicopter is destroyed
-        let target_rpm = 1.0;
-        let rate = if target_rpm > runtime.rpm {
-            specs.spool_up_rate.clamp(0.1, 2.0)
+        // === 0. GROUND DETECTION ===
+        let on_ground = if let Some((_, distance)) = context.cast_ray(
+            transform.translation,
+            Vec3::NEG_Y,
+            specs.ground_ray_length,
+            true,
+            QueryFilter::default().exclude_rigid_body(entity),
+        ) {
+            // More lenient ground check (landing gear height) + must be stopped
+            distance < 2.0 && velocity.linvel.length() < 0.5
         } else {
-            specs.spool_down_rate.clamp(0.1, 2.0)
+            false
         };
-        runtime.rpm =
-            (runtime.rpm + rate * dt * (target_rpm - runtime.rpm).signum()).clamp(0.0, 1.0);
 
-        // === 2. AUTHORITY SCALING (DAMAGE) ===
+        // === 1. AUTHORITY SCALING (DAMAGE) ===
         let health_pct = vehicle_health.map_or(1.0, |h| (h.current / h.max).clamp(0.0, 1.0));
         let damage_authority_min = specs.damage_authority_min.clamp(0.0, 1.0);
         let dmg_scale = damage_authority_min + (1.0 - damage_authority_min) * health_pct;
 
-        // === 3. RPM EFFECTIVENESS ===
+        // === 2. RPM EFFECTIVENESS ===
         let min_rpm_for_lift = specs.min_rpm_for_lift.clamp(0.0, 0.9);
         let rpm_eff = if runtime.rpm < min_rpm_for_lift {
             0.0
@@ -366,6 +373,22 @@ pub fn simple_helicopter_movement(
             control_state.vertical.signum() * ((vertical_input_abs - dz) / (1.0 - dz))
         };
 
+        // === 3. RPM UPDATE (CONTINUOUS) ===
+        // GTA-style: Keep rotors at full speed while player-controlled
+        // Only spool down when grounded with no input
+        let target_rpm = if on_ground && vertical_input_abs < dz {
+            0.0
+        } else {
+            1.0
+        };
+        let rate = if target_rpm > runtime.rpm {
+            specs.spool_up_rate.clamp(0.1, 2.0)
+        } else {
+            specs.spool_down_rate.clamp(0.1, 2.0)
+        };
+        runtime.rpm =
+            (runtime.rpm + rate * dt * (target_rpm - runtime.rpm).signum()).clamp(0.0, 1.0);
+
         // === DIRECT ANGULAR VELOCITY CONTROL ===
         let local_target_ang = Vec3::new(pitch_cmd, yaw_cmd, roll_cmd) * rpm_eff * dmg_scale;
         let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
@@ -400,7 +423,7 @@ pub fn simple_helicopter_movement(
         local_ang.z *= rf;
         velocity.angvel = transform.rotation.mul_vec3(local_ang);
 
-        // === 4. LIFT CALCULATION ===
+        // === 6. LIFT CALCULATION ===
         let mass = match mass_props {
             AdditionalMassProperties::Mass(m) => m.max(1.0),
             AdditionalMassProperties::MassProperties(mp) => mp.mass.max(1.0),
@@ -409,18 +432,17 @@ pub fn simple_helicopter_movement(
 
         let max_lift_margin_g = specs.max_lift_margin_g.clamp(1.0, 3.0);
 
-        // === VERTICAL HOVER HOLD ===
-        let auto_collective = if vertical_input_abs < dz {
-            let v_err = -velocity.linvel.y;
-            let kv = 0.6;
-            let vertical_speed = specs.vertical_speed.max(1.0);
-            (kv * v_err / vertical_speed).clamp(-0.2, 0.2)
-        } else {
+        // === ARCADE-STYLE VERTICAL CONTROL ===
+        // GTA-style lift: Zero when on ground with no throttle, allows settling via physics
+        let lift_g = if on_ground && vertical_input_abs < dz {
             0.0
+        } else {
+            // Direct vertical control (arcade):
+            // Shift (+1.0) → 1.0 + 0.75 = 1.75G → Climb
+            // Nothing (0.0) → 1.0 + 0.0 = 1.0G → Hover
+            // Ctrl (-1.0) → 1.0 - 0.75 = 0.25G → Descend
+            (1.0 + specs.collective_gain * vertical).clamp(0.0, max_lift_margin_g)
         };
-
-        let lift_g = (1.0 + specs.hover_bias + specs.collective_gain * vertical + auto_collective)
-            .clamp(0.0, max_lift_margin_g);
         let lift_mag = hover_force * lift_g;
 
         // Cyclic tilt direction
@@ -441,12 +463,19 @@ pub fn simple_helicopter_movement(
 
         let main_force = tilt_dir.normalize_or_zero() * lift_mag * rpm_eff * dmg_scale;
 
-        // === 5. HORIZONTAL DRAG ===
+        // === 7. HORIZONTAL DRAG ===
         let vel_horizontal = Vec3::new(velocity.linvel.x, 0.0, velocity.linvel.z);
         let horiz_drag = specs.horiz_drag.clamp(0.0, 10.0);
         let drag_force = -vel_horizontal * (horiz_drag * mass);
 
-        // === 6. APPLY FORCES ===
+        // === 8. GROUND DAMPING ===
+        // GTA-style: Apply extra damping when on ground for stable landing
+        if on_ground {
+            velocity.linvel *= 0.9_f32.powf(dt);
+            velocity.angvel *= 0.85_f32.powf(dt);
+        }
+
+        // === 9. APPLY FORCES ===
         external_force.force = main_force + drag_force;
         external_force.torque = Vec3::ZERO;
 
