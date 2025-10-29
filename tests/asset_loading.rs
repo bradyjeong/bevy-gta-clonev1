@@ -304,10 +304,7 @@ fn test_f16_config_valid() {
         config.max_forward_speed > 0.0,
         "Max forward speed must be positive"
     );
-    assert!(
-        config.roll_rate_max > 0.0,
-        "Roll rate must be positive"
-    );
+    assert!(config.roll_rate_max > 0.0, "Roll rate must be positive");
 }
 
 #[test]
@@ -333,8 +330,6 @@ fn test_car_arcade_physics_config() {
         "Brake grip loss should be 0-1 fraction"
     );
 }
-
-
 
 #[test]
 fn test_helicopter_stabilization_config() {
