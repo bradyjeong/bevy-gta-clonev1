@@ -2,7 +2,7 @@ Spawn multiple subagents to discover bugs across the entire codebase, then analy
 
 Strategy:
 - Launch parallel subagents to analyze different modules (components/, systems/, plugins/, factories/)
-- Each subagent searches for: logic errors, race conditions, panics/unwraps, physics edge cases, asset loading issues, memory leaks, collision detection bugs, state inconsistencies
+- Each subagent searches for: logic errors, race conditions, panics/unwraps, physics edge cases, asset loading issues, memory leaks, collision detection bugs, state inconsistencies, fighting systems
 - Aggregate findings and categorize by severity (critical/high/medium/low)
 - Provide detailed report with file locations, bug descriptions, and suggested fixes
 - Consult the oracle for complex analysis if needed
