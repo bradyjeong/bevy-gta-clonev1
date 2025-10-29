@@ -95,7 +95,7 @@ pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<Eff
     let update_drag = LinearDragModifier::new(drag);
 
     let module = writer.finish();
-    let spawner = SpawnerSettings::burst(120.0.into(), 0.016.into());
+    let spawner = SpawnerSettings::rate(50.0.into());
 
     effects.add(
         EffectAsset::new(8192, spawner, module)
@@ -128,24 +128,25 @@ pub fn spawn_rotor_wash_particles(
             heli_entity
         );
 
-        // Spawn as child of helicopter (Bug #44 fix)
-        commands.entity(heli_entity).with_children(|parent| {
-            let effect_entity = parent
-                .spawn((
-                    Name::new("rotor_wash_particles"),
-                    ParticleEffect::new(rotor_wash_effect.handle.clone()),
-                    Transform::from_xyz(0.0, 0.0, 0.0),
-                    RotorWash,
-                    RotorWashOf(heli_entity),
-                    // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
-                    VisibilityRange {
-                        start_margin: 0.0..0.0,
-                        end_margin: 900.0..1100.0,
-                        use_aabb: false,
-                    },
-                ))
-                .id();
-        });
+        // Spawn as separate entity (not child) to use world coordinates for ground contact
+        commands.spawn((
+            Name::new("rotor_wash_particles"),
+            ParticleEffect::new(rotor_wash_effect.handle.clone()),
+            {
+                let mut spawner = EffectSpawner::new(&SpawnerSettings::rate(50.0.into()));
+                spawner.active = true;
+                spawner
+            },
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            RotorWash,
+            RotorWashOf(heli_entity),
+            // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
+            VisibilityRange {
+                start_margin: 0.0..0.0,
+                end_margin: 900.0..1100.0,
+                use_aabb: false,
+            },
+        ));
     }
 }
 
@@ -173,6 +174,7 @@ pub fn update_rotor_wash_position_and_intensity(
             let ground_height = env.land_elevation;
             let altitude = (heli_pos.y - ground_height).max(0.0);
 
+            // World coordinates - particles stay on ground
             particle_transform.translation.x = heli_pos.x;
             particle_transform.translation.z = heli_pos.z;
             particle_transform.translation.y = ground_height + 0.1;
@@ -202,28 +204,10 @@ pub fn update_rotor_wash_position_and_intensity(
 
             let final_intensity = base_intensity * altitude_gate;
 
-            // DEBUG: Log rotor wash status
-            if altitude < 15.0 {
-                info!(
-                    "Rotor Wash - Alt: {:.1}m, RPM: {:.2}, RPM_eff: {:.2}, Lift: {:.2}, Base: {:.2}, Gate: {:.2}, Final: {:.2}, Active: {}",
-                    altitude,
-                    runtime.rpm,
-                    rpm_eff,
-                    lift_scalar,
-                    base_intensity,
-                    altitude_gate,
-                    final_intensity,
-                    final_intensity > 0.05
-                );
-            }
 
-            // Apply intensity to particle system
-            if final_intensity > 0.05 {
-                spawner.active = true;
-                spawner.spawn_count = (final_intensity * 120.0) as u32;
-            } else {
-                spawner.active = false;
-            }
+
+            // Apply intensity to particle system - only below 10m altitude
+            spawner.active = altitude < 10.0 && final_intensity > 0.05;
         } else {
             commands.entity(rotor_wash_entity).despawn();
         }
