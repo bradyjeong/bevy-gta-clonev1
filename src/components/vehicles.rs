@@ -32,6 +32,9 @@ pub struct Car;
 pub struct Helicopter;
 
 #[derive(Component)]
+pub struct HelicopterVisualBody;
+
+#[derive(Component)]
 pub struct F16;
 
 // Phase 2: Ground detection for car stability
@@ -468,7 +471,11 @@ pub struct SimpleHelicopterSpecs {
     pub min_rpm_for_lift: f32,
     pub rpm_to_lift_exp: f32,
     pub max_lift_margin_g: f32,
-    pub cyclic_tilt_max_deg: f32,
+    pub forward_thrust: f32,
+    pub strafe_thrust: f32,
+    pub visual_tilt_pitch_max: f32,
+    pub visual_tilt_roll_max: f32,
+    pub visual_tilt_speed: f32,
     pub horiz_drag: f32,
     pub damage_authority_min: f32,
     pub rotor_wash_scale: f32,
@@ -500,7 +507,11 @@ impl Default for SimpleHelicopterSpecs {
             min_rpm_for_lift: 0.35,
             rpm_to_lift_exp: 1.7,
             max_lift_margin_g: 1.8,
-            cyclic_tilt_max_deg: 18.0,
+            forward_thrust: 25000.0,
+            strafe_thrust: 20000.0,
+            visual_tilt_pitch_max: 15.0,
+            visual_tilt_roll_max: 20.0,
+            visual_tilt_speed: 8.0,
             horiz_drag: 1.0,
             damage_authority_min: 0.3,
             rotor_wash_scale: 1.0,

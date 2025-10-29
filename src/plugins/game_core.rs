@@ -137,6 +137,9 @@ impl Plugin for GameCorePlugin {
                         .before(PhysicsSet::SyncBackend),
                     crate::systems::movement::simple_helicopter_movement
                         .before(PhysicsSet::SyncBackend),
+                    crate::systems::movement::helicopter_visual_tilt
+                        .after(crate::systems::movement::simple_helicopter_movement)
+                        .before(PhysicsSet::SyncBackend),
                     crate::systems::movement::spool_helicopter_rpm_idle
                         .before(PhysicsSet::SyncBackend),
                     crate::systems::movement::simple_f16_movement.before(PhysicsSet::SyncBackend),
@@ -176,6 +179,7 @@ impl Plugin for GameCorePlugin {
                     .chain(),
             );
 
+        #[cfg(feature = "debug-ui")]
         info!("✅ Game Core Plugin loaded with physics ordering and coordinate safety");
     }
 }
@@ -214,6 +218,7 @@ fn validate_world_env_config(env: &crate::constants::WorldEnvConfig) {
         "max_world_coordinate ({}) must be > 0",
         env.max_world_coordinate
     );
+    #[cfg(feature = "debug-ui")]
     info!("✅ WorldEnvConfig validation passed");
 }
 
@@ -222,6 +227,7 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
     use std::path::Path;
 
     let assets_base = crate::util::asset_path::get_assets_base_path();
+    #[cfg(feature = "debug-ui")]
     info!("📁 Assets base path: {}", assets_base);
 
     // Check if assets base path exists
@@ -252,6 +258,7 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
                             validate_world_env_config(&world_env_config);
                             config.world_env = world_env_config.clone();
                             commands.insert_resource(world_env_config);
+                            #[cfg(feature = "debug-ui")]
                             info!("✅ Loaded {} config", description);
                         }
                         Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
@@ -268,6 +275,7 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
                                 streaming_config.lod_distances.far,
                             ];
                             config.world_streaming = streaming_config;
+                            #[cfg(feature = "debug-ui")]
                             info!("✅ Loaded {} config", description);
                         }
                         Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
@@ -277,6 +285,7 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
                     match ron::from_str::<crate::config::WorldPhysicsConfig>(&contents) {
                         Ok(physics_config) => {
                             config.world_physics = physics_config;
+                            #[cfg(feature = "debug-ui")]
                             info!("✅ Loaded {} config", description);
                         }
                         Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
@@ -287,7 +296,9 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
                         Ok(bounds_config) => {
                             config.world_bounds = bounds_config;
                             config.world.map_size = config.world_bounds.world_half_size * 2.0;
+                            #[cfg(feature = "debug-ui")]
                             info!("✅ Loaded {} config", description);
+                            #[cfg(feature = "debug-ui")]
                             info!(
                                 "🔗 Unified world bounds: map_size = {}",
                                 config.world.map_size
@@ -300,6 +311,7 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
                     match ron::from_str::<crate::config::CharacterDimensionsConfig>(&contents) {
                         Ok(char_config) => {
                             config.character_dimensions = char_config;
+                            #[cfg(feature = "debug-ui")]
                             info!("✅ Loaded {} config", description);
                         }
                         Err(e) => warn!("⚠️ Failed to parse {}: {}", description, e),
@@ -315,6 +327,7 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
 
     // Validate and clamp all loaded config values
     config.validate_and_clamp();
+    #[cfg(feature = "debug-ui")]
     info!("✅ Validated and clamped all configuration values");
 
     let expected_map_size = config.world_bounds.world_half_size * 2.0;
@@ -325,6 +338,7 @@ fn load_world_configs(mut commands: Commands, mut config: ResMut<GameConfig>) {
             actual_map_size, expected_map_size
         );
     } else {
+        #[cfg(feature = "debug-ui")]
         info!("✅ World bounds unified: single source of truth confirmed");
     }
 }

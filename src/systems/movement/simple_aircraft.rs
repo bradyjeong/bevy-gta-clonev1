@@ -285,7 +285,7 @@ pub fn simple_helicopter_movement(
     >,
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
-    
+
     let Ok(context) = rapier_context.single() else {
         return;
     };
@@ -348,17 +348,7 @@ pub fn simple_helicopter_movement(
         let pitch_input_abs = control_state.pitch.abs();
         let roll_input_abs = control_state.roll.abs();
         let yaw_input_abs = control_state.yaw.abs();
-
-        let pitch_cmd = if pitch_input_abs < dz {
-            0.0
-        } else {
-            control_state.pitch.signum() * specs.pitch_rate
-        };
-        let roll_cmd = if roll_input_abs < dz {
-            0.0
-        } else {
-            -control_state.roll.signum() * specs.roll_rate
-        };
+        
         let yaw_cmd = if yaw_input_abs < dz {
             0.0
         } else {
@@ -389,8 +379,9 @@ pub fn simple_helicopter_movement(
         runtime.rpm =
             (runtime.rpm + rate * dt * (target_rpm - runtime.rpm).signum()).clamp(0.0, 1.0);
 
-        // === DIRECT ANGULAR VELOCITY CONTROL ===
-        let local_target_ang = Vec3::new(pitch_cmd, yaw_cmd, roll_cmd) * rpm_eff * dmg_scale;
+        // === YAW-ONLY PHYSICS ROTATION (GTA-STYLE) ===
+        // Physics body only rotates for yaw, stays level for lift calculation
+        let local_target_ang = Vec3::new(0.0, yaw_cmd, 0.0) * rpm_eff * dmg_scale;
         let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
         velocity.angvel = safe_lerp(
             velocity.angvel,
@@ -398,29 +389,17 @@ pub fn simple_helicopter_movement(
             dt * specs.angular_lerp_factor.clamp(1.0, 20.0),
         );
 
-        // === PER-AXIS MULTIPLICATIVE DAMPING ===
+        // === YAW DAMPING ===
         let inv_rot = transform.rotation.inverse();
         let mut local_ang = inv_rot.mul_vec3(velocity.angvel);
 
-        let pf = if pitch_input_abs < dz {
-            specs.pitch_stab.clamp(0.5, 1.0).powf(dt)
-        } else {
-            1.0
-        };
-        let rf = if roll_input_abs < dz {
-            specs.roll_stab.clamp(0.5, 1.0).powf(dt)
-        } else {
-            1.0
-        };
         let yf = if yaw_input_abs < dz {
             specs.yaw_stab.clamp(0.5, 1.0).powf(dt)
         } else {
             1.0
         };
-
-        local_ang.x *= pf;
         local_ang.y *= yf;
-        local_ang.z *= rf;
+
         velocity.angvel = transform.rotation.mul_vec3(local_ang);
 
         // === 6. LIFT CALCULATION ===
@@ -445,23 +424,28 @@ pub fn simple_helicopter_movement(
         };
         let lift_mag = hover_force * lift_g;
 
-        // Cyclic tilt direction
-        let cyclic_tilt_max_deg = specs.cyclic_tilt_max_deg.clamp(0.0, 30.0);
-        let tilt_rad = cyclic_tilt_max_deg.to_radians();
-        let pitch_tilt = if pitch_input_abs < dz {
+        // === GTA-STYLE DIRECT HORIZONTAL THRUST ===
+        // Vertical lift (always upward)
+        let lift_force = Vec3::Y * lift_mag * rpm_eff * dmg_scale;
+
+        // Direct horizontal thrust forces (no tilt required)
+        let forward_input = if pitch_input_abs < dz {
             0.0
         } else {
             control_state.pitch
         };
-        let roll_tilt = if roll_input_abs < dz {
+        let strafe_input = if roll_input_abs < dz {
             0.0
         } else {
             control_state.roll
         };
-        let tilt_dir = *transform.up() - *transform.forward() * (pitch_tilt * tilt_rad.tan())
-            + *transform.right() * (-roll_tilt * tilt_rad.tan());
 
-        let main_force = tilt_dir.normalize_or_zero() * lift_mag * rpm_eff * dmg_scale;
+        let forward_thrust =
+            *transform.forward() * forward_input * specs.forward_thrust * rpm_eff * dmg_scale;
+        let strafe_thrust =
+            *transform.right() * strafe_input * specs.strafe_thrust * rpm_eff * dmg_scale;
+
+        let main_force = lift_force + forward_thrust + strafe_thrust;
 
         // === 7. HORIZONTAL DRAG ===
         let vel_horizontal = Vec3::new(velocity.linvel.x, 0.0, velocity.linvel.z);
@@ -521,12 +505,21 @@ pub fn rotate_helicopter_rotors(
         Option<&TailRotor>,
         &ChildOf,
     )>,
+    visual_body_query: Query<&ChildOf, With<crate::components::HelicopterVisualBody>>,
     helicopter_query: Query<(&SimpleHelicopterSpecsHandle, &HelicopterRuntime), With<Helicopter>>,
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
 
     for (mut transform, main_rotor, tail_rotor, child_of) in rotor_query.iter_mut() {
-        let Ok((specs_handle, runtime)) = helicopter_query.get(child_of.parent()) else {
+        // Rotors are children of HelicopterVisualBody, which is child of Helicopter
+        // Need to look up grandparent
+        let visual_body_parent = child_of.parent();
+        let Ok(visual_body_child_of) = visual_body_query.get(visual_body_parent) else {
+            continue;
+        };
+        let helicopter_entity = visual_body_child_of.parent();
+        
+        let Ok((specs_handle, runtime)) = helicopter_query.get(helicopter_entity) else {
             continue;
         };
         let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {

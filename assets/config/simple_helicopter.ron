@@ -22,7 +22,16 @@ SimpleHelicopterSpecs(
     min_rpm_for_lift: 0.30,     // Minimum RPM required for lift
     rpm_to_lift_exp: 1.5,       // Exponential curve for lift calculation
     max_lift_margin_g: 1.7,     // Maximum lift in G-forces
-    cyclic_tilt_max_deg: 22.5,  // Maximum cyclic tilt angle (degrees) - arcade-y forward accel
+    
+    // GTA-style direct thrust (replaces cyclic tilt)
+    forward_thrust: 25000.0,    // Forward/backward thrust force (N)
+    strafe_thrust: 20000.0,     // Left/right strafe thrust force (N)
+    
+    // Cosmetic visual tilt (GTA-style feedback)
+    visual_tilt_pitch_max: 25.0, // Max forward/back tilt angle (degrees)
+    visual_tilt_roll_max: 30.0,  // Max left/right tilt angle (degrees)
+    visual_tilt_speed: 3.0,      // How fast tilt responds to movement
+    
     horiz_drag: 0.40,           // Horizontal drag coefficient - shorter slide distance (~2.5s)
     damage_authority_min: 0.3,  // Minimum control authority when damaged
     rotor_wash_scale: 1.0,      // Rotor wash effect scale

@@ -48,7 +48,13 @@ pub fn update_rotor_blur_visibility(
         let main_rpm = specs.main_rotor_rpm * runtime.rpm;
         let tail_rpm = specs.tail_rotor_rpm * runtime.rpm;
 
-        for child in helicopter_children.iter() {
+        // Navigate to HelicopterVisualBody children (rotors/blur disks are grandchildren now)
+        for heli_child in helicopter_children.iter() {
+            let Ok(visual_body_children) = children_query.get(heli_child) else {
+                continue;
+            };
+            
+            for child in visual_body_children.iter() {
             if let Ok((blur_disk, mut visibility)) = main_blur_query.get_mut(child) {
                 if blur_disk.is_main_rotor && main_rpm >= blur_disk.min_rpm_for_blur {
                     if *visibility != Visibility::Visible {
@@ -90,6 +96,7 @@ pub fn update_rotor_blur_visibility(
                 if *visibility != new_visibility {
                     *visibility = new_visibility;
                 }
+            }
             }
         }
     }

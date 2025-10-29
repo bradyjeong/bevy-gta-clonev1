@@ -41,7 +41,7 @@ pub fn setup_initial_vehicles_unified(
     let mut existing_content: Vec<(Vec3, ContentType, f32)> = Vec::new();
 
     // 1. STARTER VEHICLES (3 vehicles - from starter_vehicles.rs)
-    let starter_vehicles = setup_starter_vehicles_unified(
+    let _starter_vehicles = setup_starter_vehicles_unified(
         &mut commands,
         &mut meshes,
         &mut materials,
@@ -54,7 +54,7 @@ pub fn setup_initial_vehicles_unified(
     );
 
     // 3. LUXURY CARS (5-8 cars with proper validation - from luxury_cars)
-    let luxury_cars = setup_luxury_cars_unified(
+    let _luxury_cars = setup_luxury_cars_unified(
         &mut commands,
         &mut meshes,
         &mut materials,
@@ -67,6 +67,7 @@ pub fn setup_initial_vehicles_unified(
         &env,
     );
 
+    #[cfg(feature = "debug-ui")]
     info!(
         "Unified vehicle setup complete - Spawned {} starter vehicles, {} luxury cars",
         starter_vehicles.len(),
@@ -145,6 +146,7 @@ fn setup_starter_vehicles_unified(
             existing_content.push((safe_position, ContentType::Vehicle, 25.0));
             spawned_vehicles.push(vehicle_entity);
 
+            #[cfg(feature = "debug-ui")]
             info!(
                 "Starter vehicle {} spawned at position: {:?}",
                 i, safe_position
@@ -257,6 +259,7 @@ fn setup_luxury_cars_unified(
             existing_content.push((safe_position, ContentType::Vehicle, 25.0));
             spawned_vehicles.push(vehicle_entity);
 
+            #[cfg(feature = "debug-ui")]
             info!("Luxury car {} spawned at position: {:?}", i, safe_position);
         } else {
             warn!("Failed to find safe position for luxury car {}", i);

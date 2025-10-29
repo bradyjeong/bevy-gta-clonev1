@@ -46,22 +46,30 @@ pub fn update_landing_lights(
             Or<(Changed<Transform>, Changed<Children>)>,
         ),
     >,
+    children_query: Query<&Children>,
     mut landing_light_query: Query<(&LandingLight, &mut SpotLight)>,
 ) {
-    for (helicopter_transform, children) in helicopter_query.iter() {
+    for (helicopter_transform, helicopter_children) in helicopter_query.iter() {
         let altitude = helicopter_transform.translation.y;
 
-        for child in children.iter() {
-            if let Ok((landing_light, mut spot_light)) = landing_light_query.get_mut(child) {
-                let new_intensity = if altitude < landing_light.activation_altitude {
-                    let intensity_factor = 1.0 - (altitude / landing_light.activation_altitude);
-                    200000.0 * intensity_factor.max(0.3)
-                } else {
-                    0.0
-                };
+        // Navigate to HelicopterVisualBody children (landing lights are grandchildren now)
+        for heli_child in helicopter_children.iter() {
+            let Ok(visual_body_children) = children_query.get(heli_child) else {
+                continue;
+            };
+            
+            for child in visual_body_children.iter() {
+                if let Ok((landing_light, mut spot_light)) = landing_light_query.get_mut(child) {
+                    let new_intensity = if altitude < landing_light.activation_altitude {
+                        let intensity_factor = 1.0 - (altitude / landing_light.activation_altitude);
+                        200000.0 * intensity_factor.max(0.3)
+                    } else {
+                        0.0
+                    };
 
-                if (spot_light.intensity - new_intensity).abs() > 1e-3 {
-                    spot_light.intensity = new_intensity;
+                    if (spot_light.intensity - new_intensity).abs() > 1e-3 {
+                        spot_light.intensity = new_intensity;
+                    }
                 }
             }
         }

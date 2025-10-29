@@ -4,7 +4,7 @@ use crate::components::unified_water::WaterBodyId;
 use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::{
     AircraftFlight, Car, CarWheelsConfig, ContentType, DynamicContent, F16, Grounded, Helicopter,
-    HelicopterRuntime, JetFlame, LandingLight, MainRotor, NavigationLight, NavigationLightType,
+    HelicopterRuntime, HelicopterVisualBody, JetFlame, LandingLight, MainRotor, NavigationLight, NavigationLightType,
     RotorBlurDisk, RotorWash, SimpleCarSpecs, SimpleCarSpecsHandle, SimpleF16Specs,
     SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor,
     VehicleState, VehicleType, VisualRig, VisualRigRoot, WheelMesh, WheelPos, WheelSteerPivot,
@@ -322,6 +322,20 @@ impl VehicleFactory {
             ))
             .id();
 
+        // Visual body container - this entity will tilt for visual feedback
+        // Physics body (vehicle_entity) stays level
+        let visual_body = commands
+            .spawn((
+                Transform::default(),
+                Visibility::default(),
+                InheritedVisibility::VISIBLE,
+                ViewVisibility::default(),
+                ChildOf(vehicle_entity),
+                HelicopterVisualBody,
+                Name::new("HelicopterVisualBody"),
+            ))
+            .id();
+
         // Helicopter fuselage - Main cabin (above landing gear)
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(2.2, 1.6, 3.5))),
@@ -333,7 +347,7 @@ impl VehicleFactory {
                 ..default()
             })),
             Transform::from_xyz(0.0, 0.3, 0.3),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             self.visibility_range(),
         ));
 
@@ -349,7 +363,7 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 0.1, -1.3)
                 .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             self.visibility_range(),
         ));
 
@@ -366,7 +380,7 @@ impl VehicleFactory {
                 ..default()
             })),
             Transform::from_xyz(0.0, 1.0, -0.3).with_scale(Vec3::new(1.5, 0.8, 1.6)),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             self.visibility_range(),
         ));
 
@@ -382,7 +396,7 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 0.5, 4.0)
                 .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             self.visibility_range(),
         ));
 
@@ -399,7 +413,7 @@ impl VehicleFactory {
                     ..default()
                 })),
                 Transform::from_xyz(0.0, 1.6, 0.0).with_rotation(Quat::from_rotation_y(angle)),
-                ChildOf(vehicle_entity),
+                ChildOf(visual_body),
                 MainRotor,
                 self.visibility_range(),
             ));
@@ -418,7 +432,7 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.0, 1.61, 0.0)
                 .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             RotorBlurDisk {
                 min_rpm_for_blur: 10.0,
                 is_main_rotor: true,
@@ -440,7 +454,7 @@ impl VehicleFactory {
                 })),
                 Transform::from_xyz(x, -0.62, 0.0)
                     .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
-                ChildOf(vehicle_entity),
+                ChildOf(visual_body),
                 self.visibility_range(),
             ));
         }
@@ -457,7 +471,7 @@ impl VehicleFactory {
                     ..default()
                 })),
                 Transform::from_xyz(x, -0.22, z),
-                ChildOf(vehicle_entity),
+                ChildOf(visual_body),
                 self.visibility_range(),
             ));
         }
@@ -475,7 +489,7 @@ impl VehicleFactory {
                 })),
                 Transform::from_xyz(0.0, -0.62, z)
                     .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
-                ChildOf(vehicle_entity),
+                ChildOf(visual_body),
                 self.visibility_range(),
             ));
         }
@@ -492,7 +506,7 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.8, 0.3, 7.0)
                 .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             TailRotor,
             self.visibility_range(),
         ));
@@ -510,7 +524,7 @@ impl VehicleFactory {
             })),
             Transform::from_xyz(0.82, 0.3, 7.0)
                 .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             RotorBlurDisk {
                 min_rpm_for_blur: 15.0,
                 is_main_rotor: false,
@@ -531,7 +545,7 @@ impl VehicleFactory {
                 ..default()
             },
             Transform::from_xyz(-1.3, 0.5, -1.0),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             NavigationLight::new(NavigationLightType::RedPort),
             self.visibility_range(),
         ));
@@ -546,7 +560,7 @@ impl VehicleFactory {
                 ..default()
             },
             Transform::from_xyz(1.3, 0.5, -1.0),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             NavigationLight::new(NavigationLightType::GreenStarboard),
             self.visibility_range(),
         ));
@@ -562,7 +576,7 @@ impl VehicleFactory {
                 ..default()
             },
             Transform::from_xyz(0.0, 0.5, 7.2),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             NavigationLight::new(NavigationLightType::WhiteTail),
             self.visibility_range(),
         ));
@@ -578,7 +592,7 @@ impl VehicleFactory {
                 ..default()
             },
             Transform::from_xyz(0.0, 1.8, 0.0),
-            ChildOf(vehicle_entity),
+            ChildOf(visual_body),
             NavigationLight::new(NavigationLightType::RedBeacon),
             self.visibility_range(),
         ));

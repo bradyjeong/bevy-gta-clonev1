@@ -66,18 +66,18 @@ VehicleControlsConfig(
         
         Helicopter: VehicleControls(
             name: "Helicopter",
-            description: "Rotorcraft flight controls",
+            description: "Arcade helicopter controls (GTA-style)",
             primary_controls: [
-                (action: PitchUp, key: ArrowUp, description: "Pitch forward / Move forward"),
-                (action: PitchDown, key: ArrowDown, description: "Pitch backward / Move backward"),
-                (action: RollLeft, key: KeyA, description: "Roll left / Bank left"),
-                (action: RollRight, key: KeyD, description: "Roll right / Bank right"),
+                (action: PitchUp, key: ArrowUp, description: "Move forward"),
+                (action: PitchDown, key: ArrowDown, description: "Move backward"),
+                (action: RollLeft, key: ArrowLeft, description: "Strafe left"),
+                (action: RollRight, key: ArrowRight, description: "Strafe right"),
             ],
             secondary_controls: [
-                (action: YawLeft, key: ArrowLeft, description: "Yaw left (hovering rotation)"),
-                (action: YawRight, key: ArrowRight, description: "Yaw right (hovering rotation)"),
-                (action: VerticalUp, key: ShiftLeft, description: "Collective up / Ascend"),
-                (action: VerticalDown, key: KeyC, description: "Collective down / Descend"),
+                (action: YawLeft, key: KeyA, description: "Rotate left"),
+                (action: YawRight, key: KeyD, description: "Rotate right"),
+                (action: VerticalUp, key: ShiftLeft, description: "Ascend"),
+                (action: VerticalDown, key: ControlLeft, description: "Descend"),
             ],
             meta_controls: [
                 (action: Interact, key: KeyF, description: "Exit helicopter"),
