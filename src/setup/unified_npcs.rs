@@ -64,13 +64,16 @@ pub fn setup_initial_npcs_unified(
         ) {
             Ok(_entity) => {
                 spawned_count += 1;
+                #[cfg(feature = "debug-ui")]
                 println!("DEBUG: Spawned NPC at {spawn_position:?}");
             }
-            Err(e) => {
-                println!("WARNING: Failed to spawn NPC at {spawn_position:?}: {e:?}");
+            Err(_e) => {
+                #[cfg(feature = "debug-ui")]
+                println!("WARNING: Failed to spawn NPC at {spawn_position:?}: {_e:?}");
             }
         }
     }
 
+    #[cfg(feature = "debug-ui")]
     println!("✅ UNIFIED NPC SETUP: Spawned {spawned_count} NPCs (attempted {attempts} positions)");
 }

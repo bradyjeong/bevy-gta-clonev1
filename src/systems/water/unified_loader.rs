@@ -11,6 +11,7 @@ pub fn load_unified_water_assets(mut commands: Commands, asset_server: Res<Asset
         ocean: ocean_handle,
     });
 
+    #[cfg(feature = "debug-ui")]
     info!("Started loading unified water region assets (ocean)");
 }
 
@@ -43,6 +44,7 @@ pub fn process_loaded_unified_water_assets(
                         Name::new(asset.name.clone()),
                     ));
 
+                    #[cfg(feature = "debug-ui")]
                     info!(
                         "Spawned unified water region: {} at surface level {:.2}",
                         asset.name, asset.surface_level

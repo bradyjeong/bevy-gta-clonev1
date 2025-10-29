@@ -3,6 +3,7 @@ use crate::states::AppState;
 use bevy::prelude::*;
 
 pub fn start_loading_vehicle_specs(mut commands: Commands, asset_server: Res<AssetServer>) {
+    #[cfg(feature = "debug-ui")]
     info!("🔄 Loading vehicle specification assets...");
     let specs = VehicleSpecsAssets::load(&asset_server);
     commands.insert_resource(specs);
@@ -14,6 +15,7 @@ pub fn check_vehicle_specs_loaded(
     mut next_state: ResMut<NextState<AppState>>,
 ) {
     if specs.all_loaded(&asset_server) {
+        #[cfg(feature = "debug-ui")]
         info!("✅ All vehicle specs loaded successfully");
         next_state.set(AppState::WorldGeneration);
     } else if specs.any_failed(&asset_server) {
@@ -56,6 +58,7 @@ pub fn check_vehicle_specs_loaded(
 }
 
 pub fn advance_to_ingame(mut next_state: ResMut<NextState<AppState>>) {
+    #[cfg(feature = "debug-ui")]
     info!("🎮 Starting gameplay");
     next_state.set(AppState::InGame);
 }

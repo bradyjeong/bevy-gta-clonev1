@@ -89,6 +89,7 @@ pub fn setup_initial_aircraft_unified(
         }
     }
 
+    #[cfg(feature = "debug-ui")]
     info!(
         "Unified aircraft setup complete - Spawned {} aircraft",
         spawned_aircraft.len()

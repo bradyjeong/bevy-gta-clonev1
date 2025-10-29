@@ -203,6 +203,7 @@ pub fn human_player_animation(
     };
 
     // Debug animation system running
+    #[cfg(feature = "debug-ui")]
     if (time.elapsed_secs() % 3.0) < 0.016 {
         info!(
             "🎭 ANIMATION DEBUG: is_swimming={}, is_walking={}, speed={:.2}",

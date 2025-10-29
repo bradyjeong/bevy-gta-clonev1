@@ -33,6 +33,7 @@ fn initialize_world_manager(mut commands: Commands, config: Res<GameConfig>) {
     let world_manager = UnifiedWorldManager::from_config(&config);
     commands.insert_resource(world_manager);
 
+    #[cfg(feature = "debug-ui")]
     info!(
         "World manager initialized: {}x{} chunks ({}km x {}km)",
         config.world.total_chunks_x,
@@ -45,5 +46,6 @@ fn initialize_world_manager(mut commands: Commands, config: Res<GameConfig>) {
 fn initialize_material_registry(mut commands: Commands) {
     let material_registry = MaterialRegistry::new();
     commands.insert_resource(material_registry);
+    #[cfg(feature = "debug-ui")]
     info!("Material registry initialized for cached material reuse");
 }

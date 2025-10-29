@@ -165,6 +165,7 @@ impl SpawnRegistry {
             radius,
         };
 
+        #[cfg(feature = "debug-ui")]
         info!(
             "SPAWN REGISTRY: Registered {:?} at {:?} (radius: {:.1})",
             entity_type, position, radius

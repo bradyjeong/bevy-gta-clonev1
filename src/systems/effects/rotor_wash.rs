@@ -123,6 +123,7 @@ pub fn spawn_rotor_wash_particles(
     rotor_wash_effect: Res<RotorWashEffect>,
 ) {
     for heli_entity in helicopter_query.iter() {
+        #[cfg(feature = "debug-ui")]
         info!(
             "Spawning rotor wash particles for helicopter entity: {:?}",
             heli_entity
@@ -203,8 +204,6 @@ pub fn update_rotor_wash_position_and_intensity(
             };
 
             let final_intensity = base_intensity * altitude_gate;
-
-
 
             // Apply intensity to particle system - only below 10m altitude
             spawner.active = altitude < 10.0 && final_intensity > 0.05;

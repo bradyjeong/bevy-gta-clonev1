@@ -131,6 +131,7 @@ pub fn process_loaded_controls_system(
                     if loaded_controls.config.is_none() {
                         loaded_controls.config = Some(config.clone());
                         loaded_controls.loading = false;
+                        #[cfg(feature = "debug-ui")]
                         info!("Vehicle controls loaded successfully");
                     }
                 }

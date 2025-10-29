@@ -27,6 +27,7 @@ impl Plugin for PhysicsActivationPlugin {
                 .run_if(on_timer(Duration::from_millis(200))),
         );
 
+        #[cfg(feature = "debug-ui")]
         info!(
             "Physics Activation Plugin initialized - GTA-style dynamic physics (throttled to 5Hz)"
         );

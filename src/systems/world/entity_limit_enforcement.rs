@@ -1,6 +1,8 @@
 use crate::components::world::EntityLimits;
 use crate::components::{Building, Car, F16, Helicopter, NPCState, Yacht};
-use bevy::log::{info, warn};
+#[cfg(feature = "debug-ui")]
+use bevy::log::warn;
+use bevy::log::info;
 use bevy::prelude::*;
 
 type VehicleFilter = Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>)>;
@@ -21,6 +23,7 @@ pub fn enforce_entity_limits(
     // ONE-TIME INITIALIZATION: Populate tracking lists from existing entities
     // This handles entities spawned during world generation before this system runs
     if entity_limits.vehicle_entities.is_empty() && vehicle_query.iter().count() > 0 {
+        #[cfg(feature = "debug-ui")]
         warn!("Initializing entity tracking from existing world entities...");
 
         // Populate vehicle tracking
@@ -38,6 +41,7 @@ pub fn enforce_entity_limits(
             entity_limits.npc_entities.push((entity, current_time));
         }
 
+        #[cfg(feature = "debug-ui")]
         warn!(
             "Entity tracking initialized: {} vehicles, {} buildings, {} NPCs",
             entity_limits.vehicle_entities.len(),

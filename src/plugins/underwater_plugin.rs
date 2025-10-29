@@ -45,6 +45,7 @@ impl Plugin for UnderwaterPlugin {
                 ),
             );
 
+        #[cfg(feature = "debug-ui")]
         info!("✅ Underwater post-processing plugin initialized");
     }
 

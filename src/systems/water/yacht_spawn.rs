@@ -32,10 +32,11 @@ pub fn spawn_test_yacht(
         yacht_position,
         Some(Color::srgb(0.9, 0.9, 1.0)),
     ) {
-        Ok(entity) => {
+        Ok(_entity) => {
+            #[cfg(feature = "debug-ui")]
             info!(
                 "Spawned test yacht at position: {:?} (Entity: {:?})",
-                yacht_position, entity
+                yacht_position, _entity
             );
         }
         Err(e) => {

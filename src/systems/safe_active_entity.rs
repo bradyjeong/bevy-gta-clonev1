@@ -73,15 +73,22 @@ pub fn active_transfer_executor_system(
 
 /// Diagnostic system to ensure ActiveEntity integrity
 pub fn active_entity_integrity_check(active_query: Query<Entity, With<ActiveEntity>>) {
-    let active_count = active_query.iter().count();
+    #[cfg(feature = "debug-ui")]
+    {
+        let active_count = active_query.iter().count();
 
-    if active_count == 0 {
-        error!("No entities have ActiveEntity component - this will break world streaming!");
-    } else if active_count > 1 {
-        error!(
-            "Multiple entities have ActiveEntity component: {:?}",
-            active_query.iter().collect::<Vec<_>>()
-        );
+        if active_count == 0 {
+            error!("No entities have ActiveEntity component - this will break world streaming!");
+        } else if active_count > 1 {
+            error!(
+                "Multiple entities have ActiveEntity component: {:?}",
+                active_query.iter().collect::<Vec<_>>()
+            );
+        }
+    }
+    #[cfg(not(feature = "debug-ui"))]
+    {
+        let _ = active_query;
     }
 }
 

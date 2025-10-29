@@ -139,6 +139,7 @@ pub fn validate_visual_physics_separation(
              Run with --features debug-ui and press F3 to inspect entity hierarchy."
         );
     } else {
+        #[cfg(feature = "debug-ui")]
         tracing::info!(
             target: "validation::visual_physics",
             "Visual-Physics Separation: ✓ All visual-only entities properly separated from physics"

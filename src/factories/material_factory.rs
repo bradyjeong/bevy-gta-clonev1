@@ -359,5 +359,6 @@ pub fn initialize_material_factory(
     let factory = MaterialFactory::new(&mut materials);
     commands.insert_resource(factory);
 
+    #[cfg(feature = "debug-ui")]
     println!("🏭 MATERIAL FACTORY: Initialized with template materials");
 }

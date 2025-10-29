@@ -26,13 +26,19 @@ fn initialize_npc_assets(
     cache.initialize_common_assets(&mut meshes, &mut materials);
 }
 
-fn log_cache_stats(cache: Res<NPCAssetCache>, mut timer: Local<Timer>, time: Res<Time>) {
+fn log_cache_stats(
+    #[cfg(feature = "debug-ui")] cache: Res<NPCAssetCache>,
+    #[cfg(not(feature = "debug-ui"))] _cache: Res<NPCAssetCache>,
+    mut timer: Local<Timer>,
+    time: Res<Time>,
+) {
     if timer.duration().as_secs_f32() == 0.0 {
         *timer = Timer::from_seconds(30.0, TimerMode::Repeating);
     }
 
     timer.tick(time.delta());
 
+    #[cfg(feature = "debug-ui")]
     if timer.just_finished() {
         let (hits, misses, hit_rate) = cache.stats();
         info!(

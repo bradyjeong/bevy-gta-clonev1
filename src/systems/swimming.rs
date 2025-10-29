@@ -120,6 +120,7 @@ pub fn swim_state_transition_system(
         let pos = transform.translation;
 
         // DEBUG: Log player position and water regions
+        #[cfg(feature = "debug-ui")]
         if (now % 2.0) < 0.016 {
             // Every ~2 seconds
             info!(
@@ -163,8 +164,9 @@ pub fn swim_state_transition_system(
             Vec3::splat(0.5)
         };
 
-        let submersion = if let Some(w) = water {
+        let _submersion = if let Some(w) = water {
             // DEBUG: Found water region
+            #[cfg(feature = "debug-ui")]
             if (now % 2.0) < 0.016 {
                 info!("Player is in water region: {}", w.name);
             }
@@ -177,6 +179,7 @@ pub fn swim_state_transition_system(
         // DEBUG: Log submersion ratio and water level details
         if (now % 1.0) < 0.016 {
             // More frequent logging
+            #[cfg(feature = "debug-ui")]
             if let Some(w) = water {
                 let water_level = w.get_water_surface_level(now);
                 let entity_bottom = pos.y - half_ext.y;
@@ -191,10 +194,13 @@ pub fn swim_state_transition_system(
                     "  Player half extents: ({:.3}, {:.3}, {:.3})",
                     half_ext.x, half_ext.y, half_ext.z
                 );
-                info!("  Submersion ratio: {:.3} (need >0.0 to enter)", submersion);
+                info!(
+                    "  Submersion ratio: {:.3} (need >0.0 to enter)",
+                    _submersion
+                );
 
-                if submersion > 0.0 {
-                    info!("  🏊 SUBMERSION DETECTED! Ratio: {:.3}", submersion);
+                if _submersion > 0.0 {
+                    info!("  🏊 SUBMERSION DETECTED! Ratio: {:.3}", _submersion);
                 }
                 if entity_bottom < water_level {
                     info!(

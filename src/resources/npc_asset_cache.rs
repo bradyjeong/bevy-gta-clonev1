@@ -21,6 +21,7 @@ pub enum MeshShape {
 impl MeshShape {
     fn normalize_float(value: f32) -> u32 {
         if !value.is_finite() {
+            #[cfg(feature = "debug-ui")]
             eprintln!("Warning: Invalid mesh dimension {value} (NaN/Inf), using 0.0");
             return 0.0f32.to_bits();
         }
@@ -178,6 +179,7 @@ impl NPCAssetCache {
         self.get_or_create_mesh(MeshShape::capsule(0.12, 0.6), meshes);
         self.get_or_create_mesh(MeshShape::cuboid(0.2, 0.1, 0.35), meshes);
 
+        #[cfg(feature = "debug-ui")]
         info!(
             "NPC Asset Cache initialized: {} meshes, {} materials",
             self.meshes.len(),

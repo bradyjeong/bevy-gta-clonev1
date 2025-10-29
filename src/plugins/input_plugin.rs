@@ -34,6 +34,7 @@ impl Plugin for InputPlugin {
                     .chain(),
             );
 
+        #[cfg(feature = "debug-ui")]
         info!("Input Plugin initialized with asset-based control system");
     }
 }
