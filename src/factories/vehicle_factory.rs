@@ -3,12 +3,12 @@ use crate::components::MovementTracker;
 use crate::components::unified_water::WaterBodyId;
 use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::{
-    AircraftFlight, Car, CarWheelsConfig, ContentType, DynamicContent, F16,
-    Grounded, Helicopter, HelicopterRuntime, JetFlame, LandingLight, MainRotor, NavigationLight,
-    NavigationLightType, RotorBlurDisk, RotorWash, SimpleCarSpecs, SimpleCarSpecsHandle,
-    SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle,
-    TailRotor, VehicleState, VehicleType, VisualRig, VisualRigRoot, WheelMesh, WheelPos,
-    WheelSteerPivot, WheelsRoot,
+    AircraftFlight, Car, CarWheelsConfig, ContentType, DynamicContent, F16, Grounded, Helicopter,
+    HelicopterRuntime, JetFlame, LandingLight, MainRotor, NavigationLight, NavigationLightType,
+    RotorBlurDisk, RotorWash, SimpleCarSpecs, SimpleCarSpecsHandle, SimpleF16Specs,
+    SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor,
+    VehicleState, VehicleType, VisualRig, VisualRigRoot, WheelMesh, WheelPos, WheelSteerPivot,
+    WheelsRoot,
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
@@ -64,7 +64,8 @@ impl VehicleFactory {
     ) -> Result<Entity, BundleError> {
         let color = color.unwrap_or_else(|| self.random_car_color());
 
-        // Load car specs asset following YachtSpecs pattern
+        // Bug #7: Load car specs asset following YachtSpecs pattern
+        // Note: Asset loaded asynchronously - systems check specs_handle validity
         let car_specs_handle: Handle<SimpleCarSpecs> = asset_server.load("config/simple_car.ron");
 
         let vehicle_entity = commands
@@ -94,8 +95,8 @@ impl VehicleFactory {
                 AdditionalMassProperties::Mass(1200.0), // Realistic car mass for proper physics
                 Ccd::enabled(), // High-speed cars need continuous collision detection
                 Damping {
-                    linear_damping: 0.25, // Increased to reduce jitter
-                    angular_damping: 2.5, // Phase 0: Moderate angular damping for better response
+                    linear_damping: 2.0,  // AGENT.MD: 2.0-3.0 for arcade physics
+                    angular_damping: 8.0, // AGENT.MD: 8.0-10.0 for arcade physics
                 },
                 Friction {
                     coefficient: 0.15, // Phase 0: Reduced friction to prevent interference with custom grip (was 0.2)
@@ -107,9 +108,9 @@ impl VehicleFactory {
                 },
                 MovementTracker::new(position, 10.0),
                 Name::new("SuperCar"),
-                Grounded::default(),         // Phase 2: Ground detection state
-                ExternalForce::default(),    // Phase 2: For stability forces and torques
-                VisualRig::default(),        // Phase 3: Visual-only body lean
+                Grounded::default(),      // Phase 2: Ground detection state
+                ExternalForce::default(), // Phase 2: For stability forces and torques
+                VisualRig::default(),     // Phase 3: Visual-only body lean
             ))
             .id();
 
@@ -277,7 +278,8 @@ impl VehicleFactory {
         position: Vec3,
         _color: Option<Color>,
     ) -> Result<Entity, BundleError> {
-        // Load helicopter specs asset following YachtSpecs pattern
+        // Bug #7: Load helicopter specs asset following YachtSpecs pattern
+        // Note: Asset loaded asynchronously - systems check specs_handle validity
         let heli_specs_handle: Handle<SimpleHelicopterSpecs> =
             asset_server.load("config/simple_helicopter.ron");
 
@@ -617,7 +619,8 @@ impl VehicleFactory {
         position: Vec3,
         _color: Option<Color>,
     ) -> Result<Entity, BundleError> {
-        // Load F16 specs asset following YachtSpecs pattern
+        // Bug #7: Load F16 specs asset following YachtSpecs pattern
+        // Note: Asset loaded asynchronously - systems check specs_handle validity
         let f16_specs_handle: Handle<SimpleF16Specs> = asset_server.load("config/simple_f16.ron");
 
         let vehicle_entity = commands
@@ -818,6 +821,8 @@ impl VehicleFactory {
     ) -> Result<Entity, BundleError> {
         let yacht_config = &self.config.vehicles.yacht;
         let hull_color = color.unwrap_or(yacht_config.default_color);
+        // Bug #7: Load yacht specs asset
+        // Note: Asset loaded asynchronously - systems check specs_handle validity
         let yacht_specs_handle: Handle<YachtSpecs> = asset_server.load("config/simple_yacht.ron");
         let yacht_visibility =
             || VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance);

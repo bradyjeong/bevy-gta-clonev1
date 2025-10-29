@@ -1,12 +1,12 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::ControlState;
 use crate::components::{
-    ActiveEntity, Car, Grounded, MissingSpecsWarned, SimpleCarSpecs,
-    SimpleCarSpecsHandle,
+    ActiveEntity, Car, Grounded, MissingSpecsWarned, SimpleCarSpecs, SimpleCarSpecsHandle,
 };
 use crate::config::GameConfig;
 use crate::systems::physics::PhysicsUtilities;
 use crate::util::safe_math::{safe_lerp, safe_lerp_f32};
+use crate::util::safe_specs::safe_clamp_f32;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -35,6 +35,16 @@ pub fn car_movement(
     for (entity, mut velocity, transform, control_state, specs_handle, grounded) in
         car_query.iter_mut()
     {
+        // Bug #38: Validate velocity is finite before physics operations
+        if !velocity.linvel.is_finite() || !velocity.angvel.is_finite() {
+            error!(
+                "Invalid velocity detected for car entity {:?}, resetting to zero",
+                entity
+            );
+            velocity.linvel = Vec3::ZERO;
+            velocity.angvel = Vec3::ZERO;
+        }
+
         let Some(specs) = car_specs_assets.get(&specs_handle.0) else {
             if !warned_query.contains(entity) {
                 warn!(
@@ -58,7 +68,14 @@ pub fn car_movement(
 
         // PHASE 1: Auto-brake when throttle opposes velocity (GTA SA feature)
         // Detects when moving backward but trying to go forward (or vice versa)
-        let auto_brake_gain = specs.auto_brake_gain.clamp(1.0, 50.0);
+        let auto_brake_gain =
+            safe_clamp_f32(specs.auto_brake_gain, 1.0, 50.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid auto_brake_gain for entity {:?} (spec {:?}), using default 10.0",
+                    entity, specs_handle.0
+                );
+                10.0
+            });
         let oppose_threshold = 0.5; // m/s
         let throttle = control_state.throttle;
         // FIX: Only check opposition when moving above threshold AND throttle/velocity have opposite signs
@@ -72,13 +89,26 @@ pub fn car_movement(
         }
 
         // Speed-based steering: steering effectiveness decreases with speed
-        // Safety: prevent NaN/physics issues from modded configs
-        let steer_speed_drop = specs.steer_speed_drop.clamp(0.0, 1.0);
+        let steer_speed_drop =
+            safe_clamp_f32(specs.steer_speed_drop, 0.0, 1.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid steer_speed_drop for entity {:?} (spec {:?}), using default 0.02",
+                    entity, specs_handle.0
+                );
+                0.02
+            });
         let mut steer_gain = specs.steer_gain / (1.0 + steer_speed_drop * current_speed);
 
         // Phase 2: Reduce steering when airborne
         if !grounded.is_grounded {
-            let airborne_scale = specs.airborne_steer_scale.clamp(0.0, 1.0);
+            let airborne_scale =
+                safe_clamp_f32(specs.airborne_steer_scale, 0.0, 1.0).unwrap_or_else(|| {
+                    error!(
+                        "Invalid airborne_steer_scale for entity {:?} (spec {:?}), using default 0.3",
+                        entity, specs_handle.0
+                    );
+                    0.3
+                });
             steer_gain *= airborne_scale;
         }
 
@@ -107,26 +137,61 @@ pub fn car_movement(
         // Gate acceleration/reverse to prevent fighting with auto-brake
         if !throttle_opposes_velocity && control_state.is_accelerating() {
             // Accelerate forward
-            // Clamp to prevent modded configs from breaking physics
-            let base_speed = specs.base_speed.clamp(1.0, 100.0);
-            let accel_lerp = specs.accel_lerp.clamp(1.0, 20.0);
+            let base_speed = safe_clamp_f32(specs.base_speed, 1.0, 100.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid base_speed for entity {:?} (spec {:?}), using default 20.0",
+                    entity, specs_handle.0
+                );
+                20.0
+            });
+            let accel_lerp = safe_clamp_f32(specs.accel_lerp, 1.0, 20.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid accel_lerp for entity {:?} (spec {:?}), using default 5.0",
+                    entity, specs_handle.0
+                );
+                5.0
+            });
             let target_speed = -base_speed * control_state.throttle;
             v_local.z = safe_lerp_f32(v_local.z, target_speed, dt * accel_lerp);
         } else if control_state.brake > 0.0 {
             // Regular brake (Shift): slow down current velocity toward zero
-            let brake_lerp = specs.brake_lerp.clamp(1.0, 20.0);
+            let brake_lerp = safe_clamp_f32(specs.brake_lerp, 1.0, 20.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid brake_lerp for entity {:?} (spec {:?}), using default 8.0",
+                    entity, specs_handle.0
+                );
+                8.0
+            });
             v_local.z = safe_lerp_f32(v_local.z, 0.0, dt * brake_lerp * control_state.brake);
         } else if !throttle_opposes_velocity && control_state.is_reversing() {
             // Reverse (Arrow Down): move backward
-            let base_speed = specs.base_speed.clamp(1.0, 100.0);
-            let accel_lerp = specs.accel_lerp.clamp(1.0, 20.0);
+            let base_speed = safe_clamp_f32(specs.base_speed, 1.0, 100.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid base_speed for entity {:?} (spec {:?}), using default 20.0",
+                    entity, specs_handle.0
+                );
+                20.0
+            });
+            let accel_lerp = safe_clamp_f32(specs.accel_lerp, 1.0, 20.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid accel_lerp for entity {:?} (spec {:?}), using default 5.0",
+                    entity, specs_handle.0
+                );
+                5.0
+            });
             let target_speed = base_speed * 0.5; // Half speed for reverse
             v_local.z = safe_lerp_f32(v_local.z, target_speed, dt * accel_lerp);
         } else if !throttle_opposes_velocity {
             // No input: apply momentum decay (GTA-style coasting)
-            // Clamp to prevent modded configs from breaking physics
-            let drag_factor = specs.drag_factor.clamp(0.9, 1.0);
-            let frame_drag = drag_factor.powf(dt);
+            let drag_factor = safe_clamp_f32(specs.drag_factor, 0.9, 1.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid drag_factor for entity {:?} (spec {:?}), using default 0.98",
+                    entity, specs_handle.0
+                );
+                0.98
+            });
+            let safe_dt = dt.clamp(0.0, 1.0); // Prevent NaN from negative/huge dt
+            let frame_drag = drag_factor.powf(safe_dt);
             v_local.z *= frame_drag;
         }
 
@@ -135,9 +200,30 @@ pub fn car_movement(
             // PHASE 1: Slip/friction curve for lateral grip (replaces constant grip)
             // Calculate slip ratio from lateral velocity
             let slip = v_local.x.abs();
-            let slip_extremum = specs.slip_extremum.clamp(0.1, 5.0);
-            let slip_asymptote = specs.slip_asymptote.clamp(1.0, 50.0);
-            let slip_stiffness = specs.slip_stiffness.clamp(0.1, 5.0);
+            let slip_extremum =
+                safe_clamp_f32(specs.slip_extremum, 0.1, 5.0).unwrap_or_else(|| {
+                    error!(
+                        "Invalid slip_extremum for entity {:?} (spec {:?}), using default 1.0",
+                        entity, specs_handle.0
+                    );
+                    1.0
+                });
+            let slip_asymptote =
+                safe_clamp_f32(specs.slip_asymptote, 1.0, 50.0).unwrap_or_else(|| {
+                    error!(
+                        "Invalid slip_asymptote for entity {:?} (spec {:?}), using default 10.0",
+                        entity, specs_handle.0
+                    );
+                    10.0
+                });
+            let slip_stiffness =
+                safe_clamp_f32(specs.slip_stiffness, 0.1, 5.0).unwrap_or_else(|| {
+                    error!(
+                        "Invalid slip_stiffness for entity {:?} (spec {:?}), using default 1.0",
+                        entity, specs_handle.0
+                    );
+                    1.0
+                });
 
             // Rising to peak at extremum, then exponential decay toward asymptote limit (0.2)
             let slip_factor = if slip <= slip_extremum {
@@ -151,13 +237,25 @@ pub fn car_movement(
             };
 
             // Downforce effect: increase grip at high speeds for stability
-            // Clamp base_speed to prevent division by zero from modded configs
-            let base_speed = specs.base_speed.clamp(1.0, 100.0);
+            let base_speed = safe_clamp_f32(specs.base_speed, 1.0, 100.0).unwrap_or_else(|| {
+                error!(
+                    "Invalid base_speed for entity {:?} (spec {:?}), using default 20.0",
+                    entity, specs_handle.0
+                );
+                20.0
+            });
             let speed_factor = (current_speed / base_speed).min(1.0);
             let downforce_grip = base_grip * (1.0 + specs.downforce_scale * speed_factor);
 
             // PHASE 1: Traction circle coupling - reduce lateral grip during heavy braking
-            let brake_grip_loss = specs.brake_grip_loss.clamp(0.0, 1.0);
+            let brake_grip_loss =
+                safe_clamp_f32(specs.brake_grip_loss, 0.0, 1.0).unwrap_or_else(|| {
+                    error!(
+                        "Invalid brake_grip_loss for entity {:?} (spec {:?}), using default 0.5",
+                        entity, specs_handle.0
+                    );
+                    0.5
+                });
             // Use longitudinal demand from either braking or throttle (arcade simplification)
             let long_demand = control_state
                 .brake
@@ -181,9 +279,23 @@ pub fn car_movement(
 
         // Apply angular velocity with smoothing
         // Phase 3: Reduce angular lerp when airborne for less responsive rotation
-        let mut angular_lerp_factor = specs.angular_lerp_factor.clamp(1.0, 20.0);
+        let mut angular_lerp_factor = safe_clamp_f32(specs.angular_lerp_factor, 1.0, 20.0)
+            .unwrap_or_else(|| {
+                error!(
+                    "Invalid angular_lerp_factor for entity {:?} (spec {:?}), using default 8.0",
+                    entity, specs_handle.0
+                );
+                8.0
+            });
         if !grounded.is_grounded {
-            let airborne_angular_scale = specs.airborne_angular_scale.clamp(0.0, 1.0);
+            let airborne_angular_scale =
+                safe_clamp_f32(specs.airborne_angular_scale, 0.0, 1.0).unwrap_or_else(|| {
+                    error!(
+                        "Invalid airborne_angular_scale for entity {:?} (spec {:?}), using default 0.5",
+                        entity, specs_handle.0
+                    );
+                    0.5
+                });
             angular_lerp_factor *= airborne_angular_scale;
         }
         let target_angvel = Vec3::new(0.0, target_yaw, 0.0);
@@ -192,9 +304,22 @@ pub fn car_movement(
         // Emergency brake multipliers (applied after calculations)
         // Only affect horizontal velocity, preserve Y for gravity
         if control_state.emergency_brake {
-            // Safety: prevent NaN/physics issues from modded configs
-            let emergency_brake_linear = specs.emergency_brake_linear.clamp(0.01, 1.0);
-            let emergency_brake_angular = specs.emergency_brake_angular.clamp(0.01, 1.0);
+            let emergency_brake_linear =
+                safe_clamp_f32(specs.emergency_brake_linear, 0.01, 1.0).unwrap_or_else(|| {
+                    error!(
+                        "Invalid emergency_brake_linear for entity {:?} (spec {:?}), using default 0.8",
+                        entity, specs_handle.0
+                    );
+                    0.8
+                });
+            let emergency_brake_angular =
+                safe_clamp_f32(specs.emergency_brake_angular, 0.01, 1.0).unwrap_or_else(|| {
+                    error!(
+                        "Invalid emergency_brake_angular for entity {:?} (spec {:?}), using default 0.5",
+                        entity, specs_handle.0
+                    );
+                    0.5
+                });
             velocity.linvel.x *= emergency_brake_linear;
             velocity.linvel.z *= emergency_brake_linear;
             velocity.angvel *= emergency_brake_angular;

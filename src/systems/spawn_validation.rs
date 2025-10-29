@@ -289,13 +289,25 @@ impl SpawnRegistry {
     }
 }
 
+/// AUTO-SYNC SPAWN POSITIONS SYSTEM (Bug #45 Fix)
+/// Automatically updates SpawnRegistry when entity positions change
+pub fn auto_update_spawn_positions(
+    mut registry: ResMut<SpawnRegistry>,
+    changed_transforms: Query<(Entity, &Transform), Changed<Transform>>,
+) {
+    for (entity, transform) in changed_transforms.iter() {
+        registry.update_entity_position(entity, transform.translation);
+    }
+}
+
 /// Plugin to add spawn validation system
 pub struct SpawnValidationPlugin;
 
 impl Plugin for SpawnValidationPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SpawnRegistry::new())
-            .add_systems(Update, cleanup_despawned_entities);
+            .add_systems(Update, cleanup_despawned_entities)
+            .add_systems(PostUpdate, auto_update_spawn_positions);
     }
 }
 

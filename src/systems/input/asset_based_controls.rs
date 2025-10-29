@@ -119,16 +119,28 @@ pub fn load_vehicle_controls_system(
 
 /// System to process loaded control assets
 pub fn process_loaded_controls_system(
+    asset_server: Res<AssetServer>,
     mut loaded_controls: ResMut<LoadedVehicleControls>,
     controls_assets: Res<Assets<VehicleControlsConfig>>,
     controls_handle: Option<Res<VehicleControlsHandle>>,
 ) {
-    if let Some(handle) = controls_handle
-        && let Some(config) = controls_assets.get(&handle.0)
-        && loaded_controls.config.is_none()
-    {
-        loaded_controls.config = Some(config.clone());
-        loaded_controls.loading = false;
+    if let Some(handle) = controls_handle {
+        match asset_server.load_state(&handle.0) {
+            bevy::asset::LoadState::Loaded => {
+                if let Some(config) = controls_assets.get(&handle.0) {
+                    if loaded_controls.config.is_none() {
+                        loaded_controls.config = Some(config.clone());
+                        loaded_controls.loading = false;
+                        info!("Vehicle controls loaded successfully");
+                    }
+                }
+            }
+            bevy::asset::LoadState::Failed(err) => {
+                error!("Failed to load vehicle controls: {:?}", err);
+                loaded_controls.loading = false;
+            }
+            _ => {}
+        }
     }
 }
 
@@ -144,9 +156,11 @@ pub fn asset_based_input_mapping_system(
         With<crate::components::ActiveEntity>,
     >,
 ) {
-    // Always reset control state each frame, even if assets aren't loaded yet
+    // BUG FIX #5: Always reset control state at start, even if config is None
+    // BUG FIX #39: Always validate control states, regardless of config load status
     for (mut control_state, _vehicle_type) in query.iter_mut() {
         control_state.reset();
+        control_state.validate_and_clamp();
     }
 
     // Skip input mapping if controls haven't loaded yet
@@ -178,26 +192,38 @@ pub fn asset_based_input_mapping_system(
     }
 }
 
+/// Deadzone for continuous control inputs to prevent input drift
+const CONTINUOUS_INPUT_DEADZONE: f32 = 0.1;
+
 /// Apply a control action to the control state (for held keys)
 fn apply_control_action(action: &AssetControlAction, control_state: &mut ControlState) {
+    // Helper to apply deadzone to continuous inputs
+    let apply_with_deadzone = |value: f32| {
+        if value.abs() < CONTINUOUS_INPUT_DEADZONE {
+            0.0
+        } else {
+            value
+        }
+    };
+
     match action {
-        AssetControlAction::Forward => control_state.throttle = 1.0,
-        AssetControlAction::Backward => control_state.reverse = 1.0, // Use reverse, not brake!
-        AssetControlAction::TurnLeft => control_state.steering = 1.0, // Turn left = positive rotation
-        AssetControlAction::TurnRight => control_state.steering = -1.0, // Turn right = negative rotation
+        AssetControlAction::Forward => control_state.throttle = apply_with_deadzone(1.0),
+        AssetControlAction::Backward => control_state.reverse = apply_with_deadzone(1.0), // Use reverse, not brake!
+        AssetControlAction::TurnLeft => control_state.steering = apply_with_deadzone(1.0), // Turn left = positive rotation
+        AssetControlAction::TurnRight => control_state.steering = apply_with_deadzone(-1.0), // Turn right = negative rotation
 
-        AssetControlAction::PitchUp => control_state.pitch = 1.0,
-        AssetControlAction::PitchDown => control_state.pitch = -1.0,
-        AssetControlAction::RollLeft => control_state.roll = -1.0,
-        AssetControlAction::RollRight => control_state.roll = 1.0,
-        AssetControlAction::YawLeft => control_state.yaw = -1.0, // Yaw left = negative rotation (follows control_state.rs docs)
-        AssetControlAction::YawRight => control_state.yaw = 1.0, // Yaw right = positive rotation
+        AssetControlAction::PitchUp => control_state.pitch = apply_with_deadzone(1.0),
+        AssetControlAction::PitchDown => control_state.pitch = apply_with_deadzone(-1.0),
+        AssetControlAction::RollLeft => control_state.roll = apply_with_deadzone(-1.0),
+        AssetControlAction::RollRight => control_state.roll = apply_with_deadzone(1.0),
+        AssetControlAction::YawLeft => control_state.yaw = apply_with_deadzone(-1.0), // Yaw left = negative rotation (follows control_state.rs docs)
+        AssetControlAction::YawRight => control_state.yaw = apply_with_deadzone(1.0), // Yaw right = positive rotation
 
-        AssetControlAction::VerticalUp => control_state.vertical = 1.0,
-        AssetControlAction::VerticalDown => control_state.vertical = -1.0,
+        AssetControlAction::VerticalUp => control_state.vertical = apply_with_deadzone(1.0),
+        AssetControlAction::VerticalDown => control_state.vertical = apply_with_deadzone(-1.0),
 
-        AssetControlAction::ThrottleUp => control_state.throttle = 1.0,
-        AssetControlAction::ThrottleDown => control_state.throttle = -1.0,
+        AssetControlAction::ThrottleUp => control_state.throttle = apply_with_deadzone(1.0),
+        AssetControlAction::ThrottleDown => control_state.throttle = apply_with_deadzone(-1.0),
         AssetControlAction::Brake => control_state.brake = 1.0, // Regular braking
         AssetControlAction::EmergencyBrake => control_state.emergency_brake = true,
         AssetControlAction::Turbo => control_state.boost = 1.0, // Turbo boost for boats

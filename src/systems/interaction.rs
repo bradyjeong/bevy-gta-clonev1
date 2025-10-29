@@ -19,9 +19,10 @@ fn transfer_to_vehicle(
     player_controlled: Option<&PlayerControlled>,
     vehicle_type: VehicleControlType,
     _vehicle_name: &str,
+    time: &Res<Time>,
 ) {
     // Queue atomic ActiveEntity transfer
-    queue_active_transfer(commands, player_entity, vehicle_entity);
+    queue_active_transfer(commands, player_entity, vehicle_entity, time);
 
     // Remove control components from player and hide them
     commands
@@ -60,6 +61,7 @@ pub fn interaction_system(
     mut commands: Commands,
     mut state: ResMut<NextState<GameState>>,
     current_state: Res<State<GameState>>,
+    time: Res<Time>,
     mut player_query: Query<
         (
             Entity,
@@ -177,6 +179,7 @@ pub fn interaction_system(
                     player_controlled,
                     VehicleControlType::Car,
                     "Car",
+                    &time,
                 );
                 state.set(GameState::Driving);
             } else if let Some((entity, _)) = best_helicopter {
@@ -188,6 +191,7 @@ pub fn interaction_system(
                     player_controlled,
                     VehicleControlType::Helicopter,
                     "Helicopter",
+                    &time,
                 );
                 state.set(GameState::Flying);
             } else if let Some((entity, _)) = best_f16 {
@@ -199,6 +203,7 @@ pub fn interaction_system(
                     player_controlled,
                     VehicleControlType::F16,
                     "F16",
+                    &time,
                 );
                 state.set(GameState::Jetting);
             } else if let Some((yacht_entity, _)) = best_yacht {
@@ -210,6 +215,7 @@ pub fn interaction_system(
                     player_controlled,
                     VehicleControlType::Yacht,
                     "Yacht",
+                    &time,
                 );
                 state.set(GameState::Driving);
             }
@@ -243,7 +249,7 @@ pub fn interaction_system(
                     // 35.0²
 
                     // Queue atomic ActiveEntity transfer
-                    queue_active_transfer(&mut commands, player_entity, entity);
+                    queue_active_transfer(&mut commands, player_entity, entity, &time);
 
                     // CRITICAL: Clean up swimming state components when entering from water
                     commands
@@ -300,7 +306,7 @@ pub fn interaction_system(
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
-                        queue_active_transfer(&mut commands, active_car, player_entity);
+                        queue_active_transfer(&mut commands, active_car, player_entity, &time);
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from vehicle rotation
@@ -356,7 +362,12 @@ pub fn interaction_system(
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
-                        queue_active_transfer(&mut commands, active_helicopter, player_entity);
+                        queue_active_transfer(
+                            &mut commands,
+                            active_helicopter,
+                            player_entity,
+                            &time,
+                        );
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from aircraft rotation
@@ -414,7 +425,7 @@ pub fn interaction_system(
                     // Find player and properly detach and position them
                     if let Ok((player_entity, _, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
-                        queue_active_transfer(&mut commands, active_f16, player_entity);
+                        queue_active_transfer(&mut commands, active_f16, player_entity, &time);
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from aircraft rotation

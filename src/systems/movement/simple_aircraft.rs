@@ -183,18 +183,19 @@ pub fn simple_f16_movement(
         let yaw_stab = specs.yaw_stab.clamp(0.5, 1.0);
         let inv_rot = transform.rotation.inverse();
         let mut local_ang = inv_rot.mul_vec3(velocity.angvel);
+        let safe_dt = dt.clamp(0.0, 1.0); // Prevent NaN from negative/huge dt
         let pf = if pitch_input_abs < specs.input_deadzone {
-            pitch_stab.powf(dt)
+            pitch_stab.powf(safe_dt)
         } else {
             1.0
         };
         let rf = if roll_input_abs < specs.input_deadzone {
-            roll_stab.powf(dt)
+            roll_stab.powf(safe_dt)
         } else {
             1.0
         };
         let yf = if yaw_input_abs < specs.input_deadzone {
-            yaw_stab.powf(dt)
+            yaw_stab.powf(safe_dt)
         } else {
             1.0
         };
@@ -231,8 +232,9 @@ pub fn simple_f16_movement(
             // Engine off: Apply frame-rate independent momentum decay (gliding like GTA V)
             // Clamp to prevent modded configs from breaking physics
             let drag_factor = specs.drag_factor.clamp(0.9, 1.0);
-            let frame_drag = drag_factor.powf(dt);
-            let vertical_drag = 0.999_f32.powf(dt); // Slight vertical drag for realistic sink rate
+            let safe_dt = dt.clamp(0.0, 1.0); // Prevent NaN from negative/huge dt
+            let frame_drag = drag_factor.powf(safe_dt);
+            let vertical_drag = 0.999_f32.powf(safe_dt); // Slight vertical drag for realistic sink rate
             velocity.linvel = Vec3::new(
                 velocity.linvel.x * frame_drag,
                 velocity.linvel.y * vertical_drag, // Gradual loss of vertical momentum

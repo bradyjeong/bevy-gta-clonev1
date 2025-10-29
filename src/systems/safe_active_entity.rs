@@ -12,26 +12,44 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct ActiveTransferRequest {
     pub target_entity: Entity,
+    pub creation_time: f64,
 }
 
 /// System that processes ActiveEntity transfer requests atomically
 /// Guarantees exactly one entity has ActiveEntity at any time
+/// BUG #46 FIX: Process only ONE transfer per frame, sorted by creation order
 pub fn active_transfer_executor_system(
     mut commands: Commands,
     transfer_requests: Query<(Entity, &ActiveTransferRequest)>,
     current_active: Query<Entity, With<ActiveEntity>>,
 ) {
-    // Process all transfer requests this frame
-    for (requester_entity, request) in transfer_requests.iter() {
-        // Get current active entity (should be exactly one)
+    let request_count = transfer_requests.iter().count();
+
+    if request_count == 0 {
+        return;
+    }
+
+    if request_count > 1 {
+        warn!(
+            "Multiple ActiveTransferRequests detected ({} requests) - processing oldest only",
+            request_count
+        );
+    }
+
+    let mut requests: Vec<(Entity, &ActiveTransferRequest)> = transfer_requests.iter().collect();
+    requests.sort_by(|a, b| {
+        a.1.creation_time
+            .partial_cmp(&b.1.creation_time)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    if let Some((requester_entity, request)) = requests.first() {
         if let Ok(current) = current_active.single() {
-            // Perform atomic transfer
             commands.entity(current).remove::<ActiveEntity>();
             commands.entity(request.target_entity).insert(ActiveEntity);
 
-            // Remove the request
             commands
-                .entity(requester_entity)
+                .entity(*requester_entity)
                 .remove::<ActiveTransferRequest>();
 
             info!(
@@ -39,12 +57,17 @@ pub fn active_transfer_executor_system(
                 current, request.target_entity
             );
         } else {
-            // This should never happen, but handle gracefully
             warn!("ActiveEntity transfer request but no current active entity found");
             commands
-                .entity(requester_entity)
+                .entity(*requester_entity)
                 .remove::<ActiveTransferRequest>();
         }
+    }
+
+    for (requester_entity, _) in requests.iter().skip(1) {
+        commands
+            .entity(*requester_entity)
+            .remove::<ActiveTransferRequest>();
     }
 }
 
@@ -60,12 +83,17 @@ pub fn active_entity_integrity_check(active_query: Query<Entity, With<ActiveEnti
             active_query.iter().collect::<Vec<_>>()
         );
     }
-    // active_count == 1 is correct, no logging needed
 }
 
 /// Helper function for systems that need to transfer ActiveEntity
-pub fn queue_active_transfer(commands: &mut Commands, requester: Entity, target: Entity) {
+pub fn queue_active_transfer(
+    commands: &mut Commands,
+    requester: Entity,
+    target: Entity,
+    time: &Res<Time>,
+) {
     commands.entity(requester).insert(ActiveTransferRequest {
         target_entity: target,
+        creation_time: time.elapsed_secs_f64(),
     });
 }

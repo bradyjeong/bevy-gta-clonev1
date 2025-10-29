@@ -64,7 +64,7 @@ pub fn enforce_entity_limits(
         // Sort by spawn time (oldest first)
         entity_limits
             .vehicle_entities
-            .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+            .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
         // Despawn oldest excess vehicles
         for i in 0..excess.min(entity_limits.vehicle_entities.len()) {
@@ -89,7 +89,7 @@ pub fn enforce_entity_limits(
 
         entity_limits
             .building_entities
-            .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+            .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
         for i in 0..excess.min(entity_limits.building_entities.len()) {
             if let Some((entity, _)) = entity_limits.building_entities.get(i) {
@@ -112,7 +112,7 @@ pub fn enforce_entity_limits(
 
         entity_limits
             .npc_entities
-            .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+            .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
         for i in 0..excess.min(entity_limits.npc_entities.len()) {
             if let Some((entity, _)) = entity_limits.npc_entities.get(i) {
@@ -139,7 +139,40 @@ pub fn enforce_entity_limits(
     }
 }
 
-/// Helper to register spawned entities with EntityLimits
+/// AUTO-REGISTRATION SYSTEM (Bug #6 Fix)
+/// Automatically tracks newly spawned entities without manual calls
+#[allow(clippy::too_many_arguments)]
+pub fn auto_register_spawned_entities(
+    mut entity_limits: ResMut<EntityLimits>,
+    time: Res<Time>,
+    new_cars: Query<Entity, Added<Car>>,
+    new_helicopters: Query<Entity, Added<Helicopter>>,
+    new_f16s: Query<Entity, Added<F16>>,
+    new_yachts: Query<Entity, Added<Yacht>>,
+    new_buildings: Query<Entity, Added<Building>>,
+    new_npcs: Query<Entity, Added<NPCState>>,
+) {
+    let current_time = time.elapsed_secs();
+
+    for entity in new_cars
+        .iter()
+        .chain(new_helicopters.iter())
+        .chain(new_f16s.iter())
+        .chain(new_yachts.iter())
+    {
+        entity_limits.vehicle_entities.push((entity, current_time));
+    }
+
+    for entity in new_buildings.iter() {
+        entity_limits.building_entities.push((entity, current_time));
+    }
+
+    for entity in new_npcs.iter() {
+        entity_limits.npc_entities.push((entity, current_time));
+    }
+}
+
+#[deprecated(note = "Use auto_register_spawned_entities system instead")]
 pub fn track_spawned_entity(
     entity_limits: &mut EntityLimits,
     entity: Entity,
@@ -154,6 +187,7 @@ pub fn track_spawned_entity(
     }
 }
 
+#[allow(dead_code)]
 pub enum TrackedEntityType {
     Vehicle,
     Building,

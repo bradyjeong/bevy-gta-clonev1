@@ -14,10 +14,14 @@ pub fn wheel_steering_system(
     for (control_state, wheel_config, car_children) in car_query.iter() {
         // Direct input-to-visual mapping: wheels follow raw driver input
         let steer_angle = control_state.steering * wheel_config.max_steer_rad;
-        
+
         #[cfg(feature = "debug-movement")]
         if control_state.steering.abs() > 0.01 {
-            info!("Steering: raw={:.2}, angle={:.2}°", control_state.steering, steer_angle.to_degrees());
+            info!(
+                "Steering: raw={:.2}, angle={:.2}°",
+                control_state.steering,
+                steer_angle.to_degrees()
+            );
         }
 
         for child in car_children.iter() {
@@ -61,8 +65,15 @@ pub fn wheel_rolling_system(
 
                     if let Ok(great_grandchildren) = children_query.get(grandchild) {
                         for ggchild in great_grandchildren.iter() {
-                            if let Ok((mut wheel, mut wheel_transform)) = wheel_query.get_mut(ggchild) {
-                                update_wheel_roll(&mut wheel, &mut wheel_transform, forward_velocity, dt);
+                            if let Ok((mut wheel, mut wheel_transform)) =
+                                wheel_query.get_mut(ggchild)
+                            {
+                                update_wheel_roll(
+                                    &mut wheel,
+                                    &mut wheel_transform,
+                                    forward_velocity,
+                                    dt,
+                                );
                             }
                         }
                     }

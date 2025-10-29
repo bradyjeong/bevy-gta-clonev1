@@ -4,6 +4,7 @@ use crate::components::{
 };
 use crate::constants::WorldEnvConfig;
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy_hanabi::prelude::*;
 use bevy_rapier3d::prelude::Velocity;
 
@@ -124,13 +125,22 @@ pub fn spawn_rotor_wash_particles(
     rotor_wash_effect: Res<RotorWashEffect>,
 ) {
     for entity in helicopter_query.iter() {
-        commands.spawn((
-            Name::new("rotor_wash_particles"),
-            ParticleEffect::new(rotor_wash_effect.handle.clone()),
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            RotorWash,
-            RotorWashOf(entity),
-        ));
+        // Spawn as child of helicopter (Bug #44 fix)
+        commands.entity(entity).with_children(|parent| {
+            parent.spawn((
+                Name::new("rotor_wash_particles"),
+                ParticleEffect::new(rotor_wash_effect.handle.clone()),
+                Transform::from_xyz(0.0, 0.0, 0.0),
+                RotorWash,
+                RotorWashOf(entity),
+                // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 900.0..1100.0,
+                    use_aabb: false,
+                },
+            ));
+        });
     }
 }
 
@@ -203,12 +213,13 @@ pub fn update_rotor_wash_position_and_intensity(
 pub fn cleanup_rotor_wash_on_helicopter_despawn(
     mut commands: Commands,
     mut removed_helicopters: RemovedComponents<Helicopter>,
-    rotor_wash_query: Query<(Entity, &RotorWashOf), With<RotorWash>>,
+    children_query: Query<&Children>,
 ) {
+    // Simplified cleanup: particles are children and despawn automatically with parent
     for removed_heli_entity in removed_helicopters.read() {
-        for (rotor_wash_entity, rotor_wash_of) in rotor_wash_query.iter() {
-            if rotor_wash_of.0 == removed_heli_entity {
-                commands.entity(rotor_wash_entity).despawn();
+        if let Ok(children) = children_query.get(removed_heli_entity) {
+            for child in children.iter() {
+                commands.entity(child).despawn();
             }
         }
     }

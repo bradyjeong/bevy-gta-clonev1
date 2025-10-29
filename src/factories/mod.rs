@@ -69,7 +69,6 @@ pub mod position_validator;
 pub mod bridge_factory;
 pub mod building_factory;
 pub mod effect_factory;
-pub mod entity_limit;
 pub mod npc_factory;
 
 pub mod vehicle_factory;
@@ -91,7 +90,6 @@ pub use position_validator::PositionValidator;
 pub use bridge_factory::spawn_bridge;
 pub use building_factory::{BuildingFactory, BuildingType};
 pub use effect_factory::{EffectFactory, ParticleEffect};
-pub use entity_limit::{EntityLimit, EntityLimitManager, EntityType};
 pub use npc_factory::{NPCFactory, NPCType};
 pub use vehicle_factory::VehicleFactory;
 

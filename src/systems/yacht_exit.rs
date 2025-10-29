@@ -15,6 +15,7 @@ use crate::systems::swimming::{ProneRotation, SwimState, Swimming};
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 pub fn yacht_exit_system(
     mut commands: Commands,
+    time: Res<Time>,
     yacht_query: Query<(Entity, &ControlState, &Children), (With<Yacht>, With<PlayerControlled>)>,
     just_controlled: Query<Entity, (With<Yacht>, Added<PlayerControlled>)>,
     helipad_query: Query<(&GlobalTransform, &Collider), With<Helipad>>,
@@ -74,7 +75,7 @@ pub fn yacht_exit_system(
                         .insert(InCar(heli_entity));
                 }
 
-                queue_active_transfer(&mut commands, yacht_entity, heli_entity);
+                queue_active_transfer(&mut commands, yacht_entity, heli_entity, &time);
                 next_state.set(GameState::Flying);
 
                 continue;
@@ -156,7 +157,7 @@ pub fn yacht_exit_system(
                                 .remove::<DeckWalker>();
                         }
 
-                        queue_active_transfer(&mut commands, yacht_entity, player_entity);
+                        queue_active_transfer(&mut commands, yacht_entity, player_entity, &time);
                         next_state.set(GameState::Walking);
                     }
                     ExitPointKind::Water => {
@@ -186,7 +187,7 @@ pub fn yacht_exit_system(
                             .insert(PendingPhysicsEnable)
                             .remove::<DeckWalker>();
 
-                        queue_active_transfer(&mut commands, yacht_entity, player_entity);
+                        queue_active_transfer(&mut commands, yacht_entity, player_entity, &time);
                         next_state.set(GameState::Swimming);
                     }
                 }
@@ -251,6 +252,7 @@ pub fn deck_walk_movement_system(
 #[allow(clippy::type_complexity)]
 pub fn yacht_board_from_deck_system(
     mut commands: Commands,
+    time: Res<Time>,
     player_query: Query<
         (Entity, &ControlState, &DeckWalker),
         (With<Player>, With<PlayerControlled>),
@@ -278,7 +280,7 @@ pub fn yacht_board_from_deck_system(
                 .insert(VehicleControlType::Yacht)
                 .insert(ControlState::default());
 
-            queue_active_transfer(&mut commands, player_entity, yacht_entity);
+            queue_active_transfer(&mut commands, player_entity, yacht_entity, &time);
             next_state.set(GameState::Driving);
         }
     }

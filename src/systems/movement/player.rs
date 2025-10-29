@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+use crate::GameConfig;
 use crate::components::ControlState;
 use crate::components::player::{PlayerLeftFoot, PlayerRightFoot};
 use crate::components::{ActiveEntity, HumanAnimation, HumanMovement, Player};
@@ -48,6 +49,7 @@ pub fn read_input_system(
 
 pub fn velocity_apply_system(
     input_data: Res<PlayerInputData>,
+    config: Res<GameConfig>,
     mut player_query: Query<
         (&mut Velocity, &mut HumanMovement),
         (
@@ -89,7 +91,11 @@ pub fn velocity_apply_system(
         velocity.linvel.y,
         target_linear_velocity.z,
     );
+
     velocity.angvel = target_angular_velocity;
+
+    // Clamp velocity to prevent physics solver panics
+    crate::systems::physics::PhysicsUtilities::clamp_velocity(&mut velocity, &config);
 }
 
 pub fn animation_flag_system(

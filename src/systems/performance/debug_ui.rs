@@ -64,7 +64,7 @@ pub fn update_debug_overlay_system(
     diagnostics: Res<Diagnostics>,
     debug_state: Res<DebugState>,
     mut overlay_query: Query<&mut Text, With<DebugOverlay>>,
-    car_query: Query<(&crate::components::ControlState, &bevy_rapier3d::prelude::Velocity, &crate::components::SimpleCarSpecs), With<crate::components::Car>>,
+    car_query: Query<(&crate::components::ControlState, &bevy_rapier3d::prelude::Velocity, &crate::components::SimpleCarSpecs), (With<crate::components::Car>, With<crate::components::ActiveEntity>)>,
 ) {
     if !debug_state.show_debug {
         return;

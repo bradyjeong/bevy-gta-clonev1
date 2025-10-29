@@ -28,24 +28,38 @@ impl Plugin for MapPlugin {
 }
 
 fn load_map_config(mut commands: Commands) {
-    let config: MapConfig =
-        ron::from_str(&std::fs::read_to_string("assets/config/map.ron").expect(
-            "Failed to read map config at 'assets/config/map.ron'.\n\
-             Troubleshooting:\n\
-             1. Verify file exists in assets/config/ directory\n\
-             2. Check file permissions (should be readable)\n\
-             3. If in release build, verify assets/ is copied to executable location",
-        ))
-        .expect(
-            "Failed to parse RON config at 'assets/config/map.ron'.\n\
-         Common RON syntax issues:\n\
-         1. Missing comma between fields\n\
-         2. Typo in field name (must match MapConfig struct)\n\
-         3. Wrong value type (e.g., string instead of number)\n\
-         4. Missing parentheses or brackets\n\
-         See https://github.com/ron-rs/ron for syntax guide.\n\
-         Run 'cargo run --features debug-ui' for detailed validation.",
-        );
+    // Bug #8: Fix RON parsing panic with graceful error handling
+    let config: MapConfig = match std::fs::read_to_string("assets/config/map.ron") {
+        Ok(content) => match ron::from_str(&content) {
+            Ok(config) => config,
+            Err(e) => {
+                error!(
+                    "Failed to parse RON config at 'assets/config/map.ron': {}\n\
+                     Common RON syntax issues:\n\
+                     1. Missing comma between fields\n\
+                     2. Typo in field name (must match MapConfig struct)\n\
+                     3. Wrong value type (e.g., string instead of number)\n\
+                     4. Missing parentheses or brackets\n\
+                     See https://github.com/ron-rs/ron for syntax guide.\n\
+                     Using default MapConfig as fallback.",
+                    e
+                );
+                MapConfig::default()
+            }
+        },
+        Err(e) => {
+            error!(
+                "Failed to read map config at 'assets/config/map.ron': {}\n\
+                 Troubleshooting:\n\
+                 1. Verify file exists in assets/config/ directory\n\
+                 2. Check file permissions (should be readable)\n\
+                 3. If in release build, verify assets/ is copied to executable location\n\
+                 Using default MapConfig as fallback.",
+                e
+            );
+            MapConfig::default()
+        }
+    };
 
     commands.insert_resource(config);
 }

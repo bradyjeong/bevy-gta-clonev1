@@ -29,9 +29,9 @@ pub fn simple_yacht_buoyancy(
             let target_y = water_level + specs.draft;
             let y_error = target_y - transform.translation.y;
 
-            // Proportional control: direct velocity set (no blending to prevent oscillation)
+            // Proportional control with smooth blending to prevent physics jitter
             let target_vy = (y_error * specs.buoyancy_strength).clamp(-5.0, 5.0);
-            velocity.linvel.y = target_vy;
+            velocity.linvel.y = velocity.linvel.y.lerp(target_vy, 0.1);
 
             // Upright stabilization: let Rapier's angular_damping handle this naturally
             // No manual angular velocity manipulation - keeps it simple

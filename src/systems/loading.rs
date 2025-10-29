@@ -39,7 +39,7 @@ pub fn check_vehicle_specs_loaded(
             asset_server.get_load_state(&specs.yacht),
             Some(bevy::asset::LoadState::Failed(_))
         ) {
-            error!("❌ Failed to load: config/yacht.ron");
+            error!("❌ Failed to load: config/simple_yacht.ron");
         }
 
         #[cfg(debug_assertions)]

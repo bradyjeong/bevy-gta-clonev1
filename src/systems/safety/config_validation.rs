@@ -89,6 +89,35 @@ pub fn validate_physics_config(
         }
     }
 
+    // Bug #4 + #50: Validate config constraints
+    if config.physics.min_mass > config.physics.max_mass {
+        panic!(
+            "Physics config error: min_mass ({}) exceeds max_mass ({})",
+            config.physics.min_mass, config.physics.max_mass
+        );
+    }
+
+    if config.physics.min_world_coord > config.physics.max_world_coord {
+        panic!(
+            "Physics config error: min_world_coord ({}) exceeds max_world_coord ({})",
+            config.physics.min_world_coord, config.physics.max_world_coord
+        );
+    }
+
+    if config.physics.max_collider_size < 1.0 {
+        panic!(
+            "Physics config error: max_collider_size ({}) must be >= 1.0",
+            config.physics.max_collider_size
+        );
+    }
+
+    if config.physics.max_velocity < 10.0 {
+        panic!(
+            "Physics config error: max_velocity ({}) must be >= 10.0",
+            config.physics.max_velocity
+        );
+    }
+
     let world_size = (bounds.max_x - bounds.min_x).max(bounds.max_z - bounds.min_z);
     info!(
         "Physics config validated: max_velocity={}, max_angular_velocity={}, world_size={:.1}",

@@ -66,6 +66,9 @@ pub enum BundleError {
     InvalidEntityType {
         entity_type: String,
     },
+    AssetNotLoaded {
+        asset_path: String,
+    },
 }
 
 impl std::fmt::Display for BundleError {
@@ -112,6 +115,9 @@ impl std::fmt::Display for BundleError {
             BundleError::InvalidEntityType { entity_type } => {
                 write!(f, "Invalid entity type: {entity_type}")
             }
+            BundleError::AssetNotLoaded { asset_path } => {
+                write!(f, "Asset not loaded: {asset_path}")
+            }
         }
     }
 }
@@ -143,22 +149,50 @@ impl BundleSpec for VehicleBundleSpec {
             VehicleType::Yacht => &config.vehicles.yacht,
         };
 
-        // Apply overrides with validation
-        let max_speed = self
-            .max_speed_override
-            .unwrap_or(vehicle_config.max_speed)
-            .clamp(10.0, config.physics.max_velocity);
+        // Bug #4: Apply overrides with safe clamp validation
+        let max_speed = {
+            let speed = self.max_speed_override.unwrap_or(vehicle_config.max_speed);
+            if 10.0 <= config.physics.max_velocity {
+                speed.clamp(10.0, config.physics.max_velocity)
+            } else {
+                error!(
+                    "Invalid max_velocity bounds (10.0 > {}), using fallback",
+                    config.physics.max_velocity
+                );
+                speed.clamp(10.0, 500.0)
+            }
+        };
 
-        let mass = self
-            .mass_override
-            .unwrap_or(vehicle_config.mass)
-            .clamp(config.physics.min_mass, config.physics.max_mass);
+        let mass = {
+            let m = self.mass_override.unwrap_or(vehicle_config.mass);
+            if config.physics.min_mass <= config.physics.max_mass {
+                m.clamp(config.physics.min_mass, config.physics.max_mass)
+            } else {
+                error!(
+                    "Invalid mass bounds ({} > {}), using fallback",
+                    config.physics.min_mass, config.physics.max_mass
+                );
+                m.clamp(1.0, 10000.0)
+            }
+        };
 
         // Create validated transform
-        let transform = Transform::from_translation(self.position.clamp(
-            Vec3::splat(config.physics.min_world_coord),
-            Vec3::splat(config.physics.max_world_coord),
-        ));
+        let transform = {
+            let pos = if config.physics.min_world_coord <= config.physics.max_world_coord {
+                self.position.clamp(
+                    Vec3::splat(config.physics.min_world_coord),
+                    Vec3::splat(config.physics.max_world_coord),
+                )
+            } else {
+                error!(
+                    "Invalid world coord bounds ({} > {}), using fallback",
+                    config.physics.min_world_coord, config.physics.max_world_coord
+                );
+                self.position
+                    .clamp(Vec3::splat(-5000.0), Vec3::splat(5000.0))
+            };
+            Transform::from_translation(pos)
+        };
 
         // Build bundle with configuration
         VehicleBundle {
@@ -266,10 +300,22 @@ impl BundleSpec for NPCBundleSpec {
         let _height = self.height.clamp(0.5, 3.0);
         let build = self.build.clamp(0.3, 2.0);
 
-        let transform = Transform::from_translation(self.position.clamp(
-            Vec3::splat(config.physics.min_world_coord),
-            Vec3::splat(config.physics.max_world_coord),
-        ));
+        let transform = {
+            let pos = if config.physics.min_world_coord <= config.physics.max_world_coord {
+                self.position.clamp(
+                    Vec3::splat(config.physics.min_world_coord),
+                    Vec3::splat(config.physics.max_world_coord),
+                )
+            } else {
+                error!(
+                    "Invalid world coord bounds ({} > {}), using fallback",
+                    config.physics.min_world_coord, config.physics.max_world_coord
+                );
+                self.position
+                    .clamp(Vec3::splat(-5000.0), Vec3::splat(5000.0))
+            };
+            Transform::from_translation(pos)
+        };
 
         NPCBundle {
             npc_marker: NPCState {
@@ -360,17 +406,40 @@ impl BundleSpec for BuildingBundleSpec {
     type Bundle = BuildingBundle;
 
     fn create_bundle(self, config: &GameConfig) -> Self::Bundle {
-        // Validate and clamp size
-        let size = Vec3::new(
-            self.size.x.clamp(1.0, config.physics.max_collider_size),
-            self.size.y.clamp(1.0, config.physics.max_collider_size),
-            self.size.z.clamp(1.0, config.physics.max_collider_size),
-        );
+        // Bug #4: Validate and clamp size with safe bounds check
+        let size = {
+            let max_size = if config.physics.max_collider_size >= 1.0 {
+                config.physics.max_collider_size
+            } else {
+                error!(
+                    "Invalid max_collider_size ({}), using fallback 1000.0",
+                    config.physics.max_collider_size
+                );
+                1000.0
+            };
+            Vec3::new(
+                self.size.x.clamp(1.0, max_size),
+                self.size.y.clamp(1.0, max_size),
+                self.size.z.clamp(1.0, max_size),
+            )
+        };
 
-        let transform = Transform::from_translation(self.position.clamp(
-            Vec3::splat(config.physics.min_world_coord),
-            Vec3::splat(config.physics.max_world_coord),
-        ));
+        let transform = {
+            let pos = if config.physics.min_world_coord <= config.physics.max_world_coord {
+                self.position.clamp(
+                    Vec3::splat(config.physics.min_world_coord),
+                    Vec3::splat(config.physics.max_world_coord),
+                )
+            } else {
+                error!(
+                    "Invalid world coord bounds ({} > {}), using fallback",
+                    config.physics.min_world_coord, config.physics.max_world_coord
+                );
+                self.position
+                    .clamp(Vec3::splat(-5000.0), Vec3::splat(5000.0))
+            };
+            Transform::from_translation(pos)
+        };
 
         BuildingBundle {
             building_marker: Building {
@@ -450,19 +519,40 @@ impl BundleSpec for PhysicsBundleSpec {
     type Bundle = PhysicsBundle;
 
     fn create_bundle(self, config: &GameConfig) -> Self::Bundle {
-        // Validate and clamp mass
-        let mass = self
-            .mass
-            .clamp(config.physics.min_mass, config.physics.max_mass);
+        // Bug #4: Validate and clamp mass with safe bounds check
+        let mass = {
+            if config.physics.min_mass <= config.physics.max_mass {
+                self.mass
+                    .clamp(config.physics.min_mass, config.physics.max_mass)
+            } else {
+                error!(
+                    "Invalid mass bounds ({} > {}), using fallback",
+                    config.physics.min_mass, config.physics.max_mass
+                );
+                self.mass.clamp(1.0, 10000.0)
+            }
+        };
 
         // Validate and clamp friction/restitution
         let friction = self.friction.clamp(0.0, 2.0);
         let restitution = self.restitution.clamp(0.0, 1.0);
 
-        let transform = Transform::from_translation(self.position.clamp(
-            Vec3::splat(config.physics.min_world_coord),
-            Vec3::splat(config.physics.max_world_coord),
-        ));
+        let transform = {
+            let pos = if config.physics.min_world_coord <= config.physics.max_world_coord {
+                self.position.clamp(
+                    Vec3::splat(config.physics.min_world_coord),
+                    Vec3::splat(config.physics.max_world_coord),
+                )
+            } else {
+                error!(
+                    "Invalid world coord bounds ({} > {}), using fallback",
+                    config.physics.min_world_coord, config.physics.max_world_coord
+                );
+                self.position
+                    .clamp(Vec3::splat(-5000.0), Vec3::splat(5000.0))
+            };
+            Transform::from_translation(pos)
+        };
 
         // Create collider based on shape
         let collider = match self.collider_shape {

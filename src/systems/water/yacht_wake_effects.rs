@@ -1,6 +1,7 @@
 use crate::components::water::{Yacht, YachtState};
 use crate::util::transform_utils::horizontal_forward;
 use bevy::prelude::*;
+use bevy::render::view::visibility::VisibilityRange;
 use bevy_hanabi::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -215,6 +216,12 @@ pub fn spawn_or_update_wake_foam(
                         scale: Vec3::new(width, 1.0, 1.0),
                     },
                     WakeFoam,
+                    // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
+                    VisibilityRange {
+                        start_margin: 0.0..0.0,
+                        end_margin: 900.0..1100.0,
+                        use_aabb: false,
+                    },
                 ));
             });
         }
@@ -248,6 +255,12 @@ pub fn spawn_bow_splash(
                     ParticleEffect::new(effects.bow_splash.clone()),
                     Transform::from_translation(Vec3::new(0.0, 0.6, 29.0)),
                     BowSplash,
+                    // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
+                    VisibilityRange {
+                        start_margin: 0.0..0.0,
+                        end_margin: 900.0..1100.0,
+                        use_aabb: false,
+                    },
                 ));
             });
         }
@@ -287,8 +300,28 @@ pub fn spawn_prop_wash(
                         scale: Vec3::new(width, 1.0, 1.0),
                     },
                     PropWash,
+                    // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
+                    VisibilityRange {
+                        start_margin: 0.0..0.0,
+                        end_margin: 900.0..1100.0,
+                        use_aabb: false,
+                    },
                 ));
             });
+        }
+    }
+}
+
+pub fn cleanup_yacht_particles_on_despawn(
+    mut commands: Commands,
+    mut removed_yachts: RemovedComponents<Yacht>,
+    children_query: Query<&Children>,
+) {
+    for yacht_entity in removed_yachts.read() {
+        if let Ok(children) = children_query.get(yacht_entity) {
+            for child in children.iter() {
+                commands.entity(child).despawn();
+            }
         }
     }
 }
