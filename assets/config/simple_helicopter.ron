@@ -2,12 +2,12 @@
 // Data-driven constants for helicopter movement (eliminates magic numbers)
 SimpleHelicopterSpecs(
     // Used for hover-hold vertical speed clamping
-    vertical_speed: 15.0,       // Up/down movement speed (m/s)
+    vertical_speed: 150.0,       // Up/down movement speed (m/s)
     
     // Rotation rates (direct angular velocity control)
-    yaw_rate: 2.2,             // Rotation around Y axis (rad/s) - snappier for keyboard
-    pitch_rate: 1.3,           // Forward/backward tilt (rad/s) - faster response
-    roll_rate: 1.3,            // Side tilt (rad/s) - faster response
+    yaw_rate: 9.0,             // Rotation around Y axis (rad/s) - snappier for keyboard
+    pitch_rate: 7.0,           // Forward/backward tilt (rad/s) - faster response
+    roll_rate: 7.0,            // Side tilt (rad/s) - faster response
     
     // Physics smoothing
     angular_lerp_factor: 12.0,  // Angular velocity smoothing rate - crisp keyboard feel (~0.08s)
@@ -24,8 +24,8 @@ SimpleHelicopterSpecs(
     max_lift_margin_g: 1.7,     // Maximum lift in G-forces
     
     // GTA-style direct thrust (replaces cyclic tilt)
-    forward_thrust: 35000.0,    // Forward/backward thrust force (N)
-    strafe_thrust: 28000.0,     // Left/right strafe thrust force (N)
+    forward_thrust: 160000.0,    // Forward/backward thrust force (N)
+    strafe_thrust: 130000.0,     // Left/right strafe thrust force (N)
     
     // Cosmetic visual tilt (GTA-style feedback)
     visual_tilt_pitch_max: 15.0, // Max forward/back tilt angle (degrees)
