@@ -309,6 +309,7 @@ impl VehicleFactory {
                 ExternalForce::default(),
                 RotorWash,
                 crate::components::unified_water::CurrentWaterRegion::default(),
+                Ccd::enabled(),
                 Damping {
                     linear_damping: self.config.vehicles.helicopter.linear_damping,
                     angular_damping: self.config.vehicles.helicopter.angular_damping,
@@ -881,6 +882,15 @@ impl VehicleFactory {
                     linear_damping: yacht_config.linear_damping,
                     angular_damping: yacht_config.angular_damping,
                 },
+                AdditionalMassProperties::Mass(yacht_config.mass),
+                Friction {
+                    coefficient: self.config.physics.ground_friction,
+                    combine_rule: CoefficientCombineRule::Min,
+                },
+                Restitution {
+                    coefficient: 0.0,
+                    combine_rule: CoefficientCombineRule::Min,
+                },
                 MovementTracker::new(position, 12.0),
                 Name::new("Superyacht"),
             ))
@@ -916,6 +926,23 @@ impl VehicleFactory {
             VisibleChildBundle::default(),
             yacht_visibility(),
             Name::new("Main Deck"),
+        ));
+
+        // Deck collision plate - physical surface for helicopter landing
+        // CRITICAL: Exact parity with DeckWalkVolume dimensions (9.0 × 0.02 × 24.8 at y=4.0)
+        commands.spawn((
+            Transform::from_xyz(0.0, 4.0, 0.0),
+            Collider::cuboid(9.0, 0.02, 24.8),
+            Friction {
+                coefficient: self.config.physics.ground_friction,
+                combine_rule: CoefficientCombineRule::Min,
+            },
+            Restitution {
+                coefficient: 0.0,
+                combine_rule: CoefficientCombineRule::Min,
+            },
+            ChildOf(vehicle_entity),
+            Name::new("DeckCollisionPlate"),
         ));
 
         // Helipad markings (flat layered decals on deck surface at y=4.0)
@@ -1271,7 +1298,7 @@ impl VehicleFactory {
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
-                Name::new(format!("Flag Stripe {}", i)),
+                Name::new(format!("Flag Stripe {i}")),
             ));
         }
 

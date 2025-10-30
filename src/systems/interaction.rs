@@ -15,7 +15,7 @@ fn transfer_to_vehicle(
     commands: &mut Commands,
     player_entity: Entity,
     vehicle_entity: Entity,
-    control_state: Option<&ControlState>,
+    _control_state: Option<&ControlState>,
     player_controlled: Option<&PlayerControlled>,
     vehicle_type: VehicleControlType,
     _vehicle_name: &str,
@@ -39,12 +39,9 @@ fn transfer_to_vehicle(
         .insert(ChildOf(vehicle_entity));
 
     // Transfer control components to vehicle
+    // CRITICAL: Insert fresh ControlState to avoid carrying over previous vehicle's inputs
     let mut vehicle_commands = commands.entity(vehicle_entity);
-    if let Some(control_state) = control_state {
-        vehicle_commands.insert(control_state.clone());
-    } else {
-        vehicle_commands.insert(ControlState::default());
-    }
+    vehicle_commands.insert(ControlState::default());
 
     if player_controlled.is_some() {
         vehicle_commands.insert(PlayerControlled);
@@ -226,7 +223,7 @@ pub fn interaction_system(
                 player_entity,
                 player_transform,
                 _,
-                control_state,
+                _control_state,
                 player_controlled,
                 _vehicle_control_type,
                 human_animation,
@@ -279,12 +276,9 @@ pub fn interaction_system(
                 commands.entity(player_entity).insert(ChildOf(entity));
 
                 // Transfer control components to yacht
+                // CRITICAL: Insert fresh ControlState to avoid carrying over swimming/walking inputs
                 let mut yacht_commands = commands.entity(entity);
-                if let Some(control_state) = control_state {
-                    yacht_commands.insert(control_state.clone());
-                } else {
-                    yacht_commands.insert(ControlState::default());
-                }
+                yacht_commands.insert(ControlState::default());
 
                 if player_controlled.is_some() {
                     yacht_commands.insert(PlayerControlled);
