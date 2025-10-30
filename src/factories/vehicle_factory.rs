@@ -909,7 +909,7 @@ impl VehicleFactory {
         ));
 
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(18.0, 1.0, 40.0))),
+            Mesh3d(meshes.add(Cuboid::new(18.0, 0.8, 40.0))),
             MeshMaterial3d(deck_material.clone()),
             Transform::from_xyz(0.0, 3.5, 0.0),
             ChildOf(vehicle_entity),
@@ -944,7 +944,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cylinder::new(5.4, 0.02))),
             MeshMaterial3d(deck_gray.clone()),
-            Transform::from_xyz(0.0, 4.05, 10.0),
+            Transform::from_xyz(0.0, 4.0, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -955,7 +955,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cylinder::new(5.2, 0.015))),
             MeshMaterial3d(helipad_white.clone()),
-            Transform::from_xyz(0.0, 4.06, 10.0),
+            Transform::from_xyz(0.0, 4.01, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -966,7 +966,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cylinder::new(4.4, 0.018))),
             MeshMaterial3d(deck_gray.clone()),
-            Transform::from_xyz(0.0, 4.062, 10.0),
+            Transform::from_xyz(0.0, 4.012, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -977,7 +977,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(0.35, 0.02, 2.2))),
             MeshMaterial3d(helipad_red.clone()),
-            Transform::from_xyz(-0.55, 4.07, 10.0),
+            Transform::from_xyz(-0.55, 4.02, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -988,7 +988,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(0.35, 0.02, 2.2))),
             MeshMaterial3d(helipad_red.clone()),
-            Transform::from_xyz(0.55, 4.07, 10.0),
+            Transform::from_xyz(0.55, 4.02, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -999,7 +999,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(1.5, 0.02, 0.35))),
             MeshMaterial3d(helipad_red),
-            Transform::from_xyz(0.0, 4.07, 10.0),
+            Transform::from_xyz(0.0, 4.02, 10.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -1112,7 +1112,7 @@ impl VehicleFactory {
 
         commands.spawn((
             Transform::from_xyz(0.0, 4.0, 0.0),
-            Collider::cuboid(8.5, 0.02, 19.0),
+            Collider::cuboid(9.0, 0.02, 24.8),
             Sensor,
             CollisionGroups::new(
                 self.config.physics.vehicle_group,
@@ -1209,55 +1209,81 @@ impl VehicleFactory {
             Name::new("Rudder"),
         ));
 
-        // BRIDGE/SUPERSTRUCTURE (Command center with windows)
-        let bridge_material = materials.add(StandardMaterial {
-            base_color: Color::srgb(0.9, 0.9, 0.92),
-            metallic: 0.2,
-            perceptual_roughness: 0.6,
-            ..default()
-        });
-
-        let window_material = materials.add(StandardMaterial {
-            base_color: Color::srgba(0.2, 0.3, 0.4, 0.7),
+        // AMERICAN FLAG POLE (Stern flagpole)
+        let pole_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.9, 0.9, 0.95),
             metallic: 0.8,
-            perceptual_roughness: 0.1,
-            alpha_mode: bevy::prelude::AlphaMode::Blend,
+            perceptual_roughness: 0.2,
             ..default()
         });
 
+        // Flag pole
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(8.0, 2.5, 14.0))),
-            MeshMaterial3d(bridge_material.clone()),
-            Transform::from_xyz(0.0, 4.25, -15.0),
+            Mesh3d(meshes.add(Cylinder::new(0.08, 8.0))),
+            MeshMaterial3d(pole_material.clone()),
+            Transform::from_xyz(0.0, 8.0, -28.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
-            Name::new("Bridge Structure"),
+            Name::new("Flag Pole"),
         ));
 
-        for x in [-2.5, 2.5] {
+        // American flag (red and white stripes with blue canton)
+        let flag_red = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.7, 0.1, 0.1),
+            metallic: 0.1,
+            perceptual_roughness: 0.8,
+            ..default()
+        });
+
+        let flag_white = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.95, 0.95, 0.95),
+            metallic: 0.0,
+            perceptual_roughness: 0.9,
+            ..default()
+        });
+
+        let flag_blue = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.1, 0.15, 0.4),
+            metallic: 0.0,
+            perceptual_roughness: 0.8,
+            ..default()
+        });
+
+        // Flag base (red stripes background) - thin vertical flag hanging from pole
+        commands.spawn((
+            Mesh3d(meshes.add(Cuboid::new(0.02, 2.0, 3.0))),
+            MeshMaterial3d(flag_red.clone()),
+            Transform::from_xyz(0.0, 11.0, -26.5),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            yacht_visibility(),
+            Name::new("Flag Base"),
+        ));
+
+        // White stripes (4 visible horizontal stripes)
+        for i in 0..4 {
+            let stripe_y = 11.0 + (i as f32 - 1.5) * 0.31;
             commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(1.8, 1.8, 0.05))),
-                MeshMaterial3d(window_material.clone()),
-                Transform::from_xyz(x, 4.25, -8.0),
+                Mesh3d(meshes.add(Cuboid::new(0.03, 0.15, 3.0))),
+                MeshMaterial3d(flag_white.clone()),
+                Transform::from_xyz(0.0, stripe_y, -26.5),
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
-                Name::new(format!(
-                    "Bridge Window {}",
-                    if x < 0.0 { "Port" } else { "Starboard" }
-                )),
+                Name::new(format!("Flag Stripe {}", i)),
             ));
         }
 
+        // Blue canton (upper left corner)
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(6.0, 1.8, 0.05))),
-            MeshMaterial3d(window_material.clone()),
-            Transform::from_xyz(0.0, 4.25, -22.0),
+            Mesh3d(meshes.add(Cuboid::new(0.04, 0.8, 1.2))),
+            MeshMaterial3d(flag_blue),
+            Transform::from_xyz(0.0, 11.4, -27.4),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
-            Name::new("Bridge Front Windscreen"),
+            Name::new("Flag Canton"),
         ));
 
         // NAVIGATION LIGHTS (Port red, Starboard green, Stern white)

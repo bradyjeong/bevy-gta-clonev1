@@ -106,21 +106,22 @@ pub fn yacht_exit_system(
             if let Ok((player_entity, mut player_transform, mut player_visibility)) =
                 player_query.single_mut()
             {
-                // Remove control from yacht
+                // Remove control from yacht FIRST
                 commands
                     .entity(yacht_entity)
                     .remove::<PlayerControlled>()
                     .insert(ControlState::default());
 
-                *player_visibility = Visibility::Visible;
-
-                // Transfer control to player
+                // Transfer control to player IMMEDIATELY (atomic swap)
                 commands
                     .entity(player_entity)
                     .insert(PlayerControlled)
                     .insert(ControlState::default())
                     .remove::<InCar>()
                     .remove::<ChildOf>();
+
+                // Make player visible AFTER control transfer
+                *player_visibility = Visibility::Visible;
 
                 match exit_point.kind {
                     ExitPointKind::Deck => {
