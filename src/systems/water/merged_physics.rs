@@ -6,18 +6,25 @@ use bevy_rapier3d::prelude::*;
 /// Update cached water region references for entities
 /// Only updates when entity moves out of current cached region (rare operation)
 /// PERFORMANCE: Filtered to only check entities that moved or are newly added
+/// NOW SUPPORTS: Player entities (for swim detection) and entities with WaterBodyId
 #[allow(clippy::type_complexity)]
 pub fn update_water_region_cache(
     mut query: Query<
         (Entity, &GlobalTransform, Option<&mut CurrentWaterRegion>),
-        (
-            With<WaterBodyId>,
-            Or<(
-                Changed<GlobalTransform>,
-                Added<CurrentWaterRegion>,
-                Added<WaterBodyId>,
-            )>,
-        ),
+        Or<(
+            (
+                With<WaterBodyId>,
+                Or<(
+                    Changed<GlobalTransform>,
+                    Added<CurrentWaterRegion>,
+                    Added<WaterBodyId>,
+                )>,
+            ),
+            (
+                With<crate::components::Player>,
+                Or<(Changed<GlobalTransform>, Added<CurrentWaterRegion>)>,
+            ),
+        )>,
     >,
     water_regions: Query<(Entity, &UnifiedWaterBody)>,
     mut commands: Commands,
