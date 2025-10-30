@@ -308,6 +308,7 @@ impl VehicleFactory {
                 HelicopterRuntime::default(),
                 ExternalForce::default(),
                 RotorWash,
+                crate::components::unified_water::CurrentWaterRegion::default(),
                 Damping {
                     linear_damping: self.config.vehicles.helicopter.linear_damping,
                     angular_damping: self.config.vehicles.helicopter.angular_damping,
@@ -874,6 +875,7 @@ impl VehicleFactory {
                 WaterBodyId,
                 YachtSpecsHandle(yacht_specs_handle),
                 ExternalForce::default(),
+                crate::components::unified_water::CurrentWaterRegion::default(),
                 Ccd::enabled(),
                 Damping {
                     linear_damping: yacht_config.linear_damping,

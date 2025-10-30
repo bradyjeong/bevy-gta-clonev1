@@ -119,6 +119,7 @@ impl Plugin for GameCorePlugin {
             .add_systems(
                 FixedUpdate,
                 (
+                    crate::systems::movement::initialize_movement_tracker,
                     crate::systems::physics::ground_detection_system
                         .before(crate::systems::movement::car_movement)
                         .before(PhysicsSet::SyncBackend),

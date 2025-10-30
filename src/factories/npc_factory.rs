@@ -116,6 +116,7 @@ impl NPCFactory {
             self.visibility_range(),
             HumanMovement::default(),
             HumanAnimation::default(),
+            crate::components::unified_water::CurrentWaterRegion::default(),
         ));
 
         let npc_entity = entity.id();
@@ -190,6 +191,7 @@ impl NPCFactory {
             self.visibility_range(),
             HumanMovement::default(),
             HumanAnimation::default(),
+            crate::components::unified_water::CurrentWaterRegion::default(),
         ));
 
         let npc_entity = entity.id();

@@ -68,6 +68,147 @@ pub struct VehicleControlsConfig {
     pub vehicle_types: HashMap<VehicleControlType, VehicleControls>,
 }
 
+impl Default for VehicleControlsConfig {
+    fn default() -> Self {
+        use AssetControlAction as ACA;
+        use KeyCode as KC;
+
+        let mut vehicle_types = HashMap::new();
+
+        // Walking controls
+        vehicle_types.insert(
+            VehicleControlType::Walking,
+            VehicleControls {
+                name: "Walking".to_string(),
+                description: "Default walking controls".to_string(),
+                primary_controls: vec![
+                    AssetControlBinding { action: ACA::Forward, key: KC::ArrowUp, description: "Move forward".to_string() },
+                    AssetControlBinding { action: ACA::Backward, key: KC::ArrowDown, description: "Move backward".to_string() },
+                    AssetControlBinding { action: ACA::TurnLeft, key: KC::ArrowLeft, description: "Turn left".to_string() },
+                    AssetControlBinding { action: ACA::TurnRight, key: KC::ArrowRight, description: "Turn right".to_string() },
+                ],
+                secondary_controls: vec![],
+                meta_controls: vec![
+                    AssetControlBinding { action: ACA::Run, key: KC::ShiftLeft, description: "Sprint".to_string() },
+                    AssetControlBinding { action: ACA::Interact, key: KC::KeyF, description: "Interact".to_string() },
+                ],
+            },
+        );
+
+        // Car controls
+        vehicle_types.insert(
+            VehicleControlType::Car,
+            VehicleControls {
+                name: "Car".to_string(),
+                description: "Default car controls".to_string(),
+                primary_controls: vec![
+                    AssetControlBinding { action: ACA::Forward, key: KC::ArrowUp, description: "Accelerate".to_string() },
+                    AssetControlBinding { action: ACA::Backward, key: KC::ArrowDown, description: "Brake/Reverse".to_string() },
+                    AssetControlBinding { action: ACA::TurnLeft, key: KC::ArrowLeft, description: "Steer left".to_string() },
+                    AssetControlBinding { action: ACA::TurnRight, key: KC::ArrowRight, description: "Steer right".to_string() },
+                ],
+                secondary_controls: vec![
+                    AssetControlBinding { action: ACA::Turbo, key: KC::Space, description: "Turbo boost".to_string() },
+                ],
+                meta_controls: vec![
+                    AssetControlBinding { action: ACA::Interact, key: KC::KeyF, description: "Exit vehicle".to_string() },
+                ],
+            },
+        );
+
+        // Helicopter controls
+        vehicle_types.insert(
+            VehicleControlType::Helicopter,
+            VehicleControls {
+                name: "Helicopter".to_string(),
+                description: "Default helicopter controls".to_string(),
+                primary_controls: vec![
+                    AssetControlBinding { action: ACA::PitchDown, key: KC::ArrowUp, description: "Pitch forward".to_string() },
+                    AssetControlBinding { action: ACA::PitchUp, key: KC::ArrowDown, description: "Pitch back".to_string() },
+                    AssetControlBinding { action: ACA::YawLeft, key: KC::ArrowLeft, description: "Yaw left".to_string() },
+                    AssetControlBinding { action: ACA::YawRight, key: KC::ArrowRight, description: "Yaw right".to_string() },
+                    AssetControlBinding { action: ACA::VerticalUp, key: KC::ShiftLeft, description: "Ascend".to_string() },
+                    AssetControlBinding { action: ACA::VerticalDown, key: KC::ControlLeft, description: "Descend".to_string() },
+                ],
+                secondary_controls: vec![],
+                meta_controls: vec![
+                    AssetControlBinding { action: ACA::Interact, key: KC::KeyF, description: "Exit helicopter".to_string() },
+                ],
+            },
+        );
+
+        // F16 controls
+        vehicle_types.insert(
+            VehicleControlType::F16,
+            VehicleControls {
+                name: "F16".to_string(),
+                description: "Default F16 controls".to_string(),
+                primary_controls: vec![
+                    AssetControlBinding { action: ACA::PitchDown, key: KC::ArrowUp, description: "Pitch down".to_string() },
+                    AssetControlBinding { action: ACA::PitchUp, key: KC::ArrowDown, description: "Pitch up".to_string() },
+                    AssetControlBinding { action: ACA::RollLeft, key: KC::ArrowLeft, description: "Roll left".to_string() },
+                    AssetControlBinding { action: ACA::RollRight, key: KC::ArrowRight, description: "Roll right".to_string() },
+                    AssetControlBinding { action: ACA::ThrottleUp, key: KC::KeyW, description: "Increase throttle".to_string() },
+                    AssetControlBinding { action: ACA::ThrottleDown, key: KC::KeyS, description: "Decrease throttle".to_string() },
+                    AssetControlBinding { action: ACA::YawLeft, key: KC::KeyA, description: "Yaw left".to_string() },
+                    AssetControlBinding { action: ACA::YawRight, key: KC::KeyD, description: "Yaw right".to_string() },
+                ],
+                secondary_controls: vec![
+                    AssetControlBinding { action: ACA::Afterburner, key: KC::Space, description: "Afterburner".to_string() },
+                ],
+                meta_controls: vec![
+                    AssetControlBinding { action: ACA::Interact, key: KC::KeyF, description: "Exit F16".to_string() },
+                ],
+            },
+        );
+
+        // Yacht controls
+        vehicle_types.insert(
+            VehicleControlType::Yacht,
+            VehicleControls {
+                name: "Yacht".to_string(),
+                description: "Default yacht controls".to_string(),
+                primary_controls: vec![
+                    AssetControlBinding { action: ACA::Forward, key: KC::KeyI, description: "Forward".to_string() },
+                    AssetControlBinding { action: ACA::Backward, key: KC::KeyK, description: "Reverse".to_string() },
+                    AssetControlBinding { action: ACA::TurnLeft, key: KC::KeyJ, description: "Turn left".to_string() },
+                    AssetControlBinding { action: ACA::TurnRight, key: KC::KeyL, description: "Turn right".to_string() },
+                ],
+                secondary_controls: vec![
+                    AssetControlBinding { action: ACA::Turbo, key: KC::Space, description: "Boost".to_string() },
+                ],
+                meta_controls: vec![
+                    AssetControlBinding { action: ACA::Interact, key: KC::KeyF, description: "Exit yacht".to_string() },
+                    AssetControlBinding { action: ACA::Run, key: KC::ShiftLeft, description: "Exit to water".to_string() },
+                ],
+            },
+        );
+
+        // Swimming controls
+        vehicle_types.insert(
+            VehicleControlType::Swimming,
+            VehicleControls {
+                name: "Swimming".to_string(),
+                description: "Default swimming controls".to_string(),
+                primary_controls: vec![
+                    AssetControlBinding { action: ACA::Forward, key: KC::ArrowUp, description: "Swim forward".to_string() },
+                    AssetControlBinding { action: ACA::Backward, key: KC::ArrowDown, description: "Swim backward".to_string() },
+                    AssetControlBinding { action: ACA::TurnLeft, key: KC::ArrowLeft, description: "Turn left".to_string() },
+                    AssetControlBinding { action: ACA::TurnRight, key: KC::ArrowRight, description: "Turn right".to_string() },
+                    AssetControlBinding { action: ACA::VerticalUp, key: KC::ShiftLeft, description: "Surface".to_string() },
+                    AssetControlBinding { action: ACA::VerticalDown, key: KC::ControlLeft, description: "Dive".to_string() },
+                ],
+                secondary_controls: vec![],
+                meta_controls: vec![
+                    AssetControlBinding { action: ACA::Interact, key: KC::KeyF, description: "Board yacht".to_string() },
+                ],
+            },
+        );
+
+        Self { vehicle_types }
+    }
+}
+
 impl VehicleControls {
     /// Get all control bindings for this vehicle
     pub fn get_all_bindings(&self) -> Vec<&AssetControlBinding> {
@@ -189,8 +330,11 @@ pub fn process_loaded_controls_system(
                 }
             }
             bevy::asset::LoadState::Failed(err) => {
-                error!("Failed to load vehicle controls: {:?}", err);
+                error!("Failed to load vehicle controls: {:?} - using default fallback", err);
+                // Install default fallback controls to prevent unplayable game
+                loaded_controls.config = Some(VehicleControlsConfig::default());
                 loaded_controls.loading = false;
+                commands.remove_resource::<VehicleControlsHandle>();
             }
             _ => {}
         }

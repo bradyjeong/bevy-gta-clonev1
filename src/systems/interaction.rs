@@ -236,60 +236,64 @@ pub fn interaction_system(
             };
 
             // OPTIMIZED: Use unified query with distance_squared for yachts
-            for (entity, gt, _car, _helicopter, _f16, yacht) in unified_vehicle_query.iter() {
-                if yacht.is_none() {
-                    continue;
-                }
-
-                let dist_sq = player_transform
-                    .translation
-                    .distance_squared(gt.translation());
-
-                if dist_sq < 1225.0 {
-                    // 35.0²
-
-                    // Queue atomic ActiveEntity transfer
-                    queue_active_transfer(&mut commands, player_entity, entity, &time);
-
-                    // CRITICAL: Clean up swimming state components when entering from water
-                    commands
-                        .entity(player_entity)
-                        .remove::<PlayerControlled>()
-                        .remove::<ControlState>()
-                        .remove::<VehicleControlType>()
-                        .remove::<Swimming>()
-                        .remove::<ProneRotation>()
-                        .remove::<GravityScale>()
-                        .remove::<Damping>()
-                        .insert(Visibility::Hidden)
-                        .insert(RigidBodyDisabled);
-
-                    // Reset swim animation flag
-                    if let Some(mut anim) = human_animation {
-                        anim.is_swimming = false;
-                    }
-
-                    // Make player a child of the yacht
-                    commands.entity(player_entity).insert(ChildOf(entity));
-
-                    // Transfer control components to yacht
-                    let mut yacht_commands = commands.entity(entity);
-                    if let Some(control_state) = control_state {
-                        yacht_commands.insert(control_state.clone());
+            // Find closest yacht first to prevent multiple transfer requests
+            let closest_yacht = unified_vehicle_query
+                .iter()
+                .filter(|(_, _, _, _, _, yacht)| yacht.is_some())
+                .filter_map(|(entity, gt, _, _, _, _)| {
+                    let dist_sq = player_transform
+                        .translation
+                        .distance_squared(gt.translation());
+                    if dist_sq < 1225.0 {
+                        // 35.0²
+                        Some((entity, dist_sq))
                     } else {
-                        yacht_commands.insert(ControlState::default());
+                        None
                     }
+                })
+                .min_by(|a, b| a.1.total_cmp(&b.1));
 
-                    if player_controlled.is_some() {
-                        yacht_commands.insert(PlayerControlled);
-                    }
+            if let Some((entity, _)) = closest_yacht {
+                // Queue atomic ActiveEntity transfer
+                queue_active_transfer(&mut commands, player_entity, entity, &time);
 
-                    yacht_commands.insert(VehicleControlType::Yacht);
-                    commands.entity(player_entity).insert(InCar(entity));
+                // CRITICAL: Clean up swimming state components when entering from water
+                commands
+                    .entity(player_entity)
+                    .remove::<PlayerControlled>()
+                    .remove::<ControlState>()
+                    .remove::<VehicleControlType>()
+                    .remove::<Swimming>()
+                    .remove::<ProneRotation>()
+                    .remove::<GravityScale>()
+                    .remove::<Damping>()
+                    .insert(Visibility::Hidden)
+                    .insert(RigidBodyDisabled);
 
-                    state.set(GameState::Driving);
-                    break;
+                // Reset swim animation flag
+                if let Some(mut anim) = human_animation {
+                    anim.is_swimming = false;
                 }
+
+                // Make player a child of the yacht
+                commands.entity(player_entity).insert(ChildOf(entity));
+
+                // Transfer control components to yacht
+                let mut yacht_commands = commands.entity(entity);
+                if let Some(control_state) = control_state {
+                    yacht_commands.insert(control_state.clone());
+                } else {
+                    yacht_commands.insert(ControlState::default());
+                }
+
+                if player_controlled.is_some() {
+                    yacht_commands.insert(PlayerControlled);
+                }
+
+                yacht_commands.insert(VehicleControlType::Yacht);
+                commands.entity(player_entity).insert(InCar(entity));
+
+                state.set(GameState::Driving);
             }
         }
         GameState::Driving => {

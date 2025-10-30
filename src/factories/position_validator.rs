@@ -82,9 +82,14 @@ impl PositionValidator {
                 env.ocean_floor_depth
             };
 
-        // Cache for future use (following AGENT.MD performance guidelines)
+        // Cache for future use with LRU eviction to prevent performance spikes
         if self.position_cache.len() >= self.max_cache_size {
-            self.position_cache.clear();
+            // Remove oldest 20% of entries instead of clearing all
+            let remove_count = self.max_cache_size / 5;
+            let keys_to_remove: Vec<_> = self.position_cache.keys().take(remove_count).copied().collect();
+            for key in keys_to_remove {
+                self.position_cache.remove(&key);
+            }
         }
         self.position_cache.insert((grid_x, grid_z), ground_height);
         ground_height
