@@ -120,7 +120,7 @@ pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<Eff
 /// Clones the cached effect handle instead of creating a new effect asset.
 pub fn spawn_rotor_wash_particles(
     mut commands: Commands,
-    helicopter_query: Query<Entity, (With<Helicopter>, Without<RotorWashOf>)>,
+    helicopter_query: Query<Entity, Added<Helicopter>>,
     rotor_wash_effect: Res<RotorWashEffect>,
 ) {
     for heli_entity in helicopter_query.iter() {
@@ -223,13 +223,13 @@ pub fn update_rotor_wash_position_and_intensity(
 pub fn cleanup_rotor_wash_on_helicopter_despawn(
     mut commands: Commands,
     mut removed_helicopters: RemovedComponents<Helicopter>,
-    children_query: Query<&Children>,
+    particle_query: Query<(Entity, &RotorWashOf)>,
 ) {
-    // Simplified cleanup: particles are children and despawn automatically with parent
+    // Clean up rotor wash particles linked to despawned helicopters
     for removed_heli_entity in removed_helicopters.read() {
-        if let Ok(children) = children_query.get(removed_heli_entity) {
-            for child in children.iter() {
-                commands.entity(child).despawn();
+        for (particle_entity, rotor_wash_of) in particle_query.iter() {
+            if rotor_wash_of.0 == removed_heli_entity {
+                commands.entity(particle_entity).despawn();
             }
         }
     }

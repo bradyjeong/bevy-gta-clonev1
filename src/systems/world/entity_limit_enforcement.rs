@@ -70,7 +70,7 @@ pub fn enforce_entity_limits(
             .vehicle_entities
             .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
-        // Despawn oldest excess vehicles
+        // Despawn oldest excess vehicles (automatically recursive in Bevy 0.16)
         for i in 0..excess.min(entity_limits.vehicle_entities.len()) {
             if let Some((entity, _)) = entity_limits.vehicle_entities.get(i) {
                 commands.entity(*entity).despawn();
