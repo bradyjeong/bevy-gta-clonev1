@@ -1,5 +1,5 @@
 use crate::components::{
-    ControlState, Helicopter, HelicopterRuntime, RotorWash, SimpleHelicopterSpecs,
+    ActiveEntity, ControlState, Helicopter, HelicopterRuntime, RotorWash, SimpleHelicopterSpecs,
     SimpleHelicopterSpecsHandle,
 };
 use crate::constants::WorldEnvConfig;
@@ -41,6 +41,7 @@ type HelicopterStateQuery<'w, 's> = Query<
         &'static HelicopterRuntime,
         &'static ControlState,
         &'static SimpleHelicopterSpecsHandle,
+        Option<&'static ActiveEntity>,
     ),
     With<Helicopter>,
 >;
@@ -135,7 +136,7 @@ pub fn spawn_rotor_wash_particles(
             ParticleEffect::new(rotor_wash_effect.handle.clone()),
             {
                 let mut spawner = EffectSpawner::new(&SpawnerSettings::rate(50.0.into()));
-                spawner.active = true;
+                spawner.active = false; // Start inactive, will activate only for ActiveEntity helicopters
                 spawner
             },
             Transform::from_xyz(0.0, 0.0, 0.0),
@@ -163,9 +164,15 @@ pub fn update_rotor_wash_position_and_intensity(
     {
         let heli_entity = rotor_wash_of.0;
 
-        if let Ok((helicopter_transform, _velocity, runtime, control_state, specs_handle)) =
+        if let Ok((helicopter_transform, _velocity, runtime, control_state, specs_handle, is_active)) =
             helicopter_query.get(heli_entity)
         {
+            // Only update particles for the active helicopter to save CPU/GPU
+            if is_active.is_none() {
+                spawner.active = false;
+                continue;
+            }
+
             let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
                 spawner.active = false;
                 continue;

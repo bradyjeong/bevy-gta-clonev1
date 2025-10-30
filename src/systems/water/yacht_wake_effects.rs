@@ -1,3 +1,4 @@
+use crate::components::player::ActiveEntity;
 use crate::components::water::{Yacht, YachtState};
 use crate::util::transform_utils::horizontal_forward;
 use bevy::prelude::*;
@@ -186,7 +187,7 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
 
 pub fn spawn_or_update_wake_foam(
     mut commands: Commands,
-    yacht_q: Query<(&Velocity, Entity), With<Yacht>>,
+    yacht_q: Query<(&Velocity, Entity, Option<&ActiveEntity>), With<Yacht>>,
     foam_q: Query<Entity, With<WakeFoam>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -194,7 +195,14 @@ pub fn spawn_or_update_wake_foam(
         return;
     };
 
-    for (vel, yacht_e) in yacht_q.iter() {
+    for (vel, yacht_e, is_active) in yacht_q.iter() {
+        // Only spawn particles for the active yacht to save CPU/GPU
+        if is_active.is_none() {
+            for e in foam_q.iter() {
+                commands.entity(e).despawn();
+            }
+            continue;
+        }
         let speed = vel.linvel.length();
 
         if speed < 2.0 {
@@ -230,7 +238,7 @@ pub fn spawn_or_update_wake_foam(
 
 pub fn spawn_bow_splash(
     mut commands: Commands,
-    yacht_query: Query<(&Transform, &Velocity, Entity), With<Yacht>>,
+    yacht_query: Query<(&Transform, &Velocity, Entity, Option<&ActiveEntity>), With<Yacht>>,
     splash_query: Query<Entity, With<BowSplash>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -238,7 +246,14 @@ pub fn spawn_bow_splash(
         return;
     };
 
-    for (xf, vel, yacht_e) in yacht_query.iter() {
+    for (xf, vel, yacht_e, is_active) in yacht_query.iter() {
+        // Only spawn particles for the active yacht to save CPU/GPU
+        if is_active.is_none() {
+            for e in splash_query.iter() {
+                commands.entity(e).despawn();
+            }
+            continue;
+        }
         let fwd = horizontal_forward(xf);
         let fwd_speed = vel.linvel.dot(fwd).max(0.0);
 
@@ -269,7 +284,7 @@ pub fn spawn_bow_splash(
 
 pub fn spawn_prop_wash(
     mut commands: Commands,
-    yacht_query: Query<(&YachtState, &Velocity, Entity), With<Yacht>>,
+    yacht_query: Query<(&YachtState, &Velocity, Entity, Option<&ActiveEntity>), With<Yacht>>,
     wash_query: Query<Entity, With<PropWash>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -277,7 +292,14 @@ pub fn spawn_prop_wash(
         return;
     };
 
-    for (state, vel, yacht_e) in yacht_query.iter() {
+    for (state, vel, yacht_e, is_active) in yacht_query.iter() {
+        // Only spawn particles for the active yacht to save CPU/GPU
+        if is_active.is_none() {
+            for e in wash_query.iter() {
+                commands.entity(e).despawn();
+            }
+            continue;
+        }
         let throttle = state.throttle.abs();
         let speed = vel.linvel.length();
 
