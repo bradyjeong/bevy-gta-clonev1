@@ -66,12 +66,12 @@ pub mod unified_water;
 pub mod vehicles;
 pub mod water;
 pub mod water_material;
-pub mod water_new;
 pub mod world;
 
 pub mod control_state;
 pub mod dirty_flags;
 pub mod input_smoother;
+pub mod swimming_events;
 pub mod yacht_exit;
 
 pub mod debug;
@@ -90,9 +90,9 @@ pub use rotor_wash::RotorWash;
 
 pub use vehicles::{
     AircraftFlight, Car, CarWheelsConfig, F16, Grounded, HeliState, Helicopter, HelicopterRuntime,
-    HelicopterVisualBody, MainRotor, RotorBlurDisk, SimpleCarSpecs, SimpleCarSpecsHandle, SimpleF16Specs,
-    SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor,
-    VehicleHealth, VehicleLOD, VehicleRendering, VehicleState, VehicleType, VisualRig,
+    HelicopterVisualBody, MainRotor, RotorBlurDisk, SimpleCarSpecs, SimpleCarSpecsHandle,
+    SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle,
+    TailRotor, VehicleHealth, VehicleLOD, VehicleRendering, VehicleState, VehicleType, VisualRig,
     VisualRigRoot, WheelMesh, WheelPos, WheelSteerPivot, WheelsRoot,
 };
 
@@ -105,10 +105,11 @@ pub use world::{
     RoadEntity, WorldBounds,
 };
 
-pub use unified_water::{CurrentWaterRegion, UnifiedWaterAsset, UnifiedWaterBody, WaterSurface};
+pub use unified_water::{
+    CurrentWaterRegion, TideConfig, UnifiedWaterAsset, UnifiedWaterBody, WaterSurface, WaveParams,
+};
 pub use water::{Boat, WaterBody, WaterWave, Yacht};
 pub use water_material::WaterMaterial;
-pub use water_new::{TideConfig, WaterRegion, WaterRegionAsset, WaveParams};
 
 // Visual and rendering components
 pub use effects::{
@@ -124,6 +125,7 @@ pub use dirty_flags::{DirtyFlagsMetrics, DirtyLOD, DirtyVisibility};
 pub use input_smoother::InputSmoother;
 pub use map::{MapCamera, MapConfig, MinimapUI, PlayerMapIcon};
 pub use movement_tracker::MovementTracker;
+pub use swimming_events::SwimmingEvent;
 pub use underwater_settings::UnderwaterSettings;
 pub use unified_vehicle::UnifiedVehicleSpecs;
 pub use yacht_exit::{

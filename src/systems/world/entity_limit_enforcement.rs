@@ -1,8 +1,8 @@
 use crate::components::world::EntityLimits;
 use crate::components::{Building, Car, F16, Helicopter, NPCState, Yacht};
+use bevy::log::info;
 #[cfg(feature = "debug-ui")]
 use bevy::log::warn;
-use bevy::log::info;
 use bevy::prelude::*;
 
 type VehicleFilter = Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>)>;

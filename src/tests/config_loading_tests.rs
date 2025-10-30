@@ -26,8 +26,10 @@ fn test_world_streaming_config_propagation() {
         ..Default::default()
     };
 
-    let mut game_config = GameConfig::default();
-    game_config.world_streaming = streaming_config.clone();
+    let mut game_config = GameConfig {
+        world_streaming: streaming_config.clone(),
+        ..Default::default()
+    };
     game_config.world.chunk_size = streaming_config.chunk_size;
     game_config.world.streaming_radius = streaming_config.streaming_radius;
     game_config.world.lod_distances = [
@@ -78,8 +80,10 @@ fn test_world_bounds_resource_from_config() {
         vehicle_spawn_half_size: 2000.0,
     };
 
-    let mut game_config = GameConfig::default();
-    game_config.world_bounds = bounds_config.clone();
+    let mut game_config = GameConfig {
+        world_bounds: bounds_config.clone(),
+        ..Default::default()
+    };
     game_config.world.map_size = bounds_config.world_half_size * 2.0;
 
     app.insert_resource(game_config.clone());
@@ -262,7 +266,7 @@ fn test_ron_file_parsing_world_streaming() {
             "assets"
         };
 
-    let path = format!("{}/config/world_streaming.ron", assets_base);
+    let path = format!("{assets_base}/config/world_streaming.ron");
     let contents =
         fs::read_to_string(&path).expect("world_streaming.ron should exist and be readable");
 
@@ -300,7 +304,7 @@ fn test_ron_file_parsing_world_bounds() {
             "assets"
         };
 
-    let path = format!("{}/config/world_bounds.ron", assets_base);
+    let path = format!("{assets_base}/config/world_bounds.ron");
     let contents =
         fs::read_to_string(&path).expect("world_bounds.ron should exist and be readable");
 
@@ -334,7 +338,7 @@ fn test_ron_file_parsing_world_config() {
             "assets"
         };
 
-    let path = format!("{}/config/world_config.ron", assets_base);
+    let path = format!("{assets_base}/config/world_config.ron");
     let contents =
         fs::read_to_string(&path).expect("world_config.ron should exist and be readable");
 
@@ -377,8 +381,10 @@ fn test_config_consistency_across_resources() {
         vehicle_spawn_half_size: 2000.0,
     };
 
-    let mut game_config = GameConfig::default();
-    game_config.world_bounds = bounds_config.clone();
+    let mut game_config = GameConfig {
+        world_bounds: bounds_config.clone(),
+        ..Default::default()
+    };
     game_config.world.map_size = world_half_size * 2.0;
 
     app.insert_resource(game_config.clone());
@@ -424,7 +430,7 @@ fn test_ron_file_parsing_simple_car() {
             "assets"
         };
 
-    let path = format!("{}/config/simple_car.ron", assets_base);
+    let path = format!("{assets_base}/config/simple_car.ron");
     let contents = fs::read_to_string(&path).expect("simple_car.ron should exist and be readable");
 
     let car_specs: SimpleCarSpecs =
@@ -457,7 +463,7 @@ fn test_ron_file_parsing_simple_helicopter() {
             "assets"
         };
 
-    let path = format!("{}/config/simple_helicopter.ron", assets_base);
+    let path = format!("{assets_base}/config/simple_helicopter.ron");
     let contents =
         fs::read_to_string(&path).expect("simple_helicopter.ron should exist and be readable");
 
@@ -491,7 +497,7 @@ fn test_ron_file_parsing_simple_f16() {
             "assets"
         };
 
-    let path = format!("{}/config/simple_f16.ron", assets_base);
+    let path = format!("{assets_base}/config/simple_f16.ron");
     let contents = fs::read_to_string(&path).expect("simple_f16.ron should exist and be readable");
 
     let f16_specs: SimpleF16Specs =
@@ -528,7 +534,7 @@ fn test_ron_file_parsing_simple_yacht() {
             "assets"
         };
 
-    let path = format!("{}/config/simple_yacht.ron", assets_base);
+    let path = format!("{assets_base}/config/simple_yacht.ron");
     let contents =
         fs::read_to_string(&path).expect("simple_yacht.ron should exist and be readable");
 
@@ -562,7 +568,7 @@ fn test_ron_file_parsing_vehicle_controls() {
             "assets"
         };
 
-    let path = format!("{}/config/vehicle_controls.ron", assets_base);
+    let path = format!("{assets_base}/config/vehicle_controls.ron");
     let contents =
         fs::read_to_string(&path).expect("vehicle_controls.ron should exist and be readable");
 
@@ -577,13 +583,11 @@ fn test_ron_file_parsing_vehicle_controls() {
     for (vehicle_type, controls) in &controls_config.vehicle_types {
         assert!(
             !controls.name.is_empty(),
-            "Vehicle {:?} should have a name",
-            vehicle_type
+            "Vehicle {vehicle_type:?} should have a name"
         );
         assert!(
             !controls.get_all_bindings().is_empty(),
-            "Vehicle {:?} should have at least one control binding",
-            vehicle_type
+            "Vehicle {vehicle_type:?} should have at least one control binding"
         );
     }
 }
@@ -597,7 +601,7 @@ fn test_ron_file_parsing_map_config() {
             "assets"
         };
 
-    let path = format!("{}/config/map.ron", assets_base);
+    let path = format!("{assets_base}/config/map.ron");
     let contents = fs::read_to_string(&path).expect("map.ron should exist and be readable");
 
     let map_config: MapConfig = ron::from_str(&contents).expect("map.ron should parse correctly");
@@ -619,7 +623,7 @@ fn test_ron_file_parsing_world_physics() {
             "assets"
         };
 
-    let path = format!("{}/config/world_physics.ron", assets_base);
+    let path = format!("{assets_base}/config/world_physics.ron");
     let contents =
         fs::read_to_string(&path).expect("world_physics.ron should exist and be readable");
 

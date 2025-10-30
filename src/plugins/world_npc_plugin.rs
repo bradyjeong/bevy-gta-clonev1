@@ -13,8 +13,10 @@ impl Plugin for WorldNpcPlugin {
             .add_systems(Startup, initialize_npc_assets)
             .add_systems(Update, spawn_new_npc_system)
             .add_systems(Update, simple_npc_movement)
-            .add_systems(Update, npc_animation_system.after(simple_npc_movement))
-            .add_systems(Update, log_cache_stats);
+            .add_systems(Update, npc_animation_system.after(simple_npc_movement));
+
+        #[cfg(feature = "debug-ui")]
+        app.add_systems(Update, log_cache_stats);
     }
 }
 
@@ -26,6 +28,7 @@ fn initialize_npc_assets(
     cache.initialize_common_assets(&mut meshes, &mut materials);
 }
 
+#[allow(dead_code)]
 fn log_cache_stats(
     #[cfg(feature = "debug-ui")] cache: Res<NPCAssetCache>,
     #[cfg(not(feature = "debug-ui"))] _cache: Res<NPCAssetCache>,

@@ -1,7 +1,8 @@
 use crate::bundles::PlayerPhysicsBundle;
-use crate::components::unified_water::{UnifiedWaterBody, WaterBodyId};
+use crate::components::unified_water::{CurrentWaterRegion, UnifiedWaterBody, WaterBodyId};
 use crate::components::{
-    ActiveEntity, ControlState, HumanAnimation, HumanMovement, Player, VehicleControlType,
+    ActiveEntity, ControlState, HumanAnimation, HumanMovement, Player, SwimmingEvent,
+    VehicleControlType,
 };
 use crate::util::transform_utils::horizontal_forward;
 use bevy::math::EulerRot;
@@ -10,19 +11,34 @@ use bevy_rapier3d::prelude::*;
 
 use crate::game_state::GameState;
 
-type PlayerSwimQuery<'w, 's> = Query<
+type DetectSwimmingQuery<'w, 's> = Query<
     'w,
     's,
     (
         Entity,
         &'static Transform,
         &'static Collider,
+        &'static Velocity,
         Option<&'static Swimming>,
-        Option<&'static mut ProneRotation>,
-        Option<&'static mut Velocity>,
+        &'static CurrentWaterRegion,
     ),
     (With<Player>, With<ActiveEntity>),
 >;
+
+type ApplySwimmingStateQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static Transform,
+        &'static Collider,
+        Option<&'static mut ProneRotation>,
+        Option<&'static mut Velocity>,
+    ),
+    With<Player>,
+>;
+
+type EmergencySwimExitQuery<'w, 's> =
+    Query<'w, 's, (Entity, Option<&'static mut Velocity>), (With<Player>, With<Swimming>)>;
 type SwimVelocityQuery<'w, 's> = Query<
     'w,
     's,
@@ -80,225 +96,190 @@ pub struct ProneRotation {
 #[derive(Component)]
 pub struct ExitingSwim;
 
-/// State machine based on center position - no thresholds needed
-pub fn swim_state_transition_system(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut state: ResMut<NextState<GameState>>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: PlayerSwimQuery,
+/// Detect swimming conditions and send events (READ-ONLY)
+/// Uses CurrentWaterRegion cache for O(1) lookup instead of O(N) scanning
+pub fn detect_swimming_conditions(
+    mut events: EventWriter<SwimmingEvent>,
+    time: Res<Time<Fixed>>,
+    players: DetectSwimmingQuery,
     water_regions: Query<&UnifiedWaterBody>,
 ) {
     let now = time.elapsed_secs();
 
-    // Emergency reset with F2 key
-    if keyboard_input.just_pressed(KeyCode::F2) {
-        for (entity, _, _, swimming, _prone_rotation, velocity) in &mut query {
-            if swimming.is_some() {
-                // Clamp velocity to prevent physics spikes on emergency exit
-                if let Some(mut vel) = velocity {
-                    vel.linvel.y = vel.linvel.y.clamp(-1.0, 2.0);
-                }
-
-                commands
-                    .entity(entity)
-                    .remove::<Swimming>()
-                    .remove::<GravityScale>()
-                    .remove::<Damping>()
-                    .remove::<WaterBodyId>()
-                    .insert(VehicleControlType::Walking)
-                    .insert(ExitingSwim) // Signal smooth return to upright
-                    .insert(PlayerPhysicsBundle::default()); // Restore clean physics state
-                state.set(GameState::Walking);
-                info!("Emergency exit from swimming mode with F2");
-            }
-        }
-        return;
-    }
-
-    for (entity, transform, collider, swimming, prone_rotation, velocity) in &mut query {
+    for (entity, transform, collider, velocity, swimming, current_region) in players.iter() {
         let pos = transform.translation;
 
-        // DEBUG: Log player position and water regions
-        #[cfg(feature = "debug-ui")]
-        if (now % 2.0) < 0.016 {
-            // Every ~2 seconds
-            info!(
-                "Player at position: ({:.1}, {:.1}, {:.1})",
-                pos.x, pos.y, pos.z
-            );
-            info!("Checking {} water regions:", water_regions.iter().count());
-            for (i, region) in water_regions.iter().enumerate() {
-                info!(
-                    "  Region {}: '{}' bounds=({:.1}, {:.1}) to ({:.1}, {:.1})",
-                    i,
-                    region.name,
-                    region.bounds.0,
-                    region.bounds.1,
-                    region.bounds.2,
-                    region.bounds.3
-                );
-                let in_region = region.contains_point(pos.x, pos.z);
-                info!("    Player in region: {}", in_region);
-            }
-        }
+        // O(1) cache lookup instead of O(N) iteration
+        let water = current_region
+            .region_entity
+            .and_then(|region_entity| water_regions.get(region_entity).ok());
 
-        let water = water_regions
-            .iter()
-            .find(|w| w.contains_point(pos.x, pos.z));
-
-        // Calculate submersion ratio - handle both cuboid and capsule colliders
         let half_ext = if let Some(cuboid) = collider.as_cuboid() {
-            // Cuboid collider (simple rectangular shape)
             Vec3::new(
                 cuboid.half_extents().x,
                 cuboid.half_extents().y,
                 cuboid.half_extents().z,
             )
         } else if let Some(capsule) = collider.as_capsule() {
-            // Capsule collider (common for characters)
             let total_half_height = capsule.half_height() + capsule.radius();
             Vec3::new(capsule.radius(), total_half_height, capsule.radius())
         } else {
-            // Fallback for other collider types (sphere, etc.)
             Vec3::splat(0.5)
         };
 
-        let _submersion = if let Some(w) = water {
-            // DEBUG: Found water region
-            #[cfg(feature = "debug-ui")]
-            if (now % 2.0) < 0.016 {
-                info!("Player is in water region: {}", w.name);
+        match (swimming, water) {
+            (None, Some(w)) => {
+                let water_level = w.get_base_water_level(now);
+                let head_y = pos.y + half_ext.y;
+                if head_y < water_level {
+                    let depth = water_level - pos.y;
+                    events.write(SwimmingEvent::EnterWater { entity, depth });
+                }
             }
-            w.calculate_submersion_ratio(transform, half_ext, now)
-        } else {
-            // Not in any water region - treat as completely out of water
-            0.0
-        };
-
-        // DEBUG: Log submersion ratio and water level details
-        if (now % 1.0) < 0.016 {
-            // More frequent logging
-            #[cfg(feature = "debug-ui")]
-            if let Some(w) = water {
-                let water_level = w.get_water_surface_level(now);
+            (Some(_), None) => {
+                events.write(SwimmingEvent::ExitWater { entity });
+            }
+            (Some(_), Some(w)) => {
                 let entity_bottom = pos.y - half_ext.y;
-                let entity_top = pos.y + half_ext.y;
-                info!("🌊 WATER DEBUG:");
-                info!("  Water level: {:.3}, Player Y: {:.3}", water_level, pos.y);
-                info!(
-                    "  Player bottom: {:.3}, Player top: {:.3}",
-                    entity_bottom, entity_top
-                );
-                info!(
-                    "  Player half extents: ({:.3}, {:.3}, {:.3})",
-                    half_ext.x, half_ext.y, half_ext.z
-                );
-                info!(
-                    "  Submersion ratio: {:.3} (need >0.0 to enter)",
-                    _submersion
-                );
-
-                if _submersion > 0.0 {
-                    info!("  🏊 SUBMERSION DETECTED! Ratio: {:.3}", _submersion);
-                }
-                if entity_bottom < water_level {
-                    info!(
-                        "  👣 FEET IN WATER! Bottom: {:.3} < Water: {:.3}",
-                        entity_bottom, water_level
-                    );
-                }
-            }
-        }
-
-        match swimming {
-            None => {
-                // ENTER: Pro games use head position - dive in when head goes underwater
-                if let Some(w) = water {
-                    let water_level = w.get_base_water_level(now);
-                    let head_y = pos.y + half_ext.y;
-
-                    if head_y < water_level {
-                        // HEAD UNDERWATER - enter swim mode
-                        commands
-                            .entity(entity)
-                            .insert(Swimming {
-                                state: SwimState::Surface,
-                            })
-                            .insert(GravityScale(0.1)) // Light gravity to prevent floating
-                            .insert(Damping {
-                                linear_damping: 6.0,
-                                angular_damping: 3.0,
-                            }) // Higher damping in water
-                            .insert(WaterBodyId) // Enable water physics
-                            .insert(VehicleControlType::Swimming) // Switch to swimming controls
-                            .insert(ProneRotation {
-                                target_pitch: -std::f32::consts::FRAC_PI_2, // -90° for prone
-                                current_pitch: 0.0,                         // start upright
-                                going_prone: true,
-                            });
-                        state.set(GameState::Swimming); // Update UI state
-                        info!(
-                            "Player entered swimming mode (head underwater: head Y={:.1}, water level={:.1})",
-                            head_y, water_level
-                        );
-                    }
-                }
-            }
-            Some(swim) => {
-                // EXIT: Exit while still in shallow water (feet close to surface)
-                let entity_bottom = pos.y - half_ext.y;
-                let water_level = water
-                    .map(|w| w.get_base_water_level(now))
-                    .unwrap_or(f32::MAX);
-                let exit_margin = 0.3; // Exit when feet within 0.3m of water surface (still shallow)
+                let water_level = w.get_base_water_level(now);
+                let exit_margin = 0.3;
                 let feet_on_ground = entity_bottom > water_level - exit_margin;
 
                 if feet_on_ground {
-                    // Clamp velocity to prevent physics spikes on exit
+                    events.write(SwimmingEvent::ExitWater { entity });
+                } else {
+                    let depth = water_level - pos.y;
+                    events.write(SwimmingEvent::UpdateDepth {
+                        entity,
+                        depth,
+                        velocity: velocity.linvel,
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Apply swimming state changes (WRITE-ONLY)
+pub fn apply_swimming_state(
+    mut commands: Commands,
+    mut events: EventReader<SwimmingEvent>,
+    mut state: ResMut<NextState<GameState>>,
+    mut query: ApplySwimmingStateQuery,
+    water_regions: Query<&UnifiedWaterBody>,
+    time: Res<Time<Fixed>>,
+) {
+    let now = time.elapsed_secs();
+
+    for event in events.read() {
+        match event {
+            SwimmingEvent::EnterWater { entity, depth } => {
+                commands
+                    .entity(*entity)
+                    .insert(Swimming {
+                        state: SwimState::Surface,
+                    })
+                    .insert(GravityScale(0.1))
+                    .insert(Damping {
+                        linear_damping: 6.0,
+                        angular_damping: 3.0,
+                    })
+                    .insert(WaterBodyId)
+                    .insert(VehicleControlType::Swimming)
+                    .insert(ProneRotation {
+                        target_pitch: -std::f32::consts::FRAC_PI_2,
+                        current_pitch: 0.0,
+                        going_prone: true,
+                    });
+                state.set(GameState::Swimming);
+                debug!("Player entered swimming mode (depth: {:.1})", depth);
+            }
+            SwimmingEvent::ExitWater { entity } => {
+                if let Ok((_, _, prone_rotation, velocity)) = query.get_mut(*entity) {
                     if let Some(mut vel) = velocity {
                         vel.linvel.y = vel.linvel.y.clamp(-1.0, 2.0);
                     }
 
-                    // Signal ProneRotation to return to upright position
                     if let Some(mut prone) = prone_rotation {
-                        prone.going_prone = false; // Signal to return to upright
-                        prone.target_pitch = 0.0; // Return to upright
+                        prone.going_prone = false;
+                        prone.target_pitch = 0.0;
                     }
 
                     commands
-                        .entity(entity)
+                        .entity(*entity)
                         .remove::<Swimming>()
                         .remove::<GravityScale>()
                         .remove::<Damping>()
                         .remove::<WaterBodyId>()
-                        .insert(VehicleControlType::Walking) // Switch back to walking controls
-                        .insert(PlayerPhysicsBundle::default()); // Restore clean physics state
-                    state.set(GameState::Walking); // Update UI state
-                    info!(
-                        "Player exited swimming mode (feet on ground: feet Y={:.1}, water level={:.1})",
-                        entity_bottom, water_level
-                    );
-                    continue;
+                        .insert(VehicleControlType::Walking)
+                        .insert(PlayerPhysicsBundle::default());
+                    state.set(GameState::Walking);
+                    debug!("Player exited swimming mode");
                 }
-
-                // Surface vs Diving state (only if still in water)
-                if let Some(w) = water {
-                    let head_y = transform.translation.y + half_ext.y;
-                    let water_level = w.get_water_surface_level(now);
-                    let new_state = if head_y < water_level - 0.2 {
-                        SwimState::Diving
+            }
+            SwimmingEvent::UpdateDepth { entity, .. } => {
+                if let Ok((transform, collider, _, _)) = query.get(*entity) {
+                    let half_ext = if let Some(cuboid) = collider.as_cuboid() {
+                        Vec3::new(
+                            cuboid.half_extents().x,
+                            cuboid.half_extents().y,
+                            cuboid.half_extents().z,
+                        )
+                    } else if let Some(capsule) = collider.as_capsule() {
+                        let total_half_height = capsule.half_height() + capsule.radius();
+                        Vec3::new(capsule.radius(), total_half_height, capsule.radius())
                     } else {
-                        SwimState::Surface
+                        Vec3::splat(0.5)
                     };
 
-                    if swim.state != new_state {
+                    let pos = transform.translation;
+                    let water = water_regions
+                        .iter()
+                        .find(|w| w.contains_point(pos.x, pos.z));
+
+                    if let Some(w) = water {
+                        let head_y = pos.y + half_ext.y;
+                        let water_level = w.get_base_water_level(now);
+                        let new_state = if head_y < water_level - 0.2 {
+                            SwimState::Diving
+                        } else {
+                            SwimState::Surface
+                        };
                         commands
-                            .entity(entity)
+                            .entity(*entity)
                             .insert(Swimming { state: new_state });
                     }
                 }
             }
+        }
+    }
+}
+
+/// Emergency reset with F2 key
+pub fn emergency_swim_exit_system(
+    mut commands: Commands,
+    mut state: ResMut<NextState<GameState>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: EmergencySwimExitQuery,
+) {
+    if keyboard_input.just_pressed(KeyCode::F2) {
+        for (entity, velocity) in &mut query {
+            if let Some(mut vel) = velocity {
+                vel.linvel.y = vel.linvel.y.clamp(-1.0, 2.0);
+            }
+
+            commands
+                .entity(entity)
+                .remove::<Swimming>()
+                .remove::<GravityScale>()
+                .remove::<Damping>()
+                .remove::<WaterBodyId>()
+                .insert(VehicleControlType::Walking)
+                .insert(ExitingSwim)
+                .insert(PlayerPhysicsBundle::default());
+            state.set(GameState::Walking);
+            debug!("Emergency exit from swimming mode with F2");
         }
     }
 }
@@ -420,9 +401,10 @@ pub fn swim_velocity_apply_system(
     move_data.target_velocity = target_velocity;
 
     // Debug biomechanical swimming with orientation
+    #[cfg(feature = "debug-ui")]
     if (time.elapsed_secs() % 2.0) < 0.016 {
-        info!(
-            "🏊‍♂️ BIOMECH SWIM: arm_power={:.2}, leg_power={:.2}, efficiency={:.2}, speed={:.2}",
+        debug!(
+            "BIOMECH SWIM: arm_power={:.2}, leg_power={:.2}, efficiency={:.2}, speed={:.2}",
             arm_power, leg_power, swimming_efficiency, effective_speed
         );
     }
@@ -461,9 +443,10 @@ pub fn swim_animation_flag_system(time: Res<Time>, mut query: SwimAnimQuery) {
         anim.swim_kick_cycle += dt * input_multiplier;
 
         // Debug biomechanical animation status
+        #[cfg(feature = "debug-ui")]
         if (time.elapsed_secs() % 2.0) < 0.016 {
-            info!(
-                "🏊 BIOMECH ANIM: is_swimming={}, input_intensity={:.2}, stroke_freq={:.2}, speed={:.2}",
+            debug!(
+                "BIOMECH ANIM: is_swimming={}, input_intensity={:.2}, stroke_freq={:.2}, speed={:.2}",
                 anim.is_swimming,
                 input_intensity,
                 anim.swim_stroke_frequency,
@@ -488,7 +471,7 @@ pub fn apply_prone_rotation_system(
         prone.going_prone = false;
         prone.target_pitch = 0.0; // Return to upright
         commands.entity(entity).remove::<ExitingSwim>(); // Remove the signal
-        info!("Signaled return to upright position after land exit");
+        debug!("Signaled return to upright position after land exit");
     }
 
     // Interpolate only the pitch, preserve physics-driven yaw
@@ -510,7 +493,7 @@ pub fn apply_prone_rotation_system(
             // Close enough
             prone.current_pitch = prone.target_pitch; // Snap to exact target
             commands.entity(entity).remove::<ProneRotation>(); // Remove component when done
-            info!("Player returned to upright position");
+            debug!("Player returned to upright position");
         }
     }
 }
@@ -528,7 +511,7 @@ pub fn reset_animation_on_land_system(
                 anim.swim_stroke_cycle = 0.0;
                 anim.swim_kick_cycle = 0.0;
                 anim.swim_speed = 0.0;
-                info!("Reset swimming animation - player is on land");
+                debug!("Reset swimming animation - player is on land");
             }
         }
     }

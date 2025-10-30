@@ -112,7 +112,18 @@ impl ControlState {
 
     /// Apply smooth input filtering to reduce jitter
     pub fn apply_smoothing(&mut self, dt: f32, smoothing_factor: f32) {
+        // Validate inputs
+        if !dt.is_finite() || dt <= 0.0 || dt > 1.0 {
+            warn!("Invalid dt in apply_smoothing: {}", dt);
+            return;
+        }
+        if !smoothing_factor.is_finite() || smoothing_factor < 0.0 {
+            warn!("Invalid smoothing_factor: {}", smoothing_factor);
+            return;
+        }
+
         let factor = 1.0 - (-dt * smoothing_factor).exp();
+        let factor = factor.clamp(0.0, 1.0); // Safety clamp
 
         // Only smooth analog inputs, not digital flags
         self.throttle *= 1.0 - factor;

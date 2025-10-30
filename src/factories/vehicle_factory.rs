@@ -4,11 +4,11 @@ use crate::components::unified_water::WaterBodyId;
 use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::{
     AircraftFlight, Car, CarWheelsConfig, ContentType, DynamicContent, F16, Grounded, Helicopter,
-    HelicopterRuntime, HelicopterVisualBody, JetFlame, LandingLight, MainRotor, NavigationLight, NavigationLightType,
-    RotorBlurDisk, RotorWash, SimpleCarSpecs, SimpleCarSpecsHandle, SimpleF16Specs,
-    SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor,
-    VehicleState, VehicleType, VisualRig, VisualRigRoot, WheelMesh, WheelPos, WheelSteerPivot,
-    WheelsRoot,
+    HelicopterRuntime, HelicopterVisualBody, JetFlame, LandingLight, MainRotor, NavigationLight,
+    NavigationLightType, RotorBlurDisk, RotorWash, SimpleCarSpecs, SimpleCarSpecsHandle,
+    SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle,
+    TailRotor, VehicleState, VehicleType, VisualRig, VisualRigRoot, WheelMesh, WheelPos,
+    WheelSteerPivot, WheelsRoot,
 };
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::BundleError;
@@ -92,11 +92,11 @@ impl VehicleFactory {
                 Car,
                 VehicleState::new(VehicleType::SuperCar),
                 SimpleCarSpecsHandle(car_specs_handle),
-                AdditionalMassProperties::Mass(1200.0), // Realistic car mass for proper physics
+                AdditionalMassProperties::Mass(self.config.vehicles.super_car.mass),
                 Ccd::enabled(), // High-speed cars need continuous collision detection
                 Damping {
-                    linear_damping: 2.0,  // AGENT.MD: 2.0-3.0 for arcade physics
-                    angular_damping: 8.0, // AGENT.MD: 8.0-10.0 for arcade physics
+                    linear_damping: self.config.vehicles.super_car.linear_damping,
+                    angular_damping: self.config.vehicles.super_car.angular_damping,
                 },
                 Friction {
                     coefficient: 0.15, // Phase 0: Reduced friction to prevent interference with custom grip (was 0.2)
@@ -309,10 +309,10 @@ impl VehicleFactory {
                 ExternalForce::default(),
                 RotorWash,
                 Damping {
-                    linear_damping: 0.1,
-                    angular_damping: 0.3,
+                    linear_damping: self.config.vehicles.helicopter.linear_damping,
+                    angular_damping: self.config.vehicles.helicopter.angular_damping,
                 },
-                AdditionalMassProperties::Mass(1500.0), // 1.5 ton helicopter
+                AdditionalMassProperties::Mass(self.config.vehicles.helicopter.mass),
                 Sleeping::default(),
                 MovementTracker::new(position, 15.0),
                 crate::components::Enterable {
@@ -660,9 +660,10 @@ impl VehicleFactory {
                 VehicleState::new(VehicleType::F16),
                 AircraftFlight::default(),
                 SimpleF16SpecsHandle(f16_specs_handle),
+                AdditionalMassProperties::Mass(self.config.vehicles.f16.mass),
                 Damping {
-                    linear_damping: 0.5,
-                    angular_damping: 3.0,
+                    linear_damping: self.config.vehicles.f16.linear_damping,
+                    angular_damping: self.config.vehicles.f16.angular_damping,
                 },
                 Sleeping::default(),
                 MovementTracker::new(position, 25.0),

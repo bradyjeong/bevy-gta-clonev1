@@ -42,13 +42,15 @@ impl ManhattanGridGenerator {
         let avenue_spacing = 260.0; // North-South avenues (wide spacing)
         let street_spacing = 80.0; // East-West streets (narrow spacing)
 
-        info!(
+        #[cfg(feature = "debug-ui")]
+        debug!(
             "Generating Manhattan grid for island at ({}, {}) with avenue_spacing={}m, street_spacing={}m",
             grid_x, grid_z, avenue_spacing, street_spacing
         );
 
         // Generate VERTICAL roads (North-South avenues) - wide MainStreet (34m)
         let mut x = min_x;
+        #[cfg(feature = "debug-ui")]
         let mut road_count = 0;
         while x <= max_x {
             let y = env.land_elevation + RoadType::MainStreet.height();
@@ -57,16 +59,19 @@ impl ManhattanGridGenerator {
 
             let road_id = road_network.add_road(start, end, RoadType::MainStreet);
             road_ids.push(road_id);
-            road_count += 1;
+            #[cfg(feature = "debug-ui")]
+            {
+                road_count += 1;
+            }
 
             x += avenue_spacing;
         }
 
-        info!("Generated {} vertical avenues", road_count);
+        #[cfg(feature = "debug-ui")]
+        debug!("Generated {} vertical avenues", road_count);
 
         // Generate HORIZONTAL roads (East-West streets) - narrow SideStreet (19m)
         let mut z = min_z;
-        road_count = 0;
         while z <= max_z {
             let y = env.land_elevation + RoadType::SideStreet.height();
             let start = Vec3::new(min_x, y, z);
@@ -74,13 +79,13 @@ impl ManhattanGridGenerator {
 
             let road_id = road_network.add_road(start, end, RoadType::SideStreet);
             road_ids.push(road_id);
-            road_count += 1;
 
             z += street_spacing;
         }
 
-        info!(
-            "✓ Manhattan grid generation complete: {} vertical avenues + {} horizontal streets = {} total roads for grid island at ({}, {})",
+        #[cfg(feature = "debug-ui")]
+        debug!(
+            "Manhattan grid generation complete: {} vertical avenues + {} horizontal streets = {} total roads for grid island at ({}, {})",
             ((max_x - min_x) / avenue_spacing + 1.0) as u32,
             ((max_z - min_z) / street_spacing + 1.0) as u32,
             road_ids.len(),

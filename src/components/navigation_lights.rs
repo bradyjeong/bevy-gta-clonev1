@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct NavigationLight {
     pub light_type: NavigationLightType,
     pub blink_timer: Timer,
@@ -17,6 +17,14 @@ pub enum NavigationLightType {
 #[derive(Component)]
 pub struct LandingLight {
     pub activation_altitude: f32,
+}
+
+impl Default for LandingLight {
+    fn default() -> Self {
+        Self {
+            activation_altitude: 50.0,
+        }
+    }
 }
 
 impl NavigationLight {

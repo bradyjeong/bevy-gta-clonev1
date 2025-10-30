@@ -26,6 +26,12 @@ pub fn process_loaded_unified_water_assets(
         match event {
             AssetEvent::LoadedWithDependencies { id } => {
                 if let Some(asset) = water_assets.get(*id) {
+                    // Validate asset at load time
+                    if let Err(e) = asset.validate() {
+                        error!("Invalid water asset '{}': {}", asset.name, e);
+                        continue; // Skip spawning invalid asset
+                    }
+
                     // Convert asset to component and spawn entity
                     let unified_water_body = UnifiedWaterBody {
                         name: asset.name.clone(),
@@ -54,6 +60,10 @@ pub fn process_loaded_unified_water_assets(
             AssetEvent::Modified { id } => {
                 // Handle hot-reloading of water assets
                 if let Some(asset) = water_assets.get(*id) {
+                    if let Err(e) = asset.validate() {
+                        error!("Invalid modified water asset '{}': {}", asset.name, e);
+                        return;
+                    }
                     info!("Unified water asset modified: {}", asset.name);
                     // Could update existing entities here
                 }

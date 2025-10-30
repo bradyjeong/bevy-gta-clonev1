@@ -3,6 +3,23 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Asset loading policy for handling missing assets
+#[derive(Resource, Default)]
+pub struct AssetLoadingPolicy {
+    pub fail_fast_on_missing: bool,
+}
+
+impl AssetLoadingPolicy {
+    pub fn for_build() -> Self {
+        Self {
+            #[cfg(debug_assertions)]
+            fail_fast_on_missing: false,
+            #[cfg(not(debug_assertions))]
+            fail_fast_on_missing: true,
+        }
+    }
+}
+
 /// CRITICAL: Centralized Game Configuration - Eliminates 470+ magic numbers
 /// All configurations have validation bounds and safety limits
 #[derive(Resource, Debug, Clone, Default)]

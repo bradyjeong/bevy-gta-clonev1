@@ -1,6 +1,6 @@
 use crate::systems::input::{
     LoadedVehicleControls, VehicleControlsConfig, asset_based_input_mapping_system,
-    load_vehicle_controls_system, process_loaded_controls_system,
+    controls_loaded, load_vehicle_controls_system, process_loaded_controls_system,
 };
 use bevy::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
@@ -29,7 +29,9 @@ impl Plugin for InputPlugin {
                 Update,
                 (
                     process_loaded_controls_system,
-                    asset_based_input_mapping_system.in_set(InputProcessingSet),
+                    asset_based_input_mapping_system
+                        .in_set(InputProcessingSet)
+                        .run_if(controls_loaded), // Only run when loaded
                 )
                     .chain(),
             );

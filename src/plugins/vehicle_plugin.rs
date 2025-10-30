@@ -1,4 +1,7 @@
-use crate::components::vehicles::{SimpleCarSpecs, SimpleF16Specs, SimpleHelicopterSpecs};
+use crate::components::vehicles::{
+    SimpleCarSpecs, SimpleF16Specs, SimpleHelicopterSpecs, VehiclePhysicsConfig,
+};
+use crate::states::AppState;
 use crate::systems::camera_car::car_camera_system;
 use crate::systems::camera_f16::f16_camera_system;
 use crate::systems::camera_helicopter::helicopter_camera_system;
@@ -28,9 +31,11 @@ impl Plugin for VehiclePlugin {
             .add_plugins(RonAssetPlugin::<SimpleCarSpecs>::new(&["ron"]))
             .add_plugins(RonAssetPlugin::<SimpleHelicopterSpecs>::new(&["ron"]))
             .add_plugins(RonAssetPlugin::<SimpleF16Specs>::new(&["ron"]))
+            .add_plugins(RonAssetPlugin::<VehiclePhysicsConfig>::new(&["ron"]))
             .init_asset::<SimpleCarSpecs>()
             .init_asset::<SimpleHelicopterSpecs>()
             .init_asset::<SimpleF16Specs>()
+            .init_asset::<VehiclePhysicsConfig>()
             // CRITICAL SAFEGUARDS: Run configuration validation at startup
             .add_systems(Startup, (validate_physics_config, init_rotor_wash_effect))
             // Observer for F16 setup when specs are added
@@ -73,7 +78,8 @@ impl Plugin for VehiclePlugin {
                     // physics_performance_monitoring_system,
                     // adaptive_performance_system,
                 ),
-            );
+            )
+            .add_systems(OnExit(AppState::InGame), cleanup_rotor_wash_effect);
     }
 }
 
@@ -82,4 +88,10 @@ impl Plugin for VehiclePlugin {
 fn init_rotor_wash_effect(mut commands: Commands, mut effects: ResMut<Assets<EffectAsset>>) {
     let handle = create_rotor_wash_effect(&mut effects);
     commands.insert_resource(RotorWashEffect { handle });
+}
+
+fn cleanup_rotor_wash_effect(mut commands: Commands) {
+    commands.remove_resource::<RotorWashEffect>();
+    #[cfg(feature = "debug-ui")]
+    info!("Rotor wash effect cleaned up");
 }

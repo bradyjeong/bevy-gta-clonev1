@@ -103,6 +103,11 @@ pub struct LoadedVehicleControls {
 #[derive(Resource)]
 pub struct VehicleControlsHandle(pub Handle<VehicleControlsConfig>);
 
+/// Run condition to prevent processing before assets are loaded
+pub fn controls_loaded(loaded: Res<LoadedVehicleControls>) -> bool {
+    loaded.config.is_some()
+}
+
 /// System to load vehicle controls from assets
 pub fn load_vehicle_controls_system(
     mut commands: Commands,
@@ -117,8 +122,50 @@ pub fn load_vehicle_controls_system(
     }
 }
 
+pub fn validate_controls_config(config: &VehicleControlsConfig) -> Result<(), String> {
+    use crate::components::control_state::VehicleControlType;
+
+    let required = [
+        VehicleControlType::Walking,
+        VehicleControlType::Car,
+        VehicleControlType::Helicopter,
+        VehicleControlType::F16,
+        VehicleControlType::Yacht,
+        VehicleControlType::Swimming,
+    ];
+
+    for vehicle_type in required {
+        if !config.vehicle_types.contains_key(&vehicle_type) {
+            return Err(format!("Missing controls for {vehicle_type:?}"));
+        }
+    }
+
+    for (vtype, controls) in &config.vehicle_types {
+        let mut seen_keys = std::collections::HashSet::new();
+
+        for binding in &controls.primary_controls {
+            if !seen_keys.insert(binding.key) {
+                return Err(format!("{:?} has duplicate key: {:?}", vtype, binding.key));
+            }
+        }
+        for binding in &controls.secondary_controls {
+            if !seen_keys.insert(binding.key) {
+                return Err(format!("{:?} has duplicate key: {:?}", vtype, binding.key));
+            }
+        }
+        for binding in &controls.meta_controls {
+            if !seen_keys.insert(binding.key) {
+                return Err(format!("{:?} has duplicate key: {:?}", vtype, binding.key));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 /// System to process loaded control assets
 pub fn process_loaded_controls_system(
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut loaded_controls: ResMut<LoadedVehicleControls>,
     controls_assets: Res<Assets<VehicleControlsConfig>>,
@@ -129,8 +176,13 @@ pub fn process_loaded_controls_system(
             bevy::asset::LoadState::Loaded => {
                 if let Some(config) = controls_assets.get(&handle.0) {
                     if loaded_controls.config.is_none() {
+                        if let Err(e) = validate_controls_config(config) {
+                            error!("Invalid vehicle controls: {}", e);
+                            return;
+                        }
                         loaded_controls.config = Some(config.clone());
                         loaded_controls.loading = false;
+                        commands.remove_resource::<VehicleControlsHandle>();
                         #[cfg(feature = "debug-ui")]
                         info!("Vehicle controls loaded successfully");
                     }

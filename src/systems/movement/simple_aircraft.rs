@@ -348,7 +348,7 @@ pub fn simple_helicopter_movement(
         let pitch_input_abs = control_state.pitch.abs();
         let roll_input_abs = control_state.roll.abs();
         let yaw_input_abs = control_state.yaw.abs();
-        
+
         let yaw_cmd = if yaw_input_abs < dz {
             0.0
         } else {
@@ -429,7 +429,8 @@ pub fn simple_helicopter_movement(
             // Shift (+1.0) → 1.03 + 0.75 = 1.78G → Climb
             // Nothing (0.0) → 1.03 + 0.0 = 1.03G → Stable hover
             // Ctrl (-1.0) → 1.03 - 0.75 = 0.28G → Descend
-            (1.0 + specs.hover_bias + specs.collective_gain * vertical).clamp(0.0, max_lift_margin_g)
+            (1.0 + specs.hover_bias + specs.collective_gain * vertical)
+                .clamp(0.0, max_lift_margin_g)
         };
         let lift_mag = hover_force * lift_g;
 
@@ -527,7 +528,7 @@ pub fn rotate_helicopter_rotors(
             continue;
         };
         let helicopter_entity = visual_body_child_of.parent();
-        
+
         let Ok((specs_handle, runtime)) = helicopter_query.get(helicopter_entity) else {
             continue;
         };

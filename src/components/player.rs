@@ -121,3 +121,14 @@ pub struct BodyPart {
     pub animation_offset: Vec3,
     pub animation_rotation: Quat,
 }
+
+impl Default for BodyPart {
+    fn default() -> Self {
+        Self {
+            rest_position: Vec3::ZERO,
+            rest_rotation: Quat::IDENTITY,
+            animation_offset: Vec3::ZERO,
+            animation_rotation: Quat::IDENTITY,
+        }
+    }
+}

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::config::AssetLoadingPolicy;
 use crate::setup::world::setup_dubai_noon_lighting;
 use crate::setup::{
     setup_basic_world, setup_initial_aircraft_unified, setup_initial_npcs_unified,
@@ -16,7 +17,8 @@ pub struct GameSetupPlugin;
 
 impl Plugin for GameSetupPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::AssetLoading), start_loading_vehicle_specs)
+        app.insert_resource(AssetLoadingPolicy::for_build())
+            .add_systems(OnEnter(AppState::AssetLoading), start_loading_vehicle_specs)
             .add_systems(
                 Update,
                 check_vehicle_specs_loaded.run_if(in_state(AppState::AssetLoading)),

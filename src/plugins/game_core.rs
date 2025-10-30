@@ -159,24 +159,17 @@ impl Plugin for GameCorePlugin {
                     .run_if(on_timer(Duration::from_millis(100))),
             )
             .add_systems(
-                Update,
+                FixedUpdate,
                 (
-                    // Input validation catches bad positions early
-                    // No position validation needed for finite world
-
-                    // ActiveEntity safety ensures exactly one active entity
-                    // CRITICAL: Run executor before movement systems to ensure ActiveEntity is present
                     active_transfer_executor_system,
                     active_entity_integrity_check,
-                    // Diagnostics and monitoring
-                    // No floating origin diagnostics needed
-
-                    // No sanity check system needed for finite world
-
-                    // Entity limit enforcement with FIFO cleanup (throttled to 2Hz)
-                    enforce_entity_limits.run_if(on_timer(Duration::from_millis(500))),
                 )
-                    .chain(),
+                    .chain()
+                    .before(PhysicsSet::SyncBackend),
+            )
+            .add_systems(
+                Update,
+                (enforce_entity_limits.run_if(on_timer(Duration::from_millis(500))),).chain(),
             );
 
         #[cfg(feature = "debug-ui")]

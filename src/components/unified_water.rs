@@ -15,24 +15,13 @@ pub struct UnifiedWaterBody {
 impl UnifiedWaterBody {
     /// Get visual water surface level (includes tides and waves for rendering)
     pub fn get_water_surface_level(&self, time: f32) -> f32 {
-        let tide_offset = if self.tide.amplitude > 0.0 {
-            (time * 2.0 * std::f32::consts::PI / self.tide.period_sec).sin() * self.tide.amplitude
-        } else {
-            0.0
-        };
-        self.surface_level + tide_offset
+        self.surface_level + self.tide.offset(time)
     }
 
     /// Get base water level for gameplay logic (no waves, only static level + tide)
     /// Professional games separate visual waves from physics/gameplay logic
     pub fn get_base_water_level(&self, time: f32) -> f32 {
-        // For gameplay: only use tide (slow, large-scale), ignore visual waves
-        let tide_offset = if self.tide.amplitude > 0.0 {
-            (time * 2.0 * std::f32::consts::PI / self.tide.period_sec).sin() * self.tide.amplitude
-        } else {
-            0.0
-        };
-        self.surface_level + tide_offset
+        self.surface_level + self.tide.offset(time)
     }
 
     pub fn get_bed_level(&self) -> f32 {
@@ -40,7 +29,9 @@ impl UnifiedWaterBody {
     }
 
     pub fn contains_point(&self, x: f32, z: f32) -> bool {
-        x >= self.bounds.0 && x <= self.bounds.2 && z >= self.bounds.1 && z <= self.bounds.3
+        let (min_x, min_z, max_x, max_z) = self.bounds;
+        // Bounds validated at asset load time, no need for runtime error logging
+        x >= min_x && x <= max_x && z >= min_z && z <= max_z
     }
 
     /// Calculate submersion ratio for gameplay (uses base water level, not visual waves)
@@ -63,8 +54,22 @@ impl UnifiedWaterBody {
         } else if entity_top < water_level {
             1.0 // Completely submerged
         } else {
-            // Partially submerged
-            (water_level - entity_bottom) / (entity_top - entity_bottom)
+            let height = entity_top - entity_bottom;
+            // CRITICAL FIX: Prevent division by zero
+            if height <= 0.0001 {
+                return if entity_center < water_level {
+                    1.0
+                } else {
+                    0.0
+                };
+            }
+            let ratio = (water_level - entity_bottom) / height;
+            // Validate result is finite
+            if ratio.is_finite() {
+                ratio.clamp(0.0, 1.0)
+            } else {
+                0.0
+            }
         }
     }
 }
@@ -80,11 +85,85 @@ pub struct UnifiedWaterAsset {
     pub surface_color: (f32, f32, f32, f32),
 }
 
+impl UnifiedWaterAsset {
+    pub fn validate(&self) -> Result<(), String> {
+        // Bounds validation (min < max)
+        let (min_x, min_z, max_x, max_z) = self.bounds;
+        if min_x >= max_x || min_z >= max_z {
+            return Err(format!(
+                "Invalid bounds: ({min_x}, {min_z}, {max_x}, {max_z}) - min must be < max"
+            ));
+        }
+
+        // Depth must be positive
+        if !self.depth.is_finite() || self.depth <= 0.0 {
+            return Err(format!(
+                "Invalid depth: {} (must be finite and > 0)",
+                self.depth
+            ));
+        }
+
+        // Surface level must be finite
+        if !self.surface_level.is_finite() {
+            return Err(format!(
+                "Invalid surface_level: {} (must be finite)",
+                self.surface_level
+            ));
+        }
+
+        // Tide validation
+        if !self.tide.amplitude.is_finite() || self.tide.amplitude < 0.0 {
+            return Err(format!(
+                "Invalid tide amplitude: {} (must be finite and >= 0)",
+                self.tide.amplitude
+            ));
+        }
+        if !self.tide.period_sec.is_finite() || self.tide.period_sec < 1e-3 {
+            return Err(format!(
+                "Invalid tide period: {} (must be finite and >= 0.001)",
+                self.tide.period_sec
+            ));
+        }
+
+        // Color validation - check if convertible to linear and finite
+        let (r, g, b, a) = self.surface_color;
+        if !r.is_finite() || !g.is_finite() || !b.is_finite() || !a.is_finite() {
+            return Err("Invalid color values (must be finite)".to_string());
+        }
+        if !(0.0..=1.0).contains(&r)
+            || !(0.0..=1.0).contains(&g)
+            || !(0.0..=1.0).contains(&b)
+            || !(0.0..=1.0).contains(&a)
+        {
+            return Err(format!(
+                "Invalid color values ({r}, {g}, {b}, {a}) - must be in [0, 1]"
+            ));
+        }
+
+        Ok(())
+    }
+}
+
 /// Tide configuration for water level oscillation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TideConfig {
     pub amplitude: f32,
     pub period_sec: f32,
+}
+
+impl TideConfig {
+    pub fn offset(&self, time: f32) -> f32 {
+        if !self.amplitude.is_finite() || self.amplitude <= 0.0 {
+            return 0.0;
+        }
+        let period = if self.period_sec.is_finite() && self.period_sec.abs() > 1e-3 {
+            self.period_sec
+        } else {
+            // Tide disabled for invalid period
+            return 0.0;
+        };
+        (time * 2.0 * std::f32::consts::PI / period).sin() * self.amplitude
+    }
 }
 
 /// Wave parameters for visual surface displacement

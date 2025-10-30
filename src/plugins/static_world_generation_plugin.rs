@@ -29,6 +29,7 @@ impl Plugin for StaticWorldGenerationPlugin {
                 OnExit(AppState::WorldGeneration),
                 cleanup_generation_resources,
             )
+            .add_systems(OnExit(AppState::AssetLoading), cleanup_generation_resources)
             // World generation systems
             .add_systems(
                 OnEnter(AppState::WorldGeneration),

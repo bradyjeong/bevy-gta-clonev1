@@ -1,0 +1,33 @@
+// Vehicle Physics Configuration
+// Data-driven physics values for all vehicle types
+// Eliminates hard-coded magic numbers in vehicle_factory.rs
+(
+    car: (
+        mass: 1200.0,
+        linear_damping: 2.0,
+        angular_damping: 8.0,
+        friction: 0.15,
+        restitution: 0.0,
+    ),
+    helicopter: (
+        mass: 2400.0,
+        linear_damping: 3.0,
+        angular_damping: 10.0,
+        friction: 0.1,
+        restitution: 0.0,
+    ),
+    f16: (
+        mass: 15000.0,
+        linear_damping: 0.5,
+        angular_damping: 2.0,
+        friction: 0.05,
+        restitution: 0.1,
+    ),
+    yacht: (
+        mass: 50000.0,
+        linear_damping: 5.0,
+        angular_damping: 15.0,
+        friction: 0.3,
+        restitution: 0.0,
+    ),
+)

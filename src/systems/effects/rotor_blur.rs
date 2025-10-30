@@ -53,50 +53,50 @@ pub fn update_rotor_blur_visibility(
             let Ok(visual_body_children) = children_query.get(heli_child) else {
                 continue;
             };
-            
+
             for child in visual_body_children.iter() {
-            if let Ok((blur_disk, mut visibility)) = main_blur_query.get_mut(child) {
-                if blur_disk.is_main_rotor && main_rpm >= blur_disk.min_rpm_for_blur {
-                    if *visibility != Visibility::Visible {
-                        *visibility = Visibility::Visible;
-                    }
-                    if let Ok(child_children) = children_query.get(child) {
-                        for blade_child in child_children.iter() {
-                            if let Ok(mut blade_vis) = rotor_blade_query.get_mut(blade_child) {
-                                if *blade_vis != Visibility::Hidden {
-                                    *blade_vis = Visibility::Hidden;
+                if let Ok((blur_disk, mut visibility)) = main_blur_query.get_mut(child) {
+                    if blur_disk.is_main_rotor && main_rpm >= blur_disk.min_rpm_for_blur {
+                        if *visibility != Visibility::Visible {
+                            *visibility = Visibility::Visible;
+                        }
+                        if let Ok(child_children) = children_query.get(child) {
+                            for blade_child in child_children.iter() {
+                                if let Ok(mut blade_vis) = rotor_blade_query.get_mut(blade_child) {
+                                    if *blade_vis != Visibility::Hidden {
+                                        *blade_vis = Visibility::Hidden;
+                                    }
                                 }
                             }
                         }
-                    }
-                } else if blur_disk.is_main_rotor {
-                    if *visibility != Visibility::Hidden {
-                        *visibility = Visibility::Hidden;
-                    }
-                    if let Ok(child_children) = children_query.get(child) {
-                        for blade_child in child_children.iter() {
-                            if let Ok(mut blade_vis) = rotor_blade_query.get_mut(blade_child) {
-                                if *blade_vis != Visibility::Visible {
-                                    *blade_vis = Visibility::Visible;
+                    } else if blur_disk.is_main_rotor {
+                        if *visibility != Visibility::Hidden {
+                            *visibility = Visibility::Hidden;
+                        }
+                        if let Ok(child_children) = children_query.get(child) {
+                            for blade_child in child_children.iter() {
+                                if let Ok(mut blade_vis) = rotor_blade_query.get_mut(blade_child) {
+                                    if *blade_vis != Visibility::Visible {
+                                        *blade_vis = Visibility::Visible;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            if let Ok((blur_disk, mut visibility)) = tail_blur_query.get_mut(child) {
-                let new_visibility =
-                    if !blur_disk.is_main_rotor && tail_rpm >= blur_disk.min_rpm_for_blur {
-                        Visibility::Visible
-                    } else {
-                        Visibility::Hidden
-                    };
+                if let Ok((blur_disk, mut visibility)) = tail_blur_query.get_mut(child) {
+                    let new_visibility =
+                        if !blur_disk.is_main_rotor && tail_rpm >= blur_disk.min_rpm_for_blur {
+                            Visibility::Visible
+                        } else {
+                            Visibility::Hidden
+                        };
 
-                if *visibility != new_visibility {
-                    *visibility = new_visibility;
+                    if *visibility != new_visibility {
+                        *visibility = new_visibility;
+                    }
                 }
-            }
             }
         }
     }

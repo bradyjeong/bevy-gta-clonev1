@@ -27,17 +27,26 @@ pub struct FlameEffect {
     pub offset: Vec3,           // Local position offset from vehicle
 }
 
-#[derive(Component)]
+impl Default for FlameEffect {
+    fn default() -> Self {
+        Self {
+            parent_vehicle: Entity::PLACEHOLDER,
+            offset: Vec3::ZERO,
+        }
+    }
+}
+
+#[derive(Component, Default)]
 pub struct ExhaustFlame;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct VehicleBeacon;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct ControlsText;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct ControlsDisplay;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct WaypointText;

@@ -4,6 +4,7 @@ use crate::plugins::{
     PhysicsActivationPlugin, StaticWorldGenerationPlugin, WorldDebugPlugin, WorldNpcPlugin,
 };
 use crate::resources::MaterialRegistry;
+use crate::states::AppState;
 use crate::systems::world::unified_world::UnifiedWorldManager;
 use bevy::prelude::*;
 
@@ -25,7 +26,9 @@ impl Plugin for UnifiedWorldPlugin {
             .add_plugins(WorldNpcPlugin)
             .add_plugins(WorldDebugPlugin)
             // Initialize material factory
-            .add_systems(Startup, initialize_material_factory);
+            .add_systems(Startup, initialize_material_factory)
+            // Cleanup resources on game exit
+            .add_systems(OnExit(AppState::InGame), cleanup_world_resources);
     }
 }
 
@@ -48,4 +51,11 @@ fn initialize_material_registry(mut commands: Commands) {
     commands.insert_resource(material_registry);
     #[cfg(feature = "debug-ui")]
     info!("Material registry initialized for cached material reuse");
+}
+
+fn cleanup_world_resources(mut commands: Commands) {
+    commands.remove_resource::<UnifiedWorldManager>();
+    commands.remove_resource::<MaterialRegistry>();
+    #[cfg(feature = "debug-ui")]
+    info!("World resources cleaned up");
 }

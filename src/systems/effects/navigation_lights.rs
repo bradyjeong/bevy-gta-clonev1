@@ -57,7 +57,7 @@ pub fn update_landing_lights(
             let Ok(visual_body_children) = children_query.get(heli_child) else {
                 continue;
             };
-            
+
             for child in visual_body_children.iter() {
                 if let Ok((landing_light, mut spot_light)) = landing_light_query.get_mut(child) {
                     let new_intensity = if altitude < landing_light.activation_altitude {

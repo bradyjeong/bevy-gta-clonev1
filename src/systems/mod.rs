@@ -49,6 +49,7 @@
 //!
 //! Use `.in_set()` to control when your system runs relative to others.
 
+pub mod asset_validation;
 pub mod audio;
 pub mod camera;
 pub mod camera_car;

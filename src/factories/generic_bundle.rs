@@ -69,6 +69,7 @@ pub enum BundleError {
     AssetNotLoaded {
         asset_path: String,
     },
+    InvalidConfig(String),
 }
 
 impl std::fmt::Display for BundleError {
@@ -118,11 +119,64 @@ impl std::fmt::Display for BundleError {
             BundleError::AssetNotLoaded { asset_path } => {
                 write!(f, "Asset not loaded: {asset_path}")
             }
+            BundleError::InvalidConfig(msg) => {
+                write!(f, "Invalid configuration: {msg}")
+            }
         }
     }
 }
 
 impl std::error::Error for BundleError {}
+
+/// Validate game configuration bounds before bundle creation
+pub fn validate_config(config: &GameConfig) -> Result<(), String> {
+    // Validate max_velocity
+    if !config.physics.max_velocity.is_finite() || config.physics.max_velocity < 10.0 {
+        return Err(format!(
+            "Invalid max_velocity: {} (must be finite and >= 10.0)",
+            config.physics.max_velocity
+        ));
+    }
+
+    // Validate max_angular_velocity
+    if !config.physics.max_angular_velocity.is_finite() || config.physics.max_angular_velocity < 0.1
+    {
+        return Err(format!(
+            "Invalid max_angular_velocity: {} (must be finite and >= 0.1)",
+            config.physics.max_angular_velocity
+        ));
+    }
+
+    // Validate mass bounds
+    if config.physics.min_mass > config.physics.max_mass {
+        return Err(format!(
+            "Invalid mass bounds: min ({}) > max ({})",
+            config.physics.min_mass, config.physics.max_mass
+        ));
+    }
+
+    // Validate world coordinate bounds are finite
+    if !config.physics.min_world_coord.is_finite() || !config.physics.max_world_coord.is_finite() {
+        return Err("World bounds must be finite".to_string());
+    }
+
+    if config.physics.min_world_coord > config.physics.max_world_coord {
+        return Err(format!(
+            "Invalid world coord bounds: min ({}) > max ({})",
+            config.physics.min_world_coord, config.physics.max_world_coord
+        ));
+    }
+
+    // Validate collider size
+    if config.physics.max_collider_size < 1.0 {
+        return Err(format!(
+            "Invalid max_collider_size: {} (must be >= 1.0)",
+            config.physics.max_collider_size
+        ));
+    }
+
+    Ok(())
+}
 
 /// Vehicle Bundle Specification
 #[derive(Debug, Clone)]
@@ -149,47 +203,51 @@ impl BundleSpec for VehicleBundleSpec {
             VehicleType::Yacht => &config.vehicles.yacht,
         };
 
-        // Bug #4: Apply overrides with safe clamp validation
+        // Bug #8 Fix: Explicit validation instead of silent fallback
         let max_speed = {
             let speed = self.max_speed_override.unwrap_or(vehicle_config.max_speed);
-            if 10.0 <= config.physics.max_velocity {
-                speed.clamp(10.0, config.physics.max_velocity)
-            } else {
+            if config.physics.max_velocity < 10.0 {
                 error!(
-                    "Invalid max_velocity bounds (10.0 > {}), using fallback",
+                    "CRITICAL CONFIG ERROR: max_velocity ({}) is below minimum (10.0). \
+                     This indicates invalid configuration and will cause physics issues. \
+                     Using emergency fallback 500.0",
                     config.physics.max_velocity
                 );
                 speed.clamp(10.0, 500.0)
+            } else {
+                speed.clamp(10.0, config.physics.max_velocity)
             }
         };
 
         let mass = {
             let m = self.mass_override.unwrap_or(vehicle_config.mass);
-            if config.physics.min_mass <= config.physics.max_mass {
-                m.clamp(config.physics.min_mass, config.physics.max_mass)
-            } else {
+            if config.physics.min_mass > config.physics.max_mass {
                 error!(
-                    "Invalid mass bounds ({} > {}), using fallback",
+                    "CRITICAL CONFIG ERROR: mass bounds inverted (min {} > max {}). \
+                     This indicates invalid configuration. Using emergency fallback [1.0, 10000.0]",
                     config.physics.min_mass, config.physics.max_mass
                 );
                 m.clamp(1.0, 10000.0)
+            } else {
+                m.clamp(config.physics.min_mass, config.physics.max_mass)
             }
         };
 
         // Create validated transform
         let transform = {
-            let pos = if config.physics.min_world_coord <= config.physics.max_world_coord {
-                self.position.clamp(
-                    Vec3::splat(config.physics.min_world_coord),
-                    Vec3::splat(config.physics.max_world_coord),
-                )
-            } else {
+            let pos = if config.physics.min_world_coord > config.physics.max_world_coord {
                 error!(
-                    "Invalid world coord bounds ({} > {}), using fallback",
+                    "CRITICAL CONFIG ERROR: world coord bounds inverted (min {} > max {}). \
+                     This indicates invalid configuration. Using emergency fallback [-10000, 10000]",
                     config.physics.min_world_coord, config.physics.max_world_coord
                 );
                 self.position
                     .clamp(Vec3::splat(-5000.0), Vec3::splat(5000.0))
+            } else {
+                self.position.clamp(
+                    Vec3::splat(config.physics.min_world_coord),
+                    Vec3::splat(config.physics.max_world_coord),
+                )
             };
             Transform::from_translation(pos)
         };
@@ -406,16 +464,17 @@ impl BundleSpec for BuildingBundleSpec {
     type Bundle = BuildingBundle;
 
     fn create_bundle(self, config: &GameConfig) -> Self::Bundle {
-        // Bug #4: Validate and clamp size with safe bounds check
+        // Bug #8 Fix: Explicit validation instead of silent fallback
         let size = {
-            let max_size = if config.physics.max_collider_size >= 1.0 {
-                config.physics.max_collider_size
-            } else {
+            let max_size = if config.physics.max_collider_size < 1.0 {
                 error!(
-                    "Invalid max_collider_size ({}), using fallback 1000.0",
+                    "CRITICAL CONFIG ERROR: max_collider_size ({}) is below minimum (1.0). \
+                     This indicates invalid configuration. Using emergency fallback 1000.0",
                     config.physics.max_collider_size
                 );
                 1000.0
+            } else {
+                config.physics.max_collider_size
             };
             Vec3::new(
                 self.size.x.clamp(1.0, max_size),
@@ -519,17 +578,18 @@ impl BundleSpec for PhysicsBundleSpec {
     type Bundle = PhysicsBundle;
 
     fn create_bundle(self, config: &GameConfig) -> Self::Bundle {
-        // Bug #4: Validate and clamp mass with safe bounds check
+        // Bug #8 Fix: Explicit validation instead of silent fallback
         let mass = {
-            if config.physics.min_mass <= config.physics.max_mass {
-                self.mass
-                    .clamp(config.physics.min_mass, config.physics.max_mass)
-            } else {
+            if config.physics.min_mass > config.physics.max_mass {
                 error!(
-                    "Invalid mass bounds ({} > {}), using fallback",
+                    "CRITICAL CONFIG ERROR: mass bounds inverted (min {} > max {}). \
+                     This indicates invalid configuration. Using emergency fallback [1.0, 10000.0]",
                     config.physics.min_mass, config.physics.max_mass
                 );
                 self.mass.clamp(1.0, 10000.0)
+            } else {
+                self.mass
+                    .clamp(config.physics.min_mass, config.physics.max_mass)
             }
         };
 

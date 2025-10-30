@@ -21,7 +21,10 @@ impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MapSetupTimer>()
             .add_systems(Startup, load_map_config)
-            .add_systems(Update, delayed_setup_minimap)
+            .add_systems(
+                Update,
+                delayed_setup_minimap.run_if(resource_exists::<MapSetupTimer>),
+            )
             .add_systems(Update, update_map_camera)
             .add_systems(Update, update_player_icon);
     }
@@ -67,22 +70,23 @@ fn load_map_config(mut commands: Commands) {
 fn delayed_setup_minimap(
     time: Res<Time>,
     mut timer: ResMut<MapSetupTimer>,
-    commands: Commands,
-    images: ResMut<Assets<Image>>,
+    mut commands: Commands,
+    mut images: ResMut<Assets<Image>>,
     asset_server: Res<AssetServer>,
     config: Res<MapConfig>,
     minimap_query: Query<Entity, With<MinimapUI>>,
 ) {
     if timer.0.tick(time.delta()).just_finished() && minimap_query.is_empty() {
-        setup_minimap(commands, images, asset_server, config);
+        setup_minimap(&mut commands, &mut images, &asset_server, &config);
+        commands.remove_resource::<MapSetupTimer>();
     }
 }
 
 fn setup_minimap(
-    mut commands: Commands,
-    mut images: ResMut<Assets<Image>>,
-    asset_server: Res<AssetServer>,
-    config: Res<MapConfig>,
+    commands: &mut Commands,
+    images: &mut ResMut<Assets<Image>>,
+    asset_server: &Res<AssetServer>,
+    config: &Res<MapConfig>,
 ) {
     let size = Extent3d {
         width: 512,
@@ -276,24 +280,30 @@ fn update_map_camera(
     mut camera_query: Query<&mut Transform, (With<MapCamera>, Without<ActiveEntity>)>,
     config: Res<MapConfig>,
 ) {
-    if let (Ok(active_transform), Ok(mut camera_transform)) =
-        (active_query.single(), camera_query.single_mut())
-    {
-        let target_pos = active_transform.translation;
-        camera_transform.translation.x = target_pos.x;
-        camera_transform.translation.z = target_pos.z;
-        camera_transform.translation.y = config.map_height;
-    }
+    let Ok(active_transform) = active_query.single() else {
+        return;
+    };
+    let Ok(mut camera_transform) = camera_query.single_mut() else {
+        return;
+    };
+
+    let target_pos = active_transform.translation;
+    camera_transform.translation.x = target_pos.x;
+    camera_transform.translation.z = target_pos.z;
+    camera_transform.translation.y = config.map_height;
 }
 
 fn update_player_icon(
     active_query: Query<&Transform, With<ActiveEntity>>,
     mut icon_query: Query<&mut Transform, (With<PlayerMapIcon>, Without<ActiveEntity>)>,
 ) {
-    if let (Ok(active_transform), Ok(mut icon_transform)) =
-        (active_query.single(), icon_query.single_mut())
-    {
-        let (yaw, _pitch, _roll) = active_transform.rotation.to_euler(EulerRot::YXZ);
-        icon_transform.rotation = Quat::from_rotation_z(-yaw + std::f32::consts::PI);
-    }
+    let Ok(active_transform) = active_query.single() else {
+        return;
+    };
+    let Ok(mut icon_transform) = icon_query.single_mut() else {
+        return;
+    };
+
+    let (yaw, _pitch, _roll) = active_transform.rotation.to_euler(EulerRot::YXZ);
+    icon_transform.rotation = Quat::from_rotation_z(-yaw + std::f32::consts::PI);
 }

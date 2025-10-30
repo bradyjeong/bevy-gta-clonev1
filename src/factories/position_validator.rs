@@ -20,6 +20,7 @@ use std::collections::HashMap;
 pub struct PositionValidator {
     config: GameConfig,
     position_cache: HashMap<(i32, i32), f32>,
+    max_cache_size: usize,
 }
 
 impl PositionValidator {
@@ -27,6 +28,7 @@ impl PositionValidator {
         Self {
             config,
             position_cache: HashMap::new(),
+            max_cache_size: 10000,
         }
     }
 
@@ -81,6 +83,9 @@ impl PositionValidator {
             };
 
         // Cache for future use (following AGENT.MD performance guidelines)
+        if self.position_cache.len() >= self.max_cache_size {
+            self.position_cache.clear();
+        }
         self.position_cache.insert((grid_x, grid_z), ground_height);
         ground_height
     }
@@ -142,5 +147,13 @@ impl PositionValidator {
     fn is_in_water_area(&self, position: Vec3, world: &UnifiedWorldManager) -> bool {
         // In water if not on terrain island
         !world.is_on_terrain_island(position)
+    }
+
+    pub fn clear_cache(&mut self) {
+        self.position_cache.clear();
+    }
+
+    pub fn cache_size(&self) -> usize {
+        self.position_cache.len()
     }
 }

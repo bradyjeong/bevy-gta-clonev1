@@ -58,6 +58,7 @@ pub fn helicopter_visual_tilt(
         let new_roll = current_roll + (target_roll - current_roll) * lerp_factor;
 
         // Apply tilt to visual body only (yaw stays at 0 - parent handles yaw rotation)
-        visual_transform.rotation = Quat::from_euler(EulerRot::YXZ, current_yaw, new_pitch, new_roll);
+        visual_transform.rotation =
+            Quat::from_euler(EulerRot::YXZ, current_yaw, new_pitch, new_roll);
     }
 }

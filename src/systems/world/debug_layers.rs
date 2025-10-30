@@ -45,7 +45,7 @@ pub fn add_debug_visualization(
             ..default()
         });
 
-        for (entity, transform) in entity_query.iter().take(10) {
+        for (entity, _transform) in entity_query.iter().take(10) {
             // Limit to first 10 for demo
             // Add debug wireframe sphere to show visibility range
             commands.entity(entity).with_children(|parent| {

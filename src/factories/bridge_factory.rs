@@ -112,6 +112,7 @@ pub fn spawn_bridge(
 
                 let barrier_z = side_z - barrier_t * 0.5;
                 parent.spawn((
+                    RigidBody::Fixed,
                     Collider::cuboid(rail_length * 0.5, barrier_h * 0.5, barrier_t * 0.5),
                     Transform::from_translation(Vec3::new(barrier_x, barrier_y, barrier_z)),
                     CollisionGroups::new(

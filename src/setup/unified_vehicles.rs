@@ -70,8 +70,8 @@ pub fn setup_initial_vehicles_unified(
     #[cfg(feature = "debug-ui")]
     info!(
         "Unified vehicle setup complete - Spawned {} starter vehicles, {} luxury cars",
-        starter_vehicles.len(),
-        luxury_cars.len()
+        _starter_vehicles.len(),
+        _luxury_cars.len()
     );
 }
 

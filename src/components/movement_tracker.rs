@@ -8,6 +8,15 @@ pub struct MovementTracker {
     pub movement_threshold: f32,
 }
 
+impl Default for MovementTracker {
+    fn default() -> Self {
+        Self {
+            last_position: Vec3::ZERO,
+            movement_threshold: 1.0,
+        }
+    }
+}
+
 impl MovementTracker {
     pub fn new(position: Vec3, threshold: f32) -> Self {
         Self {

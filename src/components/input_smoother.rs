@@ -45,8 +45,12 @@ impl InputSmoother {
     }
 
     pub fn smooth_value(&self, current: f32, target: f32, dt: f32) -> f32 {
+        if !dt.is_finite() || dt <= 0.0 {
+            return current;
+        }
         let factor = (self.smoothing_speed * dt).clamp(0.0, 1.0);
-        current + (target - current) * factor
+        let result = current + (target - current) * factor;
+        if result.is_finite() { result } else { current }
     }
 
     #[allow(clippy::too_many_arguments)]

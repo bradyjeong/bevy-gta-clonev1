@@ -99,6 +99,7 @@ pub fn validate_vehicle_consistency(config: Res<GameConfig>) {
         ("SuperCar", &config.vehicles.super_car),
         ("Helicopter", &config.vehicles.helicopter),
         ("F16", &config.vehicles.f16),
+        ("Yacht", &config.vehicles.yacht),
     ];
 
     for (name, vehicle_config) in vehicles {

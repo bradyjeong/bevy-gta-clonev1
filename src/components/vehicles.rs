@@ -87,6 +87,10 @@ impl VehicleHealth {
     }
 
     pub fn health_percentage(&self) -> f32 {
+        if self.max <= 0.0 {
+            error!("Invalid VehicleHealth max: {}", self.max);
+            return 0.0;
+        }
         (self.current / self.max).clamp(0.0, 1.0)
     }
 }
@@ -203,6 +207,24 @@ impl Default for SimpleF16Specs {
 
             // Banked-lift feedback
             bank_lift_scale: 0.7_f32.clamp(0.0, 1.0),
+        }
+    }
+}
+
+impl SimpleF16Specs {
+    pub fn validate(&mut self) {
+        self.max_forward_speed = self.max_forward_speed.clamp(50.0, 500.0);
+        self.roll_rate_max = self.roll_rate_max.clamp(0.1, 10.0);
+        self.pitch_rate_max = self.pitch_rate_max.clamp(0.1, 10.0);
+        self.yaw_rate_max = self.yaw_rate_max.clamp(0.1, 5.0);
+
+        if !self.max_forward_speed.is_finite() {
+            error!("Invalid max_forward_speed, using default");
+            self.max_forward_speed = 200.0;
+        }
+        if !self.lift_per_throttle.is_finite() {
+            error!("Invalid lift_per_throttle, using default");
+            self.lift_per_throttle = 3.0;
         }
     }
 }
@@ -456,6 +478,31 @@ impl Default for SimpleCarSpecs {
     }
 }
 
+impl SimpleCarSpecs {
+    pub fn validate(&mut self) {
+        self.base_speed = self.base_speed.clamp(1.0, 100.0);
+        self.rotation_speed = self.rotation_speed.clamp(0.1, 10.0);
+        self.linear_lerp_factor = self.linear_lerp_factor.clamp(1.0, 20.0);
+        self.angular_lerp_factor = self.angular_lerp_factor.clamp(1.0, 20.0);
+        self.emergency_brake_linear = self.emergency_brake_linear.clamp(0.01, 1.0);
+        self.emergency_brake_angular = self.emergency_brake_angular.clamp(0.01, 1.0);
+        self.drag_factor = self.drag_factor.clamp(0.9, 1.0);
+
+        if !self.base_speed.is_finite() {
+            error!("Invalid base_speed, using default");
+            self.base_speed = 70.0;
+        }
+        if !self.rotation_speed.is_finite() {
+            error!("Invalid rotation_speed, using default");
+            self.rotation_speed = 3.0;
+        }
+        if !self.drag_factor.is_finite() {
+            error!("Invalid drag_factor, using default");
+            self.drag_factor = 0.92;
+        }
+    }
+}
+
 // Asset-driven configuration following YachtSpecs pattern
 #[derive(Asset, TypePath, Component, Debug, Clone, serde::Deserialize)]
 pub struct SimpleHelicopterSpecs {
@@ -528,6 +575,47 @@ impl Default for SimpleHelicopterSpecs {
             ground_ray_length: 5.0,
         }
     }
+}
+
+impl SimpleHelicopterSpecs {
+    pub fn validate(&mut self) {
+        self.vertical_speed = self.vertical_speed.clamp(1.0, 50.0);
+        self.yaw_rate = self.yaw_rate.clamp(0.1, 5.0);
+        self.pitch_rate = self.pitch_rate.clamp(0.1, 5.0);
+        self.roll_rate = self.roll_rate.clamp(0.1, 5.0);
+        self.angular_lerp_factor = self.angular_lerp_factor.clamp(1.0, 20.0);
+
+        if !self.vertical_speed.is_finite() {
+            error!("Invalid vertical_speed, using default");
+            self.vertical_speed = 15.0;
+        }
+        if !self.hover_bias.is_finite() {
+            error!("Invalid hover_bias, using default");
+            self.hover_bias = 0.03;
+        }
+        if !self.collective_gain.is_finite() {
+            error!("Invalid collective_gain, using default");
+            self.collective_gain = 0.55;
+        }
+    }
+}
+
+// Vehicle Physics Configuration - Shared physics values for all vehicle types
+#[derive(Asset, TypePath, Debug, Clone, serde::Deserialize)]
+pub struct VehiclePhysicsConfig {
+    pub car: PhysicsSpec,
+    pub helicopter: PhysicsSpec,
+    pub f16: PhysicsSpec,
+    pub yacht: PhysicsSpec,
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct PhysicsSpec {
+    pub mass: f32,
+    pub linear_damping: f32,
+    pub angular_damping: f32,
+    pub friction: f32,
+    pub restitution: f32,
 }
 
 // Asset handle components for asset-driven vehicle specs
