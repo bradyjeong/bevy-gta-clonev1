@@ -19,7 +19,6 @@ pub type NPCBehavior = NPCBehaviorComponent;
 /// Particle effect types for the unified system
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParticleEffectType {
-    Exhaust,
     Smoke,
     Fire,
     Water,

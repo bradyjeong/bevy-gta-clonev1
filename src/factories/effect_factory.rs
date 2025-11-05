@@ -1,11 +1,10 @@
-use crate::components::ExhaustFlame;
 use crate::config::GameConfig;
 use crate::factories::generic_bundle::{BundleError, GenericBundleFactory, ParticleEffectType};
 use bevy::prelude::*;
 use bevy::render::view::visibility::VisibilityRange;
 
 /// Effect Factory - Focused factory for particle effects and visual effects spawning only
-/// Handles exhaust flames, explosions, sparks, and other visual effects
+/// Handles explosions, sparks, and other visual effects
 /// Follows AGENT.md simplicity principles with single responsibility
 #[derive(Debug, Clone)]
 pub struct EffectFactory {
@@ -23,25 +22,6 @@ impl EffectFactory {
     /// Create effect factory with custom configuration
     pub fn with_config(config: GameConfig) -> Self {
         Self { config }
-    }
-
-    /// Spawn exhaust flame effect
-    pub fn spawn_exhaust_flame(
-        &self,
-        commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
-        position: Vec3,
-        lifetime: Option<f32>,
-    ) -> Result<Entity, BundleError> {
-        self.spawn_particle_effect(
-            commands,
-            meshes,
-            materials,
-            position,
-            ParticleEffectType::Exhaust,
-            lifetime.unwrap_or(2.0),
-        )
     }
 
     /// Spawn explosion effect
@@ -111,11 +91,6 @@ impl EffectFactory {
         lifetime: f32,
     ) -> Result<Entity, BundleError> {
         let (mesh, material_color, radius) = match effect_type {
-            ParticleEffectType::Exhaust => (
-                meshes.add(Sphere::new(0.15)),
-                Color::srgb(1.0, 0.3, 0.0),
-                0.15,
-            ),
             ParticleEffectType::Explosion => (
                 meshes.add(Sphere::new(0.5)),
                 Color::srgb(1.0, 0.8, 0.0),
@@ -159,7 +134,6 @@ impl EffectFactory {
                     lifetime,
                     age: 0.0,
                 },
-                ExhaustFlame,
                 VisibilityRange::abrupt(0.0, self.config.performance.vehicle_visibility_distance),
                 Name::new(format!("Effect_{effect_type:?}")),
             ))

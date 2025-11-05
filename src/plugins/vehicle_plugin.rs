@@ -13,8 +13,8 @@ use bevy_common_assets::ron::RonAssetPlugin;
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
 use crate::systems::effects::{
     RotorWashEffect, cleanup_rotor_wash_on_helicopter_despawn, create_rotor_wash_effect,
-    exhaust_effects_system, spawn_rotor_wash_particles, update_jet_flames_unified,
-    update_landing_lights, update_navigation_lights, update_rotor_blur_visibility,
+    spawn_rotor_wash_particles, update_jet_flames_unified, update_landing_lights,
+    update_navigation_lights, update_rotor_blur_visibility,
     update_rotor_wash_position_and_intensity,
 };
 use crate::systems::safety::validate_physics_config;
@@ -58,7 +58,6 @@ impl Plugin for VehiclePlugin {
                     yacht_camera_system,
                     // Visual rotor animation for helicopters
                     rotate_helicopter_rotors,
-                    exhaust_effects_system,
                     // Helicopter visual enhancements
                     update_rotor_blur_visibility,
                     update_navigation_lights,

@@ -37,9 +37,6 @@ impl Default for FlameEffect {
 }
 
 #[derive(Component, Default)]
-pub struct ExhaustFlame;
-
-#[derive(Component, Default)]
 pub struct VehicleBeacon;
 
 #[derive(Component, Default)]

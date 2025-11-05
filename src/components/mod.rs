@@ -113,7 +113,7 @@ pub use water_material::WaterMaterial;
 
 // Visual and rendering components
 pub use effects::{
-    ControlsDisplay, ControlsText, ExhaustFlame, FlameEffect, JetFlame, VehicleBeacon, WaypointText,
+    ControlsDisplay, ControlsText, FlameEffect, JetFlame, VehicleBeacon, WaypointText,
 };
 
 // Control and optimization components
