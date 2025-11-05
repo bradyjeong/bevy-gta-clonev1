@@ -85,7 +85,7 @@ impl Plugin for VehiclePlugin {
             )
             .add_systems(
                 OnExit(AppState::InGame),
-                (cleanup_rotor_wash_particle_entities, cleanup_rotor_wash_effect),
+                (cleanup_rotor_wash_particle_entities, cleanup_rotor_wash_effect).chain(),
             );
     }
 }

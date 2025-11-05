@@ -11,7 +11,6 @@ use crate::systems::swimming::{
     swim_velocity_apply_system,
 };
 use crate::systems::water::{
-    cleanup_yacht_effects, cleanup_yacht_particle_entities,
     cleanup_yacht_particles_on_despawn, load_unified_water_assets,
     process_loaded_unified_water_assets, setup_yacht_effects, simple_yacht_buoyancy,
     spawn_bow_splash, spawn_or_update_wake_foam, spawn_prop_wash, spawn_test_yacht,
@@ -116,9 +115,6 @@ impl Plugin for WaterPlugin {
                     heli_landing_detection_system,
                 ),
             )
-            .add_systems(
-                OnExit(AppState::InGame),
-                (cleanup_yacht_particle_entities, cleanup_yacht_effects),
-            );
+            ;
     }
 }

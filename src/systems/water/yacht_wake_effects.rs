@@ -232,7 +232,7 @@ pub fn spawn_or_update_wake_foam(
                 parent.spawn((
                     ParticleEffect::new(effects.wake_foam.clone()),
                     Transform {
-                        translation: Vec3::new(0.0, 0.05, -28.0),
+                        translation: Vec3::new(0.0, -0.6, -28.0),
                         rotation: Quat::IDENTITY,
                         scale: Vec3::new(width, 1.0, 1.0),
                     },
@@ -288,7 +288,7 @@ pub fn spawn_bow_splash(
             commands.entity(yacht_e).with_children(|parent| {
                 parent.spawn((
                     ParticleEffect::new(effects.bow_splash.clone()),
-                    Transform::from_translation(Vec3::new(0.0, 0.6, 29.0)),
+                    Transform::from_translation(Vec3::new(0.0, -0.6, 29.0)),
                     BowSplash,
                     // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
                     VisibilityRange {
@@ -344,7 +344,7 @@ pub fn spawn_prop_wash(
                 parent.spawn((
                     ParticleEffect::new(effects.prop_wash.clone()),
                     Transform {
-                        translation: Vec3::new(0.0, -0.4, -29.0),
+                        translation: Vec3::new(0.0, -1.2, -29.0),
                         rotation: Quat::IDENTITY,
                         scale: Vec3::new(width, 1.0, 1.0),
                     },
@@ -383,18 +383,6 @@ pub fn cleanup_yacht_particles_on_despawn(
                 }
             }
         }
-    }
-}
-
-/// Despawn all yacht particle entities on state exit.
-/// Ensures GPU assets can be released when YachtEffects resource is removed.
-#[allow(clippy::type_complexity)]
-pub fn cleanup_yacht_particle_entities(
-    mut commands: Commands,
-    particle_q: Query<Entity, Or<(With<WakeFoam>, With<PropWash>, With<BowSplash>)>>,
-) {
-    for entity in particle_q.iter() {
-        commands.entity(entity).despawn();
     }
 }
 
