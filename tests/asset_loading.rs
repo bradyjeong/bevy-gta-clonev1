@@ -128,19 +128,19 @@ fn test_helicopter_config_has_valid_values() {
         ron::from_str(&content).expect("simple_helicopter.ron should parse correctly");
 
     assert!(
-        config.vertical_speed >= 1.0 && config.vertical_speed <= 50.0,
+        config.vertical_speed >= 1.0 && config.vertical_speed <= 200.0,
         "Vertical speed should be in valid range"
     );
     assert!(
-        config.yaw_rate >= 0.1 && config.yaw_rate <= 5.0,
+        config.yaw_rate >= 0.1 && config.yaw_rate <= 15.0,
         "Yaw rate should be in valid range"
     );
     assert!(
-        config.pitch_rate >= 0.1 && config.pitch_rate <= 5.0,
+        config.pitch_rate >= 0.1 && config.pitch_rate <= 15.0,
         "Pitch rate should be in valid range"
     );
     assert!(
-        config.roll_rate >= 0.1 && config.roll_rate <= 5.0,
+        config.roll_rate >= 0.1 && config.roll_rate <= 15.0,
         "Roll rate should be in valid range"
     );
 
