@@ -46,6 +46,8 @@ type HelicopterStateQuery<'w, 's> = Query<
     With<Helicopter>,
 >;
 
+type HelicopterExistsQuery<'w, 's> = Query<'w, 's, (), With<Helicopter>>;
+
 /// Creates the rotor wash particle effect asset.
 /// Called once at startup to initialize the cached effect handle.
 pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAsset> {
@@ -154,18 +156,26 @@ pub fn spawn_rotor_wash_particles(
 }
 
 pub fn update_rotor_wash_position_and_intensity(
+    mut commands: Commands,
     helicopter_query: HelicopterStateQuery,
+    helicopter_exists: HelicopterExistsQuery,
     mut particle_query: ParticleTransformQuery,
     env: Res<WorldEnvConfig>,
     heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
 ) {
-    for (_rotor_wash_entity, rotor_wash_of, mut particle_transform, mut spawner) in
+    for (rotor_wash_entity, rotor_wash_of, mut particle_transform, mut spawner) in
         particle_query.iter_mut()
     {
         let heli_entity = rotor_wash_of.0;
 
-        if let Ok((helicopter_transform, _velocity, runtime, control_state, specs_handle, is_active)) =
-            helicopter_query.get(heli_entity)
+        if let Ok((
+            helicopter_transform,
+            _velocity,
+            runtime,
+            control_state,
+            specs_handle,
+            is_active,
+        )) = helicopter_query.get(heli_entity)
         {
             // Only update particles for the active helicopter to save CPU/GPU
             if is_active.is_none() {
@@ -215,8 +225,15 @@ pub fn update_rotor_wash_position_and_intensity(
             // Apply intensity to particle system - only below 10m altitude
             spawner.active = altitude < 10.0 && final_intensity > 0.05;
         } else {
-            // Helicopter doesn't exist - cleanup handled by cleanup_rotor_wash_on_helicopter_despawn
+            // Query failed - could be temporary (missing ControlState during exit)
+            // or permanent (helicopter despawned). Turn off spawning first.
             spawner.active = false;
+            
+            // Failsafe: Only despawn particles if helicopter entity truly doesn't exist
+            // This prevents despawning during legitimate state transitions.
+            if helicopter_exists.get(heli_entity).is_err() {
+                commands.entity(rotor_wash_entity).despawn();
+            }
         }
     }
 }

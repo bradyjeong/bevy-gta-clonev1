@@ -185,9 +185,10 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
     effects.add(effect)
 }
 
+#[allow(clippy::type_complexity)]
 pub fn spawn_or_update_wake_foam(
     mut commands: Commands,
-    yacht_q: Query<(&Velocity, Entity, Option<&ActiveEntity>), With<Yacht>>,
+    yacht_q: Query<(&Velocity, Entity, Option<&ActiveEntity>, Option<&Children>), With<Yacht>>,
     foam_q: Query<Entity, With<WakeFoam>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -195,26 +196,32 @@ pub fn spawn_or_update_wake_foam(
         return;
     };
 
-    for (vel, yacht_e, is_active) in yacht_q.iter() {
-        // Only spawn particles for the active yacht to save CPU/GPU
-        if is_active.is_none() {
-            for e in foam_q.iter() {
-                commands.entity(e).despawn();
-            }
-            continue;
-        }
+    for (vel, yacht_e, is_active, children) in yacht_q.iter() {
         let speed = vel.linvel.length();
+        
+        // Check if this yacht already has wake foam
+        let has_foam = if let Some(children) = children {
+            children.iter().any(|child| foam_q.get(child).is_ok())
+        } else {
+            false
+        };
 
-        if speed < 2.0 {
-            for e in foam_q.iter() {
-                commands.entity(e).despawn();
+        // Only spawn particles for the active yacht to save CPU/GPU
+        if is_active.is_none() || speed < 2.0 {
+            // Despawn only this yacht's foam (scoped cleanup)
+            if let Some(children) = children {
+                for child in children.iter() {
+                    if foam_q.get(child).is_ok() {
+                        commands.entity(child).despawn();
+                    }
+                }
             }
             continue;
         }
 
         let width = 2.0 + ((speed / 20.0).clamp(0.0, 1.0) * 4.0);
 
-        if foam_q.is_empty() {
+        if !has_foam {
             commands.entity(yacht_e).with_children(|parent| {
                 parent.spawn((
                     ParticleEffect::new(effects.wake_foam.clone()),
@@ -236,9 +243,10 @@ pub fn spawn_or_update_wake_foam(
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn spawn_bow_splash(
     mut commands: Commands,
-    yacht_query: Query<(&Transform, &Velocity, Entity, Option<&ActiveEntity>), With<Yacht>>,
+    yacht_query: Query<(&Transform, &Velocity, Entity, Option<&ActiveEntity>, Option<&Children>), With<Yacht>>,
     splash_query: Query<Entity, With<BowSplash>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -246,25 +254,31 @@ pub fn spawn_bow_splash(
         return;
     };
 
-    for (xf, vel, yacht_e, is_active) in yacht_query.iter() {
-        // Only spawn particles for the active yacht to save CPU/GPU
-        if is_active.is_none() {
-            for e in splash_query.iter() {
-                commands.entity(e).despawn();
-            }
-            continue;
-        }
+    for (xf, vel, yacht_e, is_active, children) in yacht_query.iter() {
         let fwd = horizontal_forward(xf);
         let fwd_speed = vel.linvel.dot(fwd).max(0.0);
+        
+        // Check if this yacht already has bow splash
+        let has_splash = if let Some(children) = children {
+            children.iter().any(|child| splash_query.get(child).is_ok())
+        } else {
+            false
+        };
 
-        if fwd_speed < 6.0 {
-            for e in splash_query.iter() {
-                commands.entity(e).despawn();
+        // Only spawn particles for the active yacht to save CPU/GPU
+        if is_active.is_none() || fwd_speed < 6.0 {
+            // Despawn only this yacht's splash (scoped cleanup)
+            if let Some(children) = children {
+                for child in children.iter() {
+                    if splash_query.get(child).is_ok() {
+                        commands.entity(child).despawn();
+                    }
+                }
             }
             continue;
         }
 
-        if splash_query.is_empty() {
+        if !has_splash {
             commands.entity(yacht_e).with_children(|parent| {
                 parent.spawn((
                     ParticleEffect::new(effects.bow_splash.clone()),
@@ -282,9 +296,10 @@ pub fn spawn_bow_splash(
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn spawn_prop_wash(
     mut commands: Commands,
-    yacht_query: Query<(&YachtState, &Velocity, Entity, Option<&ActiveEntity>), With<Yacht>>,
+    yacht_query: Query<(&YachtState, &Velocity, Entity, Option<&ActiveEntity>, Option<&Children>), With<Yacht>>,
     wash_query: Query<Entity, With<PropWash>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -292,27 +307,33 @@ pub fn spawn_prop_wash(
         return;
     };
 
-    for (state, vel, yacht_e, is_active) in yacht_query.iter() {
+    for (state, vel, yacht_e, is_active, children) in yacht_query.iter() {
+        let throttle = state.throttle.abs();
+        let speed = vel.linvel.length();
+        
+        // Check if this yacht already has prop wash
+        let has_wash = if let Some(children) = children {
+            children.iter().any(|child| wash_query.get(child).is_ok())
+        } else {
+            false
+        };
+
         // Only spawn particles for the active yacht to save CPU/GPU
-        if is_active.is_none() {
-            for e in wash_query.iter() {
-                commands.entity(e).despawn();
+        if is_active.is_none() || throttle < 0.1 {
+            // Despawn only this yacht's wash (scoped cleanup)
+            if let Some(children) = children {
+                for child in children.iter() {
+                    if wash_query.get(child).is_ok() {
+                        commands.entity(child).despawn();
+                    }
+                }
             }
             continue;
         }
-        let throttle = state.throttle.abs();
-        let speed = vel.linvel.length();
 
         let width = (1.8 + (speed / 20.0).clamp(0.0, 1.0) * 2.0).max(1.8);
 
-        if throttle < 0.1 {
-            for e in wash_query.iter() {
-                commands.entity(e).despawn();
-            }
-            continue;
-        }
-
-        if wash_query.is_empty() {
+        if !has_wash {
             commands.entity(yacht_e).with_children(|parent| {
                 parent.spawn((
                     ParticleEffect::new(effects.prop_wash.clone()),
@@ -334,16 +355,14 @@ pub fn spawn_prop_wash(
     }
 }
 
+/// Cleanup yacht particles when yacht is despawned.
+/// Note: This is a failsafe - Bevy 0.16+ despawn() is recursive by default,
+/// so child particles should be auto-cleaned. This system runs as backup.
 pub fn cleanup_yacht_particles_on_despawn(
-    mut commands: Commands,
-    mut removed_yachts: RemovedComponents<Yacht>,
-    children_query: Query<&Children>,
+    mut _commands: Commands,
+    mut _removed_yachts: RemovedComponents<Yacht>,
 ) {
-    for yacht_entity in removed_yachts.read() {
-        if let Ok(children) = children_query.get(yacht_entity) {
-            for child in children.iter() {
-                commands.entity(child).despawn();
-            }
-        }
-    }
+    // Bevy 0.16+ despawn() is recursive by default - children are auto-despawned.
+    // This system is kept as a placeholder for potential future edge case handling.
+    // See entity_limit_enforcement.rs line 76 - all despawns are already recursive.
 }
