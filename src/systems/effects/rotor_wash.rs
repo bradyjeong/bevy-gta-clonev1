@@ -51,25 +51,27 @@ type HelicopterStateQuery<'w, 's> = Query<
 pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAsset> {
     let mut color_gradient = bevy_hanabi::Gradient::new();
     color_gradient.add_key(0.0, Vec4::new(0.91, 0.84, 0.68, 0.0));
-    color_gradient.add_key(0.1, Vec4::new(0.89, 0.82, 0.66, 0.7));
-    color_gradient.add_key(0.7, Vec4::new(0.87, 0.79, 0.63, 0.5));
+    color_gradient.add_key(0.1, Vec4::new(0.89, 0.82, 0.66, 0.24));
+    color_gradient.add_key(0.7, Vec4::new(0.87, 0.79, 0.63, 0.16));
     color_gradient.add_key(1.0, Vec4::new(0.85, 0.76, 0.6, 0.0));
 
     let mut size_gradient = bevy_hanabi::Gradient::new();
-    size_gradient.add_key(0.0, Vec3::splat(0.12));
-    size_gradient.add_key(0.4, Vec3::splat(0.4));
-    size_gradient.add_key(1.0, Vec3::splat(0.15));
+    size_gradient.add_key(0.0, Vec3::splat(0.25));
+    size_gradient.add_key(0.4, Vec3::splat(0.95));
+    size_gradient.add_key(1.0, Vec3::splat(0.4));
 
     let writer = ExprWriter::new();
 
     let age = writer.lit(0.).expr();
     let init_age = SetAttributeModifier::new(Attribute::AGE, age);
 
-    let lifetime = writer.lit(1.8).expr();
+    let base_lifetime = writer.lit(2.8);
+    let lifetime_jitter = writer.rand(ScalarType::Float) * writer.lit(0.8);
+    let lifetime = (base_lifetime + lifetime_jitter).expr();
     let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, lifetime);
 
-    let min_radius = writer.lit(2.5);
-    let radius_range = writer.lit(3.0);
+    let min_radius = writer.lit(4.0);
+    let radius_range = writer.lit(6.0);
     let random_radius = min_radius + writer.rand(ScalarType::Float) * radius_range;
 
     let init_pos = SetPositionCircleModifier {
@@ -79,8 +81,8 @@ pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<Eff
         dimension: ShapeDimension::Surface,
     };
 
-    let base_speed = writer.lit(3.5);
-    let random_factor = writer.rand(ScalarType::Float) * writer.lit(2.0);
+    let base_speed = writer.lit(7.5);
+    let random_factor = writer.rand(ScalarType::Float) * writer.lit(3.0);
     let speed = (base_speed + random_factor).expr();
 
     let init_vel = SetVelocityCircleModifier {
@@ -89,17 +91,17 @@ pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<Eff
         speed,
     };
 
-    let accel = writer.lit(Vec3::new(0.0, 0.3, 0.0)).expr();
+    let accel = writer.lit(Vec3::new(0.0, 0.4, 0.0)).expr();
     let update_accel = AccelModifier::new(accel);
 
     let drag = writer.lit(2.0).expr();
     let update_drag = LinearDragModifier::new(drag);
 
     let module = writer.finish();
-    let spawner = SpawnerSettings::rate(50.0.into());
+    let spawner = SpawnerSettings::rate(1200.0.into());
 
     effects.add(
-        EffectAsset::new(8192, spawner, module)
+        EffectAsset::new(16000, spawner, module)
             .with_name("rotor_wash")
             .init(init_pos)
             .init(init_vel)
@@ -135,14 +137,13 @@ pub fn spawn_rotor_wash_particles(
             Name::new("rotor_wash_particles"),
             ParticleEffect::new(rotor_wash_effect.handle.clone()),
             {
-                let mut spawner = EffectSpawner::new(&SpawnerSettings::rate(50.0.into()));
-                spawner.active = false; // Start inactive, will activate only for ActiveEntity helicopters
+                let mut spawner = EffectSpawner::new(&SpawnerSettings::rate(1200.0.into()));
+                spawner.active = false;
                 spawner
             },
             Transform::from_xyz(0.0, 0.0, 0.0),
             RotorWash,
             RotorWashOf(heli_entity),
-            // Bug #43 fix: Match parent vehicle visibility range (1000m with ±10% variance)
             VisibilityRange {
                 start_margin: 0.0..0.0,
                 end_margin: 900.0..1100.0,
@@ -153,13 +154,12 @@ pub fn spawn_rotor_wash_particles(
 }
 
 pub fn update_rotor_wash_position_and_intensity(
-    mut commands: Commands,
     helicopter_query: HelicopterStateQuery,
     mut particle_query: ParticleTransformQuery,
     env: Res<WorldEnvConfig>,
     heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
 ) {
-    for (rotor_wash_entity, rotor_wash_of, mut particle_transform, mut spawner) in
+    for (_rotor_wash_entity, rotor_wash_of, mut particle_transform, mut spawner) in
         particle_query.iter_mut()
     {
         let heli_entity = rotor_wash_of.0;
@@ -215,7 +215,8 @@ pub fn update_rotor_wash_position_and_intensity(
             // Apply intensity to particle system - only below 10m altitude
             spawner.active = altitude < 10.0 && final_intensity > 0.05;
         } else {
-            commands.entity(rotor_wash_entity).despawn();
+            // Helicopter doesn't exist - cleanup handled by cleanup_rotor_wash_on_helicopter_despawn
+            spawner.active = false;
         }
     }
 }
