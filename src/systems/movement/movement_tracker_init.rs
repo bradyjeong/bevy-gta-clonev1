@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::MovementTracker;
+use bevy::prelude::*;
 
 /// Initialize MovementTracker.last_position to current Transform position
 /// Prevents first-frame "teleport spike" when using Default::default()

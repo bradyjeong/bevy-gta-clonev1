@@ -12,10 +12,11 @@ use bevy::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 // Complex aircraft systems moved to examples/complex_aircraft_physics.rs
 use crate::systems::effects::{
-    RotorWashEffect, cleanup_rotor_wash_on_helicopter_despawn, create_rotor_wash_effect,
+    cleanup_rotor_wash_on_helicopter_despawn, cleanup_rotor_wash_particle_entities,
+    create_rotor_wash_effect, ensure_rotor_wash_for_existing_helicopters,
     spawn_rotor_wash_particles, update_jet_flames_unified, update_landing_lights,
     update_navigation_lights, update_rotor_blur_visibility,
-    update_rotor_wash_position_and_intensity,
+    update_rotor_wash_position_and_intensity, RotorWashEffect,
 };
 use crate::systems::safety::validate_physics_config;
 use bevy_hanabi::prelude::*;
@@ -37,7 +38,11 @@ impl Plugin for VehiclePlugin {
             .init_asset::<SimpleF16Specs>()
             .init_asset::<VehiclePhysicsConfig>()
             // CRITICAL SAFEGUARDS: Run configuration validation at startup
-            .add_systems(Startup, (validate_physics_config, init_rotor_wash_effect))
+            .add_systems(Startup, validate_physics_config)
+            .add_systems(
+                OnEnter(AppState::InGame),
+                (init_rotor_wash_effect, ensure_rotor_wash_for_existing_helicopters).chain(),
+            )
             // Observer for F16 setup when specs are added
             .add_observer(on_f16_spawned)
             .add_systems(
@@ -62,9 +67,9 @@ impl Plugin for VehiclePlugin {
                     update_rotor_blur_visibility,
                     update_navigation_lights,
                     update_landing_lights,
-                    // Rotor wash dust particles
-                    spawn_rotor_wash_particles,
-                    update_rotor_wash_position_and_intensity,
+                    // Rotor wash dust particles (only when resource exists)
+                    spawn_rotor_wash_particles.run_if(resource_exists::<RotorWashEffect>),
+                    update_rotor_wash_position_and_intensity.run_if(resource_exists::<RotorWashEffect>),
                 ),
             )
             .add_systems(PostUpdate, cleanup_rotor_wash_on_helicopter_despawn)
@@ -78,7 +83,10 @@ impl Plugin for VehiclePlugin {
                     // adaptive_performance_system,
                 ),
             )
-            .add_systems(OnExit(AppState::InGame), cleanup_rotor_wash_effect);
+            .add_systems(
+                OnExit(AppState::InGame),
+                (cleanup_rotor_wash_particle_entities, cleanup_rotor_wash_effect),
+            );
     }
 }
 
@@ -89,7 +97,15 @@ fn init_rotor_wash_effect(mut commands: Commands, mut effects: ResMut<Assets<Eff
     commands.insert_resource(RotorWashEffect { handle });
 }
 
-fn cleanup_rotor_wash_effect(mut commands: Commands) {
+fn cleanup_rotor_wash_effect(
+    mut commands: Commands,
+    rotor: Option<Res<RotorWashEffect>>,
+    mut effects: ResMut<Assets<EffectAsset>>,
+) {
+    if let Some(rotor) = rotor {
+        // Remove asset to prevent CPU-side asset accumulation across re-entries
+        effects.remove(rotor.handle.id());
+    }
     commands.remove_resource::<RotorWashEffect>();
     #[cfg(feature = "debug-ui")]
     info!("Rotor wash effect cleaned up");

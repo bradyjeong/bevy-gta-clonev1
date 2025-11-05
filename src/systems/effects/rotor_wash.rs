@@ -252,3 +252,58 @@ pub fn cleanup_rotor_wash_on_helicopter_despawn(
         }
     }
 }
+
+/// Despawn all rotor wash particle entities on state exit.
+/// Ensures GPU assets can be released when RotorWashEffect resource is removed.
+pub fn cleanup_rotor_wash_particle_entities(
+    mut commands: Commands,
+    particle_q: Query<Entity, With<RotorWash>>,
+) {
+    for entity in particle_q.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
+/// Ensure rotor wash particles exist for helicopters that persist across state transitions.
+/// Spawns rotor wash for helicopters that don't already have it (Added<Helicopter> won't fire on re-entry).
+pub fn ensure_rotor_wash_for_existing_helicopters(
+    mut commands: Commands,
+    helicopters: Query<Entity, With<Helicopter>>,
+    existing_rotor_wash: Query<&RotorWashOf>,
+    rotor_wash_effect: Res<RotorWashEffect>,
+) {
+    // Build set of helicopters that already have rotor wash
+    let mut has_rotor_wash = std::collections::HashSet::new();
+    for rotor_wash_of in existing_rotor_wash.iter() {
+        has_rotor_wash.insert(rotor_wash_of.0);
+    }
+
+    // Spawn rotor wash for helicopters that don't have it
+    for heli_entity in helicopters.iter() {
+        if !has_rotor_wash.contains(&heli_entity) {
+            #[cfg(feature = "debug-ui")]
+            info!(
+                "Re-spawning rotor wash particles for existing helicopter: {:?}",
+                heli_entity
+            );
+
+            commands.spawn((
+                Name::new("rotor_wash_particles"),
+                ParticleEffect::new(rotor_wash_effect.handle.clone()),
+                {
+                    let mut spawner = EffectSpawner::new(&SpawnerSettings::rate(1200.0.into()));
+                    spawner.active = false;
+                    spawner
+                },
+                Transform::from_xyz(0.0, 0.0, 0.0),
+                RotorWash,
+                RotorWashOf(heli_entity),
+                VisibilityRange {
+                    start_margin: 0.0..0.0,
+                    end_margin: 900.0..1100.0,
+                    use_aabb: false,
+                },
+            ));
+        }
+    }
+}

@@ -15,7 +15,12 @@ pub fn simple_yacht_buoyancy(
     yacht_specs: Res<Assets<YachtSpecs>>,
     water_regions: Query<&UnifiedWaterBody>,
     mut query: Query<
-        (&mut Velocity, &Transform, &mut ExternalForce, &YachtSpecsHandle),
+        (
+            &mut Velocity,
+            &Transform,
+            &mut ExternalForce,
+            &YachtSpecsHandle,
+        ),
         With<Yacht>,
     >,
 ) {
@@ -48,12 +53,12 @@ pub fn simple_yacht_buoyancy(
                 let roll_rate = velocity.angvel.dot(axis_n);
 
                 // PD controller gains tuned from yacht specs (increased for faster correction)
-                let kp = specs.buoyancy_strength * 3500.0;  // Increased from 1500.0
-                let kd = specs.angular_damping * 350.0;     // Increased from 150.0
+                let kp = specs.buoyancy_strength * 3500.0; // Increased from 1500.0
+                let kd = specs.angular_damping * 350.0; // Increased from 150.0
                 let mut torque_mag = kp * sin_angle - kd * roll_rate;
 
                 // Clamp to prevent solver explosions
-                let torque_limit = 70_000.0;  // Increased from 30_000.0
+                let torque_limit = 70_000.0; // Increased from 30_000.0
                 torque_mag = torque_mag.clamp(-torque_limit, torque_limit);
 
                 external_force.torque += axis_n * torque_mag;

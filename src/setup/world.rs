@@ -316,7 +316,9 @@ pub fn setup_basic_world(
         ControlState::default(),
         PlayerControlled,
         VehicleControlType::Walking,
-        crate::components::unified_water::CurrentWaterRegion { region_entity: None },
+        crate::components::unified_water::CurrentWaterRegion {
+            region_entity: None,
+        },
     ));
 
     spawn_registry.register_entity(

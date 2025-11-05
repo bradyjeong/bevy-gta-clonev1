@@ -3,6 +3,7 @@ use crate::components::unified_water::UnifiedWaterAsset;
 use crate::components::water::YachtSpecs;
 use crate::components::water_material::WaterMaterial;
 use crate::game_state::GameState;
+use crate::states::AppState;
 use crate::systems::movement::{propeller_spin_system, simple_yacht_movement};
 use crate::systems::swimming::{
     apply_prone_rotation_system, apply_swimming_state, detect_swimming_conditions,
@@ -10,6 +11,7 @@ use crate::systems::swimming::{
     swim_velocity_apply_system,
 };
 use crate::systems::water::{
+    cleanup_yacht_effects, cleanup_yacht_particle_entities,
     cleanup_yacht_particles_on_despawn, load_unified_water_assets,
     process_loaded_unified_water_assets, setup_yacht_effects, simple_yacht_buoyancy,
     spawn_bow_splash, spawn_or_update_wake_foam, spawn_prop_wash, spawn_test_yacht,
@@ -57,9 +59,9 @@ impl Plugin for WaterPlugin {
                 (
                     load_unified_water_assets,
                     spawn_test_yacht,
-                    setup_yacht_effects,
                 ),
             )
+            .add_systems(OnEnter(AppState::InGame), setup_yacht_effects)
             .add_systems(Update, process_loaded_unified_water_assets)
             .add_systems(
                 FixedUpdate,
@@ -102,9 +104,9 @@ impl Plugin for WaterPlugin {
                     spawn_bow_splash,
                     spawn_prop_wash,
                     propeller_spin_system,
-                    cleanup_yacht_particles_on_despawn,
                 ),
             )
+            .add_systems(PostUpdate, cleanup_yacht_particles_on_despawn)
             .add_systems(
                 Update,
                 (
@@ -113,6 +115,10 @@ impl Plugin for WaterPlugin {
                     deck_walk_movement_system,
                     heli_landing_detection_system,
                 ),
+            )
+            .add_systems(
+                OnExit(AppState::InGame),
+                (cleanup_yacht_particle_entities, cleanup_yacht_effects),
             );
     }
 }

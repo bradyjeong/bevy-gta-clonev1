@@ -38,28 +38,29 @@ fn create_bow_splash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
     let mut module = Module::default();
 
     let mut color_gradient = Gradient::new();
-    color_gradient.add_key(0.0, Vec4::new(1.0, 1.0, 1.0, 0.9));
-    color_gradient.add_key(0.25, Vec4::new(0.95, 0.98, 1.0, 0.7));
+    color_gradient.add_key(0.0, Vec4::new(0.4, 0.97, 1.0, 0.9));
+    color_gradient.add_key(0.156, Vec4::new(1.0, 1.0, 1.0, 0.9));
+    color_gradient.add_key(0.497, Vec4::new(0.95, 0.98, 1.0, 0.7));
     color_gradient.add_key(1.0, Vec4::new(0.8, 0.9, 0.98, 0.0));
 
     let init_pos = SetPositionSphereModifier {
         center: module.lit(Vec3::ZERO),
-        radius: module.lit(2.0),
+        radius: module.lit(0.5),
         dimension: ShapeDimension::Surface,
     };
 
     let init_vel = SetVelocitySphereModifier {
         center: module.lit(Vec3::ZERO),
-        speed: module.lit(12.0),
+        speed: module.lit(3.0),
     };
 
-    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(1.5));
-    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.4));
+    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(1.0));
+    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(1.5));
 
-    let update_accel = AccelModifier::new(module.lit(Vec3::new(0.0, -9.0, 0.0)));
-    let update_drag = LinearDragModifier::new(module.lit(2.0));
+    let update_accel = AccelModifier::new(module.lit(Vec3::new(0.0, -0.98, 0.0)));
+    let update_drag = LinearDragModifier::new(module.lit(0.5));
 
-    let effect = EffectAsset::new(4096, SpawnerSettings::rate(500.0.into()), module)
+    let effect = EffectAsset::new(256, SpawnerSettings::rate(80.0.into()), module)
         .with_name("BowSplash")
         .init(init_pos)
         .init(init_vel)
@@ -75,9 +76,10 @@ fn create_bow_splash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
         .render(SizeOverLifetimeModifier {
             gradient: {
                 let mut gradient = Gradient::new();
-                gradient.add_key(0.0, Vec3::splat(0.4));
-                gradient.add_key(0.3, Vec3::splat(1.5));
-                gradient.add_key(1.0, Vec3::splat(0.2));
+                gradient.add_key(0.0, Vec3::splat(1.5));
+                gradient.add_key(0.18, Vec3::splat(3.0));
+                gradient.add_key(0.5, Vec3::splat(2.8));
+                gradient.add_key(1.0, Vec3::splat(0.5));
                 gradient
             },
             screen_space_size: false,
@@ -90,26 +92,27 @@ fn create_prop_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
     let mut module = Module::default();
 
     let mut color_gradient = Gradient::new();
-    color_gradient.add_key(0.0, Vec4::new(0.95, 0.98, 1.0, 0.5));
-    color_gradient.add_key(0.5, Vec4::new(0.86, 0.92, 0.96, 0.35));
+    color_gradient.add_key(0.0, Vec4::new(0.95, 0.98, 1.0, 0.8));
+    color_gradient.add_key(0.3, Vec4::new(0.9, 0.95, 0.98, 0.7));
+    color_gradient.add_key(0.7, Vec4::new(0.86, 0.92, 0.96, 0.4));
     color_gradient.add_key(1.0, Vec4::new(0.75, 0.88, 0.92, 0.0));
 
     let init_pos = SetPositionCircleModifier {
         center: module.lit(Vec3::ZERO),
         axis: module.lit(Vec3::Y),
-        radius: module.lit(1.8),
+        radius: module.lit(1.0),
         dimension: ShapeDimension::Surface,
     };
 
-    let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, module.lit(Vec3::Z * 7.0));
+    let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, module.lit(Vec3::Z * 4.0));
 
-    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(2.8));
-    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.6));
+    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(3.0));
+    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(1.0));
 
-    let update_buoyancy = AccelModifier::new(module.lit(Vec3::new(0.0, 0.4, 0.0)));
-    let update_drag = LinearDragModifier::new(module.lit(1.2));
+    let update_buoyancy = AccelModifier::new(module.lit(Vec3::new(0.0, 0.3, 0.0)));
+    let update_drag = LinearDragModifier::new(module.lit(0.8));
 
-    let effect = EffectAsset::new(4096, SpawnerSettings::rate(400.0.into()), module)
+    let effect = EffectAsset::new(256, SpawnerSettings::rate(100.0.into()), module)
         .with_name("PropWash")
         .init(init_pos)
         .init(init_vel)
@@ -125,9 +128,10 @@ fn create_prop_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
         .render(SizeOverLifetimeModifier {
             gradient: {
                 let mut gradient = Gradient::new();
-                gradient.add_key(0.0, Vec3::splat(0.6));
-                gradient.add_key(0.6, Vec3::splat(2.0));
-                gradient.add_key(1.0, Vec3::splat(2.6));
+                gradient.add_key(0.0, Vec3::splat(1.0));
+                gradient.add_key(0.2, Vec3::splat(2.2));
+                gradient.add_key(0.6, Vec3::splat(3.5));
+                gradient.add_key(1.0, Vec3::splat(4.0));
                 gradient
             },
             screen_space_size: false,
@@ -140,25 +144,26 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
     let mut module = Module::default();
 
     let mut color_gradient = Gradient::new();
-    color_gradient.add_key(0.0, Vec4::new(0.95, 0.98, 1.0, 0.7));
-    color_gradient.add_key(0.5, Vec4::new(0.9, 0.95, 0.98, 0.5));
+    color_gradient.add_key(0.0, Vec4::new(0.95, 0.98, 1.0, 0.8));
+    color_gradient.add_key(0.3, Vec4::new(0.92, 0.96, 0.99, 0.7));
+    color_gradient.add_key(0.7, Vec4::new(0.88, 0.93, 0.97, 0.4));
     color_gradient.add_key(1.0, Vec4::new(0.85, 0.9, 0.95, 0.0));
 
     let init_pos = SetPositionCircleModifier {
         center: module.lit(Vec3::ZERO),
         axis: module.lit(Vec3::Y),
-        radius: module.lit(3.0),
+        radius: module.lit(2.5),
         dimension: ShapeDimension::Surface,
     };
 
-    let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, module.lit(Vec3::Z * -4.0));
-    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(6.0));
-    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.8));
+    let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, module.lit(Vec3::Z * -3.0));
+    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, module.lit(5.0));
+    let init_size = SetAttributeModifier::new(Attribute::SIZE, module.lit(0.5));
 
-    let update_accel = AccelModifier::new(module.lit(Vec3::new(0.0, -0.5, 0.0)));
-    let update_drag = LinearDragModifier::new(module.lit(1.2));
+    let update_accel = AccelModifier::new(module.lit(Vec3::new(0.0, -0.3, 0.0)));
+    let update_drag = LinearDragModifier::new(module.lit(0.9));
 
-    let effect = EffectAsset::new(8192, SpawnerSettings::rate(300.0.into()), module)
+    let effect = EffectAsset::new(4096, SpawnerSettings::rate(250.0.into()), module)
         .with_name("WakeFoam")
         .init(init_pos)
         .init(init_vel)
@@ -174,9 +179,10 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
         .render(SizeOverLifetimeModifier {
             gradient: {
                 let mut gradient = Gradient::new();
-                gradient.add_key(0.0, Vec3::splat(0.8));
-                gradient.add_key(0.5, Vec3::splat(2.5));
-                gradient.add_key(1.0, Vec3::splat(1.8));
+                gradient.add_key(0.0, Vec3::splat(0.5));
+                gradient.add_key(0.2, Vec3::splat(1.4));
+                gradient.add_key(0.5, Vec3::splat(2.0));
+                gradient.add_key(1.0, Vec3::splat(1.2));
                 gradient
             },
             screen_space_size: false,
@@ -356,13 +362,56 @@ pub fn spawn_prop_wash(
 }
 
 /// Cleanup yacht particles when yacht is despawned.
-/// Note: This is a failsafe - Bevy 0.16+ despawn() is recursive by default,
-/// so child particles should be auto-cleaned. This system runs as backup.
+/// Safety net for cases where Yacht component is removed without despawning the entity.
 pub fn cleanup_yacht_particles_on_despawn(
-    mut _commands: Commands,
-    mut _removed_yachts: RemovedComponents<Yacht>,
+    mut commands: Commands,
+    mut removed_yachts: RemovedComponents<Yacht>,
+    parents_q: Query<&Children>,
+    foam_q: Query<(), With<WakeFoam>>,
+    wash_q: Query<(), With<PropWash>>,
+    splash_q: Query<(), With<BowSplash>>,
 ) {
-    // Bevy 0.16+ despawn() is recursive by default - children are auto-despawned.
-    // This system is kept as a placeholder for potential future edge case handling.
-    // See entity_limit_enforcement.rs line 76 - all despawns are already recursive.
+    for removed_yacht_entity in removed_yachts.read() {
+        // Clean up child particles if Yacht component was removed without despawn
+        if let Ok(children) = parents_q.get(removed_yacht_entity) {
+            for child in children.iter() {
+                if foam_q.get(child).is_ok()
+                    || wash_q.get(child).is_ok()
+                    || splash_q.get(child).is_ok()
+                {
+                    commands.entity(child).despawn();
+                }
+            }
+        }
+    }
+}
+
+/// Despawn all yacht particle entities on state exit.
+/// Ensures GPU assets can be released when YachtEffects resource is removed.
+#[allow(clippy::type_complexity)]
+pub fn cleanup_yacht_particle_entities(
+    mut commands: Commands,
+    particle_q: Query<Entity, Or<(With<WakeFoam>, With<PropWash>, With<BowSplash>)>>,
+) {
+    for entity in particle_q.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
+/// Cleanup YachtEffects resource on state exit to prevent CPU/GPU asset leak.
+/// Removes EffectAsset instances from Assets<EffectAsset> to prevent memory accumulation.
+pub fn cleanup_yacht_effects(
+    mut commands: Commands,
+    yacht_effects: Option<Res<YachtEffects>>,
+    mut effects: ResMut<Assets<EffectAsset>>,
+) {
+    if let Some(ye) = yacht_effects {
+        // Remove assets to prevent CPU-side asset accumulation across re-entries
+        effects.remove(ye.bow_splash.id());
+        effects.remove(ye.prop_wash.id());
+        effects.remove(ye.wake_foam.id());
+    }
+    commands.remove_resource::<YachtEffects>();
+    #[cfg(feature = "debug-ui")]
+    info!("Yacht effects cleaned up");
 }
