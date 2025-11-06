@@ -4,7 +4,7 @@ use crate::components::unified_water::WaterBodyId;
 use crate::components::water::{Yacht, YachtSpecs, YachtState};
 use crate::components::{
     AircraftFlight, Car, CarWheelsConfig, ContentType, DynamicContent, F16, Grounded, Helicopter,
-    HelicopterRuntime, HelicopterVisualBody, JetFlame, LandingLight, MainRotor, NavigationLight,
+    HelicopterRuntime, HelicopterVisualBody, LandingLight, MainRotor, NavigationLight,
     NavigationLightType, RotorBlurDisk, RotorWash, SimpleCarSpecs, SimpleCarSpecsHandle,
     SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle,
     TailRotor, VehicleState, VehicleType, VisualRig, VisualRigRoot, WheelMesh, WheelPos,
@@ -791,35 +791,10 @@ impl VehicleFactory {
             self.visibility_range(),
         ));
 
-        // Part 9: Jet Flames (afterburner exhaust effects)
-        let flame_mesh = meshes.add(Cone {
-            radius: 0.6,
-            height: 2.5,
-        });
-        let flame_material = materials.add(StandardMaterial {
-            base_color: Color::srgb(1.0, 0.5, 0.2),
-            emissive: LinearRgba::rgb(1.0, 0.3, 0.0),
-            alpha_mode: AlphaMode::Opaque,
-            ..default()
-        });
-
-        commands.spawn((
-            Mesh3d(flame_mesh),
-            MeshMaterial3d(flame_material),
-            Transform::from_xyz(0.0, 0.0, 10.5)
-                .with_rotation(Quat::from_rotation_x(std::f32::consts::PI)),
-            ChildOf(vehicle_entity),
-            VisibleChildBundle::default(),
-            JetFlame {
-                intensity: 0.0,
-                base_scale: 0.5,
-                max_scale: 2.0,
-                flicker_speed: 15.0,
-                color_intensity: 1.0,
-            },
-            Visibility::Hidden,
-            self.visibility_range(),
-        ));
+        // Part 9: Jet Flames - NOW USING HANABI PARTICLES
+        // Old cone mesh code removed - replaced with particle system
+        // Particles spawned automatically by spawn_afterburner_particles system
+        // See src/systems/effects/afterburner.rs for particle implementation
 
         Ok(vehicle_entity)
     }

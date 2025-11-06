@@ -12,7 +12,9 @@ use crate::factories::spawn_bridge;
 use crate::systems::audio::FootstepTimer;
 
 use crate::systems::spawn_validation::{SpawnRegistry, SpawnableType};
+use bevy::core_pipeline::bloom::Bloom;
 use bevy::core_pipeline::prepass::DepthPrepass;
+use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -72,6 +74,18 @@ pub fn setup_basic_world(
         Camera3d::default(),
         Msaa::Off,
         DepthPrepass,
+        Camera {
+            hdr: true, // Enable HDR for particle bloom effects
+            ..default()
+        },
+        Tonemapping::AcesFitted, // Tone mapping for HDR display
+        Bloom {
+            intensity: 0.05, // Very subtle bloom for flame cores only
+            low_frequency_boost: 0.0,
+            low_frequency_boost_curvature: 0.0,
+            high_pass_frequency: 1.0,
+            ..default()
+        },
         Projection::Perspective(PerspectiveProjection {
             // Extended for proper horizon/skybox rendering (skybox at 9500 units)
             far: 10000.0,
