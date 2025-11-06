@@ -228,7 +228,7 @@ pub fn update_rotor_wash_position_and_intensity(
             // Query failed - could be temporary (missing ControlState during exit)
             // or permanent (helicopter despawned). Turn off spawning first.
             spawner.active = false;
-            
+
             // Failsafe: Only despawn particles if helicopter entity truly doesn't exist
             // This prevents despawning during legitimate state transitions.
             if helicopter_exists.get(heli_entity).is_err() {
