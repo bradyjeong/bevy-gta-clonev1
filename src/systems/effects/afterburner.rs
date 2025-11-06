@@ -71,8 +71,8 @@ pub fn create_afterburner_flame_effect(effects: &mut Assets<EffectAsset>) -> Han
         dimension: ShapeDimension::Volume,
     };
 
-    // Directional velocity - shoot particles backwards along -Z axis
-    let base_vel = writer.lit(Vec3::new(0.0, 0.0, -25.0));
+    // Directional velocity - shoot particles backwards along +Z axis
+    let base_vel = writer.lit(Vec3::new(0.0, 0.0, 25.0));
     let random_offset =
         (writer.rand(VectorType::VEC3F) * writer.lit(2.0) - writer.lit(1.0)) * writer.lit(3.0);
     let vel = (base_vel + random_offset).expr();
@@ -136,8 +136,8 @@ pub fn spawn_afterburner_particles(
             AfterburnerFlame,
             AfterburnerFlameOf(f16_entity),
             ChildOf(f16_entity),
-            // Position behind F16 engine (matches old cone position)
-            Transform::from_xyz(0.0, 0.0, 10.5),
+            // Position at exhaust nozzle exit (aligned with new detailed nozzle)
+            Transform::from_xyz(0.0, 0.0, 11.0),
             VisibilityRange::abrupt(0.0, 2000.0),
             InheritedVisibility::default(),
         ));
@@ -217,7 +217,7 @@ pub fn ensure_afterburner_for_existing_f16s(
                 AfterburnerFlame,
                 AfterburnerFlameOf(f16_entity),
                 ChildOf(f16_entity),
-                Transform::from_xyz(0.0, 0.0, 10.5),
+                Transform::from_xyz(0.0, 0.0, 11.0),
                 VisibilityRange::abrupt(0.0, 2000.0),
                 InheritedVisibility::default(),
             ));

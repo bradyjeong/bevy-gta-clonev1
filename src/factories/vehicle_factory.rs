@@ -778,18 +778,69 @@ impl VehicleFactory {
             self.visibility_range(),
         ));
 
-        // Part 8: Engine Nozzle (rear thrust visual)
-        let engine_mesh = meshes.add(Cylinder::new(0.9, 2.5));
-        let engine_material = MaterialFactory::create_f16_engine_material(materials);
+        // Part 8: Engine Nozzle (rear thrust visual) - Multi-part realistic exhaust
+        // Outer nozzle casing
+        let outer_nozzle_mesh = meshes.add(Cylinder::new(1.1, 2.0));
+        let nozzle_casing_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.2, 0.22, 0.24), // Dark metallic casing
+            metallic: 0.95,
+            perceptual_roughness: 0.25,
+            ..default()
+        });
 
         commands.spawn((
-            Mesh3d(engine_mesh),
-            MeshMaterial3d(engine_material),
-            Transform::from_xyz(0.0, 0.0, 9.0),
+            Mesh3d(outer_nozzle_mesh),
+            MeshMaterial3d(nozzle_casing_material),
+            Transform::from_xyz(0.0, 0.0, 9.5),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             self.visibility_range(),
         ));
+
+        // Inner exhaust cone (hot section)
+        let inner_cone_mesh = meshes.add(Cylinder::new(0.85, 1.2));
+        let exhaust_hot_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.15, 0.12, 0.1), // Dark burned metal
+            metallic: 0.8,
+            perceptual_roughness: 0.6,
+            emissive: LinearRgba::rgb(0.2, 0.1, 0.05), // Subtle heat glow
+            ..default()
+        });
+
+        commands.spawn((
+            Mesh3d(inner_cone_mesh),
+            MeshMaterial3d(exhaust_hot_material),
+            Transform::from_xyz(0.0, 0.0, 10.2),
+            ChildOf(vehicle_entity),
+            VisibleChildBundle::default(),
+            self.visibility_range(),
+        ));
+
+        // Exhaust petals (thrust vectoring nozzle detail)
+        let petal_mesh = meshes.add(Cuboid::new(0.3, 1.5, 0.8));
+        let petal_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.25, 0.27, 0.30),
+            metallic: 0.9,
+            perceptual_roughness: 0.35,
+            ..default()
+        });
+
+        // 8 petals around exhaust for detail
+        for i in 0..8 {
+            let angle = (i as f32 / 8.0) * std::f32::consts::TAU;
+            let radius = 0.95;
+            let x = angle.cos() * radius;
+            let y = angle.sin() * radius;
+
+            commands.spawn((
+                Mesh3d(petal_mesh.clone()),
+                MeshMaterial3d(petal_material.clone()),
+                Transform::from_xyz(x, y, 10.5).with_rotation(Quat::from_rotation_z(angle)),
+                ChildOf(vehicle_entity),
+                VisibleChildBundle::default(),
+                self.visibility_range(),
+            ));
+        }
 
         // Part 9: Jet Flames - NOW USING HANABI PARTICLES
         // Old cone mesh code removed - replaced with particle system
