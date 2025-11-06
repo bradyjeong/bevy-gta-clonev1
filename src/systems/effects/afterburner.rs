@@ -57,8 +57,8 @@ pub fn create_afterburner_flame_effect(effects: &mut Assets<EffectAsset>) -> Han
     let age = writer.lit(0.).expr();
     let init_age = SetAttributeModifier::new(Attribute::AGE, age);
 
-    // Short lifetime for fast-moving flames (0.3-0.5 seconds)
-    let base_lifetime = writer.lit(0.3);
+    // Very short lifetime for tight flames without trails (0.2-0.4 seconds)
+    let base_lifetime = writer.lit(0.2);
     let lifetime_jitter = writer.rand(ScalarType::Float) * writer.lit(0.2);
     let lifetime = (base_lifetime + lifetime_jitter).expr();
     let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, lifetime);
@@ -107,6 +107,7 @@ pub fn create_afterburner_flame_effect(effects: &mut Assets<EffectAsset>) -> Han
     effects.add(
         EffectAsset::new(8192, spawner, module)
             .with_name("afterburner_flame")
+            .with_simulation_space(SimulationSpace::Local)
             .init(init_pos)
             .init(init_vel)
             .init(init_age)

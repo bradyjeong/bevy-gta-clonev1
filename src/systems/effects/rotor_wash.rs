@@ -105,6 +105,7 @@ pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<Eff
     effects.add(
         EffectAsset::new(16000, spawner, module)
             .with_name("rotor_wash")
+            .with_simulation_space(SimulationSpace::Global)
             .init(init_pos)
             .init(init_vel)
             .init(init_age)

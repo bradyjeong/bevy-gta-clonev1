@@ -62,6 +62,7 @@ fn create_bow_splash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
 
     let effect = EffectAsset::new(256, SpawnerSettings::rate(80.0.into()), module)
         .with_name("BowSplash")
+        .with_simulation_space(SimulationSpace::Local)
         .init(init_pos)
         .init(init_vel)
         .init(init_lifetime)
@@ -114,6 +115,7 @@ fn create_prop_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
 
     let effect = EffectAsset::new(256, SpawnerSettings::rate(100.0.into()), module)
         .with_name("PropWash")
+        .with_simulation_space(SimulationSpace::Local)
         .init(init_pos)
         .init(init_vel)
         .init(init_lifetime)
@@ -165,6 +167,7 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
 
     let effect = EffectAsset::new(4096, SpawnerSettings::rate(250.0.into()), module)
         .with_name("WakeFoam")
+        .with_simulation_space(SimulationSpace::Local)
         .init(init_pos)
         .init(init_vel)
         .init(init_lifetime)
