@@ -163,20 +163,25 @@ pub fn simple_f16_movement(
             (0.0, 0.0, 0.0, 0.0)
         };
 
-        // Combine all control inputs
-        let local_target_ang = Vec3::new(
+        // Combine control inputs (GTA-style: yaw is world-space, pitch/roll are local)
+        // Pitch and roll in local space (aircraft body axes)
+        let pr_local = Vec3::new(
             pitch_cmd + pitch_auto,
-            yaw_cmd + yaw_auto,
+            0.0,
             roll_cmd + roll_auto + roll_bank,
         );
-        let world_target_ang = transform.rotation.mul_vec3(local_target_ang);
+        let pr_world = transform.rotation.mul_vec3(pr_local);
+        
+        // Yaw in world space (always around world-up axis for arcade feel)
+        let world_yaw = Vec3::new(0.0, yaw_cmd + yaw_auto, 0.0);
+        let world_target_ang = pr_world + world_yaw;
 
         // Apply angular velocity with lerp
         // Safety: prevent NaN/physics issues from modded configs
         let angular_lerp_factor = specs.angular_lerp_factor.clamp(1.0, 20.0);
         velocity.angvel = safe_lerp(velocity.angvel, world_target_ang, dt * angular_lerp_factor);
 
-        // GTA-style multiplicative damping (one pass)
+        // GTA-style multiplicative damping (pitch/roll in local space, yaw in world space)
         // Safety: prevent NaN/physics issues from modded configs (critical for powf bases!)
         let pitch_stab = specs.pitch_stab.clamp(0.5, 1.0);
         let roll_stab = specs.roll_stab.clamp(0.5, 1.0);
@@ -184,6 +189,8 @@ pub fn simple_f16_movement(
         let inv_rot = transform.rotation.inverse();
         let mut local_ang = inv_rot.mul_vec3(velocity.angvel);
         let safe_dt = dt.clamp(0.0, 1.0); // Prevent NaN from negative/huge dt
+        
+        // Pitch and roll damping in local space
         let pf = if pitch_input_abs < specs.input_deadzone {
             pitch_stab.powf(safe_dt)
         } else {
@@ -194,15 +201,17 @@ pub fn simple_f16_movement(
         } else {
             1.0
         };
-        let yf = if yaw_input_abs < specs.input_deadzone {
-            yaw_stab.powf(safe_dt)
-        } else {
-            1.0
-        };
         local_ang.x *= pf;
-        local_ang.y *= yf;
         local_ang.z *= rf;
         velocity.angvel = transform.rotation.mul_vec3(local_ang);
+        
+        // Yaw damping in world space (pure world-Y rotation for arcade)
+        if yaw_input_abs < specs.input_deadzone {
+            let yf = yaw_stab.powf(safe_dt);
+            let yaw_world = velocity.angvel.dot(Vec3::Y);
+            let other = velocity.angvel - Vec3::Y * yaw_world;
+            velocity.angvel = other + Vec3::Y * (yaw_world * yf);
+        }
 
         // === ARCADE-REALISTIC VELOCITY CONTROL ===
 
