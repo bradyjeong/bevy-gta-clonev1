@@ -62,6 +62,7 @@ fn create_bow_splash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectA
 
     let effect = EffectAsset::new(256, SpawnerSettings::rate(80.0.into()), module)
         .with_name("BowSplash")
+        .with_simulation_space(SimulationSpace::Local)
         .init(init_pos)
         .init(init_vel)
         .init(init_lifetime)
@@ -114,6 +115,7 @@ fn create_prop_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
 
     let effect = EffectAsset::new(256, SpawnerSettings::rate(100.0.into()), module)
         .with_name("PropWash")
+        .with_simulation_space(SimulationSpace::Local)
         .init(init_pos)
         .init(init_vel)
         .init(init_lifetime)
@@ -165,6 +167,7 @@ fn create_wake_foam_effect(effects: &mut Assets<EffectAsset>) -> Handle<EffectAs
 
     let effect = EffectAsset::new(4096, SpawnerSettings::rate(250.0.into()), module)
         .with_name("WakeFoam")
+        .with_simulation_space(SimulationSpace::Local)
         .init(init_pos)
         .init(init_vel)
         .init(init_lifetime)
@@ -204,7 +207,7 @@ pub fn spawn_or_update_wake_foam(
 
     for (vel, yacht_e, is_active, children) in yacht_q.iter() {
         let speed = vel.linvel.length();
-        
+
         // Check if this yacht already has wake foam
         let has_foam = if let Some(children) = children {
             children.iter().any(|child| foam_q.get(child).is_ok())
@@ -252,7 +255,16 @@ pub fn spawn_or_update_wake_foam(
 #[allow(clippy::type_complexity)]
 pub fn spawn_bow_splash(
     mut commands: Commands,
-    yacht_query: Query<(&Transform, &Velocity, Entity, Option<&ActiveEntity>, Option<&Children>), With<Yacht>>,
+    yacht_query: Query<
+        (
+            &Transform,
+            &Velocity,
+            Entity,
+            Option<&ActiveEntity>,
+            Option<&Children>,
+        ),
+        With<Yacht>,
+    >,
     splash_query: Query<Entity, With<BowSplash>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -263,7 +275,7 @@ pub fn spawn_bow_splash(
     for (xf, vel, yacht_e, is_active, children) in yacht_query.iter() {
         let fwd = horizontal_forward(xf);
         let fwd_speed = vel.linvel.dot(fwd).max(0.0);
-        
+
         // Check if this yacht already has bow splash
         let has_splash = if let Some(children) = children {
             children.iter().any(|child| splash_query.get(child).is_ok())
@@ -305,7 +317,16 @@ pub fn spawn_bow_splash(
 #[allow(clippy::type_complexity)]
 pub fn spawn_prop_wash(
     mut commands: Commands,
-    yacht_query: Query<(&YachtState, &Velocity, Entity, Option<&ActiveEntity>, Option<&Children>), With<Yacht>>,
+    yacht_query: Query<
+        (
+            &YachtState,
+            &Velocity,
+            Entity,
+            Option<&ActiveEntity>,
+            Option<&Children>,
+        ),
+        With<Yacht>,
+    >,
     wash_query: Query<Entity, With<PropWash>>,
     yacht_effects: Option<Res<YachtEffects>>,
 ) {
@@ -316,7 +337,7 @@ pub fn spawn_prop_wash(
     for (state, vel, yacht_e, is_active, children) in yacht_query.iter() {
         let throttle = state.throttle.abs();
         let speed = vel.linvel.length();
-        
+
         // Check if this yacht already has prop wash
         let has_wash = if let Some(children) = children {
             children.iter().any(|child| wash_query.get(child).is_ok())

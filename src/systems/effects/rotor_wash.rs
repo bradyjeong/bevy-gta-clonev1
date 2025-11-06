@@ -105,6 +105,7 @@ pub fn create_rotor_wash_effect(effects: &mut Assets<EffectAsset>) -> Handle<Eff
     effects.add(
         EffectAsset::new(16000, spawner, module)
             .with_name("rotor_wash")
+            .with_simulation_space(SimulationSpace::Global)
             .init(init_pos)
             .init(init_vel)
             .init(init_age)
@@ -228,7 +229,7 @@ pub fn update_rotor_wash_position_and_intensity(
             // Query failed - could be temporary (missing ControlState during exit)
             // or permanent (helicopter despawned). Turn off spawning first.
             spawner.active = false;
-            
+
             // Failsafe: Only despawn particles if helicopter entity truly doesn't exist
             // This prevents despawning during legitimate state transitions.
             if helicopter_exists.get(heli_entity).is_err() {

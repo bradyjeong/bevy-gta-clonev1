@@ -53,13 +53,7 @@ impl Plugin for WaterPlugin {
                     .chain()
                     .before(PhysicsSet::StepSimulation),
             )
-            .add_systems(
-                Startup,
-                (
-                    load_unified_water_assets,
-                    spawn_test_yacht,
-                ),
-            )
+            .add_systems(Startup, (load_unified_water_assets, spawn_test_yacht))
             .add_systems(OnEnter(AppState::InGame), setup_yacht_effects)
             .add_systems(Update, process_loaded_unified_water_assets)
             .add_systems(
@@ -114,7 +108,6 @@ impl Plugin for WaterPlugin {
                     deck_walk_movement_system,
                     heli_landing_detection_system,
                 ),
-            )
-            ;
+            );
     }
 }
