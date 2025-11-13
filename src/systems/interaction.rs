@@ -214,6 +214,7 @@ pub fn interaction_system(
                     "Yacht",
                     &time,
                 );
+
                 state.set(GameState::Driving);
             }
         }

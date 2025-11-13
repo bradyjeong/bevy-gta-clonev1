@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::Collider;
 
 use super::control_state::VehicleControlType;
 
@@ -14,6 +15,12 @@ pub struct DeckWalker {
 #[derive(Component, Debug, Clone, Copy)]
 pub struct LandedOnYacht {
     pub yacht: Entity,
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct DockedOnYacht {
+    pub yacht: Entity,
+    pub stored_collider: Collider,
 }
 
 #[derive(Component, Debug, Clone, Copy)]

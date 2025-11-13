@@ -1,6 +1,6 @@
 #![allow(clippy::type_complexity)]
 use crate::components::world::WorldBounds;
-use crate::components::{Car, F16, Helicopter, Yacht};
+use crate::components::{Car, DockedOnYacht, F16, Helicopter, Yacht};
 use crate::config::GameConfig;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -11,7 +11,10 @@ pub fn world_boundary_system(
     config: Res<GameConfig>,
     mut vehicle_query: Query<
         (&mut Velocity, &Transform),
-        Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>)>,
+        (
+            Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>)>,
+            Without<DockedOnYacht>,
+        ),
     >,
 ) {
     let pushback_strength = config.world_physics.boundaries.pushback_strength;
@@ -58,7 +61,10 @@ pub fn world_boundary_system(
 pub fn aircraft_boundary_system(
     bounds: Res<WorldBounds>,
     config: Res<GameConfig>,
-    mut aircraft_query: Query<(&mut Velocity, &Transform), Or<(With<Helicopter>, With<F16>)>>,
+    mut aircraft_query: Query<
+        (&mut Velocity, &Transform),
+        (Or<(With<Helicopter>, With<F16>)>, Without<DockedOnYacht>),
+    >,
 ) {
     let aircraft_pushback_strength = config.world_physics.boundaries.aircraft_pushback_strength;
 

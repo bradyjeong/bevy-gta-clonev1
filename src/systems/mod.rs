@@ -88,6 +88,7 @@ pub mod player_physics_enable;
 pub mod safe_active_entity;
 // pub mod floating_origin; - REMOVED: Finite world doesn't need floating origin
 
+pub mod debug_docked_heli;
 pub mod performance; // Simplified performance system (replaces performance_monitor)
 pub mod yacht_exit;
 
