@@ -171,7 +171,7 @@ pub fn simple_f16_movement(
             roll_cmd + roll_auto + roll_bank,
         );
         let pr_world = transform.rotation.mul_vec3(pr_local);
-        
+
         // Yaw in world space (always around world-up axis for arcade feel)
         let world_yaw = Vec3::new(0.0, yaw_cmd + yaw_auto, 0.0);
         let world_target_ang = pr_world + world_yaw;
@@ -189,7 +189,7 @@ pub fn simple_f16_movement(
         let inv_rot = transform.rotation.inverse();
         let mut local_ang = inv_rot.mul_vec3(velocity.angvel);
         let safe_dt = dt.clamp(0.0, 1.0); // Prevent NaN from negative/huge dt
-        
+
         // Pitch and roll damping in local space
         let pf = if pitch_input_abs < specs.input_deadzone {
             pitch_stab.powf(safe_dt)
@@ -204,7 +204,7 @@ pub fn simple_f16_movement(
         local_ang.x *= pf;
         local_ang.z *= rf;
         velocity.angvel = transform.rotation.mul_vec3(local_ang);
-        
+
         // Yaw damping in world space (pure world-Y rotation for arcade)
         if yaw_input_abs < specs.input_deadzone {
             let yf = yaw_stab.powf(safe_dt);
