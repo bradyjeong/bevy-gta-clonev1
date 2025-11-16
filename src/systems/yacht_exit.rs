@@ -22,24 +22,41 @@ fn dock_helicopter(
     heli_transform: &GlobalTransform,
     yacht_transform: &GlobalTransform,
     heli_collider: &Collider,
+    helipad_world_pos: Vec3,
 ) {
-    let world_pos = heli_transform.translation();
     let yacht_affine = yacht_transform.affine();
-    let local_pos = yacht_affine.inverse().transform_point3(world_pos);
+    let yacht_inverse = yacht_affine.inverse();
+    
+    let world_pos = heli_transform.translation();
+    let current_local_pos = yacht_inverse.transform_point3(world_pos);
+    
+    // Calculate helipad local position to get the correct deck height
+    let helipad_local_pos = yacht_inverse.transform_point3(helipad_world_pos);
+    
+    // Snap Y to helipad height + 1.5m (landing gear offset)
+    let target_local_pos = Vec3::new(
+        current_local_pos.x,
+        helipad_local_pos.y + 1.5,
+        current_local_pos.z,
+    );
 
     let world_rotation = heli_transform.to_scale_rotation_translation().1;
     let yacht_rotation = yacht_transform.to_scale_rotation_translation().1;
     let local_rotation = yacht_rotation.inverse() * world_rotation;
+    
+    // Flatten rotation relative to yacht (remove pitch/roll) so it sits flat on deck
+    let (y_rot, _, _) = local_rotation.to_euler(EulerRot::YXZ);
+    let flat_local_rotation = Quat::from_rotation_y(y_rot);
 
     info!(
-        "DOCKING: Helicopter {:?} to yacht {:?} at local_pos={:?}",
-        heli_entity, yacht_entity, local_pos
+        "DOCKING: Helicopter {:?} to yacht {:?} at local_pos={:?} (snapped from {:?})",
+        heli_entity, yacht_entity, target_local_pos, current_local_pos
     );
 
     commands
         .entity(heli_entity)
         .insert(ChildOf(yacht_entity))
-        .insert(Transform::from_translation(local_pos).with_rotation(local_rotation))
+        .insert(Transform::from_translation(target_local_pos).with_rotation(flat_local_rotation))
         .insert(DockedOnYacht {
             yacht: yacht_entity,
             stored_collider: heli_collider.clone(),
@@ -57,16 +74,16 @@ fn undock_helicopter(
     commands: &mut Commands,
     heli_entity: Entity,
     heli_transform: &GlobalTransform,
-    yacht_transform: &GlobalTransform,
     stored_collider: Collider,
 ) {
-    let local_pos = heli_transform.translation();
-    let yacht_affine = yacht_transform.affine();
-    let world_pos = yacht_affine.transform_point3(local_pos);
+    // When entity is a child, GlobalTransform IS the world position/rotation
+    let world_pos = heli_transform.translation();
+    let world_rotation = heli_transform.to_scale_rotation_translation().1;
 
-    let local_rotation = heli_transform.to_scale_rotation_translation().1;
-    let yacht_rotation = yacht_transform.to_scale_rotation_translation().1;
-    let world_rotation = yacht_rotation * local_rotation;
+    info!(
+        "UNDOCKING: Helicopter {:?} at world_pos={:?}",
+        heli_entity, world_pos
+    );
 
     commands
         .entity(heli_entity)
@@ -114,7 +131,7 @@ pub fn yacht_exit_system(
     >,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    for (yacht_entity, control_state, children, yacht_gt) in yacht_query.iter() {
+    for (yacht_entity, control_state, children, _yacht_gt) in yacht_query.iter() {
         // Skip one frame after control transfer to prevent immediate exit when F is held
         if just_controlled.get(yacht_entity).is_ok() {
             continue;
@@ -148,7 +165,6 @@ pub fn yacht_exit_system(
                         &mut commands,
                         heli_entity,
                         heli_gt,
-                        yacht_gt,
                         docked.stored_collider.clone(),
                     );
                 }
@@ -256,7 +272,6 @@ pub fn yacht_exit_system(
                                 &mut commands,
                                 heli_entity,
                                 heli_gt,
-                                yacht_gt,
                                 docked.stored_collider.clone(),
                             );
                         }
@@ -296,7 +311,6 @@ pub fn yacht_exit_system(
                                 &mut commands,
                                 heli_entity,
                                 heli_gt,
-                                yacht_gt,
                                 docked.stored_collider.clone(),
                             );
                         }
@@ -502,6 +516,7 @@ pub fn heli_landing_detection_system(
                     heli_gt,
                     yacht_gt,
                     heli_collider,
+                    *helipad_pos,
                 );
 
                 landed = true;
