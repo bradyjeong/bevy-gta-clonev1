@@ -7,9 +7,9 @@ use bevy_rapier3d::prelude::{
 
 use crate::components::unified_water::WaterBodyId;
 use crate::components::{
-    ControlState, DeckWalkAnchor, DeckWalker, DockedOnYacht, Enterable, ExitPoint, ExitPointKind,
-    Helicopter, Helipad, InCar, LandedOnYacht, PendingPhysicsEnable, Player, PlayerControlled,
-    VehicleControlType, Yacht,
+    ControlState, DeckWalkAnchor, DeckWalker, DockedOnYacht, DockingCooldown, Enterable, ExitPoint,
+    ExitPointKind, Helicopter, Helipad, InCar, LandedOnYacht, PendingPhysicsEnable, Player,
+    PlayerControlled, VehicleControlType, Yacht,
 };
 use crate::game_state::GameState;
 use crate::systems::safe_active_entity::queue_active_transfer;
@@ -71,7 +71,7 @@ fn dock_helicopter(
         .insert(RigidBodyDisabled);
 }
 
-fn undock_helicopter(
+pub fn undock_helicopter(
     commands: &mut Commands,
     heli_entity: Entity,
     heli_transform: &GlobalTransform,
@@ -98,8 +98,24 @@ fn undock_helicopter(
             angular_damping: 8.0,
         })
         .insert(stored_collider)
+        .insert(DockingCooldown {
+            timer: Timer::from_seconds(3.0, TimerMode::Once),
+        })
         .remove::<DockedOnYacht>()
         .remove::<RigidBodyDisabled>();
+}
+
+pub fn tick_docking_cooldown_system(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut cooldown_query: Query<(Entity, &mut DockingCooldown)>,
+) {
+    for (entity, mut cooldown) in cooldown_query.iter_mut() {
+        cooldown.timer.tick(time.delta());
+        if cooldown.timer.finished() {
+            commands.entity(entity).remove::<DockingCooldown>();
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
@@ -436,7 +452,10 @@ pub fn heli_landing_detection_system(
     mut commands: Commands,
     yacht_query: Query<(Entity, &Children, &GlobalTransform), With<Yacht>>,
     helipad_query: Query<&GlobalTransform, With<Helipad>>,
-    helicopter_query: Query<(Entity, &GlobalTransform, &Velocity, &Collider), With<Enterable>>,
+    helicopter_query: Query<
+        (Entity, &GlobalTransform, &Velocity, &Collider),
+        (With<Enterable>, Without<DockingCooldown>),
+    >,
 ) {
     // OPTIMIZATION 1: Altitude pre-filter - only check helicopters below landing altitude
     const MAX_LANDING_ALTITUDE: f32 = 20.0;

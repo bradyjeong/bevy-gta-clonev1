@@ -47,3 +47,9 @@ pub struct Helipad;
 
 #[derive(Component, Debug, Clone, Copy)]
 pub struct DeckWalkAnchor;
+
+#[derive(Component, Debug, Clone)]
+pub struct DockingCooldown {
+    pub timer: Timer,
+}
+
