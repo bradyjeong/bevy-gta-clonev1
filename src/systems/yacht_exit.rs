@@ -82,15 +82,20 @@ pub fn undock_helicopter(
     let world_pos = heli_transform.translation();
     let world_rotation = heli_transform.to_scale_rotation_translation().1;
 
+    // AAA FIX: Add vertical offset to separate colliders immediately
+    // This prevents Rapier from detecting a collision on the first frame and applying
+    // a massive "depenetration" impulse which causes screen jolt.
+    let safe_spawn_pos = world_pos + Vec3::Y * 0.3;
+
     info!(
-        "UNDOCKING: Helicopter {:?} at world_pos={:?} with velocity {:?}",
-        heli_entity, world_pos, initial_velocity
+        "UNDOCKING: Helicopter {:?} at world_pos={:?} (safe_pos={:?}) with velocity {:?}",
+        heli_entity, world_pos, safe_spawn_pos, initial_velocity
     );
 
     commands
         .entity(heli_entity)
         .remove::<ChildOf>()
-        .insert(Transform::from_translation(world_pos).with_rotation(world_rotation))
+        .insert(Transform::from_translation(safe_spawn_pos).with_rotation(world_rotation))
         .insert(RigidBody::Dynamic)
         .insert(initial_velocity)
         .insert(ExternalForce::default())
