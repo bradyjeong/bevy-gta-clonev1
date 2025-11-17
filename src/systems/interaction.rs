@@ -7,7 +7,6 @@ use crate::components::{
 use crate::game_state::GameState;
 use crate::systems::safe_active_entity::queue_active_transfer;
 use crate::systems::swimming::{ProneRotation, Swimming};
-use crate::systems::yacht_exit::undock_helicopter;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -186,13 +185,13 @@ pub fn interaction_system(
                     &time,
                 );
                 state.set(GameState::Driving);
-            } else if let Some((entity, _, gt, docked_opt)) = best_helicopter {
-                if let Some(docked) = docked_opt {
+            } else if let Some((entity, _, _gt, docked_opt)) = best_helicopter {
+                if let Some(_docked) = docked_opt {
                     info!(
-                        "ENTERING: Undocking helicopter {:?} before player enters (from walking)",
+                        "ENTERING: Player entering DOCKED helicopter {:?} (from walking) - will stay docked until lift-off",
                         entity
                     );
-                    undock_helicopter(&mut commands, entity, &gt, docked.stored_collider);
+                    // DO NOT UNDOCK YET - Wait for input (Lift Off)
                 }
 
                 transfer_to_vehicle(

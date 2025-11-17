@@ -8,8 +8,8 @@ use bevy_rapier3d::prelude::{
 use crate::components::unified_water::WaterBodyId;
 use crate::components::{
     ControlState, DeckWalkAnchor, DeckWalker, DockedOnYacht, DockingCooldown, Enterable, ExitPoint,
-    ExitPointKind, Helicopter, Helipad, InCar, LandedOnYacht, PendingPhysicsEnable, Player,
-    PlayerControlled, VehicleControlType, Yacht,
+    ExitPointKind, Helicopter, HelicopterRuntime, Helipad, InCar, LandedOnYacht,
+    PendingPhysicsEnable, Player, PlayerControlled, VehicleControlType, Yacht,
 };
 use crate::game_state::GameState;
 use crate::systems::safe_active_entity::queue_active_transfer;
@@ -76,14 +76,15 @@ pub fn undock_helicopter(
     heli_entity: Entity,
     heli_transform: &GlobalTransform,
     stored_collider: Collider,
+    initial_velocity: Velocity,
 ) {
     // When entity is a child, GlobalTransform IS the world position/rotation
     let world_pos = heli_transform.translation();
     let world_rotation = heli_transform.to_scale_rotation_translation().1;
 
     info!(
-        "UNDOCKING: Helicopter {:?} at world_pos={:?}",
-        heli_entity, world_pos
+        "UNDOCKING: Helicopter {:?} at world_pos={:?} with velocity {:?}",
+        heli_entity, world_pos, initial_velocity
     );
 
     commands
@@ -91,7 +92,7 @@ pub fn undock_helicopter(
         .remove::<ChildOf>()
         .insert(Transform::from_translation(world_pos).with_rotation(world_rotation))
         .insert(RigidBody::Dynamic)
-        .insert(Velocity::default())
+        .insert(initial_velocity)
         .insert(ExternalForce::default())
         .insert(Damping {
             linear_damping: 2.0,
@@ -103,6 +104,52 @@ pub fn undock_helicopter(
         })
         .remove::<DockedOnYacht>()
         .remove::<RigidBodyDisabled>();
+}
+
+#[allow(clippy::type_complexity)]
+pub fn helicopter_undock_trigger_system(
+    mut commands: Commands,
+    mut docked_query: Query<
+        (
+            Entity,
+            &ControlState,
+            &DockedOnYacht,
+            &GlobalTransform,
+            &mut HelicopterRuntime,
+        ),
+        (With<Helicopter>, With<PlayerControlled>, Without<DockingCooldown>),
+    >,
+    yacht_query: Query<&Velocity, With<Yacht>>,
+) {
+    for (heli_entity, control_state, docked, heli_gt, mut runtime) in docked_query.iter_mut() {
+        // Throttle up (Shift) or Vertical up input triggers undock
+        // vertical > 0.1 covers Shift (Ascend)
+        // throttle > 0.1 covers W (Forward) - optional, but usually Shift is needed to lift off first
+        if control_state.vertical > 0.1 {
+            let mut initial_velocity = Velocity::default();
+
+            // Get Yacht velocity for momentum inheritance
+            if let Ok(yacht_vel) = yacht_query.get(docked.yacht) {
+                initial_velocity = *yacht_vel;
+            }
+
+            // AAA FIX: Pre-spool RPM and add upward pop to prevent deck friction fighting
+            // Set RPM high enough to generate immediate lift (avoids gravity drop)
+            runtime.rpm = 1.5; // Ensure lift authority immediately (1.0 is hover)
+
+            // Add small upward velocity pop to clear deck colliders instantly
+            initial_velocity.linvel += Vec3::Y * 2.0;
+
+            info!("TRIGGER: Pilot input detected - Undocking helicopter");
+            undock_helicopter(
+                &mut commands,
+                heli_entity,
+                heli_gt,
+                docked.stored_collider.clone(),
+                initial_velocity,
+            );
+        }
+    }
 }
 
 pub fn tick_docking_cooldown_system(
@@ -136,7 +183,7 @@ pub fn yacht_exit_system(
             Without<PlayerControlled>,
         ),
     >,
-    docked_helicopter_query: Query<
+    _docked_helicopter_query: Query<
         (Entity, &GlobalTransform, &DockedOnYacht),
         (With<Helicopter>, Without<PlayerControlled>),
     >,
@@ -162,7 +209,7 @@ pub fn yacht_exit_system(
             .iter()
             .find_map(|child| helipad_query.get(child).ok())
         {
-            if let Some((heli_entity, heli_gt, _heli_collider, docked)) = helicopter_query
+            if let Some((heli_entity, _heli_gt, _heli_collider, docked)) = helicopter_query
                 .iter()
                 .filter(|(_, heli_gt, _, _)| {
                     helipad_gt.translation().distance(heli_gt.translation()) < 15.0
@@ -173,17 +220,12 @@ pub fn yacht_exit_system(
                     dist_a.total_cmp(&dist_b)
                 })
             {
-                if let Some(docked) = docked {
+                if let Some(_docked) = docked {
                     info!(
-                        "ENTERING: Undocking helicopter {:?} before player enters",
+                        "ENTERING: Player entering DOCKED helicopter {:?} (will stay docked until lift-off)",
                         heli_entity
                     );
-                    undock_helicopter(
-                        &mut commands,
-                        heli_entity,
-                        heli_gt,
-                        docked.stored_collider.clone(),
-                    );
+                    // DO NOT UNDOCK YET - Wait for input (Lift Off)
                 }
 
                 commands.entity(yacht_entity).remove::<PlayerControlled>();
@@ -284,14 +326,15 @@ pub fn yacht_exit_system(
                                 .remove::<DeckWalker>();
                         }
 
-                        for (heli_entity, heli_gt, docked) in docked_helicopter_query.iter() {
-                            undock_helicopter(
-                                &mut commands,
-                                heli_entity,
-                                heli_gt,
-                                docked.stored_collider.clone(),
-                            );
-                        }
+                        // DO NOT UNDOCK helicopters here! They should stay docked until flown.
+                        // for (heli_entity, heli_gt, docked) in docked_helicopter_query.iter() {
+                        //     undock_helicopter(
+                        //         &mut commands,
+                        //         heli_entity,
+                        //         heli_gt,
+                        //         docked.stored_collider.clone(),
+                        //     );
+                        // }
 
                         queue_active_transfer(&mut commands, yacht_entity, player_entity, &time);
                         next_state.set(GameState::Walking);
@@ -323,14 +366,15 @@ pub fn yacht_exit_system(
                             .insert(PendingPhysicsEnable)
                             .remove::<DeckWalker>();
 
-                        for (heli_entity, heli_gt, docked) in docked_helicopter_query.iter() {
-                            undock_helicopter(
-                                &mut commands,
-                                heli_entity,
-                                heli_gt,
-                                docked.stored_collider.clone(),
-                            );
-                        }
+                        // DO NOT UNDOCK helicopters here! They should stay docked until flown.
+                        // for (heli_entity, heli_gt, docked) in docked_helicopter_query.iter() {
+                        //     undock_helicopter(
+                        //         &mut commands,
+                        //         heli_entity,
+                        //         heli_gt,
+                        //         docked.stored_collider.clone(),
+                        //     );
+                        // }
 
                         queue_active_transfer(&mut commands, yacht_entity, player_entity, &time);
                         next_state.set(GameState::Swimming);
@@ -448,6 +492,7 @@ pub fn yacht_board_from_deck_system(
 /// Consider using Rapier's CollisionEvent or SensorShape on helipads to get automatic
 /// proximity detection without manual distance checks. This would eliminate the need
 /// for this system entirely and leverage Rapier's spatial acceleration structures.
+#[allow(clippy::type_complexity)]
 pub fn heli_landing_detection_system(
     mut commands: Commands,
     yacht_query: Query<(Entity, &Children, &GlobalTransform), With<Yacht>>,

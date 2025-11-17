@@ -19,8 +19,8 @@ use crate::systems::water::{
     update_water_surface_system, water_physics_system,
 };
 use crate::systems::yacht_exit::{
-    deck_walk_movement_system, heli_landing_detection_system, tick_docking_cooldown_system,
-    yacht_board_from_deck_system, yacht_exit_system,
+    deck_walk_movement_system, heli_landing_detection_system, helicopter_undock_trigger_system,
+    tick_docking_cooldown_system, yacht_board_from_deck_system, yacht_exit_system,
 };
 
 use bevy::prelude::*;
@@ -110,6 +110,7 @@ impl Plugin for WaterPlugin {
                     yacht_exit_system.after(crate::plugins::input_plugin::InputProcessingSet),
                     deck_walk_movement_system,
                     heli_landing_detection_system,
+                    helicopter_undock_trigger_system,
                     tick_docking_cooldown_system,
                 ),
             )
