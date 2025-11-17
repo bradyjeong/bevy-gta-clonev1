@@ -33,10 +33,11 @@ fn dock_helicopter(
     // Calculate helipad local position to get the correct deck height
     let helipad_local_pos = yacht_inverse.transform_point3(helipad_world_pos);
     
-    // Snap Y to helipad height + 1.5m (landing gear offset)
+    // Snap Y to helipad height + TARGET_DOCK_HEIGHT
+    // Matches the detection window to ensure seamless transition
     let target_local_pos = Vec3::new(
         current_local_pos.x,
-        helipad_local_pos.y + 1.5,
+        helipad_local_pos.y + -0.78, // Match TARGET_DOCK_HEIGHT constant
         current_local_pos.z,
     );
 
@@ -439,8 +440,25 @@ pub fn heli_landing_detection_system(
 ) {
     // OPTIMIZATION 1: Altitude pre-filter - only check helicopters below landing altitude
     const MAX_LANDING_ALTITUDE: f32 = 20.0;
-    const LANDING_DISTANCE: f32 = 8.0; // Increased from 5.0 for easier landing
-    const LANDING_DISTANCE_SQUARED: f32 = LANDING_DISTANCE * LANDING_DISTANCE;
+    const LANDING_RADIUS: f32 = 8.0; 
+    const LANDING_RADIUS_SQUARED: f32 = LANDING_RADIUS * LANDING_RADIUS;
+    
+    // TARGET_DOCK_HEIGHT: -0.78m relative to sensor (Calculated from geometry).
+    // - Sensor Y = 5.5m
+    // - Visual Deck Y = 4.0m
+    // - Heli Skids Bottom Y = -0.7m (cylinder radius 0.08 at y=-0.62)
+    // - Target Heli Origin = 4.0 + 0.7 = 4.7m
+    // - Offset from Sensor = 4.7 - 5.5 = -0.8m
+    // - Added +0.02m epsilon to prevent z-fighting -> -0.78m
+    const TARGET_DOCK_HEIGHT: f32 = -0.78;
+    
+    // Detection window centered on target height.
+    // Must include 0.0 (physical contact) and allow for suspension compression/float.
+    // Range: [-0.35, 0.45]
+    const DOCK_TOLERANCE: f32 = 0.4; 
+    const MIN_TOUCHDOWN_HEIGHT: f32 = TARGET_DOCK_HEIGHT - DOCK_TOLERANCE;
+    const MAX_TOUCHDOWN_HEIGHT: f32 = TARGET_DOCK_HEIGHT + DOCK_TOLERANCE;
+    
     const MAX_LANDING_SPEED: f32 = 6.0; // Increased from 2.0 for forgiving landing
     const MAX_LANDING_ROTATION: f32 = 1.0; // Increased from 0.5 for stability
 
@@ -480,48 +498,73 @@ pub fn heli_landing_detection_system(
         let is_slow = linvel_length < MAX_LANDING_SPEED && angvel_length < MAX_LANDING_ROTATION;
 
         if !is_slow {
-            info!(
-                "LANDING: Helicopter {:?} too fast - linvel={:.2}, angvel={:.2}",
-                heli_entity, linvel_length, angvel_length
-            );
+            // debug!(
+            //     "LANDING: Helicopter {:?} too fast - linvel={:.2}, angvel={:.2}",
+            //     heli_entity, linvel_length, angvel_length
+            // );
             commands.entity(heli_entity).remove::<LandedOnYacht>();
             continue;
         }
 
-        // Check distance against cached helipad positions (use distance_squared to avoid sqrt)
+        // Check distance against cached helipad positions (Cylinder check: Radius + Height)
+        // Uses yacht up-vector to handle listing/tilting correctly
         let mut landed = false;
         for (yacht_entity, helipad_pos, yacht_gt) in &helipad_cache {
-            let distance_squared = heli_pos.distance_squared(*helipad_pos);
-            let distance = distance_squared.sqrt();
+            let yacht_up = yacht_gt.up();
+            let delta = heli_pos - *helipad_pos;
+            
+            // Project delta onto yacht up vector for vertical distance
+            let vertical_dist = delta.dot(*yacht_up);
+            
+            // Project delta onto deck plane for horizontal distance
+            let horizontal_vec = delta - (*yacht_up * vertical_dist);
+            let horiz_dist_sq = horizontal_vec.length_squared();
 
+            // 1. Horizontal check (within radius)
+            if horiz_dist_sq > LANDING_RADIUS_SQUARED {
+                continue;
+            }
+
+            // 2. Vertical check (touching the deck)
+            // Target landed height is ~1.5m. Allow 0.5m to 3.0m (1.5m tolerance)
+            if !(MIN_TOUCHDOWN_HEIGHT..=MAX_TOUCHDOWN_HEIGHT).contains(&vertical_dist) {
+                 // Only log if close horizontally but wrong height
+                 if horiz_dist_sq < LANDING_RADIUS_SQUARED * 0.5 {
+                    trace!(
+                        "LANDING REJECTED: Height {:.2}m out of range [{:.1}, {:.1}]", 
+                        vertical_dist, MIN_TOUCHDOWN_HEIGHT, MAX_TOUCHDOWN_HEIGHT
+                    );
+                 }
+                 continue;
+            }
+
+            // info!(
+            //     "LANDING: Helicopter {:?} TOUCHDOWN on yacht {:?}! H_Dist={:.1}m, V_Dist={:.1}m",
+            //     heli_entity, yacht_entity, horiz_dist_sq.sqrt(), vertical_dist
+            // );
+
+            // Valid landing!
             info!(
-                "LANDING: Helicopter {:?} distance to yacht {:?} helipad: {:.2}m (threshold: {:.2}m)",
-                heli_entity, yacht_entity, distance, LANDING_DISTANCE
+                "LANDING: Helicopter {:?} LANDED on yacht {:?}! Auto-docking immediately (AAA-style)",
+                heli_entity, yacht_entity
             );
 
-            if distance_squared < LANDING_DISTANCE_SQUARED {
-                info!(
-                    "LANDING: Helicopter {:?} LANDED on yacht {:?}! Auto-docking immediately (AAA-style)",
-                    heli_entity, yacht_entity
-                );
+            commands.entity(heli_entity).insert(LandedOnYacht {
+                yacht: *yacht_entity,
+            });
 
-                commands.entity(heli_entity).insert(LandedOnYacht {
-                    yacht: *yacht_entity,
-                });
+            dock_helicopter(
+                &mut commands,
+                heli_entity,
+                *yacht_entity,
+                heli_gt,
+                yacht_gt,
+                heli_collider,
+                *helipad_pos,
+            );
 
-                dock_helicopter(
-                    &mut commands,
-                    heli_entity,
-                    *yacht_entity,
-                    heli_gt,
-                    yacht_gt,
-                    heli_collider,
-                    *helipad_pos,
-                );
-
-                landed = true;
-                break;
-            }
+            landed = true;
+            break;
         }
 
         if !landed {
