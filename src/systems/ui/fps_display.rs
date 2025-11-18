@@ -16,6 +16,8 @@ pub fn setup_fps_display(mut commands: Commands) {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             right: Val::Px(10.0),
+            // Set fixed width to prevent position shift when digits change
+            width: Val::Px(100.0),
             ..default()
         },
         FpsText,
