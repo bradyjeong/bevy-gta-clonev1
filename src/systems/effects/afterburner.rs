@@ -133,6 +133,11 @@ pub fn spawn_afterburner_particles(
         commands.spawn((
             Name::new("afterburner_particles"),
             ParticleEffect::new(afterburner_effect.handle.clone()),
+            {
+                let mut spawner = EffectSpawner::new(&SpawnerSettings::rate(2000.0.into()));
+                spawner.active = false;
+                spawner
+            },
             AfterburnerFlame,
             AfterburnerFlameOf(f16_entity),
             ChildOf(f16_entity),
@@ -167,12 +172,13 @@ pub fn update_afterburner_position_and_intensity(
         let Ok((_f16_transform, _velocity, flight, _control, _specs, active)) =
             f16_query.get(f16_entity)
         else {
+            spawner.active = false;
             continue;
         };
 
         // Turn off particles immediately if not the active entity
         if active.is_none() {
-            spawner.reset();
+            spawner.active = false;
             continue;
         }
 
@@ -181,9 +187,9 @@ pub fn update_afterburner_position_and_intensity(
         let afterburner_boost = if flight.afterburner_active { 1.0 } else { 0.0 };
         let flame_intensity = (base_intensity + afterburner_boost).clamp(0.0, 1.0);
 
-        // Early exit if flames should be off - just reset spawner
+        // Early exit if flames should be off
         if flame_intensity < 0.1 {
-            spawner.reset();
+            spawner.active = false;
             continue;
         }
 
@@ -191,6 +197,7 @@ pub fn update_afterburner_position_and_intensity(
         // Base: 2000 particles/sec, afterburner: up to 4000 particles/sec
         let spawn_rate = 2000.0 + (flame_intensity * 2000.0);
         *spawner = EffectSpawner::new(&SpawnerSettings::rate(spawn_rate.into()));
+        spawner.active = true;
 
         // Update position to follow F16 (particles are already in local space)
         // Transform is already relative to F16 parent, just ensure proper rotation
@@ -214,6 +221,11 @@ pub fn ensure_afterburner_for_existing_f16s(
             commands.spawn((
                 Name::new("afterburner_particles"),
                 ParticleEffect::new(afterburner_effect.handle.clone()),
+                {
+                    let mut spawner = EffectSpawner::new(&SpawnerSettings::rate(2000.0.into()));
+                    spawner.active = false;
+                    spawner
+                },
                 AfterburnerFlame,
                 AfterburnerFlameOf(f16_entity),
                 ChildOf(f16_entity),
