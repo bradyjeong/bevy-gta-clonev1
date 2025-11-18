@@ -321,6 +321,12 @@ pub fn interaction_system(
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_car, player_entity, &time);
 
+                        // CRITICAL: Remove control components from car so it becomes inactive/uncontrolled
+                        commands.entity(active_car)
+                            .remove::<PlayerControlled>()
+                            .remove::<ControlState>()
+                            .remove::<VehicleControlType>();
+
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from vehicle rotation
                         let right_horizontal =
@@ -382,6 +388,12 @@ pub fn interaction_system(
                             &time,
                         );
 
+                        // CRITICAL: Remove control components from helicopter so physics spool-down takes over
+                        commands.entity(active_helicopter)
+                            .remove::<PlayerControlled>()
+                            .remove::<ControlState>()
+                            .remove::<VehicleControlType>();
+
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from aircraft rotation
                         let right_horizontal =
@@ -439,6 +451,12 @@ pub fn interaction_system(
                     if let Ok((player_entity, _, _, _, _, _, _)) = player_query.single_mut() {
                         // Queue atomic ActiveEntity transfer back to player
                         queue_active_transfer(&mut commands, active_f16, player_entity, &time);
+
+                        // CRITICAL: Remove control components from F16
+                        commands.entity(active_f16)
+                            .remove::<PlayerControlled>()
+                            .remove::<ControlState>()
+                            .remove::<VehicleControlType>();
 
                         // Calculate exit position in WORLD SPACE using GlobalTransform
                         // Use horizontal-only right vector to avoid extreme teleportation from aircraft rotation

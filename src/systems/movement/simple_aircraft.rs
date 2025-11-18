@@ -486,14 +486,20 @@ pub fn simple_helicopter_movement(
     }
 }
 
-/// Spool down helicopter rotors when not controlled by player
+/// Spool down helicopter rotors and apply decaying physics when not controlled by player
+/// This allows the helicopter to fall out of the sky realistically (GTA style)
 pub fn spool_helicopter_rpm_idle(
     time: Res<Time>,
+    config: Res<GameConfig>,
     heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
     mut helicopter_query: Query<
         (
             &SimpleHelicopterSpecsHandle,
             &mut HelicopterRuntime,
+            &mut ExternalForce,
+            &mut Velocity,
+            &Transform,
+            &AdditionalMassProperties,
             Option<&VehicleHealth>,
         ),
         (With<Helicopter>, Without<PlayerControlled>),
@@ -501,16 +507,53 @@ pub fn spool_helicopter_rpm_idle(
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
 
-    for (specs_handle, mut runtime, _vehicle_health) in helicopter_query.iter_mut() {
+    for (specs_handle, mut runtime, mut external_force, mut velocity, transform, mass_props, _vehicle_health) in
+        helicopter_query.iter_mut()
+    {
         let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
             continue;
         };
 
+        // 1. Decay RPM
         let target_rpm = 0.0;
-
         let rate = specs.spool_down_rate.clamp(0.1, 2.0);
         runtime.rpm += rate * dt * (target_rpm - runtime.rpm);
         runtime.rpm = runtime.rpm.clamp(0.0, 1.0);
+
+        // 2. Calculate Lift based on remaining RPM
+        let min_rpm_for_lift = specs.min_rpm_for_lift.clamp(0.0, 0.9);
+        let rpm_eff = if runtime.rpm < min_rpm_for_lift {
+            0.0
+        } else {
+            let rpm_to_lift_exp = specs.rpm_to_lift_exp.clamp(1.0, 3.0);
+            ((runtime.rpm - min_rpm_for_lift) / (1.0 - min_rpm_for_lift))
+                .clamp(0.0, 1.0)
+                .powf(rpm_to_lift_exp)
+        };
+
+        let mass = match mass_props {
+            AdditionalMassProperties::Mass(m) => m.max(1.0),
+            AdditionalMassProperties::MassProperties(mp) => mp.mass.max(1.0),
+        };
+        let hover_force = mass * 9.81;
+
+        // Decaying lift force (always Up relative to helicopter)
+        // Using slight hover bias (1.03) to match powered flight baseline
+        let lift_force = transform.up() * hover_force * 1.03 * rpm_eff;
+
+        // 3. Apply Drag
+        let vel_horizontal = Vec3::new(velocity.linvel.x, 0.0, velocity.linvel.z);
+        let horiz_drag = specs.horiz_drag.clamp(0.0, 10.0);
+        let drag_force = -vel_horizontal * (horiz_drag * mass);
+
+        // 4. Apply Forces
+        external_force.force = lift_force + drag_force;
+        
+        // Apply counter-torque if main rotor is spinning but no tail rotor input?
+        // For now, just let it fall with zero torque control
+        external_force.torque = Vec3::ZERO;
+
+        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
     }
 }
 
