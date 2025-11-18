@@ -82,27 +82,31 @@ pub fn undock_helicopter(
     let world_pos = heli_transform.translation();
     let world_rotation = heli_transform.to_scale_rotation_translation().1;
 
+    // FIX: Flatten rotation on undock (Reset Pitch/Roll)
+    // If we inherit the yacht's pitch/roll (from waves), the helicopter spawns tilted.
+    // Since physics locks rotation or assumes flat hover, this tilt persists and causes drift/camera issues.
+    let (yaw, _, _) = world_rotation.to_euler(EulerRot::YXZ);
+    let flat_world_rotation = Quat::from_rotation_y(yaw);
+
     // AAA FIX: Add vertical offset to separate colliders immediately
     // This prevents Rapier from detecting a collision on the first frame and applying
     // a massive "depenetration" impulse which causes screen jolt.
     let safe_spawn_pos = world_pos + Vec3::Y * 0.3;
 
     info!(
-        "UNDOCKING: Helicopter {:?} at world_pos={:?} (safe_pos={:?}) with velocity {:?}",
+        "UNDOCKING: Helicopter {:?} at world_pos={:?} (safe_pos={:?}) with velocity {:?} and flat rotation",
         heli_entity, world_pos, safe_spawn_pos, initial_velocity
     );
 
     commands
         .entity(heli_entity)
         .remove::<ChildOf>()
-        .insert(Transform::from_translation(safe_spawn_pos).with_rotation(world_rotation))
+        .insert(Transform::from_translation(safe_spawn_pos).with_rotation(flat_world_rotation))
         .insert(RigidBody::Dynamic)
         .insert(initial_velocity)
         .insert(ExternalForce::default())
-        .insert(Damping {
-            linear_damping: 2.0,
-            angular_damping: 8.0,
-        })
+        // REMOVED: Damping component - simple_helicopter_movement handles all drag/stability manually
+        // Adding Rapier damping causes "fighting" and visual jitter/shakiness
         .insert(stored_collider)
         .insert(DockingCooldown {
             timer: Timer::from_seconds(3.0, TimerMode::Once),
@@ -124,7 +128,7 @@ pub fn helicopter_undock_trigger_system(
         ),
         (With<Helicopter>, With<PlayerControlled>, Without<DockingCooldown>),
     >,
-    yacht_query: Query<&Velocity, With<Yacht>>,
+    _yacht_query: Query<(&Velocity, &GlobalTransform), With<Yacht>>,
 ) {
     for (heli_entity, control_state, docked, heli_gt, mut runtime) in docked_query.iter_mut() {
         // Throttle up (Shift) or Vertical up input triggers undock
@@ -133,19 +137,28 @@ pub fn helicopter_undock_trigger_system(
         if control_state.vertical > 0.1 {
             let mut initial_velocity = Velocity::default();
 
-            // Get Yacht velocity for momentum inheritance
-            if let Ok(yacht_vel) = yacht_query.get(docked.yacht) {
-                initial_velocity = *yacht_vel;
+            // REMOVED: Velocity inheritance from yacht
+            // Inheriting yacht velocity (especially angular/tangential) caused jitter/instability
+            // The helicopter will now undock with zero lateral velocity, just vertical pop
+            /*
+            if let Ok((yacht_vel, yacht_gt)) = yacht_query.get(docked.yacht) {
+                let r = heli_gt.translation() - yacht_gt.translation();
+                let tangential_vel = yacht_vel.angvel.cross(r);
+                
+                initial_velocity.linvel = yacht_vel.linvel + tangential_vel;
+                initial_velocity.angvel = yacht_vel.angvel;
             }
+            */
 
             // AAA FIX: Pre-spool RPM and add upward pop to prevent deck friction fighting
             // Set RPM high enough to generate immediate lift (avoids gravity drop)
             runtime.rpm = 1.5; // Ensure lift authority immediately (1.0 is hover)
 
             // Add small upward velocity pop to clear deck colliders instantly
+            // 2.0 m/s is enough to clear the 0.3m offset in ~0.15s
             initial_velocity.linvel += Vec3::Y * 2.0;
 
-            info!("TRIGGER: Pilot input detected - Undocking helicopter");
+            info!("TRIGGER: Pilot input detected - Undocking helicopter (Zero lateral velocity)");
             undock_helicopter(
                 &mut commands,
                 heli_entity,

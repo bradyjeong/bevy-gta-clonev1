@@ -8,7 +8,7 @@ use bevy_rapier3d::prelude::*;
 pub fn helicopter_camera_system(
     mut camera_query: Query<(&mut Transform, &mut Projection), With<MainCamera>>,
     helicopter_query: Query<
-        (&Transform, &Velocity),
+        (&GlobalTransform, &Velocity),
         (With<Helicopter>, With<ActiveEntity>, Without<MainCamera>),
     >,
     time: Res<Time>,
@@ -21,7 +21,11 @@ pub fn helicopter_camera_system(
         return;
     };
 
-    if !heli_transform.translation.is_finite() || !heli_transform.rotation.is_finite() {
+    let heli_translation = heli_transform.translation();
+    // Extract rotation from GlobalTransform
+    let (_, heli_rotation, _) = heli_transform.to_scale_rotation_translation();
+
+    if !heli_translation.is_finite() || !heli_rotation.is_finite() {
         return;
     }
 
@@ -34,7 +38,7 @@ pub fn helicopter_camera_system(
     let heli_height = 8.0;
     let look_ahead_distance = 10.0 + speed * 0.2;
 
-    let target_pos = heli_transform.translation - forward * heli_distance + world_up * heli_height;
+    let target_pos = heli_translation - forward * heli_distance + world_up * heli_height;
 
     if !target_pos.is_finite() {
         return;
@@ -44,14 +48,17 @@ pub fn helicopter_camera_system(
     let lerp_factor = (follow_speed * time.delta_secs()).clamp(0.0, 1.0);
     camera_transform.translation = safe_lerp(camera_transform.translation, target_pos, lerp_factor);
 
-    let vel_dir = if velocity.linvel.length() > 1.0 {
+    // STABILITY FIX: Rely primarily on the helicopter's forward vector for look direction
+    // Raw velocity normalization causes jitter due to physics solver noise
+    let vel_dir = if velocity.linvel.length() > 5.0 { // Increased threshold from 1.0 to 5.0
         velocity.linvel.normalize()
     } else {
         forward
     };
 
-    let look_dir = forward.lerp(vel_dir, 0.2).normalize_or_zero();
-    let look_target = heli_transform.translation + look_dir * look_ahead_distance;
+    // Reduced velocity influence from 0.2 to 0.05 to prioritize stable forward orientation
+    let look_dir = forward.lerp(vel_dir, 0.05).normalize_or_zero();
+    let look_target = heli_translation + look_dir * look_ahead_distance;
 
     if !look_target.is_finite() {
         return;
