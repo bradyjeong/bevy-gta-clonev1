@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 /// Common test utilities for Bevy game testing
 /// Provides test app setup, helpers, and constants following AGENTS.md guidelines
 pub mod test_entities;

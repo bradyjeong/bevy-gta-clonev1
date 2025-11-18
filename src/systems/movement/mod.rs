@@ -7,6 +7,7 @@ pub mod movement_tracker_init;
 pub mod simple_aircraft;
 pub mod simple_flight_common;
 pub mod simple_yacht;
+pub mod vehicle_params;
 
 pub use helicopter_visual_tilt::*;
 pub use boat_animation::*;

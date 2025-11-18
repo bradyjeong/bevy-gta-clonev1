@@ -1,9 +1,9 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::ControlState;
 use crate::components::{
-    ActiveEntity, Car, Grounded, MissingSpecsWarned, SimpleCarSpecs, SimpleCarSpecsHandle,
+    ActiveEntity, Car, Grounded, SimpleCarSpecs, SimpleCarSpecsHandle,
 };
-use crate::config::GameConfig;
+use crate::systems::movement::vehicle_params::{validate_specs, VehicleParams};
 use crate::systems::physics::PhysicsUtilities;
 use crate::util::safe_math::{safe_lerp, safe_lerp_f32};
 use crate::util::safe_specs::safe_clamp_f32;
@@ -12,10 +12,7 @@ use bevy_rapier3d::prelude::*;
 
 /// Car movement system using asset-driven specs
 pub fn car_movement(
-    config: Res<GameConfig>,
-    car_specs_assets: Res<Assets<SimpleCarSpecs>>,
-    mut commands: Commands,
-    warned_query: Query<(), With<MissingSpecsWarned>>,
+    mut params: VehicleParams<SimpleCarSpecs>,
     mut car_query: Query<
         (
             Entity,
@@ -27,7 +24,6 @@ pub fn car_movement(
         ),
         (With<Car>, With<ActiveEntity>),
     >,
-    time: Res<Time>,
 ) {
     #[cfg(feature = "debug-movement")]
     let start_time = std::time::Instant::now();
@@ -45,18 +41,17 @@ pub fn car_movement(
             velocity.angvel = Vec3::ZERO;
         }
 
-        let Some(specs) = car_specs_assets.get(&specs_handle.0) else {
-            if !warned_query.contains(entity) {
-                warn!(
-                    "Car entity {:?} missing loaded specs - will skip until loaded",
-                    entity
-                );
-                commands.entity(entity).insert(MissingSpecsWarned);
-            }
+        let Some(specs) = validate_specs(
+            &params.specs,
+            &mut params.commands,
+            &params.warned,
+            entity,
+            &specs_handle.0,
+        ) else {
             continue;
         };
 
-        let dt = PhysicsUtilities::stable_dt(&time);
+        let dt = params.dt();
 
         // Convert world velocity to local car space for physics calculations
         let inv_rotation = transform.rotation.inverse();
@@ -326,7 +321,7 @@ pub fn car_movement(
         }
 
         // Apply velocity validation every frame (critical for preventing physics panics)
-        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
+        PhysicsUtilities::clamp_velocity(&mut velocity, &params.config);
     }
 
     // Performance monitoring (debug feature only)

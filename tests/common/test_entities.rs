@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 /// Test entity spawning utilities
 /// Provides simplified vehicle creation for testing without full game dependencies
 use bevy::prelude::*;

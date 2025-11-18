@@ -1,13 +1,14 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::{
     ActiveEntity, AircraftFlight, ControlState, F16, Helicopter, HelicopterRuntime, MainRotor,
-    MissingSpecsWarned, PlayerControlled, SimpleF16Specs, SimpleF16SpecsHandle,
-    SimpleHelicopterSpecs, SimpleHelicopterSpecsHandle, TailRotor, VehicleHealth,
+    PlayerControlled, SimpleF16Specs, SimpleF16SpecsHandle, SimpleHelicopterSpecs,
+    SimpleHelicopterSpecsHandle, TailRotor, VehicleHealth,
 };
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::config::GameConfig;
+use crate::systems::movement::vehicle_params::{validate_specs, VehicleParams};
 use crate::systems::movement::simple_flight_common::SimpleFlightCommon;
 use crate::systems::physics::PhysicsUtilities;
 use crate::util::safe_math::safe_lerp;
@@ -26,11 +27,7 @@ use crate::util::safe_math::safe_lerp;
 /// - Performant: Minimal calculations per frame
 /// - Flight Feel: Maintains responsive aircraft control
 pub fn simple_f16_movement(
-    time: Res<Time>,
-    config: Res<GameConfig>,
-    f16_specs_assets: Res<Assets<SimpleF16Specs>>,
-    mut commands: Commands,
-    warned_query: Query<(), With<MissingSpecsWarned>>,
+    mut params: VehicleParams<SimpleF16Specs>,
     mut f16_query: Query<
         (
             Entity,
@@ -43,19 +40,18 @@ pub fn simple_f16_movement(
         (With<F16>, With<ActiveEntity>, With<PlayerControlled>),
     >,
 ) {
-    let dt = PhysicsUtilities::stable_dt(&time);
+    let dt = params.dt();
 
     for (entity, mut velocity, transform, mut flight, specs_handle, control_state) in
         f16_query.iter_mut()
     {
-        let Some(specs) = f16_specs_assets.get(&specs_handle.0) else {
-            if !warned_query.contains(entity) {
-                warn!(
-                    "F16 entity {:?} missing loaded specs - will skip until loaded",
-                    entity
-                );
-                commands.entity(entity).insert(MissingSpecsWarned);
-            }
+        let Some(specs) = validate_specs(
+            &params.specs,
+            &mut params.commands,
+            &params.warned,
+            entity,
+            &specs_handle.0,
+        ) else {
             continue;
         };
         // === ULTRA-SIMPLIFIED INPUT PROCESSING ===
@@ -222,7 +218,7 @@ pub fn simple_f16_movement(
             let linear_lerp_factor = specs.linear_lerp_factor.clamp(1.0, 20.0);
             // Safety: clamp final target speed to max velocity config
             let target_forward_speed = (max_forward_speed * flight.throttle * boost_multiplier)
-                .min(config.physics.max_velocity);
+                .min(params.config.physics.max_velocity);
             let target_forward_velocity = transform.forward() * target_forward_speed;
 
             // Banked-lift feedback: reduce lift when wings are banked
@@ -257,7 +253,7 @@ pub fn simple_f16_movement(
 
         // === SHARED PHYSICS SAFETY ===
 
-        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
+        PhysicsUtilities::clamp_velocity(&mut velocity, &params.config);
 
         // Dynamic bodies handle ground collision through Rapier
     }
@@ -272,12 +268,8 @@ pub fn simple_f16_movement(
 /// - Damage affects control authority
 /// - Proper physics integration via ExternalForce
 pub fn simple_helicopter_movement(
-    time: Res<Time>,
-    config: Res<GameConfig>,
+    mut params: VehicleParams<SimpleHelicopterSpecs>,
     rapier_context: ReadRapierContext,
-    heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
-    mut commands: Commands,
-    warned_query: Query<(), With<MissingSpecsWarned>>,
     mut helicopter_query: Query<
         (
             Entity,
@@ -293,7 +285,7 @@ pub fn simple_helicopter_movement(
         (With<Helicopter>, With<ActiveEntity>, With<PlayerControlled>),
     >,
 ) {
-    let dt = PhysicsUtilities::stable_dt(&time);
+    let dt = params.dt();
 
     let Ok(context) = rapier_context.single() else {
         return;
@@ -311,14 +303,13 @@ pub fn simple_helicopter_movement(
         vehicle_health,
     ) in helicopter_query.iter_mut()
     {
-        let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
-            if !warned_query.contains(entity) {
-                warn!(
-                    "Helicopter entity {:?} missing loaded specs - will skip until loaded",
-                    entity
-                );
-                commands.entity(entity).insert(MissingSpecsWarned);
-            }
+        let Some(specs) = validate_specs(
+            &params.specs,
+            &mut params.commands,
+            &params.warned,
+            entity,
+            &specs_handle.0,
+        ) else {
             continue;
         };
 
@@ -482,7 +473,7 @@ pub fn simple_helicopter_movement(
         external_force.force = main_force + drag_force;
         external_force.torque = Vec3::ZERO;
 
-        PhysicsUtilities::clamp_velocity(&mut velocity, &config);
+        PhysicsUtilities::clamp_velocity(&mut velocity, &params.config);
     }
 }
 
