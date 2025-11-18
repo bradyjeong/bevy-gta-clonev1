@@ -60,6 +60,7 @@ pub mod movement_tracker;
 pub mod navigation_lights;
 pub mod player;
 pub mod propeller;
+pub mod rudder;
 pub mod rotor_wash;
 pub mod underwater_settings;
 pub mod unified_water;
@@ -86,6 +87,7 @@ pub use player::{
 
 pub use navigation_lights::{LandingLight, NavigationLight, NavigationLightType};
 pub use propeller::PropellerHub;
+pub use rudder::Rudder;
 pub use rotor_wash::RotorWash;
 
 pub use vehicles::{

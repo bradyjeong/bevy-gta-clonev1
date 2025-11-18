@@ -1,5 +1,6 @@
 pub mod afterburner;
 pub mod beacon_effects;
+pub mod boat_wake;
 pub mod jet_flames;
 pub mod navigation_lights;
 pub mod rotor_blur;
@@ -12,6 +13,10 @@ pub use afterburner::{
     spawn_afterburner_particles, update_afterburner_position_and_intensity,
 };
 pub use beacon_effects::*;
+pub use boat_wake::{
+    BoatWakeEffect, BoatWakeOf, cleanup_boat_wake_on_despawn, create_boat_wake_effect,
+    spawn_boat_wake_particles, update_boat_wake_intensity,
+};
 pub use jet_flames::*;
 pub use navigation_lights::{update_landing_lights, update_navigation_lights};
 pub use rotor_blur::*;

@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 #[derive(Component, Default)]
-pub struct PropellerHub {
-    pub current_rpm: f32,
+pub struct Rudder {
+    pub max_angle: f32,
 }
-

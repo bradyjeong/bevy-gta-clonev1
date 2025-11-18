@@ -3,8 +3,14 @@ use crate::components::unified_water::UnifiedWaterAsset;
 use crate::components::water::YachtSpecs;
 use crate::components::water_material::WaterMaterial;
 use crate::game_state::GameState;
+use crate::states::AppState;
 use crate::systems::debug_docked_heli::audit_docked_helicopter_movement;
-use crate::systems::movement::{propeller_spin_system, simple_yacht_movement, spool_docked_helicopter_rpm};
+use crate::systems::movement::{boat_animation_system, simple_yacht_movement, spool_docked_helicopter_rpm};
+use crate::systems::effects::boat_wake::{
+    create_boat_wake_effect, cleanup_boat_wake_on_despawn, spawn_boat_wake_particles,
+    update_boat_wake_intensity, BoatWakeEffect,
+};
+use bevy_hanabi::prelude::*;
 use crate::systems::swimming::{
     apply_prone_rotation_system, apply_swimming_state, detect_swimming_conditions,
     emergency_swim_exit_system, reset_animation_on_land_system, swim_animation_flag_system,
@@ -52,6 +58,7 @@ impl Plugin for WaterPlugin {
                     .before(PhysicsSet::StepSimulation),
             )
             .add_systems(Startup, (load_unified_water_assets, spawn_test_yacht))
+            .add_systems(OnEnter(AppState::InGame), init_boat_wake_effect)
             .add_systems(Update, process_loaded_unified_water_assets)
             .add_systems(
                 FixedUpdate,
@@ -86,7 +93,14 @@ impl Plugin for WaterPlugin {
                     emergency_swim_exit_system,
                 ),
             )
-            .add_systems(Update, propeller_spin_system)
+            .add_systems(Update, boat_animation_system)
+            .add_systems(
+                Update, 
+                (
+                    spawn_boat_wake_particles.run_if(resource_exists::<BoatWakeEffect>),
+                    update_boat_wake_intensity.run_if(resource_exists::<BoatWakeEffect>),
+                )
+            )
             .add_systems(
                 FixedUpdate,
                 yacht_board_from_deck_system.before(PhysicsSet::SyncBackend),
@@ -102,6 +116,19 @@ impl Plugin for WaterPlugin {
                     spool_docked_helicopter_rpm,
                 ),
             )
-            .add_systems(PostUpdate, audit_docked_helicopter_movement);
+            .add_systems(PostUpdate, (audit_docked_helicopter_movement, cleanup_boat_wake_on_despawn))
+            .add_systems(OnExit(AppState::InGame), cleanup_boat_wake_resource);
     }
+}
+
+fn init_boat_wake_effect(mut commands: Commands, mut effects: ResMut<Assets<EffectAsset>>) {
+    let handle = create_boat_wake_effect(&mut effects);
+    commands.insert_resource(BoatWakeEffect { handle });
+}
+
+fn cleanup_boat_wake_resource(mut commands: Commands, wake: Option<Res<BoatWakeEffect>>, mut effects: ResMut<Assets<EffectAsset>>) {
+    if let Some(wake) = wake {
+        effects.remove(wake.handle.id());
+    }
+    commands.remove_resource::<BoatWakeEffect>();
 }

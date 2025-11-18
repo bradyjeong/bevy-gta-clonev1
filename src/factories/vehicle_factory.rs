@@ -1232,18 +1232,25 @@ impl VehicleFactory {
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
-                crate::components::PropellerHub,
+                crate::components::PropellerHub::default(),
                 Name::new("Propeller Hub"),
             ))
             .id();
 
         for i in 0..3 {
             let angle = (i as f32) * (2.0 * std::f32::consts::PI / 3.0);
+            // 1. Pitch (Twist) around the long axis (Y) to create angle of attack
+            // 2. Point outward (Rotate X 90 deg)
+            // 3. Position in circle (Rotate Y angle)
+            let blade_rot = Quat::from_rotation_y(angle) 
+                * Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)
+                * Quat::from_rotation_y(std::f32::consts::FRAC_PI_6); // 30 deg pitch around long axis
+
             commands.spawn((
                 Mesh3d(meshes.add(Cuboid::new(0.3, 6.0, 1.5))),
                 MeshMaterial3d(prop_material.clone()),
                 Transform::from_xyz(angle.sin() * 3.5, 0.0, angle.cos() * 3.5)
-                    .with_rotation(Quat::from_rotation_y(angle)),
+                    .with_rotation(blade_rot),
                 ChildOf(prop_hub_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
@@ -1259,6 +1266,9 @@ impl VehicleFactory {
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
+            crate::components::Rudder {
+                max_angle: std::f32::consts::FRAC_PI_4, // 45 degrees max turn
+            },
             Name::new("Rudder"),
         ));
 
