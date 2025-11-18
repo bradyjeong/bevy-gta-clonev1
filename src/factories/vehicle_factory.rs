@@ -1225,9 +1225,9 @@ impl VehicleFactory {
 
         let prop_hub_entity = commands
             .spawn((
-                Mesh3d(meshes.add(Cylinder::new(0.25, 0.4))),
+                Mesh3d(meshes.add(Cylinder::new(1.5, 2.0))),
                 MeshMaterial3d(prop_material.clone()),
-                Transform::from_xyz(0.0, -1.0, 29.0)
+                Transform::from_xyz(0.0, -2.5, 31.0)
                     .with_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
@@ -1240,9 +1240,9 @@ impl VehicleFactory {
         for i in 0..3 {
             let angle = (i as f32) * (2.0 * std::f32::consts::PI / 3.0);
             commands.spawn((
-                Mesh3d(meshes.add(Cuboid::new(0.05, 1.2, 0.3))),
+                Mesh3d(meshes.add(Cuboid::new(0.3, 6.0, 1.5))),
                 MeshMaterial3d(prop_material.clone()),
-                Transform::from_xyz(angle.sin() * 0.6, 0.0, angle.cos() * 0.6)
+                Transform::from_xyz(angle.sin() * 3.5, 0.0, angle.cos() * 3.5)
                     .with_rotation(Quat::from_rotation_y(angle)),
                 ChildOf(prop_hub_entity),
                 VisibleChildBundle::default(),
@@ -1253,9 +1253,9 @@ impl VehicleFactory {
 
         // RUDDER (Decorative control surface behind propeller)
         commands.spawn((
-            Mesh3d(meshes.add(Cuboid::new(0.1, 1.2, 1.0))),
+            Mesh3d(meshes.add(Cuboid::new(0.5, 6.0, 4.0))),
             MeshMaterial3d(prop_material.clone()),
-            Transform::from_xyz(0.0, -0.5, 29.5),
+            Transform::from_xyz(0.0, -2.5, 39.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -1270,11 +1270,11 @@ impl VehicleFactory {
             ..default()
         });
 
-        // Flag pole
+        // Flag pole (at stern)
         commands.spawn((
             Mesh3d(meshes.add(Cylinder::new(0.08, 8.0))),
             MeshMaterial3d(pole_material.clone()),
-            Transform::from_xyz(0.0, 8.0, -28.0),
+            Transform::from_xyz(0.0, 8.0, 28.0),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -1307,7 +1307,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(0.02, 2.0, 3.0))),
             MeshMaterial3d(flag_red.clone()),
-            Transform::from_xyz(0.0, 11.0, -26.5),
+            Transform::from_xyz(0.0, 11.0, 26.5),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
@@ -1320,7 +1320,7 @@ impl VehicleFactory {
             commands.spawn((
                 Mesh3d(meshes.add(Cuboid::new(0.03, 0.15, 3.0))),
                 MeshMaterial3d(flag_white.clone()),
-                Transform::from_xyz(0.0, stripe_y, -26.5),
+                Transform::from_xyz(0.0, stripe_y, 26.5),
                 ChildOf(vehicle_entity),
                 VisibleChildBundle::default(),
                 yacht_visibility(),
@@ -1332,7 +1332,7 @@ impl VehicleFactory {
         commands.spawn((
             Mesh3d(meshes.add(Cuboid::new(0.04, 0.8, 1.2))),
             MeshMaterial3d(flag_blue),
-            Transform::from_xyz(0.0, 11.4, -27.4),
+            Transform::from_xyz(0.0, 11.4, 27.4),
             ChildOf(vehicle_entity),
             VisibleChildBundle::default(),
             yacht_visibility(),
