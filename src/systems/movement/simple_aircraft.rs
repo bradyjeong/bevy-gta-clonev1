@@ -602,3 +602,31 @@ pub fn rotate_helicopter_rotors(
         }
     }
 }
+
+/// Spool down docked helicopter rotors (no physics, just RPM decay)
+/// Fixes bug where rotors freeze at high RPM when docking because physics components are removed
+pub fn spool_docked_helicopter_rpm(
+    time: Res<Time>,
+    heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
+    mut helicopter_query: Query<
+        (
+            &SimpleHelicopterSpecsHandle,
+            &mut HelicopterRuntime,
+        ),
+        (With<Helicopter>, With<crate::components::DockedOnYacht>),
+    >,
+) {
+    let dt = PhysicsUtilities::stable_dt(&time);
+
+    for (specs_handle, mut runtime) in helicopter_query.iter_mut() {
+        let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
+            continue;
+        };
+
+        // Decay RPM to 0.0
+        let target_rpm = 0.0;
+        let rate = specs.spool_down_rate.clamp(0.1, 2.0);
+        runtime.rpm += rate * dt * (target_rpm - runtime.rpm);
+        runtime.rpm = runtime.rpm.clamp(0.0, 2.0);
+    }
+}

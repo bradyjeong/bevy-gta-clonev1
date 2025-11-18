@@ -5,7 +5,7 @@ use crate::components::water_material::WaterMaterial;
 use crate::game_state::GameState;
 use crate::states::AppState;
 use crate::systems::debug_docked_heli::audit_docked_helicopter_movement;
-use crate::systems::movement::{propeller_spin_system, simple_yacht_movement};
+use crate::systems::movement::{propeller_spin_system, simple_yacht_movement, spool_docked_helicopter_rpm};
 use crate::systems::swimming::{
     apply_prone_rotation_system, apply_swimming_state, detect_swimming_conditions,
     emergency_swim_exit_system, reset_animation_on_land_system, swim_animation_flag_system,
@@ -112,6 +112,7 @@ impl Plugin for WaterPlugin {
                     heli_landing_detection_system,
                     helicopter_undock_trigger_system,
                     tick_docking_cooldown_system,
+                    spool_docked_helicopter_rpm,
                 ),
             )
             .add_systems(PostUpdate, audit_docked_helicopter_movement);
