@@ -3,7 +3,6 @@ use crate::components::unified_water::UnifiedWaterAsset;
 use crate::components::water::YachtSpecs;
 use crate::components::water_material::WaterMaterial;
 use crate::game_state::GameState;
-use crate::states::AppState;
 use crate::systems::debug_docked_heli::audit_docked_helicopter_movement;
 use crate::systems::movement::{propeller_spin_system, simple_yacht_movement, spool_docked_helicopter_rpm};
 use crate::systems::swimming::{
@@ -12,11 +11,9 @@ use crate::systems::swimming::{
     swim_velocity_apply_system,
 };
 use crate::systems::water::{
-    cleanup_yacht_particles_on_despawn, load_unified_water_assets,
-    process_loaded_unified_water_assets, setup_yacht_effects, simple_yacht_buoyancy,
-    spawn_bow_splash, spawn_or_update_wake_foam, spawn_prop_wash, spawn_test_yacht,
-    surface_render_system, update_water_material_time_system, update_water_region_cache,
-    update_water_surface_system, water_physics_system,
+    load_unified_water_assets, process_loaded_unified_water_assets, simple_yacht_buoyancy,
+    spawn_test_yacht, surface_render_system, update_water_material_time_system,
+    update_water_region_cache, update_water_surface_system, water_physics_system,
 };
 use crate::systems::yacht_exit::{
     deck_walk_movement_system, heli_landing_detection_system, helicopter_undock_trigger_system,
@@ -55,7 +52,6 @@ impl Plugin for WaterPlugin {
                     .before(PhysicsSet::StepSimulation),
             )
             .add_systems(Startup, (load_unified_water_assets, spawn_test_yacht))
-            .add_systems(OnEnter(AppState::InGame), setup_yacht_effects)
             .add_systems(Update, process_loaded_unified_water_assets)
             .add_systems(
                 FixedUpdate,
@@ -90,16 +86,7 @@ impl Plugin for WaterPlugin {
                     emergency_swim_exit_system,
                 ),
             )
-            .add_systems(
-                Update,
-                (
-                    spawn_or_update_wake_foam,
-                    spawn_bow_splash,
-                    spawn_prop_wash,
-                    propeller_spin_system,
-                ),
-            )
-            .add_systems(PostUpdate, cleanup_yacht_particles_on_despawn)
+            .add_systems(Update, propeller_spin_system)
             .add_systems(
                 FixedUpdate,
                 yacht_board_from_deck_system.before(PhysicsSet::SyncBackend),
