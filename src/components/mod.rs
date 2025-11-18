@@ -129,6 +129,6 @@ pub use swimming_events::SwimmingEvent;
 pub use underwater_settings::UnderwaterSettings;
 pub use unified_vehicle::UnifiedVehicleSpecs;
 pub use yacht_exit::{
-    DeckWalkAnchor, DeckWalkable, DeckWalker, Enterable, ExitPoint, ExitPointKind, Helipad,
-    LandedOnYacht,
+    DeckWalkAnchor, DeckWalkable, DeckWalker, DockedOnYacht, DockingCooldown, Enterable, ExitPoint,
+    ExitPointKind, Helipad, LandedOnYacht,
 };

@@ -4,6 +4,7 @@ use crate::components::water::YachtSpecs;
 use crate::components::water_material::WaterMaterial;
 use crate::game_state::GameState;
 use crate::states::AppState;
+use crate::systems::debug_docked_heli::audit_docked_helicopter_movement;
 use crate::systems::movement::{propeller_spin_system, simple_yacht_movement};
 use crate::systems::swimming::{
     apply_prone_rotation_system, apply_swimming_state, detect_swimming_conditions,
@@ -18,8 +19,8 @@ use crate::systems::water::{
     update_water_surface_system, water_physics_system,
 };
 use crate::systems::yacht_exit::{
-    deck_walk_movement_system, heli_landing_detection_system, sync_landed_helicopter_with_yacht,
-    yacht_board_from_deck_system, yacht_exit_system,
+    deck_walk_movement_system, heli_landing_detection_system, helicopter_undock_trigger_system,
+    tick_docking_cooldown_system, yacht_board_from_deck_system, yacht_exit_system,
 };
 
 use bevy::prelude::*;
@@ -73,7 +74,6 @@ impl Plugin for WaterPlugin {
                     detect_swimming_conditions,
                     apply_swimming_state,
                     swim_velocity_apply_system.run_if(in_state(GameState::Swimming)),
-                    sync_landed_helicopter_with_yacht,
                 )
                     .chain()
                     .in_set(WaterSystemSet::Effects),
@@ -101,13 +101,19 @@ impl Plugin for WaterPlugin {
             )
             .add_systems(PostUpdate, cleanup_yacht_particles_on_despawn)
             .add_systems(
+                FixedUpdate,
+                yacht_board_from_deck_system.before(PhysicsSet::SyncBackend),
+            )
+            .add_systems(
                 Update,
                 (
                     yacht_exit_system.after(crate::plugins::input_plugin::InputProcessingSet),
-                    yacht_board_from_deck_system,
                     deck_walk_movement_system,
                     heli_landing_detection_system,
+                    helicopter_undock_trigger_system,
+                    tick_docking_cooldown_system,
                 ),
-            );
+            )
+            .add_systems(PostUpdate, audit_docked_helicopter_movement);
     }
 }

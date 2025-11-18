@@ -1,8 +1,8 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::water::Yacht;
 use crate::components::{
-    ActiveEntity, Car, ControlState, F16, Helicopter, HumanAnimation, InCar, PendingPhysicsEnable,
-    Player, PlayerControlled, VehicleControlType,
+    ActiveEntity, Car, ControlState, DockedOnYacht, F16, Helicopter, HumanAnimation, InCar,
+    PendingPhysicsEnable, Player, PlayerControlled, VehicleControlType,
 };
 use crate::game_state::GameState;
 use crate::systems::safe_active_entity::queue_active_transfer;
@@ -87,6 +87,7 @@ pub fn interaction_system(
             Option<&Helicopter>,
             Option<&F16>,
             Option<&Yacht>,
+            Option<&DockedOnYacht>,
         ),
         (
             Or<(With<Car>, With<Helicopter>, With<F16>, With<Yacht>)>,
@@ -136,11 +137,12 @@ pub fn interaction_system(
             // Collect best match for each vehicle type, then check priority order
             // Using squared distances avoids expensive sqrt: 3.0² = 9.0, 5.0² = 25.0, 8.0² = 64.0, 35.0² = 1225.0
             let mut best_car: Option<(Entity, f32)> = None;
-            let mut best_helicopter: Option<(Entity, f32)> = None;
+            let mut best_helicopter: Option<(Entity, f32, GlobalTransform, Option<DockedOnYacht>)> =
+                None;
             let mut best_f16: Option<(Entity, f32)> = None;
             let mut best_yacht: Option<(Entity, f32)> = None;
 
-            for (entity, gt, car, helicopter, f16, yacht) in unified_vehicle_query.iter() {
+            for (entity, gt, car, helicopter, f16, yacht, docked) in unified_vehicle_query.iter() {
                 let dist_sq = player_transform
                     .translation
                     .distance_squared(gt.translation());
@@ -151,8 +153,12 @@ pub fn interaction_system(
                         best_car = Some((entity, dist_sq));
                     }
                 } else if helicopter.is_some() && dist_sq < 25.0 {
-                    if best_helicopter.is_none_or(|(_, d)| dist_sq < d) {
-                        best_helicopter = Some((entity, dist_sq));
+                    let is_closer = match &best_helicopter {
+                        None => true,
+                        Some((_, best_dist, _, _)) => dist_sq < *best_dist,
+                    };
+                    if is_closer {
+                        best_helicopter = Some((entity, dist_sq, *gt, docked.cloned()));
                     }
                 } else if f16.is_some() && dist_sq < 64.0 {
                     if best_f16.is_none_or(|(_, d)| dist_sq < d) {
@@ -179,7 +185,15 @@ pub fn interaction_system(
                     &time,
                 );
                 state.set(GameState::Driving);
-            } else if let Some((entity, _)) = best_helicopter {
+            } else if let Some((entity, _, _gt, docked_opt)) = best_helicopter {
+                if let Some(_docked) = docked_opt {
+                    info!(
+                        "ENTERING: Player entering DOCKED helicopter {:?} (from walking) - will stay docked until lift-off",
+                        entity
+                    );
+                    // DO NOT UNDOCK YET - Wait for input (Lift Off)
+                }
+
                 transfer_to_vehicle(
                     &mut commands,
                     player_entity,
@@ -214,6 +228,7 @@ pub fn interaction_system(
                     "Yacht",
                     &time,
                 );
+
                 state.set(GameState::Driving);
             }
         }
@@ -236,8 +251,8 @@ pub fn interaction_system(
             // Find closest yacht first to prevent multiple transfer requests
             let closest_yacht = unified_vehicle_query
                 .iter()
-                .filter(|(_, _, _, _, _, yacht)| yacht.is_some())
-                .filter_map(|(entity, gt, _, _, _, _)| {
+                .filter(|(_, _, _, _, _, yacht, _)| yacht.is_some())
+                .filter_map(|(entity, gt, _, _, _, _, _)| {
                     let dist_sq = player_transform
                         .translation
                         .distance_squared(gt.translation());
