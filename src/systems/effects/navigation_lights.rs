@@ -5,9 +5,21 @@ use bevy::prelude::*;
 /// OPTIMIZATION: Timer needs to tick every frame, but we can early-exit if nothing needs updating
 pub fn update_navigation_lights(
     time: Res<Time>,
-    mut light_query: Query<(&mut NavigationLight, &mut PointLight)>,
+    mut light_query: Query<(&mut NavigationLight, &mut PointLight, &GlobalTransform)>,
+    player_query: Query<&GlobalTransform, With<crate::components::ActiveEntity>>,
 ) {
-    for (mut nav_light, mut point_light) in light_query.iter_mut() {
+    let player_pos = player_query.iter().next().map(|t| t.translation()).unwrap_or_default();
+    let has_player = player_query.iter().next().is_some();
+
+    for (mut nav_light, mut point_light, transform) in light_query.iter_mut() {
+        // Distance culling
+        if has_player && transform.translation().distance(player_pos) > 500.0 {
+            if point_light.intensity > 0.0 {
+                point_light.intensity = 0.0;
+            }
+            continue;
+        }
+
         nav_light.blink_timer.tick(time.delta());
 
         match nav_light.light_type {
@@ -48,8 +60,27 @@ pub fn update_landing_lights(
     >,
     children_query: Query<&Children>,
     mut landing_light_query: Query<(&LandingLight, &mut SpotLight)>,
+    player_query: Query<&GlobalTransform, With<crate::components::ActiveEntity>>,
 ) {
+    let player_pos = player_query.iter().next().map(|t| t.translation()).unwrap_or_default();
+    let has_player = player_query.iter().next().is_some();
+
     for (helicopter_transform, helicopter_children) in helicopter_query.iter() {
+        // Distance culling
+        if has_player && helicopter_transform.translation.distance(player_pos) > 500.0 {
+            // Set all landing lights for this heli to intensity 0
+             for heli_child in helicopter_children.iter() {
+                if let Ok(visual_body_children) = children_query.get(heli_child) {
+                    for child in visual_body_children.iter() {
+                        if let Ok((_, mut spot_light)) = landing_light_query.get_mut(child) {
+                            spot_light.intensity = 0.0;
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
         let altitude = helicopter_transform.translation.y;
 
         // Navigate to HelicopterVisualBody children (landing lights are grandchildren now)

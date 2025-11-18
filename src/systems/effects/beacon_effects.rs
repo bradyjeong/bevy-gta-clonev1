@@ -41,13 +41,22 @@ pub fn update_waypoint_system(
 /// Update beacon visibility system - uses Timer for square wave instead of sine
 /// OPTIMIZATION: Beacons use time-based animation so no Changed filter applicable here
 pub fn update_beacon_visibility(
-    mut beacon_query: Query<&mut Visibility, With<VehicleBeacon>>,
+    mut beacon_query: Query<(&mut Visibility, &GlobalTransform), With<VehicleBeacon>>,
+    player_query: Query<&GlobalTransform, With<crate::components::ActiveEntity>>,
     time: Res<Time>,
 ) {
+    let player_pos = player_query.iter().next().map(|t| t.translation()).unwrap_or_default();
+    let has_player = player_query.iter().next().is_some();
+
     // Use integer division for clean square wave instead of sine > 0 which causes flashes
     let flash_cycle = ((time.elapsed_secs() * 2.0) as i32) % 2 == 0;
 
-    for mut visibility in beacon_query.iter_mut() {
+    for (mut visibility, transform) in beacon_query.iter_mut() {
+        if has_player && transform.translation().distance(player_pos) > 500.0 {
+            *visibility = Visibility::Hidden;
+            continue;
+        }
+
         *visibility = if flash_cycle {
             Visibility::Visible
         } else {

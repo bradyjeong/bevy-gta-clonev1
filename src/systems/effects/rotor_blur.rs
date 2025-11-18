@@ -26,7 +26,12 @@ type TailBlurQuery<'w, 's> = Query<
 pub fn update_rotor_blur_visibility(
     heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
     helicopter_query: Query<
-        (&SimpleHelicopterSpecsHandle, &HelicopterRuntime, &Children),
+        (
+            &SimpleHelicopterSpecsHandle,
+            &HelicopterRuntime,
+            &Children,
+            &GlobalTransform,
+        ),
         (
             With<Helicopter>,
             Or<(
@@ -40,8 +45,53 @@ pub fn update_rotor_blur_visibility(
     mut tail_blur_query: TailBlurQuery,
     mut rotor_blade_query: Query<&mut Visibility, (With<MainRotor>, Without<RotorBlurDisk>)>,
     children_query: Query<&Children>,
+    player_query: Query<&GlobalTransform, With<crate::components::ActiveEntity>>,
 ) {
-    for (specs_handle, runtime, helicopter_children) in helicopter_query.iter() {
+    let player_pos = player_query.iter().next().map(|t| t.translation()).unwrap_or_default();
+    let has_player = player_query.iter().next().is_some();
+
+    for (specs_handle, runtime, helicopter_children, heli_transform) in helicopter_query.iter() {
+        // Distance culling
+        if has_player && heli_transform.translation().distance(player_pos) > 200.0 {
+            // Force blur Hidden, blades Visible (default state)
+            for heli_child in helicopter_children.iter() {
+                let Ok(visual_body_children) = children_query.get(heli_child) else {
+                    continue;
+                };
+
+                for child in visual_body_children.iter() {
+                    // Handle Main Blur Disk
+                    if let Ok((blur_disk, mut visibility)) = main_blur_query.get_mut(child) {
+                        if blur_disk.is_main_rotor {
+                            if *visibility != Visibility::Hidden {
+                                *visibility = Visibility::Hidden;
+                            }
+                            // Ensure blades are visible
+                            if let Ok(child_children) = children_query.get(child) {
+                                for blade_child in child_children.iter() {
+                                    if let Ok(mut blade_vis) =
+                                        rotor_blade_query.get_mut(blade_child)
+                                    {
+                                        if *blade_vis != Visibility::Visible {
+                                            *blade_vis = Visibility::Visible;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Handle Tail Blur Disk
+                    if let Ok((_, mut visibility)) = tail_blur_query.get_mut(child) {
+                        if *visibility != Visibility::Hidden {
+                            *visibility = Visibility::Hidden;
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
         let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
             continue;
         };
