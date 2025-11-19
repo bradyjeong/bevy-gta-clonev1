@@ -5,6 +5,7 @@ use crate::plugins::{
 };
 use crate::resources::MaterialRegistry;
 use crate::states::AppState;
+use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::unified_world::UnifiedWorldManager;
 use bevy::prelude::*;
 
@@ -18,7 +19,12 @@ impl Plugin for UnifiedWorldPlugin {
             // Initialize world manager and resources EARLY (PreStartup, before OnEnter(Loading))
             .add_systems(
                 PreStartup,
-                (initialize_world_manager, initialize_material_registry).chain(),
+                (
+                    initialize_world_manager,
+                    initialize_road_network,
+                    initialize_material_registry,
+                )
+                    .chain(),
             )
             // Add world generation and gameplay plugins
             .add_plugins(StaticWorldGenerationPlugin) // Static generation in Loading state
@@ -46,6 +52,13 @@ fn initialize_world_manager(mut commands: Commands, config: Res<GameConfig>) {
     );
 }
 
+fn initialize_road_network(mut commands: Commands) {
+    let road_network = RoadNetwork::default();
+    commands.insert_resource(road_network);
+    #[cfg(feature = "debug-ui")]
+    info!("Road network initialized as independent resource");
+}
+
 fn initialize_material_registry(mut commands: Commands) {
     let material_registry = MaterialRegistry::new();
     commands.insert_resource(material_registry);
@@ -55,6 +68,7 @@ fn initialize_material_registry(mut commands: Commands) {
 
 fn cleanup_world_resources(mut commands: Commands) {
     commands.remove_resource::<UnifiedWorldManager>();
+    commands.remove_resource::<RoadNetwork>();
     commands.remove_resource::<MaterialRegistry>();
     #[cfg(feature = "debug-ui")]
     info!("World resources cleaned up");

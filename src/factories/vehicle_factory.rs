@@ -1242,7 +1242,7 @@ impl VehicleFactory {
             // 1. Pitch (Twist) around the long axis (Y) to create angle of attack
             // 2. Point outward (Rotate X 90 deg)
             // 3. Position in circle (Rotate Y angle)
-            let blade_rot = Quat::from_rotation_y(angle) 
+            let blade_rot = Quat::from_rotation_y(angle)
                 * Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)
                 * Quat::from_rotation_y(std::f32::consts::FRAC_PI_6); // 30 deg pitch around long axis
 

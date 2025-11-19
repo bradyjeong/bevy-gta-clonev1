@@ -4,6 +4,7 @@ use crate::components::unified_water::UnifiedWaterBody;
 use crate::config::GameConfig;
 use crate::constants::WorldEnvConfig;
 use crate::resources::WorldRng;
+use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
 };
@@ -20,6 +21,7 @@ impl VegetationGenerator {
         &self,
         commands: &mut Commands,
         world: &mut UnifiedWorldManager,
+        road_network: &RoadNetwork,
         coord: ChunkCoord,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -59,7 +61,7 @@ impl VegetationGenerator {
 
             // Check if position is valid (on terrain edge band, not on road, not overlapping, not in water)
             if self.is_on_terrain_edge_band(position, env)
-                && !self.is_on_road(position, world)
+                && !self.is_on_road(position, road_network)
                 && !self.is_in_water_area(position, water_bodies)
                 && world
                     .placement_grid
@@ -172,8 +174,8 @@ impl VegetationGenerator {
         Ok(palm_entity)
     }
 
-    fn is_on_road(&self, position: Vec3, world: &UnifiedWorldManager) -> bool {
-        for road in world.road_network.roads.values() {
+    fn is_on_road(&self, position: Vec3, road_network: &RoadNetwork) -> bool {
+        for road in road_network.roads.values() {
             if self.is_point_on_road_spline(position, road, 15.0) {
                 return true;
             }

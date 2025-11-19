@@ -20,14 +20,14 @@ pub fn boat_animation_system(
         // Propeller throttle input (forward - brake/reverse)
         // GTA style: brake acts as reverse when stopped, but for visuals we just want to know "effort"
         let throttle_effort = controls.throttle - controls.brake;
-        
+
         // Steering input (-1.0 to 1.0)
         let steering_input = controls.steering;
 
         for child in children.iter() {
             // --- Propeller Animation ---
             if let Ok((mut transform, mut prop)) = propeller_query.get_mut(child) {
-                // Target RPM based on effort. 
+                // Target RPM based on effort.
                 // 600 RPM max seems reasonable for visual speed.
                 let target_rpm = throttle_effort * 600.0;
 
@@ -63,7 +63,7 @@ pub fn boat_animation_system(
                 // Smoothly interpolate rudder position (hydraulic steering delay)
                 let current_rot = transform.rotation;
                 let target_rot = Quat::from_rotation_y(target_angle);
-                
+
                 // Slerp factor for steering speed
                 transform.rotation = current_rot.slerp(target_rot, dt * 5.0);
             }

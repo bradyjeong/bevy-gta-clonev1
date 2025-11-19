@@ -64,6 +64,7 @@ pub mod water_plugin;
 // New focused world plugins
 pub mod physics_activation_plugin;
 pub mod static_world_generation_plugin;
+pub mod traffic_plugin;
 pub mod world_debug_plugin;
 pub mod world_npc_plugin;
 
@@ -76,6 +77,7 @@ pub use map_plugin::MapPlugin;
 pub use particle_plugin::ParticlePlugin;
 pub use player_plugin::PlayerPlugin;
 pub use skybox_plugin::SkyboxPlugin;
+pub use traffic_plugin::TrafficPlugin;
 pub use ui_plugin::UIPlugin;
 pub use underwater_plugin::UnderwaterPlugin;
 

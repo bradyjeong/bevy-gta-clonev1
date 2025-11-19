@@ -1,8 +1,8 @@
-use bevy::prelude::*;
-use bevy::ecs::system::SystemParam;
+use crate::components::MissingSpecsWarned;
 use crate::config::GameConfig;
 use crate::systems::physics::PhysicsUtilities;
-use crate::components::MissingSpecsWarned;
+use bevy::ecs::system::SystemParam;
+use bevy::prelude::*;
 
 /// Common system parameters for vehicle movement systems
 /// Reduces boilerplate in function signatures

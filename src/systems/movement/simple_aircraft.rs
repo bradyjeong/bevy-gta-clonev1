@@ -8,8 +8,8 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::config::GameConfig;
-use crate::systems::movement::vehicle_params::{validate_specs, VehicleParams};
 use crate::systems::movement::simple_flight_common::SimpleFlightCommon;
+use crate::systems::movement::vehicle_params::{VehicleParams, validate_specs};
 use crate::systems::physics::PhysicsUtilities;
 use crate::util::safe_math::safe_lerp;
 
@@ -498,8 +498,15 @@ pub fn spool_helicopter_rpm_idle(
 ) {
     let dt = PhysicsUtilities::stable_dt(&time);
 
-    for (specs_handle, mut runtime, mut external_force, mut velocity, transform, mass_props, _vehicle_health) in
-        helicopter_query.iter_mut()
+    for (
+        specs_handle,
+        mut runtime,
+        mut external_force,
+        mut velocity,
+        transform,
+        mass_props,
+        _vehicle_health,
+    ) in helicopter_query.iter_mut()
     {
         let Some(specs) = heli_specs_assets.get(&specs_handle.0) else {
             continue;
@@ -539,7 +546,7 @@ pub fn spool_helicopter_rpm_idle(
 
         // 4. Apply Forces
         external_force.force = lift_force + drag_force;
-        
+
         // Apply counter-torque if main rotor is spinning but no tail rotor input?
         // For now, just let it fall with zero torque control
         external_force.torque = Vec3::ZERO;
@@ -600,10 +607,7 @@ pub fn spool_docked_helicopter_rpm(
     time: Res<Time>,
     heli_specs_assets: Res<Assets<SimpleHelicopterSpecs>>,
     mut helicopter_query: Query<
-        (
-            &SimpleHelicopterSpecsHandle,
-            &mut HelicopterRuntime,
-        ),
+        (&SimpleHelicopterSpecsHandle, &mut HelicopterRuntime),
         (With<Helicopter>, With<crate::components::DockedOnYacht>),
     >,
 ) {

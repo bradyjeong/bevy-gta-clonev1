@@ -4,4 +4,3 @@ use bevy::prelude::*;
 pub struct PropellerHub {
     pub current_rpm: f32,
 }
-

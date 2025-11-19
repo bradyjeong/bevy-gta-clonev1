@@ -45,7 +45,11 @@ pub fn update_beacon_visibility(
     player_query: Query<&GlobalTransform, With<crate::components::ActiveEntity>>,
     time: Res<Time>,
 ) {
-    let player_pos = player_query.iter().next().map(|t| t.translation()).unwrap_or_default();
+    let player_pos = player_query
+        .iter()
+        .next()
+        .map(|t| t.translation())
+        .unwrap_or_default();
     let has_player = player_query.iter().next().is_some();
 
     // Use integer division for clean square wave instead of sine > 0 which causes flashes

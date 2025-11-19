@@ -4,6 +4,7 @@ use crate::config::GameConfig;
 use crate::constants::WorldEnvConfig;
 use crate::factories::{BuildingFactory, BuildingType};
 use crate::resources::WorldRng;
+use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
 };
@@ -150,6 +151,7 @@ impl BuildingGenerator {
         &self,
         commands: &mut Commands,
         world: &mut UnifiedWorldManager,
+        road_network: &RoadNetwork,
         coord: ChunkCoord,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -226,7 +228,7 @@ impl BuildingGenerator {
 
             // Check if position is valid (on island, not on road with radius, not overlapping, not in water)
             if world.is_on_terrain_island(position)
-                && !self.is_on_road(position, world, radius)
+                && !self.is_on_road(position, world, road_network, radius)
                 && !self.is_in_water_area(position, water_bodies)
             {
                 let min_distance = if on_grid {
@@ -311,14 +313,20 @@ impl BuildingGenerator {
         }
     }
 
-    fn is_on_road(&self, position: Vec3, world: &UnifiedWorldManager, radius: f32) -> bool {
+    fn is_on_road(
+        &self,
+        position: Vec3,
+        world: &UnifiedWorldManager,
+        road_network: &RoadNetwork,
+        radius: f32,
+    ) -> bool {
         let tolerance = if world.is_on_grid_island(position) {
             5.0 // Conservative margin - buildings NEVER touch roads
         } else {
             25.0 // Suburban spacing elsewhere
         };
 
-        for road in world.road_network.roads.values() {
+        for road in road_network.roads.values() {
             if self.is_point_on_road_spline(position, road, tolerance, radius) {
                 return true;
             }

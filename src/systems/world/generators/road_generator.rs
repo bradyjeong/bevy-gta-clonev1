@@ -7,7 +7,7 @@ use crate::resources::{MaterialKey, MaterialRegistry, WorldRng};
 use crate::systems::world::road_mesh::{
     generate_road_markings_mesh_local, generate_road_mesh_local,
 };
-use crate::systems::world::road_network::{IntersectionType, RoadSpline, RoadType};
+use crate::systems::world::road_network::{IntersectionType, RoadNetwork, RoadSpline, RoadType};
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
 };
@@ -21,6 +21,7 @@ impl RoadGenerator {
         &self,
         commands: &mut Commands,
         world: &mut UnifiedWorldManager,
+        road_network: &mut RoadNetwork,
         coord: ChunkCoord,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -41,9 +42,9 @@ impl RoadGenerator {
             // Generate entire Manhattan grid on first chunk (subsequent chunks skip)
             world
                 .manhattan_generator
-                .generate_grid(&mut world.road_network, config, env)
+                .generate_grid(road_network, config, env)
         } else {
-            world.road_network.generate_roads_for_cell(
+            road_network.generate_roads_for_cell(
                 IVec2::new(coord.x, coord.z),
                 config.world_streaming.road_cell_size,
                 world_rng.global(),
@@ -53,7 +54,7 @@ impl RoadGenerator {
 
         // Create road entities and add to placement grid
         for road_id in new_road_ids {
-            if let Some(road) = world.road_network.roads.get(&road_id).cloned() {
+            if let Some(road) = road_network.roads.get(&road_id).cloned() {
                 // RoadNetwork already validates island boundaries during generation
                 // Skip roads that pass through water areas
                 if self.road_intersects_water(&road, water_bodies) {
@@ -91,7 +92,7 @@ impl RoadGenerator {
         }
 
         // Detect and create intersections
-        self.detect_and_spawn_intersections(commands, world, coord);
+        self.detect_and_spawn_intersections(commands, world, road_network, coord);
 
         // Mark roads as generated
         if let Some(chunk) = world.get_chunk_mut(coord) {
@@ -168,6 +169,7 @@ impl RoadGenerator {
         &self,
         commands: &mut Commands,
         world: &mut UnifiedWorldManager,
+        road_network: &mut RoadNetwork,
         coord: ChunkCoord,
     ) {
         let chunk_center = coord.to_world_pos_with_size(world.chunk_size);
@@ -176,7 +178,7 @@ impl RoadGenerator {
 
         // Collect all roads in and around this chunk
         let mut chunk_roads = Vec::new();
-        for (road_id, road) in &world.road_network.roads {
+        for (road_id, road) in &road_network.roads {
             let road_center = road.evaluate(0.5);
             if (road_center.x - chunk_center.x).abs() < chunk_size
                 && (road_center.z - chunk_center.z).abs() < chunk_size
@@ -213,15 +215,9 @@ impl RoadGenerator {
         // Create intersection entities
         for (position, connected_roads, intersection_type) in detected_intersections {
             let intersection_id =
-                world
-                    .road_network
-                    .add_intersection(position, connected_roads, intersection_type);
+                road_network.add_intersection(position, connected_roads, intersection_type);
 
-            if world
-                .road_network
-                .intersections
-                .contains_key(&intersection_id)
-            {
+            if road_network.intersections.contains_key(&intersection_id) {
                 let intersection_entity = commands
                     .spawn((
                         UnifiedChunkEntity {

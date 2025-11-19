@@ -322,7 +322,8 @@ pub fn interaction_system(
                         queue_active_transfer(&mut commands, active_car, player_entity, &time);
 
                         // CRITICAL: Remove control components from car so it becomes inactive/uncontrolled
-                        commands.entity(active_car)
+                        commands
+                            .entity(active_car)
                             .remove::<PlayerControlled>()
                             .remove::<ControlState>()
                             .remove::<VehicleControlType>();
@@ -389,7 +390,8 @@ pub fn interaction_system(
                         );
 
                         // CRITICAL: Remove control components from helicopter so physics spool-down takes over
-                        commands.entity(active_helicopter)
+                        commands
+                            .entity(active_helicopter)
                             .remove::<PlayerControlled>()
                             .remove::<ControlState>()
                             .remove::<VehicleControlType>();
@@ -453,7 +455,8 @@ pub fn interaction_system(
                         queue_active_transfer(&mut commands, active_f16, player_entity, &time);
 
                         // CRITICAL: Remove control components from F16
-                        commands.entity(active_f16)
+                        commands
+                            .entity(active_f16)
                             .remove::<PlayerControlled>()
                             .remove::<ControlState>()
                             .remove::<VehicleControlType>();

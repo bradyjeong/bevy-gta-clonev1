@@ -52,4 +52,3 @@ pub struct DeckWalkAnchor;
 pub struct DockingCooldown {
     pub timer: Timer,
 }
-

@@ -139,6 +139,75 @@ impl RoadSpline {
             + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3)
     }
 
+    // Evaluate tangent at parameter t (0.0 to 1.0)
+    pub fn tangent(&self, t: f32) -> Vec3 {
+        if self.control_points.len() < 2 {
+            return Vec3::X;
+        }
+
+        if self.control_points.len() == 2 {
+            (self.control_points[1] - self.control_points[0]).normalize_or_zero()
+        } else {
+            self.catmull_rom_tangent(t)
+        }
+    }
+
+    fn catmull_rom_tangent(&self, t: f32) -> Vec3 {
+        let points = &self.control_points;
+        let n = points.len();
+
+        if n < 4 {
+            return (points[n - 1] - points[0]).normalize_or_zero();
+        }
+
+        let segment_t = t * (n - 3) as f32;
+        let segment = segment_t.floor() as usize;
+        let local_t = segment_t.fract();
+
+        let p0 = points[segment.max(0)];
+        let p1 = points[(segment + 1).min(n - 1)];
+        let p2 = points[(segment + 2).min(n - 1)];
+        let p3 = points[(segment + 3).min(n - 1)];
+
+        // Derivative of Catmull-Rom
+        let t2 = local_t * local_t;
+
+        let tangent = 0.5
+            * ((-p0 + p2)
+                + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * 2.0 * local_t
+                + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * 3.0 * t2);
+
+        tangent.normalize_or_zero()
+    }
+
+    // Get position for a specific lane
+    // lane_index: 0 = rightmost (relative to direction), 1 = inner right
+    // For bidirectional roads: 0,1 are forward, -1,-2 are backward (oncoming)
+    pub fn get_lane_position(&self, t: f32, lane_index: i32) -> Vec3 {
+        let center = self.evaluate(t);
+        let tangent = self.tangent(t);
+        // Right vector: Cross product of Tangent and Up (Y)
+        // If tangent is forward (Z), right is X.
+        // Cross(Z, Y) = -X? Wait.
+        // Right hand rule: index=Z, middle=Y, thumb=X? No.
+        // Bevy uses Y-up.
+        // If moving +Z, Right should be -X.
+        // Cross(Vec3::Z, Vec3::Y) = Vec3::new(-1.0, 0.0, 0.0) -> Correct.
+        let right = tangent.cross(Vec3::Y).normalize_or_zero();
+
+        let lane_width = 4.0; // Standard lane width
+        // Offset: 0 -> 2.0 (center of first lane)
+        //         1 -> 6.0 (center of second lane)
+        //        -1 -> -2.0 (center of first oncoming lane)
+        let offset = if lane_index >= 0 {
+            (lane_index as f32 * lane_width) + (lane_width * 0.5)
+        } else {
+            (lane_index as f32 * lane_width) - (lane_width * 0.5)
+        };
+
+        center + (right * offset)
+    }
+
     pub fn length(&self) -> f32 {
         let mut length = 0.0;
         let samples = 50;

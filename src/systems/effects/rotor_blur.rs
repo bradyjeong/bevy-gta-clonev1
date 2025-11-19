@@ -47,7 +47,11 @@ pub fn update_rotor_blur_visibility(
     children_query: Query<&Children>,
     player_query: Query<&GlobalTransform, With<crate::components::ActiveEntity>>,
 ) {
-    let player_pos = player_query.iter().next().map(|t| t.translation()).unwrap_or_default();
+    let player_pos = player_query
+        .iter()
+        .next()
+        .map(|t| t.translation())
+        .unwrap_or_default();
     let has_player = player_query.iter().next().is_some();
 
     for (specs_handle, runtime, helicopter_children, heli_transform) in helicopter_query.iter() {

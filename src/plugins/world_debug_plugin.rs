@@ -1,5 +1,7 @@
 use crate::systems::effects::update_beacon_visibility;
-use crate::systems::world::{debug::debug_player_position, unified_world::UnifiedWorldManager};
+use crate::systems::world::{
+    debug::debug_player_position, road_network::RoadNetwork, unified_world::UnifiedWorldManager,
+};
 use bevy::prelude::*;
 
 /// Plugin responsible for world debugging and monitoring
@@ -18,6 +20,7 @@ impl Plugin for WorldDebugPlugin {
 
 fn debug_unified_world_activity(
     world_manager: Res<UnifiedWorldManager>,
+    road_network: Res<RoadNetwork>,
     time: Res<Time>,
     #[cfg(feature = "debug-ui")] mut last_report_time: Local<f32>,
     #[cfg(not(feature = "debug-ui"))] last_report_time: Local<f32>,
@@ -57,16 +60,13 @@ fn debug_unified_world_activity(
             println!("  Total chunks: {}", world_manager.chunks.len());
             println!("  Loaded chunks: {loaded_chunks}");
             println!("  Loading chunks: {loading_chunks}");
-            println!(
-                "  Roads generated: {}",
-                world_manager.road_network.roads.len()
-            );
+            println!("  Roads generated: {}", road_network.roads.len());
             println!("  Active chunk: {:?}", world_manager.active_chunk);
             println!("  Max chunks/frame: {}", world_manager.max_chunks_per_frame);
         }
     }
     #[cfg(not(feature = "debug-ui"))]
     {
-        let _ = (world_manager, time, last_report_time);
+        let _ = (world_manager, road_network, time, last_report_time);
     }
 }

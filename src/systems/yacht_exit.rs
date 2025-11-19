@@ -26,13 +26,13 @@ fn dock_helicopter(
 ) {
     let yacht_affine = yacht_transform.affine();
     let yacht_inverse = yacht_affine.inverse();
-    
+
     let world_pos = heli_transform.translation();
     let current_local_pos = yacht_inverse.transform_point3(world_pos);
-    
+
     // Calculate helipad local position to get the correct deck height
     let helipad_local_pos = yacht_inverse.transform_point3(helipad_world_pos);
-    
+
     // Snap Y to helipad height + TARGET_DOCK_HEIGHT
     // Matches the detection window to ensure seamless transition
     let target_local_pos = Vec3::new(
@@ -44,7 +44,7 @@ fn dock_helicopter(
     let world_rotation = heli_transform.to_scale_rotation_translation().1;
     let yacht_rotation = yacht_transform.to_scale_rotation_translation().1;
     let local_rotation = yacht_rotation.inverse() * world_rotation;
-    
+
     // Flatten rotation relative to yacht (remove pitch/roll) so it sits flat on deck
     let (y_rot, _, _) = local_rotation.to_euler(EulerRot::YXZ);
     let flat_local_rotation = Quat::from_rotation_y(y_rot);
@@ -126,7 +126,11 @@ pub fn helicopter_undock_trigger_system(
             &GlobalTransform,
             &mut HelicopterRuntime,
         ),
-        (With<Helicopter>, With<PlayerControlled>, Without<DockingCooldown>),
+        (
+            With<Helicopter>,
+            With<PlayerControlled>,
+            Without<DockingCooldown>,
+        ),
     >,
     _yacht_query: Query<(&Velocity, &GlobalTransform), With<Yacht>>,
 ) {
@@ -144,7 +148,7 @@ pub fn helicopter_undock_trigger_system(
             if let Ok((yacht_vel, yacht_gt)) = yacht_query.get(docked.yacht) {
                 let r = heli_gt.translation() - yacht_gt.translation();
                 let tangential_vel = yacht_vel.angvel.cross(r);
-                
+
                 initial_velocity.linvel = yacht_vel.linvel + tangential_vel;
                 initial_velocity.angvel = yacht_vel.angvel;
             }
@@ -522,9 +526,9 @@ pub fn heli_landing_detection_system(
 ) {
     // OPTIMIZATION 1: Altitude pre-filter - only check helicopters below landing altitude
     const MAX_LANDING_ALTITUDE: f32 = 20.0;
-    const LANDING_RADIUS: f32 = 8.0; 
+    const LANDING_RADIUS: f32 = 8.0;
     const LANDING_RADIUS_SQUARED: f32 = LANDING_RADIUS * LANDING_RADIUS;
-    
+
     // TARGET_DOCK_HEIGHT: -0.78m relative to sensor (Calculated from geometry).
     // - Sensor Y = 5.5m
     // - Visual Deck Y = 4.0m
@@ -533,14 +537,14 @@ pub fn heli_landing_detection_system(
     // - Offset from Sensor = 4.7 - 5.5 = -0.8m
     // - Added +0.02m epsilon to prevent z-fighting -> -0.78m
     const TARGET_DOCK_HEIGHT: f32 = -0.78;
-    
+
     // Detection window centered on target height.
     // Must include 0.0 (physical contact) and allow for suspension compression/float.
     // Range: [-0.35, 0.45]
-    const DOCK_TOLERANCE: f32 = 0.4; 
+    const DOCK_TOLERANCE: f32 = 0.4;
     const MIN_TOUCHDOWN_HEIGHT: f32 = TARGET_DOCK_HEIGHT - DOCK_TOLERANCE;
     const MAX_TOUCHDOWN_HEIGHT: f32 = TARGET_DOCK_HEIGHT + DOCK_TOLERANCE;
-    
+
     const MAX_LANDING_SPEED: f32 = 6.0; // Increased from 2.0 for forgiving landing
     const MAX_LANDING_ROTATION: f32 = 1.0; // Increased from 0.5 for stability
 
@@ -594,10 +598,10 @@ pub fn heli_landing_detection_system(
         for (yacht_entity, helipad_pos, yacht_gt) in &helipad_cache {
             let yacht_up = yacht_gt.up();
             let delta = heli_pos - *helipad_pos;
-            
+
             // Project delta onto yacht up vector for vertical distance
             let vertical_dist = delta.dot(*yacht_up);
-            
+
             // Project delta onto deck plane for horizontal distance
             let horizontal_vec = delta - (*yacht_up * vertical_dist);
             let horiz_dist_sq = horizontal_vec.length_squared();
@@ -610,14 +614,14 @@ pub fn heli_landing_detection_system(
             // 2. Vertical check (touching the deck)
             // Target landed height is ~1.5m. Allow 0.5m to 3.0m (1.5m tolerance)
             if !(MIN_TOUCHDOWN_HEIGHT..=MAX_TOUCHDOWN_HEIGHT).contains(&vertical_dist) {
-                 // Only log if close horizontally but wrong height
-                 if horiz_dist_sq < LANDING_RADIUS_SQUARED * 0.5 {
+                // Only log if close horizontally but wrong height
+                if horiz_dist_sq < LANDING_RADIUS_SQUARED * 0.5 {
                     trace!(
-                        "LANDING REJECTED: Height {:.2}m out of range [{:.1}, {:.1}]", 
+                        "LANDING REJECTED: Height {:.2}m out of range [{:.1}, {:.1}]",
                         vertical_dist, MIN_TOUCHDOWN_HEIGHT, MAX_TOUCHDOWN_HEIGHT
                     );
-                 }
-                 continue;
+                }
+                continue;
             }
 
             // info!(

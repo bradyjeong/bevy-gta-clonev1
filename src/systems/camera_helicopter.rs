@@ -50,7 +50,8 @@ pub fn helicopter_camera_system(
 
     // STABILITY FIX: Rely primarily on the helicopter's forward vector for look direction
     // Raw velocity normalization causes jitter due to physics solver noise
-    let vel_dir = if velocity.linvel.length() > 5.0 { // Increased threshold from 1.0 to 5.0
+    let vel_dir = if velocity.linvel.length() > 5.0 {
+        // Increased threshold from 1.0 to 5.0
         velocity.linvel.normalize()
     } else {
         forward

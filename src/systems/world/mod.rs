@@ -6,6 +6,7 @@ pub mod performance;
 pub mod road_generation;
 pub mod road_mesh;
 pub mod road_network;
+pub mod traffic;
 
 // NEW UNIFIED WORLD SYSTEM
 pub mod generators; // NEW: Focused chunk generators following AGENT.md simplicity principles

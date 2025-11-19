@@ -13,6 +13,7 @@ use crate::systems::spawn_validation::SpawnRegistry;
 use crate::systems::world::generators::{
     BuildingGenerator, RoadGenerator, VegetationGenerator, VehicleGenerator,
 };
+use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::unified_world::{ChunkCoord, ChunkState, UnifiedWorldManager};
 
 /// Static world generation plugin - generates all chunks at startup
@@ -107,6 +108,7 @@ fn queue_all_chunks_for_generation(
 fn apply_generated_chunks(
     mut commands: Commands,
     mut world_manager: ResMut<UnifiedWorldManager>,
+    mut road_network: ResMut<RoadNetwork>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut material_registry: ResMut<MaterialRegistry>,
@@ -156,6 +158,7 @@ fn apply_generated_chunks(
         road_generator.generate_roads(
             &mut commands,
             &mut world_manager,
+            &mut road_network,
             coord,
             &mut meshes,
             &mut materials,
@@ -169,6 +172,7 @@ fn apply_generated_chunks(
         building_generator.generate_buildings(
             &mut commands,
             &mut world_manager,
+            &road_network,
             coord,
             &mut meshes,
             &mut materials,
@@ -181,6 +185,7 @@ fn apply_generated_chunks(
         vehicle_generator.generate_vehicles(
             &mut commands,
             &mut world_manager,
+            &road_network,
             coord,
             &mut meshes,
             &mut materials,
@@ -192,6 +197,7 @@ fn apply_generated_chunks(
         vegetation_generator.generate_vegetation(
             &mut commands,
             &mut world_manager,
+            &road_network,
             coord,
             &mut meshes,
             &mut materials,

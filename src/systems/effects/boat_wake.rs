@@ -47,10 +47,10 @@ pub fn create_boat_wake_effect(effects: &mut Assets<EffectAsset>) -> Handle<Effe
     // Initial velocity: Backwards and slightly up
     // We assume the effect is spawned at the prop with local rotation matching the boat?
     // Actually, easier to update position/rotation in the system.
-    // Let's assume -Z is backward (local). 
-    // BUT, we will handle position update in world space. 
+    // Let's assume -Z is backward (local).
+    // BUT, we will handle position update in world space.
     // If we update transform to match boat rotation, then -Z is backwards.
-    
+
     // Velocity spread
     let speed = writer.lit(5.0).expr();
     let init_vel = SetVelocitySphereModifier {
@@ -63,7 +63,7 @@ pub fn create_boat_wake_effect(effects: &mut Assets<EffectAsset>) -> Handle<Effe
     let update_drag = LinearDragModifier::new(drag);
 
     let module = writer.finish();
-    
+
     // High spawn rate for continuous wake
     let spawner = SpawnerSettings::rate(100.0.into());
 
@@ -114,7 +114,10 @@ pub fn spawn_boat_wake_particles(
 #[allow(clippy::type_complexity)]
 pub fn update_boat_wake_intensity(
     mut particle_query: Query<(&mut EffectSpawner, &mut Transform, &BoatWakeOf)>,
-    yacht_query: Query<(&GlobalTransform, &ControlState, &Children), (With<Yacht>, With<ActiveEntity>)>,
+    yacht_query: Query<
+        (&GlobalTransform, &ControlState, &Children),
+        (With<Yacht>, With<ActiveEntity>),
+    >,
     prop_query: Query<&GlobalTransform, With<PropellerHub>>,
 ) {
     for (mut spawner, mut particle_transform, wake_of) in particle_query.iter_mut() {
@@ -127,7 +130,7 @@ pub fn update_boat_wake_intensity(
                 if let Ok(prop_transform) = prop_query.get(child) {
                     prop_pos = prop_transform.translation();
                     // Offset slightly behind prop to avoid clipping
-                    prop_pos -= yacht_transform.forward() * 1.0; 
+                    prop_pos -= yacht_transform.forward() * 1.0;
                     found_prop = true;
                     break;
                 }
@@ -138,16 +141,16 @@ pub fn update_boat_wake_intensity(
                 // Typical yacht stern is -Z local.
                 prop_pos -= yacht_transform.forward() * 4.0;
             }
-            
+
             // Position particles at prop/stern
             particle_transform.translation = prop_pos;
             // Align rotation with boat so particles shoot backward relative to boat?
-            // If SimulationSpace::World is used, initial velocity is in local space? 
+            // If SimulationSpace::World is used, initial velocity is in local space?
             // Wait, SimulationSpace::World means simulation runs in world space (particles stay behind).
             // Emitter transform determines spawn location/orientation.
             // So if we rotate emitter to match boat, particles spawn with velocity relative to emitter axis?
             // Let's assume SetVelocitySphere sends them in all directions, but we want backward jet.
-            // Actually SetVelocitySphere is omnidirectional. 
+            // Actually SetVelocitySphere is omnidirectional.
             // To mimic prop wash, we want backward cone.
             // But simple sphere with World simulation creates a trail as the boat moves forward.
             // The particles spawn and stay (mostly) where they were, creating a trail.
@@ -155,9 +158,8 @@ pub fn update_boat_wake_intensity(
 
             // Intensity based on throttle
             let throttle_effort = (controls.throttle - controls.brake).abs();
-            
-            spawner.active = throttle_effort > 0.1;
 
+            spawner.active = throttle_effort > 0.1;
         } else {
             spawner.active = false;
         }

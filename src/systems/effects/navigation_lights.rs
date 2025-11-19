@@ -8,7 +8,11 @@ pub fn update_navigation_lights(
     mut light_query: Query<(&mut NavigationLight, &mut PointLight, &GlobalTransform)>,
     player_query: Query<&GlobalTransform, With<crate::components::ActiveEntity>>,
 ) {
-    let player_pos = player_query.iter().next().map(|t| t.translation()).unwrap_or_default();
+    let player_pos = player_query
+        .iter()
+        .next()
+        .map(|t| t.translation())
+        .unwrap_or_default();
     let has_player = player_query.iter().next().is_some();
 
     for (mut nav_light, mut point_light, transform) in light_query.iter_mut() {
@@ -62,14 +66,18 @@ pub fn update_landing_lights(
     mut landing_light_query: Query<(&LandingLight, &mut SpotLight)>,
     player_query: Query<&GlobalTransform, With<crate::components::ActiveEntity>>,
 ) {
-    let player_pos = player_query.iter().next().map(|t| t.translation()).unwrap_or_default();
+    let player_pos = player_query
+        .iter()
+        .next()
+        .map(|t| t.translation())
+        .unwrap_or_default();
     let has_player = player_query.iter().next().is_some();
 
     for (helicopter_transform, helicopter_children) in helicopter_query.iter() {
         // Distance culling
         if has_player && helicopter_transform.translation.distance(player_pos) > 500.0 {
             // Set all landing lights for this heli to intensity 0
-             for heli_child in helicopter_children.iter() {
+            for heli_child in helicopter_children.iter() {
                 if let Ok(visual_body_children) = children_query.get(heli_child) {
                     for child in visual_body_children.iter() {
                         if let Ok((_, mut spot_light)) = landing_light_query.get_mut(child) {

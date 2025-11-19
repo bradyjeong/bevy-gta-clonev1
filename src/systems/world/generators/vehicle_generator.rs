@@ -2,6 +2,7 @@ use crate::components::{ContentType, VehicleType};
 use crate::config::GameConfig;
 use crate::factories::VehicleFactory;
 use crate::resources::WorldRng;
+use crate::systems::world::road_network::RoadNetwork;
 use crate::systems::world::unified_world::{
     ChunkCoord, ContentLayer, UnifiedChunkEntity, UnifiedWorldManager,
 };
@@ -16,6 +17,7 @@ impl VehicleGenerator {
         &self,
         commands: &mut Commands,
         world: &mut UnifiedWorldManager,
+        road_network: &RoadNetwork,
         coord: ChunkCoord,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
@@ -59,7 +61,7 @@ impl VehicleGenerator {
 
             // Only spawn on roads (which are on islands) with sufficient spacing
             if world.is_on_terrain_island(position)
-                && self.is_on_road(position, world)
+                && self.is_on_road(position, road_network)
                 && world
                     .placement_grid
                     .can_place(position, ContentType::Vehicle, 4.0, 15.0)
@@ -96,7 +98,7 @@ impl VehicleGenerator {
             );
 
             // Spawn in open areas away from roads
-            if !self.is_on_road(position, world)
+            if !self.is_on_road(position, road_network)
                 && world.placement_grid.can_place(
                     position,
                     ContentType::Vehicle,
@@ -203,8 +205,8 @@ impl VehicleGenerator {
         }
     }
 
-    fn is_on_road(&self, position: Vec3, world: &UnifiedWorldManager) -> bool {
-        for road in world.road_network.roads.values() {
+    fn is_on_road(&self, position: Vec3, road_network: &RoadNetwork) -> bool {
+        for road in road_network.roads.values() {
             if self.is_point_on_road_spline(position, road, 25.0) {
                 return true;
             }

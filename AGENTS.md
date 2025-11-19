@@ -247,4 +247,19 @@ Primary control configuration using RON (Rusty Object Notation) files.
 - Warnings for mismatched ratios or oversized differences
 - Performance impact logging for validation systems
 
+## Traffic System
+Basic traffic simulation using kinematic physics and road network splines.
+
+### Components
+- **Road Splines**: `RoadNetwork` resource holds splines with `tangent()` and `get_lane_position()` support.
+- **TrafficAI**: `src/components/traffic.rs` - Stores current road ID, lane, and progress `t`.
+- **TrafficVehicle**: Marker component for traffic entities.
+
+### Simulation
+- **Kinematic Movement**: Traffic cars use `RigidBody::KinematicPositionBased` for performance and stability.
+- **Spline Following**: Cars follow road splines perfectly, handling curves and lane offsets.
+- **Obstacle Avoidance**: Simple raycast braking when obstacles are detected ahead.
+- **Spawning**: Cars spawn in a ring around the player and despawn when far away.
+- **Density Control**: Max car count limit (default 50) prevents performance degradation.
+
 

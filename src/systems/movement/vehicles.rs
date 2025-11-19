@@ -1,9 +1,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 use crate::components::ControlState;
-use crate::components::{
-    ActiveEntity, Car, Grounded, SimpleCarSpecs, SimpleCarSpecsHandle,
-};
-use crate::systems::movement::vehicle_params::{validate_specs, VehicleParams};
+use crate::components::{ActiveEntity, Car, Grounded, SimpleCarSpecs, SimpleCarSpecsHandle};
+use crate::systems::movement::vehicle_params::{VehicleParams, validate_specs};
 use crate::systems::physics::PhysicsUtilities;
 use crate::util::safe_math::{safe_lerp, safe_lerp_f32};
 use crate::util::safe_specs::safe_clamp_f32;
